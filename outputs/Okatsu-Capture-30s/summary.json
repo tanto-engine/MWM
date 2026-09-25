@@ -1,0 +1,80 @@
+{
+  "session": {
+    "t": 0.000274,
+    "kind": "session",
+    "pid": 12284,
+    "creation_filetime": "134347864347095577",
+    "module_base": "0x7ff61ce60000",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "vtable": "0x7ff61e003530",
+    "vtable_rva": "0x11a3530",
+    "wall_time": 1790315252.5097983,
+    "interval_ms": 10,
+    "objects": [
+      "0x24390fbc910",
+      "0x24390fbe390"
+    ],
+    "player_candidate": "0x24390fbe390",
+    "boss_candidate": "0x24390fbc910",
+    "mode": "external_read_only",
+    "atomic_snapshot": false,
+    "metadata_entry_limit": 64,
+    "region_check_policy": "refreshed each sample; reused within that sample; discarded on copy failure",
+    "stop_policy": "duration, process exit, STOP file, or loss of any selected actor's object/owner identity; not a death detector",
+    "discovery_candidates": [
+      {
+        "object": "0x24390fbc910",
+        "role": "unassigned",
+        "owner_like": "0x24380087dc0",
+        "current": "0x24390c7be90",
+        "previous": "0x24390c7aa40",
+        "index": 1,
+        "previous_index": 1,
+        "transition": "0x24390912ce0",
+        "previous_transition": "0x24390912ce0",
+        "pending": "0x0",
+        "pending_index": -1,
+        "counter": 131,
+        "descriptor": {
+          "word0_u16": 3172,
+          "word0_hex": "0x0C64",
+          "payload": "0x24390468450",
+          "transition_slice": {
+            "table": "0x24390f54748",
+            "start": 726,
+            "count": 28
+          }
+        }
+      },
+      {
+        "object": "0x24390fbe390",
+        "role": "unassigned",
+        "owner_like": "0x2438008f7a0",
+        "current": "0x24390ae99f0",
+        "previous": "0x24390b042e0",
+        "index": 2,
+        "previous_index": 0,
+        "transition": "0x243905a52d0",
+        "previous_transition": "0x243905f67e0",
+        "pending": "0x0",
+        "pending_index": -1,
+        "counter": 363,
+        "descriptor": {
+          "word0_u16": 567,
+          "word0_hex": "0x0237",
+          "payload": "0x243903109b0",
+          "transition_slice": {
+            "table": "0x24390d15c70",
+            "start": 3917,
+            "count": 12
+          }
+        }
+      }
+    ],
+    "notes": "OS inputs are separate from game-accepted inputs. Roles are investigator labels. Temporal adjacency is not causation. Durations are sampled wall time, not frame data."
+  },
+  "input_observations": 886,
+  "transitions": 233,
+  "candidates": 2,
+  "interpretation": "Inspect shared timestamps; no automatic input-to-action assignment"
+}

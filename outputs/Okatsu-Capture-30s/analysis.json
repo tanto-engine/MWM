@@ -1,0 +1,429 @@
+{
+  "source": "work/okatsu-take3/events.jsonl",
+  "status": {
+    "running": false,
+    "seconds": 30.009,
+    "samples": 2604,
+    "action_events": 239,
+    "input_events": 886,
+    "button_edges": 173,
+    "memory_read_failures": 9,
+    "max_sample_gap_ms": 56.679,
+    "max_gap_after_first_second_ms": 56.679,
+    "mean_sample_gap_ms": 11.525,
+    "controller": {
+      "valid_slots": {
+        "winmm": [
+          0
+        ],
+        "xinput": []
+      },
+      "backend_load_errors": {},
+      "unexpected_error_events": 0,
+      "capability_result_codes": {
+        "winmm": {
+          "0": 0,
+          "1": 165,
+          "2": 165,
+          "3": 165,
+          "4": 165,
+          "5": 165,
+          "6": 165,
+          "7": 165,
+          "8": 165,
+          "9": 165,
+          "10": 165,
+          "11": 165,
+          "12": 165,
+          "13": 165,
+          "14": 165,
+          "15": 165
+        }
+      },
+      "disconnect_events": 0,
+      "button_edges": 173,
+      "input_events": 886,
+      "polls": 2604,
+      "last_result_codes": {
+        "winmm:0": 0,
+        "xinput:0": 1167,
+        "xinput:1": 1167,
+        "xinput:2": 1167,
+        "xinput:3": 1167
+      },
+      "rescan_seconds": 2.0,
+      "button_mapping": "uncalibrated; OS observations are not game-accepted input",
+      "cross_backend_duplicates_possible": true
+    },
+    "stop_reason": "duration"
+  },
+  "event_kind_counts": {
+    "session": 1,
+    "input_device": 1,
+    "input": 886,
+    "action_state": 239,
+    "metadata": 66,
+    "sampling_gap": 13,
+    "snapshot_race": 9,
+    "end": 1
+  },
+  "roles": {
+    "player_candidate": {
+      "object": "0x24390fbe390",
+      "observations": 192,
+      "change_labels": {
+        "initial": 10,
+        "descriptor": 182
+      },
+      "descriptor_pointer_changes_between_observations": 190,
+      "action_key_changes_between_observations": 190,
+      "unique_word_count": 51,
+      "word_observation_counts": {
+        "0x0C52": 8,
+        "0x0C57": 1,
+        "0x0C58": 8,
+        "0x0C5E": 1,
+        "0x0C61": 3,
+        "0x0C62": 2,
+        "0x0C63": 1,
+        "0x0C64": 1,
+        "0x0C65": 1,
+        "0x0C67": 1,
+        "0x0C6E": 6,
+        "0x0C72": 3,
+        "0x0C73": 3,
+        "0x0C74": 3,
+        "0x0C7F": 2,
+        "0x0C82": 1,
+        "0x0C83": 1,
+        "0x0C84": 1,
+        "0x0CCC": 6,
+        "0x0CD1": 1,
+        "0x0CD8": 1,
+        "0x0CDB": 10,
+        "0x0CDC": 5,
+        "0x0CDD": 9,
+        "0x0CDE": 3,
+        "0x0CDF": 4,
+        "0x0CE1": 3,
+        "0x0CE5": 1,
+        "0x0CE7": 17,
+        "0x0CE8": 1,
+        "0x0CEA": 1,
+        "0x0CEC": 3,
+        "0x0CED": 3,
+        "0x0CEE": 9,
+        "0x0CEF": 3,
+        "0x0CFC": 1,
+        "0x0CFE": 1,
+        "0x0CFF": 4,
+        "0x0D00": 5,
+        "0x0D07": 1,
+        "0x0D44": 1,
+        "0x0D5E": 2,
+        "0x0D70": 4,
+        "0x0D87": 1,
+        "0x0D88": 2,
+        "0x0D89": 2,
+        "0x0D8B": 1,
+        "0x0D8F": 14,
+        "0x0D90": 7,
+        "0x0D91": 14,
+        "0x0D92": 5
+      },
+      "unique_descriptor_count": 51,
+      "owners": [
+        "0x2438008f7a0"
+      ],
+      "owner_mismatch_observations": 0,
+      "prior_sword_capture_comparison": {
+        "shared_descriptor_pointers": [
+          "0x24390afcc40",
+          "0x24390afd6d0",
+          "0x24390b032a0",
+          "0x24390b03d30",
+          "0x24390b04960",
+          "0x24390b04a30"
+        ],
+        "shared_pointer_count": 6,
+        "shared_descriptor_word_and_payload_count": 6,
+        "shared_word_values": [
+          3154,
+          3166,
+          3276,
+          3288,
+          3303,
+          3304
+        ],
+        "specific_quick_heavy_LW_anchor_words_seen": [],
+        "interpretation": "Exact descriptor-pointer reuse supports shared action data; not independent actor identity proof."
+      },
+      "input_temporal_proximity": {
+        "50ms": {
+          "press_observations_with_following_transition": 47,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.2675
+        },
+        "100ms": {
+          "press_observations_with_following_transition": 53,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.4525
+        },
+        "250ms": {
+          "press_observations_with_following_transition": 81,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.7953
+        }
+      },
+      "metadata": {
+        "events": 52,
+        "stable_events": 51,
+        "unstable_events": 1,
+        "stable_unique_descriptors": 51,
+        "observed_descriptors_without_stable_metadata": [],
+        "payload_prefix_successes": 51,
+        "payload_errors": 0,
+        "slice_errors": 0,
+        "requested_transition_entries": 0,
+        "omitted_transition_entries": 2206,
+        "captured_transition_entries": 0,
+        "entry_errors": 0,
+        "unique_entry_addresses": 0,
+        "unique_target_key_count": 0,
+        "target_keys_i16": [],
+        "payload_key_word0_comparisons": 51,
+        "payload_key_word0_agreements": 51,
+        "payload_key_word0_mismatches": [],
+        "payload_key_comparison": "i16 payload key normalized to the same 16 bits as descriptor u16 word"
+      }
+    },
+    "boss_candidate": {
+      "object": "0x24390fbc910",
+      "observations": 47,
+      "change_labels": {
+        "initial": 1,
+        "state_only": 6,
+        "descriptor": 40
+      },
+      "descriptor_pointer_changes_between_observations": 40,
+      "action_key_changes_between_observations": 40,
+      "unique_word_count": 14,
+      "word_observation_counts": {
+        "0x0000": 15,
+        "0x0008": 7,
+        "0x001F": 3,
+        "0x0021": 1,
+        "0x05F3": 3,
+        "0x0C54": 2,
+        "0x0C55": 1,
+        "0x0C5E": 2,
+        "0x0C61": 2,
+        "0x0C62": 2,
+        "0x0C63": 2,
+        "0x0C64": 4,
+        "0x0C65": 1,
+        "0x0C69": 2
+      },
+      "unique_descriptor_count": 14,
+      "owners": [
+        "0x24380087dc0"
+      ],
+      "owner_mismatch_observations": 0,
+      "prior_sword_capture_comparison": {
+        "shared_descriptor_pointers": [],
+        "shared_pointer_count": 0,
+        "shared_descriptor_word_and_payload_count": 0,
+        "shared_word_values": [
+          0,
+          3166
+        ],
+        "specific_quick_heavy_LW_anchor_words_seen": [],
+        "interpretation": "Exact descriptor-pointer reuse supports shared action data; not independent actor identity proof."
+      },
+      "input_temporal_proximity": {
+        "50ms": {
+          "press_observations_with_following_transition": 5,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.0561
+        },
+        "100ms": {
+          "press_observations_with_following_transition": 7,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.0963
+        },
+        "250ms": {
+          "press_observations_with_following_transition": 20,
+          "total_press_observations": 86,
+          "chance_time_coverage_fraction": 0.2163
+        }
+      },
+      "metadata": {
+        "events": 14,
+        "stable_events": 14,
+        "unstable_events": 0,
+        "stable_unique_descriptors": 14,
+        "observed_descriptors_without_stable_metadata": [],
+        "payload_prefix_successes": 14,
+        "payload_errors": 0,
+        "slice_errors": 0,
+        "requested_transition_entries": 342,
+        "omitted_transition_entries": 0,
+        "captured_transition_entries": 342,
+        "entry_errors": 0,
+        "unique_entry_addresses": 163,
+        "unique_target_key_count": 53,
+        "target_keys_i16": [
+          0,
+          8,
+          12,
+          13,
+          16,
+          17,
+          25,
+          30,
+          31,
+          32,
+          33,
+          170,
+          865,
+          1341,
+          1343,
+          1523,
+          1705,
+          3002,
+          3003,
+          3020,
+          3154,
+          3155,
+          3156,
+          3157,
+          3158,
+          3163,
+          3164,
+          3165,
+          3166,
+          3168,
+          3169,
+          3170,
+          3171,
+          3172,
+          3173,
+          3174,
+          3175,
+          3176,
+          3177,
+          3178,
+          3179,
+          3180,
+          3181,
+          3182,
+          3183,
+          3184,
+          3185,
+          3186,
+          3247,
+          3259,
+          3272,
+          3273,
+          3344
+        ],
+        "payload_key_word0_comparisons": 14,
+        "payload_key_word0_agreements": 14,
+        "payload_key_word0_mismatches": [],
+        "payload_key_comparison": "i16 payload key normalized to the same 16 bits as descriptor u16 word"
+      }
+    }
+  },
+  "errors": {
+    "counts": {
+      "snapshot_race": 9
+    },
+    "by_object": {
+      "0x24390fbc910": {},
+      "0x24390fbe390": {
+        "snapshot_race": 9
+      }
+    },
+    "events": [
+      {
+        "t": 4.703302,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 12.711887,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 13.576602,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 14.011457,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 15.846714,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 15.914033,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 21.720403,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 23.371863,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      },
+      {
+        "t": 28.193855,
+        "kind": "snapshot_race",
+        "object": "0x24390fbe390"
+      }
+    ],
+    "owner_or_actor_replacement_observed": false
+  },
+  "controller": {
+    "observations": 886,
+    "button_edge_observations": 168,
+    "press_edges": 87,
+    "release_edges": 86,
+    "pressed_bit_counts": {
+      "0x2": 29,
+      "0x20": 19,
+      "0x1": 12,
+      "0x8": 1,
+      "0x800": 2,
+      "0x10": 14,
+      "0x4": 10
+    },
+    "released_bit_counts": {
+      "0x2": 29,
+      "0x1": 12,
+      "0x8": 1,
+      "0x20": 19,
+      "0x800": 2,
+      "0x4": 10,
+      "0x10": 13
+    },
+    "first_observation_edges_unknown": true,
+    "labels": "Raw OS button masks only; physical/game actions uncalibrated"
+  },
+  "limitations": [
+    "Player/boss roles are investigator candidate labels, independently unverified and potentially swapped.",
+    "Action records include movement, reactions and other states; not all are attacks.",
+    "External sampling can miss short states; timings are wall time, not game frames.",
+    "Repeated keys in descriptor and payload support a relationship; semantics remain unproven.",
+    "No frame, damage, hitbox, or player-reusability fields established."
+  ]
+}

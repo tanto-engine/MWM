@@ -1,0 +1,5 @@
+MinHook v1.3.4
+Source: https://github.com/TsudaKageyu/minhook
+Commit: c3fcafdc10146beb5919319d0683e44e3c30d537
+Included: unmodified src/, include/ and LICENSE.txt.
+This is a third-party dependency, separate from the project's original code.

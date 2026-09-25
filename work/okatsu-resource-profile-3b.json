@@ -1,0 +1,718 @@
+{
+  "session": {
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "module_base": "0x7ff61ce60000",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "vtable": "0x7ff61e003530",
+    "vtable_rva": "0x11a3530"
+  },
+  "recorded_at": 1790318677.6820312,
+  "action_key": 3172,
+  "compact_config": {
+    "player_actor": "0x1703cca34d0",
+    "player_owner": "0x1702bd08b50",
+    "player_action_context": "0x1703cca3540",
+    "player_action_banks": [
+      "0x1708fbc6e60",
+      "0x17093da22b0",
+      "0x1708eed0440"
+    ],
+    "source_actor": "0x1703cca1960",
+    "source_owner": "0x1702bd01170",
+    "source_action_context": "0x1703cca19d0",
+    "source_action_banks": [
+      "0x0",
+      "0x1702d3c08b0",
+      "0x1708eed0440"
+    ],
+    "source_descriptor": "0x1703c88f220",
+    "source_payload": "0x1703c098800"
+  },
+  "source": {
+    "actor": "0x1703cca1960",
+    "owner": "0x1702bd01170",
+    "role": "boss_fingerprint",
+    "action_key": 3172,
+    "action_resolution": {
+      "bank_index": 1,
+      "bank_address": "0x1702d3c08b0",
+      "position": 34,
+      "descriptor": "0x1703c88f220",
+      "key_u32": 3172,
+      "key_hex": "0x00000C64",
+      "enabled_byte": 1,
+      "payload": "0x1703c098800"
+    },
+    "action_context": "0x1703cca19d0",
+    "action_banks": [
+      "0x0",
+      "0x1702d3c08b0",
+      "0x1708eed0440"
+    ],
+    "motion_key": 1220,
+    "timing_key": -1,
+    "descriptor_bytes": "640c0000700100000000000000000000000000000000000000000000000000000088093c7001000040093c2d700100000000000000000000b0083c2d7001000001000000000000003096c33c7001000007000200000000004897c33c7001000000000000000000004897c33c7001000000000000000000004897c33c70010000d6021c0000000000902ac43c700100000000000000000000902ac43c700100000000000000000000902ac43c700100000000000000000000902ac43c7001000000000000000000000000000000000000",
+    "payload_bytes": "02000100000100000000ff01640cffff0109010004000f0000004c1800000000c40400004100ffffffff000001000200ffffff00ffffffff",
+    "effective_timing_key": 1220,
+    "timing_key_rule": "payload+0x34 < 0 uses motion key; verified native RVA0x6FF7C3..0x6FF7DB",
+    "resources": {
+      "motion_object": "0x1702bd063f0",
+      "timing_object": "0x1702bd06780",
+      "sampled_motion_group": 1,
+      "sampled_motion_bank": 0,
+      "sampled_motion_key": 8000,
+      "sampled_motion_clip": "0x1702cff0440",
+      "motion": {
+        "lookup_key": 1220,
+        "banks": [
+          {
+            "slot": 0,
+            "bank": "0x1708c11ee40",
+            "hash_slots": 351,
+            "motion_key": 1220,
+            "matches": [
+              [
+                165,
+                37
+              ]
+            ],
+            "index": 37,
+            "clip": "0x1702cf5fca0",
+            "presence": "present"
+          },
+          {
+            "slot": 1,
+            "presence": "empty_slot"
+          },
+          {
+            "slot": 2,
+            "bank": "0x1708c095a50",
+            "hash_slots": 829,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 3,
+            "bank": "0x1708c11c490",
+            "hash_slots": 69,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 4,
+            "bank": "0x1708c11ee40",
+            "hash_slots": 351,
+            "motion_key": 1220,
+            "matches": [
+              [
+                165,
+                37
+              ]
+            ],
+            "index": 37,
+            "clip": "0x1702cf5fca0",
+            "presence": "present"
+          },
+          {
+            "slot": 5,
+            "presence": "empty_slot"
+          },
+          {
+            "slot": 6,
+            "bank": "0x1708c095f30",
+            "hash_slots": 703,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 7,
+            "bank": "0x1708c11c490",
+            "hash_slots": 69,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          }
+        ],
+        "present_slots": [
+          0,
+          4
+        ],
+        "unresolved_slots": [],
+        "absent_from_all_loaded_banks": false
+      },
+      "timing": {
+        "lookup_key": 1220,
+        "banks": [
+          {
+            "slot": 0,
+            "wrapper": "0x1702d3be2c0",
+            "hash_slots": 355,
+            "indexes": [
+              37
+            ],
+            "record": "0x1702ce22970",
+            "prefix": "000000002100000024000000b0010000",
+            "event_count": 33,
+            "events": "000000000a00000003000000000000000a00000006000000000000001400000000000000000000001400000001000000050000000000000000000000050000000000000001000000060000000a000000010000000a0000002800000000000000100000000000000007000000100000000a0000000e0000001500000000000000080000001a00000001000000070000001a00000001000000080000001e0000000a000000070000001e0000000a000000080000001e0000000a0000000b000000220000000a0000000c000000260000000a00000003000000260000000a00000004000000280000000000000006000000280000000a00000009000000280000000a0000000a000000320000000000000004000000340000000a000000000000003500000000000000050000003500000001000000060000003a00000001000000040000003a0000000100000005000000410000002900000000000000420000000a00000005000000550000000000000002000000560000000000000003000000560000000a00000002000000",
+            "presence": "present"
+          },
+          {
+            "slot": 1,
+            "presence": "empty_slot"
+          },
+          {
+            "slot": 2,
+            "wrapper": "0x1708eb9a650",
+            "hash_slots": 953,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 3,
+            "wrapper": "0x17093ce2600",
+            "hash_slots": 59,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 4,
+            "presence": "empty_slot"
+          },
+          {
+            "slot": 5,
+            "wrapper": "0x1708eb9a690",
+            "hash_slots": 811,
+            "indexes": [],
+            "presence": "absent"
+          }
+        ],
+        "present_slots": [
+          0
+        ],
+        "unresolved_slots": [],
+        "absent_from_all_loaded_banks": false
+      }
+    }
+  },
+  "player": {
+    "actor": "0x1703cca34d0",
+    "owner": "0x1702bd08b50",
+    "role": "player_fingerprint",
+    "action_key": 3172,
+    "action_resolution": {
+      "bank_index": 0,
+      "bank_address": "0x1708fbc6e60",
+      "position": 19,
+      "descriptor": "0x1703c7e2bb0",
+      "key_u32": 3172,
+      "key_hex": "0x00000C64",
+      "enabled_byte": 1,
+      "payload": "0x1703c0069f0"
+    },
+    "action_context": "0x1703cca3540",
+    "action_banks": [
+      "0x1708fbc6e60",
+      "0x17093da22b0",
+      "0x1708eed0440"
+    ],
+    "motion_key": 2033,
+    "timing_key": -1,
+    "descriptor_bytes": "640c000070010000000000000000000000000000000000000000000000000000f069003c70010000f06ebc8f70010000e01d7e3c70010000606ebc8f700100000100000000000000e0eba23c70010000050001000000000088f5a23c70010000000000000000000088f5a23c70010000000000000000000088f5a23c7001000060032f0000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c7001000000000000000000000000000000000000",
+    "payload_bytes": "01010000000008000000ff04640c0bffff090000000000000000c01700040000f1070000ffffffffffff000001000200ffffff00ffffffff",
+    "target_actions": [
+      {
+        "action_key": 3312,
+        "action_key_hex": "0xcf0",
+        "resolution": {
+          "bank_index": 0,
+          "bank_address": "0x1708fbc6e60",
+          "position": 163,
+          "descriptor": "0x1703c7ea0b0",
+          "key_u32": 3312,
+          "key_hex": "0x00000CF0",
+          "enabled_byte": 1,
+          "payload": "0x1703c00ccf0"
+        },
+        "motion_key": 4100,
+        "timing_override": -1,
+        "effective_timing_key": 4100,
+        "descriptor_bytes": "f00c000070010000000000000000000000000000000000000000000000000000f0cc003c70010000f06ebc8f700100000000000000000000606ebc8f700100000100000000000000e0eba23c70010000450002000000000088f5a23c70010000000000000000000088f5a23c70010000000000000000000088f5a23c700100006d19320000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c7001000000000000000000000000000000000000",
+        "payload_bytes": "02000000000100000000ff02f00cffff010906000400130000004c59000000080410000019002600ffff000001000200ffffff28ffffffff",
+        "resources": {
+          "motion": {
+            "lookup_key": 4100,
+            "banks": [
+              {
+                "slot": 0,
+                "bank": "0x1708c0c0a50",
+                "hash_slots": 59,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 1,
+                "bank": "0x1708c098380",
+                "hash_slots": 581,
+                "motion_key": 4100,
+                "matches": [
+                  [
+                    189,
+                    184
+                  ]
+                ],
+                "index": 184,
+                "clip": "0x1708f228380",
+                "presence": "present"
+              },
+              {
+                "slot": 2,
+                "bank": "0x1708c095a50",
+                "hash_slots": 829,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 3,
+                "bank": "0x1708c0c0f90",
+                "hash_slots": 19,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 4,
+                "bank": "0x1708c0a7f00",
+                "hash_slots": 59,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 5,
+                "bank": "0x1708c098860",
+                "hash_slots": 581,
+                "motion_key": 4100,
+                "matches": [
+                  [
+                    189,
+                    184
+                  ]
+                ],
+                "index": 184,
+                "clip": "0x1708f8a5d60",
+                "presence": "present"
+              },
+              {
+                "slot": 6,
+                "bank": "0x1708c095f30",
+                "hash_slots": 703,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 7,
+                "bank": "0x1708c0c0f90",
+                "hash_slots": 19,
+                "motion_key": 4100,
+                "matches": [],
+                "presence": "absent"
+              }
+            ],
+            "present_slots": [
+              1,
+              5
+            ],
+            "unresolved_slots": [],
+            "absent_from_all_loaded_banks": false
+          },
+          "timing": {
+            "lookup_key": 4100,
+            "banks": [
+              {
+                "slot": 0,
+                "wrapper": "0x17093da2270",
+                "hash_slots": 59,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 1,
+                "wrapper": "0x1708fbc2cc0",
+                "hash_slots": 603,
+                "indexes": [
+                  185
+                ],
+                "record": "0x1708ebd2500",
+                "prefix": "000000001000000024000000e4000000",
+                "event_count": 16,
+                "events": "000000001400000000000000060000000a000000010000000a0000000a000000030000000a00000028000000000000000b0000000a000000040000000c00000000000000000000000c0000000a000000000000000c0000000a000000060000000e00000000000000010000000e0000000a00000005000000100000000000000002000000120000000100000000000000200000000a000000020000002800000029000000000000002a00000000000000030000002a0000000a00000007000000",
+                "presence": "present"
+              },
+              {
+                "slot": 2,
+                "wrapper": "0x1708eb9a650",
+                "hash_slots": 953,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 3,
+                "wrapper": "0x17093ce2600",
+                "hash_slots": 59,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 4,
+                "wrapper": "0x1708fbc2d00",
+                "hash_slots": 603,
+                "indexes": [
+                  185
+                ],
+                "record": "0x1708ec31ec0",
+                "prefix": "000000001000000024000000e4000000",
+                "event_count": 16,
+                "events": "000000001400000000000000060000000a000000010000000a0000000a000000030000000a00000028000000000000000b0000000a000000040000000c00000000000000000000000c0000000a000000000000000c0000000a000000060000000e00000000000000010000000e0000000a00000005000000100000000000000002000000120000000100000000000000200000000a000000020000002800000029000000000000002a00000000000000030000002a0000000a00000007000000",
+                "presence": "present"
+              },
+              {
+                "slot": 5,
+                "wrapper": "0x1708eb9a690",
+                "hash_slots": 811,
+                "indexes": [],
+                "presence": "absent"
+              }
+            ],
+            "present_slots": [
+              1,
+              4
+            ],
+            "unresolved_slots": [],
+            "absent_from_all_loaded_banks": false
+          }
+        }
+      },
+      {
+        "action_key": 3380,
+        "action_key_hex": "0xd34",
+        "resolution": {
+          "bank_index": 0,
+          "bank_address": "0x1708fbc6e60",
+          "position": 256,
+          "descriptor": "0x1703c7eec40",
+          "key_u32": 3380,
+          "key_hex": "0x00000D34",
+          "enabled_byte": 1,
+          "payload": "0x1703c010ce0"
+        },
+        "motion_key": 9200,
+        "timing_override": -1,
+        "effective_timing_key": 9200,
+        "descriptor_bytes": "340d000070010000000000000000000000000000000000000000000000000000e00c013c70010000f06ebc8f700100000000000000000000606ebc8f700100000100000000000000e0eba23c700100009d0001000000000088f5a23c70010000000000000000000088f5a23c70010000000000000000000088f5a23c700100005323260000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c700100000000000000000000d072a53c7001000000000000000000000000000000000000",
+        "payload_bytes": "02000000000100000000ff04340dffff0109080006002d0000004c1900000000f023000014002d00ffff000001000200ffffff50ffffffff",
+        "resources": {
+          "motion": {
+            "lookup_key": 9200,
+            "banks": [
+              {
+                "slot": 0,
+                "bank": "0x1708c0c0a50",
+                "hash_slots": 59,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 1,
+                "bank": "0x1708c098380",
+                "hash_slots": 581,
+                "motion_key": 9200,
+                "matches": [
+                  [
+                    351,
+                    276
+                  ]
+                ],
+                "index": 276,
+                "clip": "0x1708f4d4c60",
+                "presence": "present"
+              },
+              {
+                "slot": 2,
+                "bank": "0x1708c095a50",
+                "hash_slots": 829,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 3,
+                "bank": "0x1708c0c0f90",
+                "hash_slots": 19,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 4,
+                "bank": "0x1708c0a7f00",
+                "hash_slots": 59,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 5,
+                "bank": "0x1708c098860",
+                "hash_slots": 581,
+                "motion_key": 9200,
+                "matches": [
+                  [
+                    351,
+                    276
+                  ]
+                ],
+                "index": 276,
+                "clip": "0x1708fb537a0",
+                "presence": "present"
+              },
+              {
+                "slot": 6,
+                "bank": "0x1708c095f30",
+                "hash_slots": 703,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 7,
+                "bank": "0x1708c0c0f90",
+                "hash_slots": 19,
+                "motion_key": 9200,
+                "matches": [],
+                "presence": "absent"
+              }
+            ],
+            "present_slots": [
+              1,
+              5
+            ],
+            "unresolved_slots": [],
+            "absent_from_all_loaded_banks": false
+          },
+          "timing": {
+            "lookup_key": 9200,
+            "banks": [
+              {
+                "slot": 0,
+                "wrapper": "0x17093da2270",
+                "hash_slots": 59,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 1,
+                "wrapper": "0x1708fbc2cc0",
+                "hash_slots": 603,
+                "indexes": [
+                  281
+                ],
+                "record": "0x1708ebf6660",
+                "prefix": "00000000140000002400000014010000",
+                "event_count": 20,
+                "events": "0000000014000000000000000a0000000a000000070000000a00000028000000000000000b0000000a000000030000000c0000000a000000050000000d00000000000000000000000d0000000a000000000000000d0000000a000000040000000f0000000000000003000000100000000a00000006000000140000000100000000000000220000000a00000002000000220000000a000000070000002900000000000000040000002a0000000a000000090000002d00000000000000010000003600000029000000000000003a0000000a000000080000003b00000000000000020000003c0000000000000005000000",
+                "presence": "present"
+              },
+              {
+                "slot": 2,
+                "wrapper": "0x1708eb9a650",
+                "hash_slots": 953,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 3,
+                "wrapper": "0x17093ce2600",
+                "hash_slots": 59,
+                "indexes": [],
+                "presence": "absent"
+              },
+              {
+                "slot": 4,
+                "wrapper": "0x1708fbc2d00",
+                "hash_slots": 603,
+                "indexes": [
+                  281
+                ],
+                "record": "0x1708ec56020",
+                "prefix": "00000000140000002400000014010000",
+                "event_count": 20,
+                "events": "0000000014000000000000000a0000000a000000070000000a00000028000000000000000b0000000a000000030000000c0000000a000000050000000d00000000000000000000000d0000000a000000000000000d0000000a000000040000000f0000000000000003000000100000000a00000006000000140000000100000000000000220000000a00000002000000220000000a000000070000002900000000000000040000002a0000000a000000090000002d00000000000000010000003600000029000000000000003a0000000a000000080000003b00000000000000020000003c0000000000000005000000",
+                "presence": "present"
+              },
+              {
+                "slot": 5,
+                "wrapper": "0x1708eb9a690",
+                "hash_slots": 811,
+                "indexes": [],
+                "presence": "absent"
+              }
+            ],
+            "present_slots": [
+              1,
+              4
+            ],
+            "unresolved_slots": [],
+            "absent_from_all_loaded_banks": false
+          }
+        }
+      }
+    ],
+    "resources": {
+      "motion_object": "0x1702bd0ddd0",
+      "timing_object": "0x1702bd0e160",
+      "sampled_motion_group": 0,
+      "sampled_motion_bank": 1,
+      "sampled_motion_key": 4000,
+      "sampled_motion_clip": "0x1708f1e1c80",
+      "motion": {
+        "lookup_key": 1220,
+        "banks": [
+          {
+            "slot": 0,
+            "bank": "0x1708c0c0a50",
+            "hash_slots": 59,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 1,
+            "bank": "0x1708c098380",
+            "hash_slots": 581,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 2,
+            "bank": "0x1708c095a50",
+            "hash_slots": 829,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 3,
+            "bank": "0x1708c0c0f90",
+            "hash_slots": 19,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 4,
+            "bank": "0x1708c0a7f00",
+            "hash_slots": 59,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 5,
+            "bank": "0x1708c098860",
+            "hash_slots": 581,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 6,
+            "bank": "0x1708c095f30",
+            "hash_slots": 703,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 7,
+            "bank": "0x1708c0c0f90",
+            "hash_slots": 19,
+            "motion_key": 1220,
+            "matches": [],
+            "presence": "absent"
+          }
+        ],
+        "present_slots": [],
+        "unresolved_slots": [],
+        "absent_from_all_loaded_banks": true
+      },
+      "timing": {
+        "lookup_key": 1220,
+        "banks": [
+          {
+            "slot": 0,
+            "wrapper": "0x17093da2270",
+            "hash_slots": 59,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 1,
+            "wrapper": "0x1708fbc2cc0",
+            "hash_slots": 603,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 2,
+            "wrapper": "0x1708eb9a650",
+            "hash_slots": 953,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 3,
+            "wrapper": "0x17093ce2600",
+            "hash_slots": 59,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 4,
+            "wrapper": "0x1708fbc2d00",
+            "hash_slots": 603,
+            "indexes": [],
+            "presence": "absent"
+          },
+          {
+            "slot": 5,
+            "wrapper": "0x1708eb9a690",
+            "hash_slots": 811,
+            "indexes": [],
+            "presence": "absent"
+          }
+        ],
+        "present_slots": [],
+        "unresolved_slots": [],
+        "absent_from_all_loaded_banks": true
+      }
+    }
+  },
+  "other_fingerprints": [],
+  "consistency": {
+    "process_birth_rechecked": true,
+    "stable_ranges": 104,
+    "owner_action_and_resource_identities_rechecked": true,
+    "atomic_snapshot": false
+  },
+  "role_basis": "C64 motion-key fingerprints: 1220 boss, 2033 player; not an independent character ID",
+  "game_modified": false
+}

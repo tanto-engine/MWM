@@ -1,0 +1,51 @@
+{
+  "start_completed": true,
+  "stop_attempted": true,
+  "stop_completed": true,
+  "dispatch_count": 0,
+  "recovery_seconds": 3,
+  "errors": [],
+  "native_control": {
+    "frequency": 10000000,
+    "generation": 1,
+    "enabled": 1,
+    "status": 1,
+    "consumed_sequence": 0,
+    "dispatch_count": 0,
+    "last_reason": 1
+  },
+  "stop_report": {
+    "status": "export_returned",
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "mode": "nioh",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "loaded_now": false,
+    "export": "NiohResearchStop",
+    "result": 0,
+    "stage": "export",
+    "api": "GetExitCodeThread",
+    "mutation_started": true,
+    "load_thread_started": false,
+    "load_completed": false,
+    "export_thread_started": true,
+    "export_completed": true
+  },
+  "start_report": {
+    "status": "export_returned",
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "mode": "nioh",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "loaded_now": true,
+    "export": "NiohResearchStart",
+    "result": 0,
+    "stage": "export",
+    "api": "GetExitCodeThread",
+    "mutation_started": true,
+    "load_thread_started": true,
+    "load_completed": true,
+    "export_thread_started": true,
+    "export_completed": true
+  }
+}

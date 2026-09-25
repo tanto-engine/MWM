@@ -1,0 +1,35 @@
+#pragma once
+#include <windows.h>
+#include <stdint.h>
+#include <stddef.h>
+
+enum { TRACE_MAGIC = 0x3152494e, TRACE_VERSION = 1, TRACE_CAPACITY = 512 };
+
+struct TraceRecord {
+    volatile LONG64 sequence_begin;
+    int64_t qpc;
+    uint64_t actor, owner, context, before, after, payload;
+    uint32_t thread_id, input_key, before_key, after_key;
+    int32_t bank, motion_key, timing_key;
+    uint32_t native_result, valid_fields, reserved;
+    volatile LONG64 sequence_end;
+};
+
+struct TraceHeader {
+    uint32_t magic, version, capacity, record_size;
+    int64_t qpc_frequency;
+    volatile LONG64 written, dropped;
+    volatile LONG status, enabled;
+    uint64_t hook_address, module_base;
+    uint8_t reserved[64];
+};
+
+struct TraceMapping { TraceHeader header; TraceRecord records[TRACE_CAPACITY]; };
+static_assert(sizeof(TraceRecord) == 112, "External reader layout mismatch");
+static_assert(sizeof(TraceHeader) == 128, "External reader layout mismatch");
+static_assert(sizeof(void*) == 8, "Observer requires the Windows x64 ABI");
+static_assert(offsetof(TraceRecord, sequence_end) == 104, "Record sequence offset mismatch");
+static_assert(offsetof(TraceHeader, written) == 24 && offsetof(TraceHeader, dropped) == 32,
+              "Header counter offset mismatch");
+static_assert(alignof(TraceRecord) >= 8 && alignof(TraceHeader) >= 8,
+              "Interlocked 64-bit fields require eight-byte alignment");

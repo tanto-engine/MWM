@@ -1,0 +1,1408 @@
+{
+  "source": "work/okatsu-take3/events.jsonl",
+  "boss_candidate": "0x24390fbc910",
+  "capture_seconds": 30.009,
+  "raw_boss_state_observations": 47,
+  "collapsed_segments": 41,
+  "observed_descriptor_entries": 40,
+  "discarded_state_only_duplicates": 6,
+  "first_segment_is_left_censored": true,
+  "last_segment_is_right_censored": true,
+  "record_ranking": [
+    {
+      "word0": "0x0000",
+      "observed_entries": 15,
+      "segments_including_initial_censored": 15,
+      "raw_state_observations": 15,
+      "total_observed_dwell_seconds": 0.465317,
+      "complete_dwell_seconds": [
+        0.018779,
+        0.057709,
+        0.023143,
+        0.039471,
+        0.035189,
+        0.035197,
+        0.01465,
+        0.039906,
+        0.010877,
+        0.046418,
+        0.023868,
+        0.025103,
+        0.025454,
+        0.042425,
+        0.027128
+      ],
+      "complete_dwell_median_seconds": 0.027128,
+      "predecessors": {
+        "0x0008": 2,
+        "0x0C64": 3,
+        "0x001F": 3,
+        "0x0C65": 1,
+        "0x0C5E": 1,
+        "0x0C54": 1,
+        "0x0021": 1,
+        "0x0C69": 2,
+        "0x0C55": 1
+      },
+      "successors": {
+        "0x0C64": 4,
+        "0x001F": 2,
+        "0x0008": 3,
+        "0x0C5E": 2,
+        "0x0C54": 1,
+        "0x0021": 1,
+        "0x0C61": 2
+      },
+      "occurrences": [
+        {
+          "t": 5.97862,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 5.997399,
+          "dwell_seconds": 0.018779,
+          "exit_censored": false,
+          "previous": "0x0008",
+          "next": "0x0C64"
+        },
+        {
+          "t": 7.763871,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 7.82158,
+          "dwell_seconds": 0.057709,
+          "exit_censored": false,
+          "previous": "0x0C64",
+          "next": "0x001F"
+        },
+        {
+          "t": 8.405569,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 8.428712,
+          "dwell_seconds": 0.023143,
+          "exit_censored": false,
+          "previous": "0x001F",
+          "next": "0x0C64"
+        },
+        {
+          "t": 10.839233,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 10.878704,
+          "dwell_seconds": 0.039471,
+          "exit_censored": false,
+          "previous": "0x0C65",
+          "next": "0x0008"
+        },
+        {
+          "t": 11.986817,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 12.022006,
+          "dwell_seconds": 0.035189,
+          "exit_censored": false,
+          "previous": "0x001F",
+          "next": "0x0C5E"
+        },
+        {
+          "t": 13.921451,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 13.956648,
+          "dwell_seconds": 0.035197,
+          "exit_censored": false,
+          "previous": "0x0C5E",
+          "next": "0x0008"
+        },
+        {
+          "t": 14.728185,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 14.742835,
+          "dwell_seconds": 0.01465,
+          "exit_censored": false,
+          "previous": "0x0008",
+          "next": "0x0C64"
+        },
+        {
+          "t": 16.512723,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 16.552629,
+          "dwell_seconds": 0.039906,
+          "exit_censored": false,
+          "previous": "0x0C64",
+          "next": "0x0C54"
+        },
+        {
+          "t": 18.109772,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 18.120649,
+          "dwell_seconds": 0.010877,
+          "exit_censored": false,
+          "previous": "0x0C54",
+          "next": "0x0021"
+        },
+        {
+          "t": 18.877322,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 18.92374,
+          "dwell_seconds": 0.046418,
+          "exit_censored": false,
+          "previous": "0x0021",
+          "next": "0x0C61"
+        },
+        {
+          "t": 22.220642,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 22.24451,
+          "dwell_seconds": 0.023868,
+          "exit_censored": false,
+          "previous": "0x0C69",
+          "next": "0x001F"
+        },
+        {
+          "t": 22.836691,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 22.861794,
+          "dwell_seconds": 0.025103,
+          "exit_censored": false,
+          "previous": "0x001F",
+          "next": "0x0C61"
+        },
+        {
+          "t": 26.156838,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 26.182292,
+          "dwell_seconds": 0.025454,
+          "exit_censored": false,
+          "previous": "0x0C69",
+          "next": "0x0C64"
+        },
+        {
+          "t": 27.950803,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 27.993228,
+          "dwell_seconds": 0.042425,
+          "exit_censored": false,
+          "previous": "0x0C64",
+          "next": "0x0008"
+        },
+        {
+          "t": 29.150791,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 29.177919,
+          "dwell_seconds": 0.027128,
+          "exit_censored": false,
+          "previous": "0x0C55",
+          "next": "0x0C5E"
+        }
+      ],
+      "descriptor": "0x24390c7aa40",
+      "payload": "0x2439046eac0",
+      "native_transition_entries": 40,
+      "native_target_keys": [
+        0,
+        8,
+        12,
+        13,
+        16,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        170,
+        1341,
+        1343,
+        1523,
+        1705,
+        3002,
+        3003,
+        3154,
+        3155,
+        3156,
+        3157,
+        3163,
+        3165,
+        3166,
+        3169,
+        3172,
+        3174,
+        3175,
+        3176,
+        3177,
+        3178,
+        3179,
+        3180,
+        3247,
+        3259,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0008",
+      "observed_entries": 4,
+      "segments_including_initial_censored": 4,
+      "raw_state_observations": 7,
+      "total_observed_dwell_seconds": 2.192676,
+      "complete_dwell_seconds": [
+        0.861067,
+        0.534691,
+        0.771537,
+        0.025381
+      ],
+      "complete_dwell_median_seconds": 0.653114,
+      "predecessors": {
+        "0x05F3": 1,
+        "0x0000": 3
+      },
+      "successors": {
+        "0x0000": 2,
+        "0x001F": 1,
+        "0x0C55": 1
+      },
+      "occurrences": [
+        {
+          "t": 5.117553,
+          "raw_observations": 2,
+          "entry_censored": false,
+          "end_t": 5.97862,
+          "dwell_seconds": 0.861067,
+          "exit_censored": false,
+          "previous": "0x05F3",
+          "next": "0x0000"
+        },
+        {
+          "t": 10.878704,
+          "raw_observations": 2,
+          "entry_censored": false,
+          "end_t": 11.413395,
+          "dwell_seconds": 0.534691,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x001F"
+        },
+        {
+          "t": 13.956648,
+          "raw_observations": 2,
+          "entry_censored": false,
+          "end_t": 14.728185,
+          "dwell_seconds": 0.771537,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        },
+        {
+          "t": 27.993228,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 28.018609,
+          "dwell_seconds": 0.025381,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0C55"
+        }
+      ],
+      "descriptor": "0x24390c7a700",
+      "payload": "0x2439046ed80",
+      "native_transition_entries": 41,
+      "native_target_keys": [
+        0,
+        8,
+        12,
+        13,
+        16,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        170,
+        1341,
+        1343,
+        1523,
+        1705,
+        3002,
+        3003,
+        3154,
+        3155,
+        3156,
+        3157,
+        3163,
+        3165,
+        3166,
+        3169,
+        3172,
+        3174,
+        3175,
+        3176,
+        3177,
+        3178,
+        3179,
+        3180,
+        3247,
+        3259,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C64",
+      "observed_entries": 4,
+      "segments_including_initial_censored": 4,
+      "raw_state_observations": 4,
+      "total_observed_dwell_seconds": 6.660866,
+      "complete_dwell_seconds": [
+        1.766472,
+        1.355995,
+        1.769888,
+        1.768511
+      ],
+      "complete_dwell_median_seconds": 1.767491,
+      "predecessors": {
+        "0x0000": 4
+      },
+      "successors": {
+        "0x0000": 3,
+        "0x0C65": 1
+      },
+      "occurrences": [
+        {
+          "t": 5.997399,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 7.763871,
+          "dwell_seconds": 1.766472,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        },
+        {
+          "t": 8.428712,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 9.784707,
+          "dwell_seconds": 1.355995,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0C65"
+        },
+        {
+          "t": 14.742835,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 16.512723,
+          "dwell_seconds": 1.769888,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        },
+        {
+          "t": 26.182292,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 27.950803,
+          "dwell_seconds": 1.768511,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7be90",
+      "payload": "0x24390468450",
+      "native_transition_entries": 28,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3164,
+        3173,
+        3181,
+        3182,
+        3183,
+        3184,
+        3185,
+        3186,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x001F",
+      "observed_entries": 3,
+      "segments_including_initial_censored": 3,
+      "raw_state_observations": 3,
+      "total_observed_dwell_seconds": 1.749592,
+      "complete_dwell_seconds": [
+        0.583989,
+        0.573422,
+        0.592181
+      ],
+      "complete_dwell_median_seconds": 0.583989,
+      "predecessors": {
+        "0x0000": 2,
+        "0x0008": 1
+      },
+      "successors": {
+        "0x0000": 3
+      },
+      "occurrences": [
+        {
+          "t": 7.82158,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 8.405569,
+          "dwell_seconds": 0.583989,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        },
+        {
+          "t": 11.413395,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 11.986817,
+          "dwell_seconds": 0.573422,
+          "exit_censored": false,
+          "previous": "0x0008",
+          "next": "0x0000"
+        },
+        {
+          "t": 22.24451,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 22.836691,
+          "dwell_seconds": 0.592181,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7b0c0",
+      "payload": "0x2439046ea10",
+      "native_transition_entries": 28,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3158,
+        3168,
+        3184,
+        3185,
+        3186,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C5E",
+      "observed_entries": 2,
+      "segments_including_initial_censored": 2,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 2.730717,
+      "complete_dwell_seconds": [
+        1.899445
+      ],
+      "complete_dwell_median_seconds": 1.899445,
+      "predecessors": {
+        "0x0000": 2
+      },
+      "successors": {
+        "0x0000": 1,
+        "capture_ended": 1
+      },
+      "occurrences": [
+        {
+          "t": 12.022006,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 13.921451,
+          "dwell_seconds": 1.899445,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        },
+        {
+          "t": 29.177919,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 30.009191,
+          "dwell_seconds": 0.831272,
+          "exit_censored": true,
+          "previous": "0x0000",
+          "next": null
+        }
+      ],
+      "descriptor": "0x24390c7b9b0",
+      "payload": "0x24390468030",
+      "native_transition_entries": 13,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3020,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C61",
+      "observed_entries": 2,
+      "segments_including_initial_censored": 2,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 1.077494,
+      "complete_dwell_seconds": [
+        0.544491,
+        0.533003
+      ],
+      "complete_dwell_median_seconds": 0.538747,
+      "predecessors": {
+        "0x0000": 2
+      },
+      "successors": {
+        "0x0C62": 2
+      },
+      "occurrences": [
+        {
+          "t": 18.92374,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 19.468231,
+          "dwell_seconds": 0.544491,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0C62"
+        },
+        {
+          "t": 22.861794,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 23.394797,
+          "dwell_seconds": 0.533003,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0C62"
+        }
+      ],
+      "descriptor": "0x24390c7bc20",
+      "payload": "0x24390468240",
+      "native_transition_entries": 14,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3170,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C62",
+      "observed_entries": 2,
+      "segments_including_initial_censored": 2,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 0.63165,
+      "complete_dwell_seconds": [
+        0.314453,
+        0.317197
+      ],
+      "complete_dwell_median_seconds": 0.315825,
+      "predecessors": {
+        "0x0C61": 2
+      },
+      "successors": {
+        "0x0C63": 2
+      },
+      "occurrences": [
+        {
+          "t": 19.468231,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 19.782684,
+          "dwell_seconds": 0.314453,
+          "exit_censored": false,
+          "previous": "0x0C61",
+          "next": "0x0C63"
+        },
+        {
+          "t": 23.394797,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 23.711994,
+          "dwell_seconds": 0.317197,
+          "exit_censored": false,
+          "previous": "0x0C61",
+          "next": "0x0C63"
+        }
+      ],
+      "descriptor": "0x24390c7bcf0",
+      "payload": "0x243904682f0",
+      "native_transition_entries": 14,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3171,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C63",
+      "observed_entries": 2,
+      "segments_including_initial_censored": 2,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 2.304261,
+      "complete_dwell_seconds": [
+        1.148536,
+        1.155725
+      ],
+      "complete_dwell_median_seconds": 1.15213,
+      "predecessors": {
+        "0x0C62": 2
+      },
+      "successors": {
+        "0x0C69": 2
+      },
+      "occurrences": [
+        {
+          "t": 19.782684,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 20.93122,
+          "dwell_seconds": 1.148536,
+          "exit_censored": false,
+          "previous": "0x0C62",
+          "next": "0x0C69"
+        },
+        {
+          "t": 23.711994,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 24.867719,
+          "dwell_seconds": 1.155725,
+          "exit_censored": false,
+          "previous": "0x0C62",
+          "next": "0x0C69"
+        }
+      ],
+      "descriptor": "0x24390c7bdc0",
+      "payload": "0x243904683a0",
+      "native_transition_entries": 16,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3163,
+        3177,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C69",
+      "observed_entries": 2,
+      "segments_including_initial_censored": 2,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 2.578541,
+      "complete_dwell_seconds": [
+        1.289422,
+        1.289119
+      ],
+      "complete_dwell_median_seconds": 1.28927,
+      "predecessors": {
+        "0x0C63": 2
+      },
+      "successors": {
+        "0x0000": 2
+      },
+      "occurrences": [
+        {
+          "t": 20.93122,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 22.220642,
+          "dwell_seconds": 1.289422,
+          "exit_censored": false,
+          "previous": "0x0C63",
+          "next": "0x0000"
+        },
+        {
+          "t": 24.867719,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 26.156838,
+          "dwell_seconds": 1.289119,
+          "exit_censored": false,
+          "previous": "0x0C63",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7c2a0",
+      "payload": "0x243904687c0",
+      "native_transition_entries": 13,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        865,
+        1705,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0021",
+      "observed_entries": 1,
+      "segments_including_initial_censored": 1,
+      "raw_state_observations": 1,
+      "total_observed_dwell_seconds": 0.756673,
+      "complete_dwell_seconds": [
+        0.756673
+      ],
+      "complete_dwell_median_seconds": 0.756673,
+      "predecessors": {
+        "0x0000": 1
+      },
+      "successors": {
+        "0x0000": 1
+      },
+      "occurrences": [
+        {
+          "t": 18.120649,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 18.877322,
+          "dwell_seconds": 0.756673,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7b330",
+      "payload": "0x2439046df10",
+      "native_transition_entries": 20,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C54",
+      "observed_entries": 1,
+      "segments_including_initial_censored": 1,
+      "raw_state_observations": 2,
+      "total_observed_dwell_seconds": 1.557143,
+      "complete_dwell_seconds": [
+        1.557143
+      ],
+      "complete_dwell_median_seconds": 1.557143,
+      "predecessors": {
+        "0x0000": 1
+      },
+      "successors": {
+        "0x0000": 1
+      },
+      "occurrences": [
+        {
+          "t": 16.552629,
+          "raw_observations": 2,
+          "entry_censored": false,
+          "end_t": 18.109772,
+          "dwell_seconds": 1.557143,
+          "exit_censored": false,
+          "previous": "0x0000",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7a3c0",
+      "payload": "0x2439046e3e0",
+      "native_transition_entries": 41,
+      "native_target_keys": [
+        0,
+        8,
+        12,
+        13,
+        16,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        170,
+        1341,
+        1343,
+        1523,
+        1705,
+        3002,
+        3003,
+        3154,
+        3155,
+        3156,
+        3157,
+        3163,
+        3165,
+        3166,
+        3169,
+        3172,
+        3174,
+        3175,
+        3176,
+        3177,
+        3178,
+        3179,
+        3180,
+        3247,
+        3259,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C55",
+      "observed_entries": 1,
+      "segments_including_initial_censored": 1,
+      "raw_state_observations": 1,
+      "total_observed_dwell_seconds": 1.132182,
+      "complete_dwell_seconds": [
+        1.132182
+      ],
+      "complete_dwell_median_seconds": 1.132182,
+      "predecessors": {
+        "0x0008": 1
+      },
+      "successors": {
+        "0x0000": 1
+      },
+      "occurrences": [
+        {
+          "t": 28.018609,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 29.150791,
+          "dwell_seconds": 1.132182,
+          "exit_censored": false,
+          "previous": "0x0008",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7a2f0",
+      "payload": "0x2439046e490",
+      "native_transition_entries": 41,
+      "native_target_keys": [
+        0,
+        8,
+        12,
+        13,
+        16,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        170,
+        1341,
+        1343,
+        1523,
+        1705,
+        3002,
+        3003,
+        3154,
+        3155,
+        3156,
+        3157,
+        3163,
+        3165,
+        3166,
+        3169,
+        3172,
+        3174,
+        3175,
+        3176,
+        3177,
+        3178,
+        3179,
+        3180,
+        3247,
+        3259,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x0C65",
+      "observed_entries": 1,
+      "segments_including_initial_censored": 1,
+      "raw_state_observations": 1,
+      "total_observed_dwell_seconds": 1.054526,
+      "complete_dwell_seconds": [
+        1.054526
+      ],
+      "complete_dwell_median_seconds": 1.054526,
+      "predecessors": {
+        "0x0C64": 1
+      },
+      "successors": {
+        "0x0000": 1
+      },
+      "occurrences": [
+        {
+          "t": 9.784707,
+          "raw_observations": 1,
+          "entry_censored": false,
+          "end_t": 10.839233,
+          "dwell_seconds": 1.054526,
+          "exit_censored": false,
+          "previous": "0x0C64",
+          "next": "0x0000"
+        }
+      ],
+      "descriptor": "0x24390c7bf60",
+      "payload": "0x24390468500",
+      "native_transition_entries": 24,
+      "native_target_keys": [
+        0,
+        17,
+        25,
+        30,
+        31,
+        32,
+        33,
+        1705,
+        3181,
+        3182,
+        3183,
+        3184,
+        3185,
+        3186,
+        3247,
+        3272,
+        3273
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    },
+    {
+      "word0": "0x05F3",
+      "observed_entries": 0,
+      "segments_including_initial_censored": 1,
+      "raw_state_observations": 3,
+      "total_observed_dwell_seconds": 5.084428,
+      "complete_dwell_seconds": [],
+      "complete_dwell_median_seconds": null,
+      "predecessors": {
+        "capture_started": 1
+      },
+      "successors": {
+        "0x0008": 1
+      },
+      "occurrences": [
+        {
+          "t": 0.033125,
+          "raw_observations": 3,
+          "entry_censored": true,
+          "end_t": 5.117553,
+          "dwell_seconds": 5.084428,
+          "exit_censored": false,
+          "previous": null,
+          "next": "0x0008"
+        }
+      ],
+      "descriptor": "0x24390c83600",
+      "payload": "0x2439046c020",
+      "native_transition_entries": 9,
+      "native_target_keys": [
+        17,
+        170,
+        1523,
+        1705,
+        3247,
+        3272,
+        3273,
+        3344
+      ],
+      "interpretation": "Unclassified action record; entry count is not an attack count."
+    }
+  ],
+  "shared_numeric_keys_with_player": [
+    {
+      "word0": "0x0C5E",
+      "boss_candidate": {
+        "descriptor": "0x24390c7b9b0",
+        "payload": "0x24390468030",
+        "payload_key_0x0c_i16": 3166,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1200,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 643,
+          "count": 13
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afd6d0",
+        "payload": "0x243903215d0",
+        "payload_key_0x0c_i16": 3166,
+        "payload_flags_0x18": "0x40017c00000",
+        "payload_field_0x20_i32": 2030,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 599,
+          "count": 44
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0xe",
+        "0x10",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x1d",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25"
+      ]
+    },
+    {
+      "word0": "0x0C61",
+      "boss_candidate": {
+        "descriptor": "0x24390c7bc20",
+        "payload": "0x24390468240",
+        "payload_key_0x0c_i16": 3169,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1210,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 682,
+          "count": 14
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afd940",
+        "payload": "0x243903217e0",
+        "payload_key_0x0c_i16": 3169,
+        "payload_flags_0x18": "0x40017c00000",
+        "payload_field_0x20_i32": 2030,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 723,
+          "count": 47
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x1",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0xe",
+        "0x10",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x1d",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25",
+        "0x2a"
+      ]
+    },
+    {
+      "word0": "0x0C62",
+      "boss_candidate": {
+        "descriptor": "0x24390c7bcf0",
+        "payload": "0x243904682f0",
+        "payload_key_0x0c_i16": 3170,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1211,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 696,
+          "count": 14
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afda10",
+        "payload": "0x24390321890",
+        "payload_key_0x0c_i16": 3170,
+        "payload_flags_0x18": "0x40017c00000",
+        "payload_field_0x20_i32": 2031,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 770,
+          "count": 47
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x1",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0xe",
+        "0x10",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x1d",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25",
+        "0x2a"
+      ]
+    },
+    {
+      "word0": "0x0C63",
+      "boss_candidate": {
+        "descriptor": "0x24390c7bdc0",
+        "payload": "0x243904683a0",
+        "payload_key_0x0c_i16": 3171,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1212,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 710,
+          "count": 16
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afdae0",
+        "payload": "0x24390321940",
+        "payload_key_0x0c_i16": 3171,
+        "payload_flags_0x18": "0x40017c00000",
+        "payload_field_0x20_i32": 2032,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 817,
+          "count": 47
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x1",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0xe",
+        "0x10",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x1d",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25",
+        "0x2a"
+      ]
+    },
+    {
+      "word0": "0x0C64",
+      "boss_candidate": {
+        "descriptor": "0x24390c7be90",
+        "payload": "0x24390468450",
+        "payload_key_0x0c_i16": 3172,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1220,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 726,
+          "count": 28
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afdbb0",
+        "payload": "0x243903219f0",
+        "payload_key_0x0c_i16": 3172,
+        "payload_flags_0x18": "0x40017c00000",
+        "payload_field_0x20_i32": 2033,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 864,
+          "count": 47
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x1",
+        "0x2",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0xe",
+        "0x10",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x1d",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25"
+      ]
+    },
+    {
+      "word0": "0x0C65",
+      "boss_candidate": {
+        "descriptor": "0x24390c7bf60",
+        "payload": "0x24390468500",
+        "payload_key_0x0c_i16": 3173,
+        "payload_flags_0x18": "0x184c0000",
+        "payload_field_0x20_i32": 1221,
+        "transition_table": {
+          "table": "0x24390f54748",
+          "start": 754,
+          "count": 24
+        }
+      },
+      "player_candidate": {
+        "descriptor": "0x24390afdc80",
+        "payload": "0x24390321aa0",
+        "payload_key_0x0c_i16": 3173,
+        "payload_flags_0x18": "0x13c20000",
+        "payload_field_0x20_i32": 2040,
+        "transition_table": {
+          "table": "0x24390d4a588",
+          "start": 911,
+          "count": 43
+        }
+      },
+      "same_descriptor_pointer": false,
+      "same_payload_pointer": false,
+      "payload_prefix_differing_offsets": [
+        "0x0",
+        "0x1",
+        "0x2",
+        "0x5",
+        "0x6",
+        "0xb",
+        "0x10",
+        "0x11",
+        "0x12",
+        "0x14",
+        "0x16",
+        "0x1a",
+        "0x1b",
+        "0x20",
+        "0x21",
+        "0x24",
+        "0x25"
+      ]
+    }
+  ],
+  "candidate_for_visual_identification": {
+    "word0": "0x0C64",
+    "observed_entries": 4,
+    "basis": "Most repeated observed entry excluding numeric keys0x0000/0x0008, which are also unclassified. This exclusion is a heuristic, not a validated attack filter.",
+    "implementation_readiness": "Not sufficient to bind a confirmed Okatsu attack. Verify the move visually or identify its animation/event resources and actor-dependent dependencies first."
+  },
+  "limitations": [
+    "Actor roles remain candidate labels; previous input and shared-player-data evidence supports them.",
+    "All counts describe record-pointer changes observed by polling, not guaranteed complete game transitions.",
+    "Initial segment began before recording; final segment ended after recording. Neither gives a complete dwell.",
+    "Thirteen sampling gaps over30ms occurred; short transitions can be absent.",
+    "Frequency/dwell cannot distinguish attacks, movement, idle, reactions, or recovery by itself.",
+    "Same numeric key in both actor data sets is not proof of interchangeable action content."
+  ]
+}

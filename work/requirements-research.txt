@@ -1,0 +1,3 @@
+# Optional offline disassembly and reference-document tools only.
+capstone==5.0.6
+pypdf

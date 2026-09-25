@@ -1,0 +1,94 @@
+{
+  "start_completed": true,
+  "stop_attempted": true,
+  "stop_completed": true,
+  "dispatch_count": 1,
+  "recovery_seconds": 5,
+  "errors": [],
+  "native_control": {
+    "frequency": 10000000,
+    "generation": 1,
+    "enabled": 1,
+    "status": 3,
+    "consumed_sequence": 1,
+    "dispatch_count": 1,
+    "last_reason": 1
+  },
+  "final_resources": {
+    "kind": "resource_state",
+    "slots": [
+      "0x1708c0c0a50",
+      "0x1708c0a7f00",
+      "0x17093da2270",
+      "0x17093ce2600"
+    ],
+    "all_slots_original": true,
+    "current_clip": "0x1708f02e1e0",
+    "previous_clips": [
+      "0x0",
+      "0x0"
+    ],
+    "motion_key": 2005,
+    "timing_record": "0x1708ebb0d20",
+    "timing_key": 2005,
+    "source_clip_current": false,
+    "source_clip_retained": false,
+    "source_timing_current": false
+  },
+  "stop_report": {
+    "status": "export_returned",
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "mode": "nioh",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "loaded_now": false,
+    "export": "NiohResearchStop",
+    "result": 0,
+    "stage": "export",
+    "api": "GetExitCodeThread",
+    "mutation_started": true,
+    "load_thread_started": false,
+    "load_completed": false,
+    "export_thread_started": true,
+    "export_completed": true
+  },
+  "post_stop_resources": {
+    "kind": "resource_state",
+    "slots": [
+      "0x1708c0c0a50",
+      "0x1708c0a7f00",
+      "0x17093da2270",
+      "0x17093ce2600"
+    ],
+    "all_slots_original": true,
+    "current_clip": "0x1708f02e1e0",
+    "previous_clips": [
+      "0x0",
+      "0x0"
+    ],
+    "motion_key": 2005,
+    "timing_record": "0x1708ebb0d20",
+    "timing_key": 2005,
+    "source_clip_current": false,
+    "source_clip_retained": false,
+    "source_timing_current": false
+  },
+  "post_stop_slots_restored": true,
+  "start_report": {
+    "status": "export_returned",
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "mode": "nioh",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "loaded_now": true,
+    "export": "NiohResearchStart",
+    "result": 0,
+    "stage": "export",
+    "api": "GetExitCodeThread",
+    "mutation_started": true,
+    "load_thread_started": true,
+    "load_completed": true,
+    "export_thread_started": true,
+    "export_completed": true
+  }
+}

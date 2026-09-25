@@ -1,0 +1,42 @@
+Nioh 1 read-only boss probe - research prototype
+
+Requires Windows x64 and Python 3.10+ (standard library only).
+Supports only the exact Nioh executable SHA-256 checked by boss_probe.py.
+The game must already be running. This tool does not start or control it.
+
+Run from this folder, replacing PID and paths:
+  python boss_probe.py scan --pid PID --out encounter.json
+  python boss_probe.py record --config encounter.json --outdir take1 --seconds 120
+  python boss_probe.py report --events take1/events.jsonl --outdir take1-report
+
+Scan after entering the encounter. Repeat after restart or encounter reload.
+To stop a capture, create an empty file named STOP inside its output folder.
+Use --seconds 20 for a short take that ends without a manual stop message.
+Losing either selected actor's object or owner identity stops the take early.
+This detects invalidated actor data, not the precise frame of death.
+Output filenames/folders must be new; existing captures are never overwritten.
+
+Once objects are identified, add --player 0xADDRESS --boss 0xADDRESS --entries 64
+to record. These are investigator-assigned candidates, not automatic recognition.
+The tool drops role labels when the observed owner-like pointer changes.
+inspect --pid PID --descriptor 0xADDRESS --out record.json reads bounded metadata.
+
+Compare a candidate move across two actors without changing the game:
+  python action_banks.py --pid PID --source 0xBOSS --destination 0xPLAYER --key 0x0C64 --out banks.json
+This reconstructs the native three-bank lookup, including DWORD key matching.
+Equal numeric keys can resolve to different records for different actors.
+Its consistency checks do not make concurrent game-memory reads atomic.
+
+events.jsonl preserves raw inputs, actions, payload prefixes and transition entries.
+The report produces a shared timeline, candidate ranking and input/action links.
+Raw WinMM button bits need calibration; XInput names are API names, not game binds.
+Input/action links are timestamp associations, not proof the game accepted an input.
+Word0 is an observed 16-bit record value, not a globally unique full attack ID.
+The native lookup compares 32 bits; transition references are signed 16-bit values.
+Sampling is non-atomic, may miss brief states, and does not establish frame data.
+Full structure sizes, damage, hitboxes and asset dependencies are not identified.
+Pointers are session-specific; saves and game files are never modified.
+
+API references:
+https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory
+https://learn.microsoft.com/en-us/windows/win32/api/joystickapi/nf-joystickapi-joygetposex

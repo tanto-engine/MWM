@@ -1,0 +1,39 @@
+{
+  "session": {
+    "pid": 5032,
+    "creation_filetime": "134347915002964188",
+    "module_base": "0x7ff61ce60000",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "vtable": "0x7ff61e003530",
+    "vtable_rva": "0x11a3530"
+  },
+  "player": 1581567849360,
+  "player_owner": 1581283493792,
+  "source_actor": 1581567842576,
+  "source_owner": 1581283462592,
+  "vtable": 140695042012464,
+  "source_bank": 1581306873984,
+  "source_descriptor": 1581563596272,
+  "source_payload": 1581555298208,
+  "source_motion": 1581283483712,
+  "source_timing": 1581283484624,
+  "source_motion_bank": 1582897934304,
+  "source_timing_wrapper": 1581306873920,
+  "source_clip": 1581302397216,
+  "source_timing_record": 1581300984176,
+  "player_motion": 1581283514912,
+  "player_timing": 1581283515824,
+  "charge_descriptor": 1581563595856,
+  "charge_payload": 1581555298560,
+  "charge_clip": 1581302468128,
+  "charge_timing_record": 1581300988784,
+  "player_pulse_descriptor": 1581562896560,
+  "originals": [
+    1582897564240,
+    1582897463040,
+    1583028511344,
+    1583027725824
+  ],
+  "config_tag": "5848413a1b604646",
+  "scope": "Current process and encounter only"
+}

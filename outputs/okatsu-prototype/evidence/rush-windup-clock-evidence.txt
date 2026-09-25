@@ -1,0 +1,151 @@
+Native startup speed evidence (offline saved exact-build text).
+C64 only: preserve all event traversal; no animation/event cursor seek.
+actor+6A8 speed and+24 effective delta are scaled together after native719050.
+Boost boundary30 is a tuning choice, not a proved first-damage frame.
+
+RVA 7190FE..71911F
+007190FE mov      eax, dword ptr [rbx + 0x24]
+00719101 movss    xmm0, dword ptr [rbx + 0x6a8]
+00719109 mulss    xmm0, dword ptr [rbx + 0x6a4]
+00719111 mov      dword ptr [rbx + 0x20], eax
+00719114 movss    dword ptr [rbx + 0x24], xmm0
+00719119 add      rsp, 0x20
+0071911D pop      rbx
+0071911E ret
+
+RVA 747694..7476CA
+00747695 mov      rax, qword ptr [rdi]
+00747698 mov      rcx, rdi
+0074769B mov      qword ptr [r11 + 8], rbp
+0074769F mov      qword ptr [r11 + 0x10], rsi
+007476A3 mov      qword ptr [r11 + 0x18], r14
+007476A7 call     qword ptr [rax + 0x40]
+007476AA mov      rdx, qword ptr [rbx]
+007476AD mov      rcx, rdi
+007476B0 mov      rax, qword ptr [rdi]
+007476B3 mov      byte ptr [rsp + 0x20], 0
+007476B8 mov      r9, qword ptr [rdx + 0x48]
+007476BC mov      r8, qword ptr [rdx + 0x68]
+007476C0 mov      rdx, qword ptr [rdx + 0x38]
+007476C4 call     qword ptr [rax + 0x90]
+
+RVA 6FF8F1..6FF951
+006FF8F1 movss    xmm1, dword ptr [rbx + 0x6a8]
+006FF8F9 movss    xmm0, dword ptr [rdi + 0xf4]
+006FF901 ucomiss  xmm0, xmm1
+006FF904 mov      rsi, qword ptr [rsp + 0x80]
+006FF90C movaps   xmm9, xmmword ptr [rsp + 0x30]
+006FF912 movaps   xmm7, xmmword ptr [rsp + 0x50]
+006FF917 movaps   xmm6, xmmword ptr [rsp + 0x60]
+006FF91C jp       0x6ff920
+006FF91E je       0x6ff928
+006FF920 movss    dword ptr [rdi + 0xf4], xmm1
+006FF928 cmp      qword ptr [rbx + 0xb0], 0
+006FF930 je       0x6ff951
+006FF932 movss    xmm1, dword ptr [rbx + 0x6a8]
+006FF93A movss    xmm0, dword ptr [rdi + 0x1a4]
+006FF942 ucomiss  xmm0, xmm1
+006FF945 jp       0x6ff949
+006FF947 je       0x6ff951
+006FF949 movss    dword ptr [rdi + 0x1a4], xmm1
+
+RVA 955A40..955A97
+00955A40 mov      qword ptr [rsp + 8], rbx
+00955A45 push     rdi
+00955A46 sub      rsp, 0x30
+00955A4A cmp      qword ptr [rcx + 0x58], 0
+00955A4F mov      rbx, rcx
+00955A52 movaps   xmmword ptr [rsp + 0x20], xmm6
+00955A57 movaps   xmm6, xmm1
+00955A5A je       0x955a97
+00955A5C movaps   xmm0, xmm1
+00955A5F movss    xmm1, dword ptr [rcx + 0xf0]
+00955A67 mulss    xmm0, dword ptr [rcx + 0xf4]
+00955A6F addss    xmm0, dword ptr [rcx + 0x60]
+00955A74 comiss   xmm0, xmm1
+00955A77 movss    dword ptr [rcx + 0x60], xmm0
+00955A7C jb       0x955a97
+00955A7E cmp      byte ptr [rcx + 0xf8], 0
+00955A85 je       0x955a92
+00955A87 subss    xmm0, xmm1
+00955A8B movss    dword ptr [rcx + 0x60], xmm0
+00955A90 jmp      0x955a97
+00955A92 movss    dword ptr [rcx + 0x60], xmm1
+
+RVA 9694C0..969546
+009694C0 push     r14
+009694C2 push     r15
+009694C4 sub      rsp, 0x88
+009694CB mov      rdx, qword ptr [rcx + 8]
+009694CF mov      r14, rcx
+009694D2 movaps   xmmword ptr [rsp + 0x40], xmm9
+009694D8 movaps   xmm9, xmm1
+009694DC movaps   xmmword ptr [rsp + 0x50], xmm8
+009694E2 xorps    xmm8, xmm8
+009694E6 cmp      word ptr [rdx + 4], 0
+009694EB jne      0x9698f0
+009694F1 test     rdx, rdx
+009694F4 je       0x9698f0
+009694FA mov      rax, qword ptr [rdx + 0x38]
+009694FE test     rax, rax
+00969501 je       0x9698f0
+00969507 mov      ecx, dword ptr [rcx + 0x18]
+0096950A test     ecx, ecx
+0096950C jne      0x9698d8
+00969512 movss    xmm0, dword ptr [rax + 0xf4]
+0096951A comiss   xmm0, xmm8
+0096951E jbe      0x9698f0
+00969524 mov      rax, qword ptr [rdx + 0x500]
+0096952B mulss    xmm9, xmm0
+00969530 test     rax, rax
+00969533 je       0x969546
+00969535 mov      rcx, qword ptr [rax + 0x38]
+00969539 test     rcx, rcx
+0096953C je       0x969546
+0096953E movss    dword ptr [rcx + 0xf4], xmm0
+
+RVA 9683A0..9683E4
+009683A0 mov      ecx, dword ptr [rdi + 8]
+009683A3 xorps    xmm0, xmm0
+009683A6 cdqe
+009683A8 add      rcx, rdi
+009683AB lea      rdx, [rax + rax*2]
+009683AF mov      eax, dword ptr [rcx + rdx*4]
+009683B2 lea      r8, [rcx + rdx*4]
+009683B6 cvtsi2ss xmm0, rax
+009683BB comiss   xmm6, xmm0
+009683BE jb       0x9684da
+009683C4 mov      eax, dword ptr [r8 + 4]
+009683C8 test     eax, eax
+009683CA jne      0x9683e4
+009683CC movzx    r9d, r15b
+009683D0 mov      dword ptr [rsp + 0x20], esi
+009683D4 mov      rdx, rdi
+009683D7 mov      rcx, rbx
+009683DA call     0x966000
+009683DF jmp      0x9684c9
+
+RVA 9684C9..9684DA
+009684C9 mov      eax, dword ptr [r14]
+009684CC inc      eax
+009684CE mov      dword ptr [r14], eax
+009684D1 cmp      eax, dword ptr [rdi + 4]
+009684D4 jb       0x9683a0
+
+RVA 969B50..969B66
+00969B50 cmp      qword ptr [r14 + 0x20], r15
+00969B54 je       0x969bc3
+00969B56 addss    xmm9, dword ptr [r14 + 0x40]
+00969B5C mov      rax, qword ptr [r14 + 8]
+00969B60 movss    dword ptr [r14 + 0x40], xmm9
+
+RVA 718CFA..718D29
+00718CFA movss    xmm0, dword ptr [rdi + 0x60]
+00718CFF comiss   xmm0, dword ptr [rdi + 0xf0]
+00718D06 jb       0x718d12
+00718D08 or       qword ptr [rbx + 0x40], 1
+00718D0D movss    xmm0, dword ptr [rdi + 0x60]
+00718D12 movss    xmm2, dword ptr [rip + 0xa8bf76]
+00718D1A movss    xmm3, dword ptr [rbx + 0x24]
+00718D1F movss    xmm1, dword ptr [rbx + 0x2c]
+00718D24 movss    dword ptr [rbx + 0x28], xmm0

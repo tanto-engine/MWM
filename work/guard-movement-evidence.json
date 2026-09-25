@@ -1,0 +1,333 @@
+{
+  "trace": "outputs\\okatsu-prototype\\sessions\\20260925-003117\\trace-1\\events.jsonl",
+  "player": "0x1703cca34d0",
+  "records": [
+    {
+      "key": 3311,
+      "motion": 1163,
+      "input_key": 3311,
+      "qpc": 189060378007,
+      "input_age_ms": 38.5944,
+      "buttons": 16,
+      "axes": {
+        "x": 31487,
+        "y": 27135,
+        "z": 31999,
+        "r": 32767,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189217490679,
+      "input_age_ms": 32.7199,
+      "buttons": 0,
+      "axes": {
+        "x": 22271,
+        "y": 4864,
+        "z": 31999,
+        "r": 32768,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3309,
+      "motion": 1161,
+      "input_key": 3309,
+      "qpc": 189283943701,
+      "input_age_ms": 4.4033,
+      "buttons": 16,
+      "axes": {
+        "x": 63455,
+        "y": 50452,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189311088755,
+      "input_age_ms": 23.8521,
+      "buttons": 16,
+      "axes": {
+        "x": 39009,
+        "y": 0,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189315759982,
+      "input_age_ms": 53.0829,
+      "buttons": 16,
+      "axes": {
+        "x": 33548,
+        "y": 28415,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189378817410,
+      "input_age_ms": 8.24,
+      "buttons": 16,
+      "axes": {
+        "x": 30207,
+        "y": 0,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3311,
+      "motion": 1163,
+      "input_key": 3311,
+      "qpc": 189402914016,
+      "input_age_ms": 10.4481,
+      "buttons": 16,
+      "axes": {
+        "x": 35629,
+        "y": 0,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189404915911,
+      "input_age_ms": 70.2276,
+      "buttons": 20,
+      "axes": {
+        "x": 38229,
+        "y": 0,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189436663912,
+      "input_age_ms": 31.4641,
+      "buttons": 0,
+      "axes": {
+        "x": 37189,
+        "y": 9472,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3247,
+      "motion": 1160,
+      "input_key": 3247,
+      "qpc": 189463613541,
+      "input_age_ms": 14.7975,
+      "buttons": 16,
+      "axes": {
+        "x": 52532,
+        "y": 5120,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3310,
+      "motion": 1162,
+      "input_key": 3310,
+      "qpc": 189513831279,
+      "input_age_ms": 20.1603,
+      "buttons": 16,
+      "axes": {
+        "x": 50712,
+        "y": 2304,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    },
+    {
+      "key": 3308,
+      "motion": 1160,
+      "input_key": 3308,
+      "qpc": 189517000960,
+      "input_age_ms": 59.6769,
+      "buttons": 16,
+      "axes": {
+        "x": 47331,
+        "y": 0,
+        "z": 33028,
+        "r": 33288,
+        "u": 0,
+        "v": 0
+      },
+      "native_result": 1
+    }
+  ],
+  "descriptors": [
+    {
+      "key": 3186,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1160,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04720c0bffff09000000000000000040170004000088040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e3710",
+      "payload": "0x1703c007390"
+    },
+    {
+      "key": 3187,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1161,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04730c0bffff09000000000000000040170004000089040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e37e0",
+      "payload": "0x1703c007440"
+    },
+    {
+      "key": 3188,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1162,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04740c0bffff0900000000000000004017000400008a040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e38b0",
+      "payload": "0x1703c0074f0"
+    },
+    {
+      "key": 3189,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1163,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04750c0bffff0900000000000000004017000400008b040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e3980",
+      "payload": "0x1703c0075a0"
+    },
+    {
+      "key": 3247,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1160,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04af0c0bffff09000000000000000040170004000088040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e6b10",
+      "payload": "0x1703c009f90"
+    },
+    {
+      "key": 3248,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1161,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04b00c0bffff09000000000000000040170004000089040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e6be0",
+      "payload": "0x1703c00a040"
+    },
+    {
+      "key": 3249,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1162,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04b10c0bffff0900000000000000004017000400008a040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e6cb0",
+      "payload": "0x1703c00a0f0"
+    },
+    {
+      "key": 3250,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1163,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04b20c0bffff0900000000000000004017000400008b040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e6d80",
+      "payload": "0x1703c00a1a0"
+    },
+    {
+      "key": 3308,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1160,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04ec0c0bffff09000000000000000040170004000088040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e9d70",
+      "payload": "0x1703c00ca30"
+    },
+    {
+      "key": 3309,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1161,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04ed0c0bffff09000000000000000040170004000089040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e9e40",
+      "payload": "0x1703c00cae0"
+    },
+    {
+      "key": 3310,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1162,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04ee0c0bffff0900000000000000004017000400008a040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e9f10",
+      "payload": "0x1703c00cb90"
+    },
+    {
+      "key": 3311,
+      "bank": 0,
+      "stance": 4,
+      "motion": 1163,
+      "timing": -1,
+      "prefix": "01030000000008000000ff04ef0c0bffff0900000000000000004017000400008b040000ffffffffffff000001000200ffffff00ffffffff",
+      "descriptor": "0x1703c7e9fe0",
+      "payload": "0x1703c00cc40"
+    }
+  ],
+  "note": "Time-aligned input observations establish coincidence, not causation. No game writes."
+}
