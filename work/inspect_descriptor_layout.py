@@ -1,4 +1,4 @@
-"""Offline candidate discovery for the native 0xD0 action-record layout."""
+# Offline candidate discovery for the native 0xD0 action-record layout.
 from pathlib import Path
 import json
 from nioh_native import Native

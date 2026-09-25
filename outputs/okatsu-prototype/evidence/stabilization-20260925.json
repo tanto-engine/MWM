@@ -1,0 +1,59 @@
+{
+  "recorded_at": "2026-09-25T17:59:01.174831+00:00",
+  "scope": "Owned-memory regressions and source trainer only; user deferred gameplay until later.",
+  "reproduced": [
+    "A Triangle release first sampled beyond the hold deadline selected a tap.",
+    "Native action eligibility restarted the hold timer instead of retaining the observed press timestamp.",
+    "Okatsu private cancel frame remained -1, which native714F06 cannot cross from a nonnegative clock.",
+    "Reimporting mixed encounters repopulated excluded and unclassified actions."
+  ],
+  "changes": [
+    "One timestamped game-frame snapshot feeds native holds and the external gesture reader.",
+    "Hold classification uses observed press/release timestamps; stale input and lifecycle changes cancel.",
+    "Private attack/cancel/Pulse boundaries agree; C79=54 after final non-audio event53, unchanged65-frame clip.",
+    "One schema2 preset owns sword/chord/stance choices and hold duration; native changes reattach cleanly.",
+    "Mid/high held trials disabled; low-heavy D taps and low C79 launcher preserved.",
+    "Imported recordings enrich only curated sword action identities."
+  ],
+  "performance": {
+    "owned_heavy_reads": 10000,
+    "device_calls_before": 10000,
+    "device_calls_after": 0,
+    "limit": "The fake device returns immediately. Call-count reduction is measured; gameplay latency/FPS is not."
+  },
+  "catalogue": {
+    "before_entries": 142,
+    "entries": 18,
+    "source_actions": 37,
+    "observations": 1,
+    "encounters": 5,
+    "workbook_bytes": 144712
+  },
+  "verification": {
+    "readiness_checks": 210,
+    "crash_checks": 8,
+    "log": "work/prune-final-verification.txt",
+    "source_trainer_preset_roundtrip": true,
+    "built_runtime_components": 2,
+    "gameplay": "not assessed; user will test later"
+  },
+  "runtime_sha256": {
+    "nioh_skill_runtime.dll": "f38f00cef6755dc6948569bfc7ba62df0d010996eb39f374172cdcb1a18e7511",
+    "nioh_resources.dll": "12176b669382f6f764dc27d025e58a6145ed955242e89a28ceb9be8747e40006"
+  },
+  "remaining": [
+    "Gameplay launcher/movement/lock-on/sprint and Pulse/Living Water/recovery acceptance",
+    "Guardian/final-spin hitboxes, William vocals, physical controllers and full lifecycle matrix",
+    "Opening grapple hop and launcher-to-Izuna are absent; new move work and packaging deferred"
+  ],
+  "pruning_block": {
+    "reason": "Automatic approval review rejected a combined deletion batch as blocked by policy.",
+    "retained_duplicates": [
+      "work/okatsu-play1",
+      "work/okatsu-preview-test1",
+      "work/okatsu-preview-test2",
+      "work/player-dispatch-test1",
+      "work/player-dispatch-test2"
+    ]
+  }
+}

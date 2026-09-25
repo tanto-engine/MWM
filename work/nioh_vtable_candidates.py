@@ -1,9 +1,12 @@
-"""Read-only search for object layouts using native function-pointer references."""
+# Read-only search for object layouts using native function-pointer references.
 import argparse, ctypes as C, json, struct
 from pathlib import Path
 from nioh_readonly_probe import kernel, modules, read
 
 def inspect(pid):
+    # Find read-only function-pointer arrays near the action setter reference.
+    # Inspect RTTI and class hierarchy candidates for related action-node types.
+    # Retain hypotheses as research evidence instead of assigning actor roles.
     main=next(m for m in modules(pid) if m['name'].lower()=='nioh.exe')
     h=kernel.OpenProcess(0x410,False,pid)
     if not h: raise C.WinError(C.get_last_error())
@@ -19,7 +22,11 @@ def inspect(pid):
             flags=struct.unpack_from('<I',hdr,p+36)[0]
             sections.append(dict(name=hdr[p:p+8].rstrip(b'\0').decode(),start=base+rva,size=size,execute=bool(flags&0x20000000)))
         code=[s for s in sections if s['execute']]
-        def executable(a): return any(s['start']<=a<s['start']+s['size'] for s in code)
+        def executable(a):
+            # Check whether a pointer falls inside an executable image section.
+            # Use the section ranges already read from the PE header.
+            # Bound candidate vtable runs to pointers that could reference code.
+            return any(s['start']<=a<s['start']+s['size'] for s in code)
         results=[]; common_type=None; derived=[]
         function=base+0x7119c0
         for s in sections:
@@ -48,8 +55,16 @@ def inspect(pid):
                 results.append(item)
             if common_type is not None:
                 srva=s['start']-base
-                def in_rdata(r,n=4): return srva<=r and r+n<=srva+len(data)
-                def word(r): return struct.unpack_from('<I',data,r-srva)[0]
+                def in_rdata(r,n=4):
+                    # Check whether a relative span is contained in the sampled rdata section.
+                    # Include the requested size in the upper-bound comparison.
+                    # Avoid decoding RTTI arrays beyond the captured section bytes.
+                    return srva<=r and r+n<=srva+len(data)
+                def word(r):
+                    # Decode one little-endian DWORD from the sampled rdata section.
+                    # Translate the image RVA into the section-relative offset.
+                    # Share the checked RTTI layout interpretation within this inspection.
+                    return struct.unpack_from('<I',data,r-srva)[0]
                 pos=0
                 while True:
                     pos=data.find(b'\x01\x00\x00\x00',pos)

@@ -15,6 +15,9 @@ for i in range(count):
     vs,va,rs,rp=struct.unpack_from('<IIII',data,off+8)
     sections.append(dict(name=name,rva=va,vsize=vs,size=rs,offset=rp))
 def read(rva,n):
+    # Translate an image-relative address into a PE section's file offset.
+    # Read the requested bytes from the local executable image.
+    # Support offline caller analysis without opening a game process.
     s=next(s for s in sections if s['rva']<=rva<s['rva']+max(s['size'],s['vsize']))
     offset=s['offset']+rva-s['rva']
     return data[offset:offset+n]
@@ -23,9 +26,15 @@ functions=[struct.unpack_from('<III',data,o) for o in range(pdata['offset'],pdat
 functions=sorted((a,b,u) for a,b,u in functions if a and b>a)
 starts=[f[0] for f in functions]
 def function_at(rva):
+    # Locate the unwind-table interval containing an instruction RVA.
+    # Use binary search over ordered function starts.
+    # Avoid scanning every function for each call-site candidate.
     i=bisect.bisect_right(starts,rva)-1
     return functions[i] if i>=0 and functions[i][0]<=rva<functions[i][1] else None
 def references(target):
+    # Find relative call and jump encodings aimed at a target RVA.
+    # Compute signed displacements within the executable text section.
+    # Report candidates for disassembly rather than claiming every byte is code.
     text=next(s for s in sections if s['name']=='.text')
     blob=data[text['offset']:text['offset']+text['size']]
     hits=[]
@@ -38,6 +47,9 @@ def references(target):
     return hits
 OBJDUMP=os.environ.get('OBJDUMP') or shutil.which('objdump') or str(pathlib.Path.home() / 'AppData/Local/Scoop/apps/gcc/current/bin/objdump.exe')
 def disasm(begin,end,label):
+    # Write a bounded function slice and decode it with objdump.
+    # Retain the image-relative address base in the text output.
+    # Make candidate caller behavior inspectable offline.
     binary=OUT/(label+'.bin')
     binary.write_bytes(read(begin,end-begin))
     result=subprocess.run([OBJDUMP,'-D','-b','binary','-m','i386:x86-64','-M','intel','--adjust-vma='+hex(begin),str(binary)],capture_output=True,text=True,check=True).stdout

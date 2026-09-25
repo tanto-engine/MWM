@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "boss_id": "maria",
+  "signature": [],
+  "boss_name": "Maria",
+  "recording_id": "0842fd1aa9bd4db890c565e658a327a9",
+  "created_at": 1790343684.316935,
+  "mode": "external_read_only",
+  "identity_basis": "unassigned encounter context"
+}

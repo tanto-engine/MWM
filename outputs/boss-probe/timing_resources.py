@@ -1,7 +1,10 @@
-"""Read-only timing resource lookup; callers supply all live addresses."""
+# Read-only timing resource lookup; callers supply all live addresses.
 from boss_probe import U32, I32, U64
 
 def lookup(game, wrapper, key):
+    # Resolve a timing key to its relative-offset event record.
+    # Bound hash indices, entry counts and event offsets before reading.
+    # Recheck wrapper identity to catch concurrent resource replacement.
     head = game.bytes(wrapper, 16)
     data, table = U64(head, 0), U64(head, 8)
     hash_head = game.bytes(table, 24)

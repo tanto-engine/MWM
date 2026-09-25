@@ -1,4 +1,4 @@
-"""Bounded read-only name/header inspection; never extracts or rewrites archives."""
+# Bounded read-only name/header inspection; never extracts or rewrites archives.
 import json
 from pathlib import Path
 import struct

@@ -5,9 +5,21 @@ from pypdf import PdfReader
 out = Path(__file__).parent
 game = Path(os.environ.get('NIOH_EXE', r'C:\Program Files (x86)\Steam\steamapps\common\Nioh\nioh.exe'))
 b = game.read_bytes()
-u16 = lambda p: struct.unpack_from('<H', b, p)[0]
-u32 = lambda p: struct.unpack_from('<I', b, p)[0]
-u64 = lambda p: struct.unpack_from('<Q', b, p)[0]
+u16 = lambda p: (
+    # Decode one unsigned 16-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from('<H', b, p)[0])
+u32 = lambda p: (
+    # Decode one unsigned 32-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from('<I', b, p)[0])
+u64 = lambda p: (
+    # Decode one unsigned 64-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from('<Q', b, p)[0])
 pe = u32(0x3c)
 assert b[pe:pe+4] == b'PE\0\0'
 opt = pe + 24
@@ -17,12 +29,18 @@ for i in range(u16(pe+6)):
     p = opt + u16(pe+20) + 40*i
     sections.append(dict(name=b[p:p+8].rstrip(b'\0').decode(),virtual_size=u32(p+8),rva=u32(p+12),raw_size=u32(p+16),raw=u32(p+20)))
 def offset(rva):
+    # Translate a PE RVA through section or header ranges.
+    # Return its corresponding offset in the local file image.
+    # Reject addresses that cannot be attributed to an image range.
     for s in sections:
         if s['rva'] <= rva < s['rva']+max(s['virtual_size'],s['raw_size']):
             return s['raw'] + rva-s['rva']
     if rva < u32(opt+60): return rva
     raise ValueError(hex(rva))
 def string(p):
+    # Decode a null-terminated import name from the local image.
+    # Keep undecodable bytes visible through replacement characters.
+    # Support import-table inventory without loading executable code.
     return b[p:b.index(b'\0',p)].decode('ascii',errors='replace')
 imports = {}
 imp_rva = u32(opt+112+8)

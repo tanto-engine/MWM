@@ -1,4 +1,4 @@
-"""Offline summary of an existing capture; does not import a live reader."""
+# Offline summary of an existing capture; does not import a live reader.
 from collections import Counter
 import bisect
 import json

@@ -1,4 +1,4 @@
-"""Read the active trace; no game memory writes or command publication."""
+# Read the active trace; no game memory writes or command publication.
 import collections
 import json
 from pathlib import Path

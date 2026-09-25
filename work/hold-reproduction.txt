@@ -1,0 +1,2 @@
+10000 heavy reads: 10000 device calls, 0.255 ms
+Assertion failed: boss_active && boss_active_slot==5 && dispatch->control.dispatch_count==1, file work/native-tests/replacement_cases.cpp, line 191

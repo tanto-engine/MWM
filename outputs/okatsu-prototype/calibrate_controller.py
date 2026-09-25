@@ -1,8 +1,7 @@
-"""Bounded controller calibration and chord dry-run. Never modifies a game.
-
-Uses the sibling boss-probe/controller_reader.py only when the CLI is run.
-Inference and chord adaptation can be tested without loading controller APIs.
-"""
+# Bounded controller calibration and chord dry-run. Never modifies a game.
+#
+# Uses the sibling boss-probe/controller_reader.py only when the CLI is run.
+# Inference and chord adaptation can be tested without loading controller APIs.
 import argparse
 import json
 import math
@@ -22,12 +21,18 @@ PHASES = (("neutral", "Release every button and trigger; leave sticks centered."
 
 
 def identity(event):
+    # Select the stable capability fields retained in a mapping.
+    # Omit observation timing and transient button state.
+    # Compare reconnects against the same device description.
     keys = ("backend", "slot", "name", "manufacturer", "product", "num_buttons",
             "num_axes", "axis_ranges", "caps_result")
     return {key: event[key] for key in keys if key in event}
 
 
 def axis_ranges(device):
+    # Supply standardized XInput limits or advertised WinMM ranges.
+    # Keep device-specific axes in their native units.
+    # Calibration uses these spans to distinguish travel from noise.
     if device["backend"] == "xinput":
         return {axis: [0, 255] if axis in ("lt", "rt") else [-32768, 32767]
                 for axis in ("lt", "rt", "lx", "ly", "rx", "ry")}
@@ -35,11 +40,17 @@ def axis_ranges(device):
 
 
 def one_bit(value):
+    # Recognize a positive integer containing exactly one set bit.
+    # Exclude booleans even though Python treats them as integers.
+    # Prevent ambiguous button masks from entering a saved mapping.
     return isinstance(value, int) and not isinstance(value, bool) and value > 0 and value & (value - 1) == 0
 
 
 def infer_calibration(phases, device):
-    """Require clear, held observations; uncertainty produces no mapping."""
+    # Infer LB and LT from isolated, settled calibration phases.
+    # Compare button sets, median travel and within-phase variation.
+    # Reject ambiguous evidence instead of guessing controller semantics.
+    # Require clear, held observations; uncertainty produces no mapping.
     medians, buttons, spreads = {}, {}, {}
     ranges = axis_ranges(device)
     if not ranges:
@@ -106,6 +117,9 @@ def infer_calibration(phases, device):
 
 
 def normalize_lt(raw, mapping):
+    # Convert a calibrated trigger sample into zero-to-one travel.
+    # Reject invalid ranges and values outside the measured direction.
+    # Return unavailable input when a sample cannot support a gesture.
     if not isinstance(raw, (int, float)) or isinstance(raw, bool):
         return None
     low, high = mapping["advertised_range"]
@@ -118,8 +132,11 @@ def normalize_lt(raw, mapping):
 
 
 class CalibratedChord:
-    """Adapt one matching event stream. Reconnection never fabricates an edge."""
+    # Adapt one matching event stream. Reconnection never fabricates an edge.
     def __init__(self, calibration):
+        # Pair a saved calibration with a fresh chord state machine.
+        # Start disconnected and validate the schema and LB bit.
+        # A loaded profile alone must never arm a held input.
         self.calibration = calibration
         self.gate = ChordGate()
         self.connected = False
@@ -127,6 +144,9 @@ class CalibratedChord:
             raise ValueError("Invalid calibration schema or LB mask")
 
     def process(self, event, context_valid=False):
+        # Translate one matching device stream into logical LB and LT.
+        # Reset the gesture on context loss or unknown input history.
+        # Require neutral rearming after device replacement or reconnect.
         if not context_valid:
             self.gate.reset()
         expected = self.calibration["device"]
@@ -155,6 +175,9 @@ class CalibratedChord:
 
 
 def cue_matches(path, phase):
+    # Read the optional research cue file for the current phase.
+    # Treat an absent or partially written cue as not ready.
+    # Allow a separate prompt driver without advancing calibration early.
     try:
         cue = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
@@ -164,11 +187,17 @@ def cue_matches(path, phase):
 
 def collect(reader, backend, slot, held_seconds, settle_seconds, evidence,
             cue_file=None, status_file=None, total_seconds=120, wait_seconds=30):
+    # Gather bounded neutral, isolated-button and combined-input phases.
+    # Retain raw evidence while enforcing settle and total deadlines.
+    # Produce a mapping only after all phases agree.
     phases, device, latest = {}, None, None
     started = time.perf_counter()
     completed = []
 
     def status(state, phase, **extra):
+        # Publish the current calibration phase and elapsed time.
+        # Replace a temporary JSON file after the write completes.
+        # Readers never need to interpret a half-written phase update.
         if status_file is not None:
             target = Path(status_file)
             temporary = target.with_name(target.name + ".tmp")
@@ -178,14 +207,23 @@ def collect(reader, backend, slot, held_seconds, settle_seconds, evidence,
             temporary.replace(target)
 
     def abort(message, phase):
+        # Persist the failed phase before raising its explanation.
+        # Use the existing status channel for the visible failure reason.
+        # Stop inference immediately when evidence becomes unusable.
         status("failed", phase, error=message)
         raise ValueError(message)
 
     def check_total(phase):
+        # Enforce a deadline across all calibration phases.
+        # Compare the shared start time before each polling cycle.
+        # Prevent missing cues from leaving research workers running indefinitely.
         if time.perf_counter() - started >= total_seconds:
             abort("Total calibration deadline reached", phase)
 
     def poll(phase, stage):
+        # Append device events while following the selected stream.
+        # Update its latest held state and verify device identity.
+        # Abort on disconnect rather than collecting stale controller evidence.
         nonlocal device, latest
         for event in reader.poll():
             evidence.write(json.dumps(dict(phase=phase, stage=stage, **event)) + "\n")
@@ -246,7 +284,10 @@ def collect(reader, backend, slot, held_seconds, settle_seconds, evidence,
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    # Expose the optional calibration and dry-run research commands.
+    # Validate durations before constructing native controller backends.
+    # Save failures and raw evidence without modifying game input.
+    parser = argparse.ArgumentParser(description='Map controller inputs and check chord recognition.')
     commands = parser.add_subparsers(dest="command", required=True)
     cal = commands.add_parser("calibrate")
     cal.add_argument("--backend", choices=("winmm", "xinput"), default="winmm")

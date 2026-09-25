@@ -1,4 +1,4 @@
-"""Read-only bounded snapshot of the loaded executable code for offline analysis."""
+# Read-only bounded snapshot of the loaded executable code for offline analysis.
 import json
 from pathlib import Path
 import sys

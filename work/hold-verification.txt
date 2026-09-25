@@ -1,0 +1,2 @@
+10000 heavy reads: 0 device calls, 0.281 ms
+native replacement checks passed: three stance holds, native mid/high taps, three-link heavy, camera-independent input, cancellations and LastError

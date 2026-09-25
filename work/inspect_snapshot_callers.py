@@ -14,7 +14,10 @@ for i,b in enumerate(blob[:-4]):
     dest=at+5+struct.unpack_from('<i',blob,i+1)[0]
     if dest not in targets: continue
     f=n.function(at)
-    ins=cache.setdefault(f[0],n.instructions(at))
+    # Decode each function once; setdefault would evaluate the decode on every hit.
+    if f[0] not in cache:
+        cache[f[0]]=n.instructions(at)
+    ins=cache[f[0]]
     match=next((x for x in ins if x.address==at and x.mnemonic in ('call','jmp')),None)
     if match is None: continue
     idx=ins.index(match)

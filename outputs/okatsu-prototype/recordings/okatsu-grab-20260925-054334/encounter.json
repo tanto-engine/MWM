@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "boss_id": "okatsu",
+  "signature": [
+    {
+      "action_id": 3172,
+      "motion_id": 1220
+    },
+    {
+      "action_id": 3174,
+      "motion_id": 1230
+    }
+  ],
+  "recording_id": "ae37f248dbe147198df80463cdd854e7",
+  "created_at": 1790340214.4322448,
+  "mode": "external_read_only",
+  "identity_basis": "source action/motion fingerprint"
+}

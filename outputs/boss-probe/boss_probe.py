@@ -1,9 +1,8 @@
-"""Nioh 1 action research. Standard library only; external memory reads only.
-
-scan discovers native action-node candidates; record logs inputs and actions;
-inspect reads a bounded record and its transition slice; report exports CSV.
-Offsets are restricted to the executable fingerprint researched in this session.
-"""
+# Nioh 1 action research. Standard library only; external memory reads only.
+#
+# scan discovers native action-node candidates; record logs inputs and actions;
+# inspect reads a bounded record and its transition slice; report exports CSV.
+# Offsets are restricted to the executable fingerprint researched in this session.
 import argparse
 import bisect
 import csv
@@ -22,11 +21,31 @@ VTABLE_RVA = 0x11A3530
 RTTI_NAME = ".?AVCActModuleActionMotNode@@"
 READ_ACCESS = 0x410  # PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
 MAX_POINTER = 0x7FFFFFFFFFFF
-U16 = lambda b, p: struct.unpack_from("<H", b, p)[0]
-I16 = lambda b, p: struct.unpack_from("<h", b, p)[0]
-U32 = lambda b, p: struct.unpack_from("<I", b, p)[0]
-I32 = lambda b, p: struct.unpack_from("<i", b, p)[0]
-U64 = lambda b, p: struct.unpack_from("<Q", b, p)[0]
+U16 = lambda b, p: (
+    # Decode one unsigned 16-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from("<H", b, p)[0])
+I16 = lambda b, p: (
+    # Decode one signed 16-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from("<h", b, p)[0])
+U32 = lambda b, p: (
+    # Decode one unsigned 32-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from("<I", b, p)[0])
+I32 = lambda b, p: (
+    # Decode one signed 32-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from("<i", b, p)[0])
+U64 = lambda b, p: (
+    # Decode one unsigned 64-bit field from the supplied byte snapshot.
+    # Use an explicit little-endian layout at the requested offset.
+    # Keep native structure interpretation consistent across research readers.
+    struct.unpack_from("<Q", b, p)[0])
 
 kernel.GetProcessTimes.argtypes = [W.HANDLE] + [C.POINTER(W.FILETIME)] * 4
 kernel.GetProcessTimes.restype = W.BOOL
@@ -35,17 +54,26 @@ kernel.GetExitCodeProcess.restype = W.BOOL
 
 
 def save_new(path, value):
+    # Write a new evidence document without overwriting prior captures.
+    # Create its parent directory and reject non-finite JSON values.
+    # Keep saved observations reproducible and uniquely addressed.
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf8") as f:
         json.dump(value, f, indent=2, allow_nan=False)
 
 
 def readable(mbi):
+    # Classify committed memory using its protection flags.
+    # Exclude guard pages and non-readable access modes.
+    # Discovery uses this filter before copying remote regions.
     return (mbi.State == 0x1000 and not mbi.Protect & 0x100
             and mbi.Protect & 0xFF in (2, 4, 8, 0x20, 0x40, 0x80))
 
 
 def object_fields(b):
+    # Decode researched fields from one action-node byte snapshot.
+    # Keep pointers as diagnostic strings and action indices as integers.
+    # Separate raw object state from any inferred move identity.
     return dict(owner_like=hex(U64(b, 0x50)), current=hex(U64(b, 0x58)),
                 previous=hex(U64(b, 0x60)), index=U32(b, 0x68),
                 previous_index=U32(b, 0x6C), transition=hex(U64(b, 0x90)),
@@ -54,22 +82,40 @@ def object_fields(b):
 
 
 def descriptor_fields(b):
-    return dict(word0_u16=U16(b, 0), word0_hex=f"0x{U16(b, 0):04X}",
+    # Decode the action key, payload pointer and transition slice.
+    # Preserve both full DWORD and low-word representations.
+    # Native lookup comparisons require the complete key.
+    return dict(action_key_u32=U32(b, 0), action_key_hex=f"0x{U32(b, 0):08X}",
+                word0_u16=U16(b, 0), word0_hex=f"0x{U16(b, 0):04X}",
                 payload=hex(U64(b, 0x20)),
+                combat_slice=dict(table=hex(U64(b,0x48)),start=U16(b,0x50),count=U16(b,0x52)),
                 transition_slice=dict(table=hex(U64(b, 0x78)),
                                       start=U16(b, 0x80), count=U16(b, 0x82)))
 
 
 def payload_fields(b):
+    # Decode motion selection, timing override and researched payload flags.
+    # Use the motion ID only when the override is negative.
+    # Preserve raw fields without assigning unsupported combat semantics.
     flags = U64(b, 0x18)
-    return dict(key_0x0c_i16=I16(b, 0x0C), flags_0x18_u64=hex(flags),
+    motion, override = I32(b, 0x20), I32(b, 0x34)
+    result = dict(key_0x0c_i16=I16(b, 0x0C), flags_0x18_u64=hex(flags),
+                motion_id=motion, timing_override=override,
+                timing_id=motion if override < 0 else override,
                 flag_bit34=bool(flags & (1 << 34)),
                 flag_bit35=bool(flags & (1 << 35)),
-                sentinel_0x20_i32=I32(b, 0x20), related_key_0x30_i16=I16(b, 0x30))
+                sentinel_0x20_i32=I32(b, 0x20), related_key_0x30_i16=I16(b, 0x30),
+                recovery_frame=I16(b,0x24),cancel_frame=I16(b,0x26),ki_pulse_percent=b[0x33])
+    if len(b)>=0x3E:
+        result.update(ki_pulse_start=I16(b,0x38),ki_pulse_fill=I16(b,0x3A),ki_pulse_hold=I16(b,0x3C))
+    return result
 
 
 class LiveGame:
     def __init__(self, pid):
+        # Open a read-only process after verifying its executable hash.
+        # Confirm the native commit instruction and action-node RTTI.
+        # Close the handle if initialization cannot establish the supported build.
         self.pid = pid
         self.handle = None
         self._sample_regions = None
@@ -79,7 +125,11 @@ class LiveGame:
         self.main = main[0]
         digest = hashlib.sha256()
         with Path(self.main["path"]).open("rb") as f:
-            for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            for chunk in iter(lambda: (
+                # Read the next bounded chunk for a file hash.
+                # An empty chunk terminates the sentinel iterator at end of file.
+                # Avoid copying the entire executable or capture into memory to fingerprint it.
+                f.read(1024 * 1024)), b""):
                 digest.update(chunk)
         if digest.hexdigest() != BUILD_SHA256:
             raise ValueError("Unrecognized Nioh executable; offsets are disabled")
@@ -105,27 +155,45 @@ class LiveGame:
             raise
 
     def close(self):
+        # Release the process handle owned by this reader.
+        # Clear the reference after closing it.
+        # Allow cleanup from initialization failure or context exit.
         if self.handle:
             kernel.CloseHandle(self.handle)
             self.handle = None
 
     def __enter__(self):
+        # Expose the initialized read-only reader to a with block.
+        # The constructor has already established process identity.
+        # The matching context exit owns handle cleanup.
         return self
 
     def __exit__(self, *exc):
+        # Close the process handle when the with block exits.
+        # Preserve any exception raised while inspecting the game.
+        # Failed reads must remain visible to the caller.
         self.close()
 
     def alive(self):
+        # Query the exit status through the existing process handle.
+        # Accept only the Windows still-active result.
+        # Stop capture when its original process lifetime ends.
         code = W.DWORD()
         return bool(kernel.GetExitCodeProcess(self.handle, C.byref(code)) and code.value == 259)
 
     def begin_sample(self):
+        # Discard memory-region classifications from the previous sample.
+        # Reuse region queries only within the next sampling pass.
+        # Avoid treating permissions from an earlier frame as current.
         # A VirtualQueryEx result covers its entire homogeneous region. Reuse it
         # only within this pass. RPM still validates/counts every actual copy.
         # Permission queries and reads are inherently non-atomic either way.
         self._sample_regions = []
 
     def region(self, address):
+        # Query the region containing an address, reusing this sample's cache.
+        # Limit retained regions to keep long scans from growing the cache.
+        # Actual byte reads still verify every requested copy.
         cached = getattr(self, "_sample_regions", None)
         if cached is not None:
             for region in cached:
@@ -139,6 +207,9 @@ class LiveGame:
         return mbi
 
     def bytes(self, address, count):
+        # Read a bounded span after checking each covered region.
+        # Reject guards, overflow and partial copies before decoding.
+        # Invalidate cached permissions when a region changes during the read.
         if not 0x10000 <= address <= MAX_POINTER or not 0 < count <= 1024 * 1024:
             raise OSError("Rejected address or read size")
         end = address + count
@@ -161,6 +232,9 @@ class LiveGame:
             raise
 
     def rtti(self, vtable):
+        # Follow the MSVC locator to the class name within the image.
+        # Check locator self-reference and image bounds before decoding.
+        # Return no identity for unreadable or unrelated vtables.
         try:
             locator = U64(self.bytes(vtable - 8, 8), 0)
             col = self.bytes(locator, 24)
@@ -174,6 +248,9 @@ class LiveGame:
             return None
 
     def snapshot(self, address):
+        # Read one action-node prefix and verify its expected vtable.
+        # Decode state only after the object type check succeeds.
+        # Detect freed or repurposed actor addresses during capture.
         raw = self.bytes(address, 0xF0)
         if U64(raw, 0) != self.vtable:
             raise OSError("Object no longer has the expected action-node vtable")
@@ -181,43 +258,51 @@ class LiveGame:
 
 
 def metadata(game, address, entry_limit=0):
-    """Observed prefixes, not claims about full allocation size or game semantics."""
+    # Capture a descriptor, recovery/Pulse payload and bounded native row slices.
+    # Retain individual read errors alongside the available raw evidence.
+    # Do not discard an entire action because an optional dependency vanished.
     raw = game.bytes(address, 0xD0)
     result = dict(address=hex(address), descriptor_bytes=raw.hex(),
-                  **descriptor_fields(raw), unknown_semantics="No frame, damage or hitbox fields identified")
+                  **descriptor_fields(raw), unknown_semantics="Damage scaling, hitboxes and unnamed row fields remain unverified")
     payload = int(result["payload"], 0)
     try:
-        prefix = game.bytes(payload, 0x38)  # Native code reads through +0x31.
+        prefix = game.bytes(payload, 0x40)  # Include native recovery and Pulse durations through+0x3C.
         result["payload_prefix"] = dict(address=hex(payload), bytes=prefix.hex(),
                                         **payload_fields(prefix))
     except OSError as e:
         result["payload_error"] = str(e)
-    sl = result["transition_slice"]
-    count = min(sl["count"], entry_limit)
-    result["transition_entries"] = []
-    result["entries_requested"] = count
-    result["entries_omitted"] = sl["count"] - count
-    if count:
+    for name,size,limit in [('transition',0x30,min(entry_limit,128)),('combat',0x80,min(entry_limit,16))]:
+        sl=result[name+'_slice']; count=min(sl['count'],limit)
+        entries=result[name+'_entries']=[]
+        prefix='' if name=='transition' else 'combat_'
+        result[prefix+'entries_requested']=count
+        result[prefix+'entries_omitted']=sl['count']-count
+        if not count:
+            continue
         try:
             pointers = game.bytes(int(sl["table"], 0) + sl["start"] * 8, count * 8)
         except OSError as e:
-            result["slice_error"] = str(e)
+            result[prefix+'slice_error'] = str(e)
         else:
             for i in range(count):
                 ptr = U64(pointers, i * 8)
                 entry = dict(slice_index=i, table_index=sl["start"] + i, address=hex(ptr))
                 try:
-                    b = game.bytes(ptr, 0x30)
-                    entry.update(bytes=b.hex(), byte_0x0a=b[0x0A],
-                                 target_key_0x14_i16=I16(b, 0x14),
-                                 condition_0x2c_i32=I32(b, 0x2C))
+                    b = game.bytes(ptr, size)
+                    entry['bytes']=b.hex()
+                    if name=='transition':
+                        entry.update(byte_0x0a=b[0x0A],target_key_0x14_i16=I16(b,0x14),
+                                     condition_0x2c_i32=I32(b,0x2C))
                 except OSError as e:
                     entry["error"] = str(e)
-                result["transition_entries"].append(entry)
+                entries.append(entry)
     return result
 
 
-def discover(game, seed=None):
+def discover(game, seed=None, stop_requested=None):
+    # Find aligned action-node vtable references in writable private memory.
+    # Revalidate candidate snapshots and bind them to process identity.
+    # Support cancellation during long scans without arming stale actors.
     found = set()
     scanned = failures = 0
     if seed:
@@ -231,6 +316,8 @@ def discover(game, seed=None):
         needle = struct.pack("<Q", game.vtable)
         cursor = 0
         while cursor <= MAX_POINTER and game.alive():
+            if stop_requested and stop_requested():
+                raise InterruptedError("Discovery cancelled")
             try:
                 mbi = game.region(cursor)
             except OSError:
@@ -241,6 +328,8 @@ def discover(game, seed=None):
             if readable(mbi) and mbi.Type == 0x20000 and mbi.Protect & 0xFF in (4, 8, 0x40, 0x80):
                 tail = b""
                 for at in range(mbi.BaseAddress, end, 1024 * 1024):
+                    if stop_requested and stop_requested():
+                        raise InterruptedError("Discovery cancelled")
                     try:
                         chunk = game.bytes(at, min(1024 * 1024, end - at))
                     except OSError:
@@ -278,7 +367,11 @@ def discover(game, seed=None):
                 recorded_at=time.time(), scope="CActModuleActionMotNode candidates only; actor identity unproven")
 
 
-def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
+def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit,
+           stop_requested=None, session_context=None):
+    # Record controller changes and coherent action snapshots into one timeline.
+    # Recheck owner identity and descriptor reads before assigning roles.
+    # End a take on actor loss so the encounter loop can rediscover it.
     from controller_reader import ControllerReader
     for key, value in game.identity.items():
         if cfg.get(key) != value:
@@ -289,7 +382,9 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
         raise ValueError("Invalid candidates or selected role address")
     if player is not None and player == boss:
         raise ValueError("Player and boss candidates must be distinct")
-    required_objects = {address for address in (player, boss) if address is not None}
+    # Scout captures have no confirmed boss identity. Losing any discovered
+    # candidate must trigger discovery again, even while William remains valid.
+    required_objects = set(objects) if boss is None else {address for address in (player, boss) if address is not None}
     folder.mkdir(parents=True, exist_ok=False)
     controller = ControllerReader()
     started = time.perf_counter()
@@ -303,10 +398,16 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
     reason = "duration"
     with (folder / "events.jsonl").open("x", encoding="utf8") as f:
         def emit(kind, observed_at=None, **fields):
+            # Append a timestamped event to the current take's stream.
+            # Use the supplied observation clock when a sample was read earlier.
+            # Keep controller and action events on the same elapsed-time axis.
             f.write(json.dumps(dict(t=round((time.perf_counter() if observed_at is None else observed_at) - started, 6), kind=kind, **fields),
                                separators=(",", ":"), allow_nan=False) + "\n")
 
         def status(running):
+            # Summarize sampling gaps, identity races and controller counters.
+            # Distinguish an active capture from its final stop reason.
+            # Make missed observations visible when judging sequence continuity.
             return dict(running=running, seconds=round(time.perf_counter() - started, 3),
                         samples=samples, action_events=action_events, input_events=input_events,
                         button_edges=edges, memory_read_failures=failures, max_sample_gap_ms=round(gaps * 1000, 3),
@@ -318,16 +419,17 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
         emit("session", **game.identity, wall_time=time.time(), interval_ms=interval_ms,
              objects=[hex(a) for a in objects], player_candidate=hex(player) if player is not None else None,
              boss_candidate=hex(boss) if boss is not None else None,
+             encounter_context=session_context,
              mode="external_read_only", atomic_snapshot=False, metadata_entry_limit=entry_limit,
              region_check_policy="refreshed each sample; reused within that sample; discarded on copy failure",
-             stop_policy="duration, process exit, STOP file, or loss of any selected actor's object/owner identity; not a death detector",
+             stop_policy="duration, process exit, STOP file, or loss of selected actor identity (all candidates in scout mode); not a death detector",
              discovery_candidates=cfg["candidates"],
              notes="OS inputs are separate from game-accepted inputs. Roles are investigator labels. "
                    "Temporal adjacency is not causation. Durations are sampled wall time, not frame data.")
         try:
             while time.perf_counter() - started < seconds:
                 tick = time.perf_counter()
-                if (folder / "STOP").exists():
+                if (folder / "STOP").exists() or (stop_requested and stop_requested()):
                     reason = "stop_file"
                     break
                 if not game.alive():
@@ -356,6 +458,9 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
                 invalid_required = set()
 
                 def checked_snapshot(address):
+                    # Verify the sampled actor still belongs to its discovered owner.
+                    # Track required identities that fail or change during this tick.
+                    # Do not let a later successful read erase an earlier identity failure.
                     try:
                         result = game.snapshot(address)
                     except OSError:
@@ -444,9 +549,13 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit):
             emit("end", **final)
             (folder / "status.json").write_text(json.dumps(final, indent=2), encoding="utf8")
     print(json.dumps(final, indent=2))
+    return final
 
 
 def report(source, folder):
+    # Reconstruct a diagnostic timeline from a saved external capture.
+    # Associate input edges with nearby actions using ordered timestamps.
+    # Break associations across gaps rather than claiming input causation.
     folder.mkdir(parents=True, exist_ok=False)
     candidates = {}
     transitions = []
@@ -502,24 +611,46 @@ def report(source, folder):
     if not session:
         raise ValueError("Capture has no session header")
     def csv_out(name, data, fields):
+        # Export one diagnostic table with explicit columns.
+        # Use a new UTF-8 CSV file suitable for spreadsheet inspection.
+        # Preserve the source capture and previous reports.
         with (folder / name).open("x", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=fields)
             w.writeheader()
             w.writerows(data)
-    csv_out("timeline.csv", sorted(rows, key=lambda x: x["t"]),
+    csv_out("timeline.csv", sorted(rows, key=lambda x: (
+        # Order retained evidence by its sampled elapsed time.
+        # Use the timestamp stored on each event or report row.
+        # Allow adjacent-event lookup without changing the original observations.
+        x["t"])),
             ["t", "event", "subject", "word0_hex", "index", "buttons_hex", "pressed_hex", "released_hex", "note"])
-    ranking = sorted(candidates.values(), key=lambda x: x["descriptor_changes"], reverse=True)
+    ranking = sorted(candidates.values(), key=lambda x: (
+        # Rank actor candidates by observed descriptor changes.
+        # Read the change count accumulated from the saved timeline.
+        # Guide inspection without claiming the busiest actor is the boss.
+        x["descriptor_changes"]), reverse=True)
     for row in ranking:
         row["unique_words"] = len(row["words"])
         row["words"] = " ".join(sorted(row["words"]))
     csv_out("candidates.csv", ranking,
             ["object", "role", "owner_like", "observations", "descriptor_changes", "unique_words", "words"])
-    player_events = sorted([e for e in transitions if e["role"] == "player_candidate"], key=lambda e: e["t"])
+    player_events = sorted([e for e in transitions if e["role"] == "player_candidate"], key=lambda e: (
+        # Order retained evidence by its sampled elapsed time.
+        # Use the timestamp stored on each event or report row.
+        # Allow adjacent-event lookup without changing the original observations.
+        e["t"]))
     player_times = [e["t"] for e in player_events]
-    edge_events = sorted([e for e in inputs if e["kind"] == "input" and (e.get("pressed_mask") or e.get("released_mask"))], key=lambda e: e["t"])
+    edge_events = sorted([e for e in inputs if e["kind"] == "input" and (e.get("pressed_mask") or e.get("released_mask"))], key=lambda e: (
+        # Order retained evidence by its sampled elapsed time.
+        # Use the timestamp stored on each event or report row.
+        # Allow adjacent-event lookup without changing the original observations.
+        e["t"]))
     input_gaps = [e for e in inputs if e["kind"] == "input_unavailable"]
     associations = []
     def word_of(event):
+        # Extract the recorded descriptor word for an optional adjacent event.
+        # Return a blank cell when that observation is unavailable.
+        # A missing association must not masquerade as a move ID.
         return (event.get("descriptor") or {}).get("word0_hex", "") if event else ""
     for i, edge in enumerate(edge_events):
         at = bisect.bisect_right(player_times, edge["t"])
@@ -553,7 +684,10 @@ def report(source, folder):
 
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__)
+    # Dispatch explicit scan, record, inspect or report research commands.
+    # Validate bounds before opening a read-only game connection.
+    # Keep offline reporting usable without an attached process.
+    p = argparse.ArgumentParser(description='Record Nioh action state without game-memory writes.')
     commands = p.add_subparsers(dest="command", required=True)
     scan = commands.add_parser("scan")
     scan.add_argument("--pid", type=int, required=True)
@@ -564,12 +698,24 @@ def main():
     rec.add_argument("--outdir", type=Path, required=True)
     rec.add_argument("--seconds", type=float, default=120)
     rec.add_argument("--interval-ms", type=float, default=10)
-    rec.add_argument("--player", type=lambda x: int(x, 0))
-    rec.add_argument("--boss", type=lambda x: int(x, 0))
+    rec.add_argument("--player", type=lambda x: (
+        # Parse an explicit CLI address or action key.
+        # Accept decimal and prefixed hexadecimal through Python integer parsing.
+        # Reject malformed values before the command can attach to a process.
+        int(x, 0)))
+    rec.add_argument("--boss", type=lambda x: (
+        # Parse an explicit CLI address or action key.
+        # Accept decimal and prefixed hexadecimal through Python integer parsing.
+        # Reject malformed values before the command can attach to a process.
+        int(x, 0)))
     rec.add_argument("--entries", type=int, default=0, help="0..64 transition entries per selected boss descriptor")
     ins = commands.add_parser("inspect")
     ins.add_argument("--pid", type=int, required=True)
-    ins.add_argument("--descriptor", type=lambda x: int(x, 0), required=True)
+    ins.add_argument("--descriptor", type=lambda x: (
+        # Parse an explicit CLI address or action key.
+        # Accept decimal and prefixed hexadecimal through Python integer parsing.
+        # Reject malformed values before the command can attach to a process.
+        int(x, 0)), required=True)
     ins.add_argument("--out", type=Path, required=True)
     ins.add_argument("--entries", type=int, default=64)
     rep = commands.add_parser("report")

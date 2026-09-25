@@ -1,7 +1,7 @@
 #pragma once
 #include "dispatch_protocol.h"
 #ifdef RESEARCH_REPEAT
-#include "boss_session.h"
+#include "boss_session_config.h"
 #include "repeat_namespace.h"
 #endif
 
@@ -9,11 +9,17 @@ static DispatchMapping* dispatch;
 static HANDLE dispatch_handle;
 
 static void cleanup_dispatch() {
+    // Release command mapping resources before the hook acquires them.
+    // Unmap the view and close its process-owned mapping handle.
+    // Later callbacks require retained mappings and must never call this cleanup path.
     if (dispatch) { UnmapViewOfFile(dispatch); dispatch = nullptr; }
     if (dispatch_handle) { CloseHandle(dispatch_handle); dispatch_handle = nullptr; }
 }
 
 static DWORD open_dispatch(int64_t frequency) {
+    // Create a uniquely named command mapping for this runtime configuration.
+    // Validate exclusive creation, map the fixed ABI and initialize its frequency and header.
+    // Another session's command stream must not attach to these transient actor pointers.
     wchar_t name[96];
 #ifdef RESEARCH_REPEAT
     repeat_mapping_name(name, L"Command", GetCurrentProcessId(), BOSS_CONFIG_TAG);
@@ -38,11 +44,15 @@ static DWORD open_dispatch(int64_t frequency) {
 }
 
 static void begin_dispatch() {
+    // Arm a fresh dispatch generation without replenishing an active session.
+    // Reset shared counters and context only after confirming dispatch was disabled.
+    // Duplicate Start calls must not replay consumed gestures or bypass one-shot research limits.
     // Duplicate Start while active cannot replenish the one-shot allowance.
     if (InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)) return;
     InterlockedIncrement64(&dispatch->control.generation);
     InterlockedExchange64(&dispatch->control.consumed_sequence, 0);
     InterlockedExchange64(&dispatch->control.dispatch_count, 0);
+    InterlockedExchange(reinterpret_cast<volatile LONG*>(&dispatch->control.reserved0), 0);
     InterlockedExchange(reinterpret_cast<volatile LONG*>(&dispatch->control.reserved1), 0);
     InterlockedExchange(&dispatch->control.last_reason, Disabled);
     InterlockedExchange(&dispatch->control.status, 1);
@@ -50,12 +60,18 @@ static void begin_dispatch() {
 }
 
 static void stop_dispatch() {
+    // Disarm gesture execution while leaving retained resources accessible.
+    // Clear only the command control's enabled and status fields.
+    // Entered callbacks still need those mappings to finish native recovery safely.
     if (!dispatch) return;
     InterlockedExchange(&dispatch->control.enabled, 0);
     InterlockedExchange(&dispatch->control.status, 0);
 }
 
 static bool snapshot_command(DispatchCommand& c) {
+    // Read one committed external command without blocking the game thread.
+    // Require matching positive sequence markers before and after the payload copy.
+    // Torn publisher writes cannot become mixed actor identities or gesture timings.
     const LONG64 before = InterlockedCompareExchange64(&dispatch->command.sequence_begin, 0, 0);
     if (before <= 0) return false;
     CopyMemory(&c, &dispatch->command, sizeof(c));
@@ -66,6 +82,9 @@ static bool snapshot_command(DispatchCommand& c) {
 }
 
 static bool copy_bytes(uint64_t address, void* target, SIZE_T size) {
+    // Read a bounded native-memory span through the process API.
+    // Require a user-space address and an exact-length copy into owned storage.
+    // Unreadable or partially copied records must reject the command before pointer use.
     SIZE_T read = 0;
     return address >= 0x10000 && ReadProcessMemory(GetCurrentProcess(),
         reinterpret_cast<void*>(address), target, size, &read) && read == size;
@@ -77,11 +96,18 @@ static bool copy_bytes(uint64_t address, void* target, SIZE_T size) {
 
 #ifdef RESEARCH_REPEAT
 static bool repeat_current_allowed(uint64_t descriptor, uint32_t key) {
-    // Exact key/motion/stance triples from the validated sword bank; deliberately
-    // exclude attacks, damage, death and unresolved command-only descriptors.
+    // Limit new gesture entry to researched William sword control states.
+    // Match exact action, motion and stance triples while excluding attacks and damage.
+    // Unknown locomotion or aiming states need evidence before gaining entry eligibility.
+    // Saved player-triangle-movement evidence identifies the free/lock-on movement
+    // states that resume while a native-approved Triangle hold is pending. Exclude
+    // dodge9, damage3E8 and concrete running attacks; all remain interruptible.
     struct Neutral { uint32_t key; int32_t motion; int8_t stance; };
     static constexpr Neutral allowed[] = {
         {0,0,3}, {1,1,3}, {2,2,3}, {3,3,3}, {4,8,3},
+        {0xC,20,3}, {0xD,30,3}, {0xC7,21,3}, {0xC9,40,3}, {0xCA,41,3},
+        {0x3EB,20,3}, {0x3EC,24,3}, {0x3F7,26,3}, {0x3F8,28,3},
+        {0x3FA,30,3}, {0x3FB,31,3}, {0x3FC,32,3}, {0x3FD,33,3},
         {3154,2000,1}, {3155,2001,1}, {3156,2002,4}, {3157,2003,4}, {3158,2005,3},
         {3159,2006,0}, {3160,2007,2}, {3161,2008,4}, {3162,2009,4},
         {3214,3000,0}, {3215,3001,0}, {3216,3002,4}, {3217,3003,4}, {3218,2005,3},
@@ -107,6 +133,9 @@ static bool repeat_current_allowed(uint64_t descriptor, uint32_t key) {
 #endif
 
 static DispatchReason validate_actor(const DispatchCommand& c, void* actor) {
+    // Check the native actor and requested action immediately before dispatch.
+    // Re-read ownership and bank identity while respecting native lookup priority.
+    // Configuration prepared earlier cannot authorize a replaced actor or changed bank.
     const uint64_t address = reinterpret_cast<uint64_t>(actor);
     if (address != c.player) return WrongActor;
     uint64_t owner = 0, vtable = 0, banks[3]{}, current = 0;
@@ -166,14 +195,81 @@ static DispatchReason validate_actor(const DispatchCommand& c, void* actor) {
 }
 
 static bool same_dispatch_intent(const DispatchCommand& latest, const DispatchCommand& before) {
+    // Detect whether publisher intent changed during native preflight.
+    // Compare gesture identity, actor fields, desired action and reserved policy fields.
+    // Heartbeat refreshes may continue while release or move changes must invalidate the attempt.
     return latest.chord_sequence == before.chord_sequence && latest.generation == before.generation
         && !memcmp(reinterpret_cast<const char*>(&latest) + 48,
                    reinterpret_cast<const char*>(&before) + 48, 72)
         && !memcmp(latest.reserved, before.reserved, sizeof(before.reserved));
 }
 
+#ifdef RESEARCH_REPEAT
+static DispatchReason player_context_status(const DispatchCommand& command) {
+    // Match a published gesture to the currently valid player-context epoch.
+    // Read the packed native flags atomically and compare the command's epoch.
+    // Even a suspension shorter than the Python polling interval must invalidate pending input.
+    const uint32_t context = uint32_t(InterlockedCompareExchange(
+        reinterpret_cast<volatile LONG*>(&dispatch->control.reserved0), 0, 0));
+    if (!player_context_ready(context)) return ContextSuspended;
+    return command.reserved[2] == (context >> 16) ? Accepted : ContextChanged;
+}
+#endif
+
+#ifdef RESEARCH_REPEAT
+static DispatchReason choose_chain(void* actor, DispatchCommand& c) {
+    // Select a configured follow-up while the original held gesture remains current.
+    // Check heartbeat, epoch, ownership and the source transition's frame window.
+    // Release or interruption cancels later links; native contact alone may select a paired finisher.
+    if (!dispatch || reinterpret_cast<uint64_t>(actor) != boss_active_player
+        || !InterlockedCompareExchange(&boss_active,0,0) || boss_chain_cancelled) return BossPreviewActive;
+    DispatchCommand intent{};
+    LARGE_INTEGER now; QueryPerformanceCounter(&now);
+    const int64_t frequency = dispatch->control.qpc_frequency;
+    if (!InterlockedCompareExchange(&dispatch->control.enabled,0,0) || !snapshot_command(intent)
+        || intent.held != 1 || intent.reserved[0] != 0 || intent.chord_sequence != boss_chain_sequence
+        || intent.reserved[2] != boss_chain_epoch || intent.reserved[1] != boss_string_variant
+        || intent.generation != uint64_t(dispatch->control.generation)
+        || frequency <= 0 || intent.heartbeat_qpc > now.QuadPart
+        || now.QuadPart-intent.heartbeat_qpc > frequency/10 || player_context_status(intent) != Accepted) {
+        boss_chain_cancelled = true;
+        return Released;
+    }
+    const auto& current = boss_imports[boss_active_slot];
+    if (current.next_variant < 0 || !current.next_start) return BossPreviewActive;
+    float frame = 0;
+    if (!boss_player_valid() || !same_field(boss_active_player,0x58,boss_private_descriptor_address(boss_active_slot))
+        || !copy_field(boss_active_player+0x28,frame) || !std::isfinite(frame)) {
+        boss_chain_cancelled = true;
+        return BossSourceMismatch;
+    }
+    if (frame < current.next_start) return CurrentNotAllowed;
+    if (frame > current.next_end) { boss_chain_cancelled = true; return Expired; }
+    c = intent;
+    const auto& next = boss_imports[current.next_variant];
+    c.reserved[1] = current.next_variant;
+    c.desired_key = next.key; c.expected_motion = next.motion;
+    c.expected_descriptor = next.descriptor; c.expected_payload = next.payload;
+    c.edge_qpc = now.QuadPart;
+    uint64_t banks[3]{};
+    if (!copy_bytes(c.player+0x70,banks,sizeof(banks)) || memcmp(banks,c.banks,sizeof(banks))) return BankMismatch;
+    auto reason = validate_boss_source(c);
+    DispatchCommand latest{};
+    if (reason == Accepted && (!snapshot_command(latest) || !same_dispatch_intent(latest,intent)
+        || !latest.held || player_context_status(latest) != Accepted)) {
+        boss_chain_cancelled = true;
+        return Released;
+    }
+    if (reason == Accepted) InterlockedIncrement64(&dispatch->control.dispatch_count);
+    return reason;
+}
+#endif
+
 static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, DispatchCommand& c,
                                      bool frame_mode = false) {
+    // Consume one eligible gesture at the permitted native dispatch boundary.
+    // Validate the committed command twice before atomically claiming its sequence.
+    // A release, stale actor or competing callback must not manufacture a new attack.
 #ifdef RESEARCH_REPEAT
     constexpr bool limit_one_dispatch = false;
 #else
@@ -202,6 +298,9 @@ static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, 
             InterlockedCompareExchange64(&dispatch->control.generation, 0, 0),
             InterlockedCompareExchange64(&dispatch->control.consumed_sequence, 0, 0),
             limit_one_dispatch && InterlockedCompareExchange64(&dispatch->control.dispatch_count, 0, 0) != 0);
+#ifdef RESEARCH_REPEAT
+        if (reason == Accepted) reason = player_context_status(c);
+#endif
         if (reason == Accepted) reason = validate_actor(c, actor);
         // Re-read the live command after preflight: releasing during the lookup cancels it.
         if (reason == Accepted) {
@@ -216,6 +315,9 @@ static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, 
                     limit_one_dispatch && InterlockedCompareExchange64(&dispatch->control.dispatch_count, 0, 0) != 0);
             }
         }
+#ifdef RESEARCH_REPEAT
+        if (reason == Accepted) reason = player_context_status(c);
+#endif
         if (reason == Accepted) {
             if (!InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)) reason = Disabled;
 #ifdef RESEARCH_REPEAT

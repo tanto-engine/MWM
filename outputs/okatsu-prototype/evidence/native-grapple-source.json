@@ -1,0 +1,68 @@
+{
+  "original_sha256": "77cabb577f1465f1e76be7cac989c8cd6aff23fc1d05e60f67af12477fee2a20",
+  "session": {
+    "pid": 12260,
+    "creation_filetime": "134348218449220504",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "qpc_frequency": 10000000
+  },
+  "records": [
+    {
+      "original_line": 3906,
+      "event": {
+        "kind": "action_call",
+        "sequence": 2147,
+        "qpc": 503435290464,
+        "actor": "0x15dc0ac5330",
+        "owner": "0x15daf8bcce0",
+        "context": "0x0",
+        "before": "0x15dc017be20",
+        "after": "0x15dc017bef0",
+        "payload": "0x15dbf99dcb0",
+        "thread_id": 8664,
+        "input_key": 769,
+        "before_key": 3402,
+        "after_key": 769,
+        "bank": 0,
+        "motion_key": 5051,
+        "timing_key": -1,
+        "native_result": 1,
+        "valid_fields": 287,
+        "sequence_end": 2147,
+        "forwarded_key": 769,
+        "dispatch_reason": 1,
+        "substitution_intended": false,
+        "final_exact_match": false
+      }
+    },
+    {
+      "original_line": 3908,
+      "event": {
+        "kind": "action_call",
+        "sequence": 2149,
+        "qpc": 503435291168,
+        "actor": "0x15dc0a7cb60",
+        "owner": "0x15daf73a9d0",
+        "context": "0x0",
+        "before": "0x15dc015c660",
+        "after": "0x15dc015aed0",
+        "payload": "0x15dbf981dd0",
+        "thread_id": 8664,
+        "input_key": 770,
+        "before_key": 206,
+        "after_key": 770,
+        "bank": 2,
+        "motion_key": 34000,
+        "timing_key": -1,
+        "native_result": 1,
+        "valid_fields": 287,
+        "sequence_end": 2149,
+        "forwarded_key": 770,
+        "dispatch_reason": 1,
+        "substitution_intended": false,
+        "final_exact_match": false
+      }
+    }
+  ],
+  "scope": "Two retained sword grapple attacker/victim transitions. Original trace contained unrelated trials; no player-adaptation acceptance is claimed."
+}

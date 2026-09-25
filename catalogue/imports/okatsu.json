@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "boss_id": "okatsu",
+  "resource_profile_id": "okatsu.resources.v1",
+  "string_entry": "okatsu.action_0c61",
+  "moves": [
+    {
+      "id": "okatsu.charged_rush",
+      "key": 3172,
+      "motion": 1220,
+      "flags": 407633920,
+      "ki_cost": 15,
+      "recovery_frame": 65,
+      "transition_count": 28,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 30,
+          "index": 11,
+          "hash": 235371830
+        }
+      ]
+    },
+    {
+      "id": "okatsu.leaping_slash",
+      "key": 3174,
+      "motion": 1230,
+      "flags": 407633920,
+      "ki_cost": 15,
+      "recovery_frame": 90,
+      "transition_count": 22,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 46,
+          "index": 16,
+          "hash": 4112102486
+        }
+      ]
+    },
+    {
+      "id": "okatsu.action_0c61",
+      "key": 3169,
+      "motion": 1210,
+      "flags": 407633920,
+      "ki_cost": 15,
+      "recovery_frame": 52,
+      "transition_count": 14,
+      "next": "okatsu.action_0c62",
+      "next_start": 30,
+      "next_end": 45,
+      "voices": [
+        {
+          "frame": 22,
+          "index": 12,
+          "hash": 696066581
+        }
+      ]
+    },
+    {
+      "id": "okatsu.action_0c62",
+      "key": 3170,
+      "motion": 1211,
+      "flags": 407633920,
+      "ki_cost": 15,
+      "recovery_frame": 37,
+      "transition_count": 14,
+      "next": "okatsu.action_0c63",
+      "next_start": 25,
+      "next_end": 40,
+      "voices": [
+        {
+          "frame": 10,
+          "index": 11,
+          "hash": 715420056
+        }
+      ]
+    },
+    {
+      "id": "okatsu.action_0c63",
+      "key": 3171,
+      "motion": 1212,
+      "flags": 407633920,
+      "ki_cost": 15,
+      "recovery_frame": 67,
+      "transition_count": 16,
+      "next": "okatsu.action_0c69",
+      "next_start": 75,
+      "next_end": 99,
+      "voices": [
+        {
+          "frame": 22,
+          "index": 12,
+          "hash": 4112102486
+        }
+      ]
+    },
+    {
+      "id": "okatsu.action_0c69",
+      "key": 3177,
+      "motion": 1310,
+      "flags": 1498152960,
+      "ki_cost": 15,
+      "recovery_frame": -1,
+      "transition_count": 13,
+      "next": "okatsu.action_0361",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 0,
+          "index": 5,
+          "hash": 1713815423
+        }
+      ]
+    },
+    {
+      "id": "okatsu.action_0361",
+      "key": 865,
+      "motion": 1311,
+      "flags": 551769079808,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 7,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 58,
+          "index": 15,
+          "hash": 235371830
+        },
+        {
+          "frame": 132,
+          "index": 16,
+          "hash": 3707818711
+        }
+      ]
+    }
+  ]
+}

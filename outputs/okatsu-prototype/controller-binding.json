@@ -1,46 +1,18 @@
 {
-  "schema": 1,
-  "device": {
-    "backend": "winmm",
-    "slot": 0,
-    "name": "Microsoft PC-joystick driver",
-    "manufacturer": 1356,
-    "product": 2508,
-    "num_buttons": 14,
-    "num_axes": 6,
-    "axis_ranges": {
-      "x": [
-        0,
-        65535
-      ],
-      "y": [
-        0,
-        65535
-      ],
-      "z": [
-        0,
-        65535
-      ],
-      "r": [
-        0,
-        65535
-      ],
-      "u": [
-        0,
-        65535
-      ],
-      "v": [
-        0,
-        65535
-      ]
-    },
-    "caps_result": 0
-  },
-  "lb_mask": 16,
-  "circle_mask": 4,
+  "schema_version": 2,
+  "name": "Sword baseline",
+  "weapon": "sword",
+  "tap_move": "okatsu.charged_rush",
+  "hold_move": "okatsu.leaping_slash",
+  "modifier_mask": 16,
+  "trigger_mask": 4,
   "hold_seconds": 0.25,
-  "mapping_basis": "Sony DS4 054C:09CC Windows button ordering: Circle=button3, LB=button5; LB independently calibrated",
-  "mapping_reference": "https://github.com/libsdl-org/SDL/blob/main/src/joystick/SDL_gamepad_db.h",
-  "tap_action": "Okatsu Charged Rush (C64/1220)",
-  "hold_action": "Okatsu Leaping Slash (C66/1230)"
+  "low_heavy": "jin_hayabusa.action_0c6e",
+  "stance_holds": {
+    "low": "jin_hayabusa.action_0c79",
+    "mid": null,
+    "high": null
+  },
+  "okatsu_grapple": true,
+  "string_enabled": false
 }

@@ -15,6 +15,9 @@ static HANDLE stop_event;
 __declspec(dllexport) __attribute__((noinline, noclone))
 LONG64 research_probe(uint64_t caller)
 {
+    // Provide a stable breakpoint address shared by two disposable threads.
+    // Increment the caller's counter with an interlocked operation.
+    // Detect missed continuation without touching another process.
     if (caller > 1) {
         return -1;
     }
@@ -23,6 +26,9 @@ LONG64 research_probe(uint64_t caller)
 
 static DWORD WINAPI worker_main(LPVOID unused)
 {
+    // Exercise the same probe from a second native thread.
+    // Wait on the stop event between calls instead of spinning.
+    // Let the parent verify debugger cleanup across thread contexts.
     (void)unused;
     while (WaitForSingleObject(stop_event, 100) == WAIT_TIMEOUT) {
         research_probe(1);
@@ -32,6 +38,9 @@ static DWORD WINAPI worker_main(LPVOID unused)
 
 int main(int argc, char **argv)
 {
+    // Run a bounded disposable process for debugger research.
+    // Publish probe addresses and counters while both threads execute.
+    // Join the worker before closing its event so normal exit proves recovery.
     unsigned long duration_seconds = 60;
     if (argc > 2) {
         fprintf(stderr, "Usage: ce_probe_target.exe [seconds: 1..60]\n");

@@ -1,4 +1,4 @@
-"""Client for CE's existing local Lua server. Execute only our research scripts."""
+# Client for CE's existing local Lua server. Execute only our research scripts.
 import argparse
 import ctypes as C
 from ctypes import wintypes as W
@@ -16,6 +16,9 @@ k.CloseHandle.argtypes=[W.HANDLE]
 k.CloseHandle.restype=W.BOOL
 
 def call(script):
+    # Send an explicit research script to the existing local CE Lua pipe.
+    # Frame UTF-8 source with the protocol length and read its numeric reply.
+    # Close the pipe on success or failure without adding a release dependency.
     h=k.CreateFileW(r'\\.\pipe\NiohResearchFresh',0xC0000000,0,None,3,0,None)
     if h==C.c_void_p(-1).value:
         raise C.WinError(C.get_last_error())
@@ -44,7 +47,10 @@ if __name__=='__main__':
     text=a.script.read_text(encoding='utf8') if a.script else 'return 73191'
     if a.script:
         status=Path(__file__).with_name('ce-script-status.txt').as_posix()
-        text=("local ok,v=xpcall(function()\n"+text+"\nend,debug.traceback)\n"
+        text=("local ok,v=xpcall(function()\n"
+            +"-- Execute the explicit script supplied to this research client.\n"
+            +"-- Catch Lua errors with a traceback for the status file.\n"
+            +"-- Preserve failure details beyond the numeric pipe reply.\n"+text+"\nend,debug.traceback)\n"
             +"local f=assert(io.open([["+status+"]],'w')); f:write(ok and 'ok' or tostring(v)); f:close()\n"
             +"if not ok then return 999999991 end; return v or 0")
     value=call(text)

@@ -1,8 +1,7 @@
-"""Read-only OS controller observations, separate from game-accepted input.
-
-WinMM button numbers deliberately have no guessed physical/game labels.
-Queries do not acquire, capture, or write to devices. No game APIs are used.
-"""
+# Read-only OS controller observations, separate from game-accepted input.
+#
+# WinMM button numbers deliberately have no guessed physical/game labels.
+# Queries do not acquire, capture, or write to devices. No game APIs are used.
 import ctypes as C
 from ctypes import wintypes as W
 import time
@@ -46,6 +45,9 @@ class WinMMBackend:
     absent_codes = {2, 6, 167}
 
     def __init__(self):
+        # Bind WinMM with the Windows structure layout expected by its ABI.
+        # Warm the driver and cache capabilities before recording starts.
+        # Keep driver initialization latency outside encounter timestamps.
         assert C.sizeof(JoyInfo) == 52 and C.sizeof(JoyCaps) == 728
         self.dll = C.WinDLL("winmm")
         self.dll.joyGetNumDevs.restype = W.UINT
@@ -60,6 +62,9 @@ class WinMMBackend:
         self.slots()
 
     def slots(self):
+        # Find slots with advertised capabilities instead of probing every position.
+        # Refresh the capability cache on each discovery pass.
+        # Avoid driver timeouts on empty joystick slots.
         eligible = []
         # joyGetNumDevs reports supported slots, not connected controllers.
         # Query capabilities first: reading position on every empty slot can
@@ -78,6 +83,9 @@ class WinMMBackend:
         return eligible
 
     def read(self, slot):
+        # Read one joystick snapshot through joyGetPosEx.
+        # Return raw axes and button bits alongside the native result code.
+        # Leave physical labels to saved device mappings.
         state = JoyInfo()
         state.size, state.flags = C.sizeof(state), 0xFF  # JOY_RETURNALL
         code = self.dll.joyGetPosEx(slot, C.byref(state))
@@ -87,6 +95,9 @@ class WinMMBackend:
                        axes={name: getattr(state, name) for name in ("x", "y", "z", "r", "u", "v")})
 
     def describe(self, slot):
+        # Expose device identity and advertised axis limits.
+        # Reuse cached capabilities or query the requested slot once.
+        # Retain capability errors so unsupported devices remain diagnosable.
         caps = self._caps.get(slot)
         code = 0
         if caps is None:
@@ -108,15 +119,24 @@ class XInputBackend:
     absent_codes = {1167}  # ERROR_DEVICE_NOT_CONNECTED
 
     def __init__(self):
+        # Bind the XInput state query with its fixed Windows ABI.
+        # Check the packed state size before any native read.
+        # Use the OS backend without acquiring the controller.
         assert C.sizeof(XInputState) == 16
         self.dll = C.WinDLL("xinput1_4")
         self.dll.XInputGetState.argtypes = [W.DWORD, C.POINTER(XInputState)]
         self.dll.XInputGetState.restype = W.DWORD
 
     def slots(self):
+        # Expose the four slots defined by XInput.
+        # Connection checks happen when each slot is read.
+        # Avoid confusing supported slots with attached devices.
         return range(4)
 
     def read(self, slot):
+        # Sample one XInput controller into a native state structure.
+        # Decode standardized buttons, triggers and sticks on success.
+        # Preserve disconnect codes rather than inventing neutral input.
         state = XInputState()
         code = self.dll.XInputGetState(slot, C.byref(state))
         if code:
@@ -127,20 +147,25 @@ class XInputBackend:
                        button_names_down=[name for mask, name in XINPUT_BUTTONS.items() if mask & pad.buttons])
 
     def describe(self, slot):
+        # Describe the standardized XInput axes and button labels.
+        # No device-specific calibration is needed for these raw ranges.
+        # Game bindings remain separate from conventional button names.
         return dict(button_labels="conventional XInput names; game function uncalibrated",
                     axis_units="lt/rt: 0..255; sticks: -32768..32767", pov_units=None)
 
 
 class ControllerReader:
-    """Poll connected slots each call; discover/retry absent slots every two seconds.
-
-    Events retain raw axes, with coarse buckets suppressing axis-only jitter.
-    Button and POV changes are never bucketed. Polling can miss brief events.
-    Initial/recovery observations have unknown edges, never fabricated presses.
-    A physical controller may appear in both backends; streams are not deduplicated.
-    Optional backends/clock are seams for tests that never access a controller.
-    """
+    # Poll connected slots each call; discover/retry absent slots every two seconds.
+    #
+    # Events retain raw axes, with coarse buckets suppressing axis-only jitter.
+    # Button and POV changes are never bucketed. Polling can miss brief events.
+    # Initial/recovery observations have unknown edges, never fabricated presses.
+    # A physical controller may appear in both backends; streams are not deduplicated.
+    # Optional backends/clock are seams for tests that never access a controller.
     def __init__(self, backends=None, clock=time.perf_counter, rescan_seconds=2.0):
+        # Create independent backend streams with a shared sampling clock.
+        # Track previous observations and rescan deadlines per reader.
+        # Keep optional driver failures visible without disabling other backends.
         if rescan_seconds < 0.1:
             raise ValueError("Rescan interval must be at least 0.1 seconds")
         self._clock = clock
@@ -163,13 +188,19 @@ class ControllerReader:
         self._polls = 0
 
     @staticmethod
-    def _key(backend, state):
+    def input_change_key(backend, state):
+        # Quantize axes solely for change detection.
+        # Preserve exact button and POV values in the comparison key.
+        # Suppress analog jitter without losing digital edges.
         axes = state["axes"]
         buckets = tuple((name, round(value / (16 if backend == "xinput" and name in ("lt", "rt") else 4096)))
                         for name, value in sorted(axes.items()))
         return state["buttons"], state.get("pov"), buckets
 
     def poll(self):
+        # Poll connected slots and periodically search for returning devices.
+        # Derive edges only when a prior observation exists for that stream.
+        # Discard history on disconnect so reconnects cannot fabricate presses.
         now = self._clock()
         rescan = now >= self._next_rescan
         if rescan:
@@ -206,8 +237,10 @@ class ControllerReader:
                     events.append(dict(kind="input_device", **common, **backend.describe(slot)))
                 self._active.add(key)
                 self._last_error.pop(key, None)
-                change_key = self._key(backend.name, state)
+                change_key = self.input_change_key(backend.name, state)
                 prior = self._last.get(key)
+                # A reconnect establishes a new baseline. Unknown edges remain
+                # None until a second observation can establish an actual change.
                 if prior is not None and prior == change_key:
                     continue
                 buttons = state["buttons"]
@@ -225,6 +258,9 @@ class ControllerReader:
         return events
 
     def status(self):
+        # Summarize reader counters and native backend errors.
+        # Report connected slots separately from capability results.
+        # Expose polling limitations for interpreting recorded evidence.
         names = {backend.name for backend in self._backends} | set(self._load_errors)
         return dict(valid_slots={name: sorted(slot for backend, slot in self._active if backend == name)
                                  for name in sorted(names)},

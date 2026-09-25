@@ -1,4 +1,4 @@
-"""Compact evidence from saved data and previously disassembled native code only."""
+# Compact evidence from saved data and previously disassembled native code only.
 import json
 import struct
 from pathlib import Path

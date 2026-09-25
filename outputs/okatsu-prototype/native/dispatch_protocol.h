@@ -9,9 +9,21 @@ enum DispatchReason : uint32_t {
     BankMismatch, CurrentNotAllowed, DesiredInvalid, DesiredMissing,
     DesiredMismatch, Accepted, Contention, InvalidTime, InvalidConfig,
     BossSourceMismatch, BossBindingMismatch, BossFollowupExit, BossPreviewActive,
-    BossGuardSuppressed
+    BossGuardSuppressed, ContextSuspended, ContextChanged, NativeHeavyTap
 };
 enum { TRACE_SUBSTITUTED = 1u << 16, TRACE_FINAL_MATCH = 1u << 17 };
+enum PlayerContext : uint32_t {
+    ContextPlayer = 1, ContextBanks = 2, ContextOriginalSlots = 4,
+    ContextAdvancing = 8, ContextImportedAction = 16, ContextNeutralAction = 32
+};
+
+static inline bool player_context_ready(uint32_t context) {
+    // Decide whether the last player frame permits imported execution.
+    // Require verified identity, matching banks, advancing time and owned resource slots.
+    // Menus and lifecycle gaps must suspend dispatch without skipping native recovery.
+    constexpr uint32_t required = ContextPlayer | ContextBanks | ContextAdvancing;
+    return (context & required) == required && (context & (ContextOriginalSlots | ContextImportedAction));
+}
 
 // External publisher writes this region only. Matching positive markers commit it.
 struct DispatchCommand {
@@ -22,12 +34,12 @@ struct DispatchCommand {
     uint32_t desired_key;
     int32_t expected_motion;
     uint32_t armed, held;
-    uint64_t reserved[3];
+    uint64_t reserved[3]; // Latched gesture, move variant, 16-bit player-context epoch.
     volatile LONG64 sequence_end;
 };
 // DLL writes this region only. A new generation requires a fresh explicit publish.
 struct DispatchControl {
-    uint32_t magic, version, command_size, reserved0;
+    uint32_t magic, version, command_size, reserved0; // Low 16 bits: context flags; high 16: epoch.
     int64_t qpc_frequency;
     volatile LONG64 generation;
     volatile LONG enabled, status;
@@ -45,9 +57,12 @@ static_assert(offsetof(DispatchCommand, desired_key) == 112 && offsetof(Dispatch
 
 static inline DispatchReason command_status(const DispatchCommand& c, int64_t now,
         int64_t frequency, uint64_t generation, uint64_t consumed, bool shot_used) {
+    // Reject stale, malformed or already-consumed external gesture commands.
+    // Check generation, time bounds, heartbeat, gesture state and sequence ownership.
+    // A reconnect or delayed publisher must not replay an old input into valid gameplay.
     if (c.armed != 1) return NotArmed;
     if (c.generation != generation) return WrongGeneration;
-    if (c.reserved[0] > 1 || c.reserved[1] > 1 || c.reserved[2]) return InvalidConfig;
+    if (c.reserved[0] > 1 || c.reserved[1] >= 16 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
     if (c.held != 1 && c.reserved[0] != 1) return Released;
     if (!c.chord_sequence || c.chord_sequence > INT64_MAX) return InvalidConfig;
     if (c.chord_sequence <= consumed) return SequenceConsumed;

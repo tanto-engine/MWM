@@ -1,0 +1,224 @@
+[
+  {
+    "line": 412,
+    "role": "boss_candidate",
+    "key": "0x0C69",
+    "motion": 1310,
+    "flags": "0x594c0000",
+    "payload": "02000100000300000000ff04690cffff0109010004000f0000004c59000000001e050000ffffffffffff000001000200ffffff00ffffffff",
+    "descriptor": "690c0000a001000000000000000000000000000000000000000000000000000060104690a0010000201d6e81a00100000000000000000000901c6e81a0010000010000000000000030e6f490a0010000110001000000000048e7f490a0010000000000000000000048e7f490a0010000000000000000000048e7f490a00100004c030d0000000000907af590a00100000000000000000000907af590a00100000000000000000000907af590a00100000000000000000000907af590a001000000000000000000000000000000000000",
+    "transitions": [
+      {
+        "slice_index": 0,
+        "table_index": 844,
+        "address": "0x1a090902ea0",
+        "bytes": "ffffffffffffffffffff01ffffffff00000000000000000800806464040000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 1,
+        "target_key_0x14_i16": 0,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 1,
+        "table_index": 845,
+        "address": "0x1a090902ed0",
+        "bytes": "1600ffffffffffffffff00ffffffff00000000006103000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 865,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 2,
+        "table_index": 846,
+        "address": "0x1a09090cec0",
+        "bytes": "0100ffffffffffffffff00ffffffff00000000001100000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 17,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 3,
+        "table_index": 847,
+        "address": "0x1a09090cef0",
+        "bytes": "3400ffffffffffffffff00ffffffff0000000000c80c0000ff806464400020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3272,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 4,
+        "table_index": 848,
+        "address": "0x1a09090cf20",
+        "bytes": "e600ffffffffffffffff00ffffffff0000000000af0c0a00ff806464000020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3247,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 5,
+        "table_index": 849,
+        "address": "0x1a09090cf50",
+        "bytes": "9b011800ffffffffffff002601ffff0000000000a906000200806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 1705,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 6,
+        "table_index": 850,
+        "address": "0x1a09090cf80",
+        "bytes": "01001800ffffffffffff00ffffffff00000000001100000800800000010020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 17,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 7,
+        "table_index": 851,
+        "address": "0x1a09090cfb0",
+        "bytes": "4100ffffffffffffffff00ffffffff0000000000c90c0000ff806464000020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3273,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 8,
+        "table_index": 852,
+        "address": "0x1a09090d400",
+        "bytes": "5c00ffffffffffffffff001f04020100000000001e00000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 30,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 9,
+        "table_index": 853,
+        "address": "0x1a09090d430",
+        "bytes": "5c00ffffffffffffffff002104020100000000002000000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 32,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 10,
+        "table_index": 854,
+        "address": "0x1a09090d460",
+        "bytes": "5c00ffffffffffffffff002204020100000000002100000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 33,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 11,
+        "table_index": 855,
+        "address": "0x1a09090d490",
+        "bytes": "5c00ffffffffffffffff000201ffff00000000001f00000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 31,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 12,
+        "table_index": 856,
+        "address": "0x1a09090d4c0",
+        "bytes": "5c004700ffffffffffff000500ffff00000000001900000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 25,
+        "condition_0x2c_i32": -1
+      }
+    ]
+  },
+  {
+    "line": 811,
+    "role": "boss_candidate",
+    "key": "0x0361",
+    "motion": 1311,
+    "flags": "0x8078000000",
+    "payload": "02000300000000000000ff046103ffffffff00000000000000000078800000001f050000ffffffff1027000001000200ffffff00ffffffff",
+    "descriptor": "61030000a001000000000000000000000000000000000000000000000000000010114690a0010000201d6e81a00100000000000000000000901c6e81a0010000010000000000000030e6f490a0010000120001000000000048e7f490a0010000000000000000000048e7f490a0010000000000000000000048e7f490a00100005903070000000000907af590a00100000000000000000000907af590a00100000000000000000000907af590a00100000000000000000000907af590a001000000000000000000000000000000000000",
+    "transitions": [
+      {
+        "slice_index": 0,
+        "table_index": 857,
+        "address": "0x1a090902f00",
+        "bytes": "ffffffffffffffffffff01ffffffff00000000000000000800806464040000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 1,
+        "target_key_0x14_i16": 0,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 1,
+        "table_index": 858,
+        "address": "0x1a09090cec0",
+        "bytes": "0100ffffffffffffffff00ffffffff00000000001100000800806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 17,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 2,
+        "table_index": 859,
+        "address": "0x1a09090cef0",
+        "bytes": "3400ffffffffffffffff00ffffffff0000000000c80c0000ff806464400020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3272,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 3,
+        "table_index": 860,
+        "address": "0x1a09090cf20",
+        "bytes": "e600ffffffffffffffff00ffffffff0000000000af0c0a00ff806464000020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3247,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 4,
+        "table_index": 861,
+        "address": "0x1a09090cf50",
+        "bytes": "9b011800ffffffffffff002601ffff0000000000a906000200806464000000000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 1705,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 5,
+        "table_index": 862,
+        "address": "0x1a09090cf80",
+        "bytes": "01001800ffffffffffff00ffffffff00000000001100000800800000010020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 17,
+        "condition_0x2c_i32": -1
+      },
+      {
+        "slice_index": 6,
+        "table_index": 863,
+        "address": "0x1a09090cfb0",
+        "bytes": "4100ffffffffffffffff00ffffffff0000000000c90c0000ff806464000020000080ff7fffffffffffffffffffffffff",
+        "byte_0x0a": 0,
+        "target_key_0x14_i16": 3273,
+        "condition_0x2c_i32": -1
+      }
+    ]
+  },
+  {
+    "line": 813,
+    "role": "player_candidate",
+    "key": "0x0362",
+    "motion": 35030,
+    "flags": "0x8038000000",
+    "payload": "02000600000000000000ff036203ffffffff0000000000000000003880000000d6880000ffffffff1027000001000200ffffff00ffffffff",
+    "descriptor": "62030000a001000000000000000000000000000000000000000000000000000050ea3090a0010000e023d0fca001000000000000000000005023d0fca00100000100000000000000e0fbd090a00100000e0000000000000070fcd090a0010000000000000000000070fcd090a0010000000000000000000070fcd090a0010000761505000000000070a2d290a0010000000000000000000070a2d290a0010000000000000000000070a2d290a0010000000000000000000070a2d290a001000000000000000000000000000000000000",
+    "transitions": []
+  },
+  {
+    "line": 817,
+    "role": "player_candidate",
+    "key": "0x0090",
+    "motion": 30200,
+    "flags": "0x18000000",
+    "payload": "00000800080020000000ffff9000ffffffff0000000000000000001800000000f8750000ffffffffffff060007000800ffffff00ffffffff",
+    "descriptor": "90000000a0010000000000000000000000000000000000000000000000000000507c3090a0010000e023d0fca001000000000000000000005023d0fca00100000100000000000000e0fbd090a0010000080000000000000070fcd090a0010000000000000000000070fcd090a0010000000000000000000070fcd090a0010000bf0916000000000070a2d290a0010000000000000000000070a2d290a0010000000000000000000070a2d290a0010000000000000000000070a2d290a001000000000000000000000000000000000000",
+    "transitions": []
+  }
+]

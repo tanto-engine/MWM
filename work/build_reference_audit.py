@@ -12,7 +12,11 @@ ET.parse(ctfile)
 tree = ET.parse(cfgfile)
 groups=[]; records=[]; actions=[]; issues=[]; current=None; in_comment=False
 cfg_rows=[]
-word = lambda b,i: int.from_bytes(b[i:i+2], 'little')
+word = lambda b,i: (
+    # Decode a paired little-endian word from the reference record.
+    # Read exactly two bytes at the supplied record offset.
+    # Keep numeric interpretations separate from unverified field semantics.
+    int.from_bytes(b[i:i+2], 'little'))
 for n, raw in enumerate(cfg,1):
     s=raw.strip()
     enabled_code = re.sub(r'<!--.*?-->', '', s)
@@ -99,12 +103,9 @@ for n,raw in enumerate(ct,1):
     else:desc='Source statement: '+s
     ct_rows.append((n,desc))
 
-def esc(s):return s.replace('|','\\|').replace('\n',' ')
-out=['# Reference line audit', '', 'This ledger accounts for every physical line of both supplied source files. CT code was manually read without execution. Every XML line was classified, every Skill literal was decoded and validated, and every Action target was checked statically. Long repeated bytes are summarized rather than copied. Raw parameter values are not assigned semantics beyond the CT code and author comments; `target-like` and `window-like` are explicit hypotheses.', '', 'The source files were not edited. No game process was accessed. See the companion research report for conclusions and caveats.', '', '## CT: Nioh2_SE_1.28.08_v0.4.7.CT', '', '| Original line | Annotation |','|---:|---|']
-out += [f'| {n} | {esc(d)} |' for n,d in ct_rows]
-out += ['', '## XML: SkillConfig.xml', '', 'All offsets are record-relative hexadecimal; decoded paired words are little-endian interpretations for inspection. Only word reads at +0x14 and +0x2C and byte read +4 are directly established by the CT hook; other labels reflect patterns in the configuration and require runtime confirmation. Numbers shown for +0x20/+0x22 are decimal for ease of comparing adjacent windows.', '', '| Original line | Annotation |','|---:|---|']
-out += [f'| {n} | {esc(d)} |' for n,d in cfg_rows]
-(ROOT/'work/reference-line-audit.md').write_text('\n'.join(out)+'\n',encoding='utf-8')
+# Store source-line evidence as structured data; the mod owns no Markdown reports.
+(ROOT/'work/reference-line-audit.json').write_text(json.dumps(dict(
+    source_unchanged=True, game_access=False, ct=ct_rows, config=cfg_rows), indent=2), encoding='utf8')
 
 # Compact review stream: every non-structural source line, with structural coverage
 # proven by the complete ledger and machine validation, plus all group boundaries.

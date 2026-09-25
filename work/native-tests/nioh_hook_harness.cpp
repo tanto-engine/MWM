@@ -12,11 +12,17 @@ alignas(8) static std::array<unsigned char, 0x38> payloads[2]{};
 static volatile std::uint32_t calls = 0;
 
 template <class T> static void put(void* base, size_t offset, T value) {
+    // Write captured native-layout fields into memory owned by the harness.
+    // Use memcpy so byte offsets do not create unaligned typed accesses.
+    // The fixture must exercise real ABI offsets without requiring live game memory.
     std::memcpy(static_cast<unsigned char*>(base) + offset, &value, sizeof(value));
 }
 
 extern "C" __declspec(dllexport) __attribute__((noinline))
 bool HarnessAction(void* target, std::uint32_t key, void* context) {
+    // Expose a real hookable action function in a disposable research process.
+    // Update only its owned descriptors while retaining a nontrivial native body.
+    // MinHook integration can be researched without targeting Nioh or game memory.
     (void)context;
     // A nontrivial owned function body gives MinHook enough ordinary instructions.
     if (target != actor.data() || (key != 0xC64 && key != 0xCF0)) return false;
@@ -28,6 +34,9 @@ bool HarnessAction(void* target, std::uint32_t key, void* context) {
 }
 
 int main(int argc, char** argv) {
+    // Run a bounded disposable action process for explicit hook research.
+    // Allocate its own actor records and alternate calls through the exported setter.
+    // The printed addresses describe only this harness and must never identify game moves.
     unsigned seconds = 60;
     if (argc == 3 && std::strcmp(argv[1], "--seconds") == 0) {
         char* end = nullptr;

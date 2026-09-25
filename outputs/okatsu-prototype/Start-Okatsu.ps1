@@ -10,7 +10,7 @@ if (Test-Path -LiteralPath $statePath) {
     $previous = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
     $existing = Get-Process -Id $previous.publisher_pid -ErrorAction SilentlyContinue
     if ($existing -and $existing.StartTime.ToFileTimeUtc().ToString() -eq $previous.publisher_start_filetime) {
-        Write-Output 'Okatsu launcher is already running. Check play-status.json. Binding: LB + Circle.'
+        Write-Output 'Skill runtime is already running. Check play-status.json and controller-binding.json for the active preset.'
         return
     }
 }
@@ -36,8 +36,7 @@ if (-not (Test-Path -LiteralPath $PythonRuntime)) {
 }
 if (-not (Test-Path -LiteralPath $PythonRuntime)) { throw '64-bit Python is missing; pass -PythonRuntime or set NIOH_PYTHON.' }
 $PythonRuntime = (Resolve-Path -LiteralPath $PythonRuntime).Path
-if (-not (Test-Path -LiteralPath (Join-Path $MinHook 'include\MinHook.h'))) { throw "MinHook source missing: $MinHook" }
-$MinHook = (Resolve-Path -LiteralPath $MinHook).Path
+if (-not (Test-Path -LiteralPath (Join-Path $folder 'native\build\nioh_skill_runtime.dll'))) { throw 'Prebuilt runtime is missing. Run outputs\okatsu-prototype\native\build-runtime.ps1 once as a developer.' }
 if (-not (Test-Path -LiteralPath (Join-Path $folder 'controller-calibration.json'))) { throw 'Saved controller calibration is missing.' }
 
 $stopFile = Join-Path $folder 'stop.flag'
@@ -46,7 +45,7 @@ $runFolder = Join-Path $folder ('sessions\launcher-' + (Get-Date -Format 'yyyyMM
 New-Item -ItemType Directory -Path $runFolder -Force | Out-Null
 $stdout = Join-Path $runFolder 'stdout.txt'
 $stderr = Join-Path $runFolder 'stderr.txt'
-$arguments = @('-B', ('"' + (Join-Path $folder 'play_okatsu.py') + '"'), '--minhook', ('"' + $MinHook + '"'))
+$arguments = @('-B', ('"' + (Join-Path $folder 'play_okatsu.py') + '"'))
 $publisher = Start-Process -FilePath $PythonRuntime -ArgumentList $arguments -WorkingDirectory $folder `
     -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
 @{ publisher_pid=$publisher.Id; publisher_start_filetime=$publisher.StartTime.ToFileTimeUtc().ToString();

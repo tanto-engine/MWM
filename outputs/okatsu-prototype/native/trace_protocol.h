@@ -8,6 +8,8 @@ enum { TRACE_MAGIC = 0x3152494e, TRACE_VERSION = 1, TRACE_CAPACITY = 512 };
 struct TraceRecord {
     volatile LONG64 sequence_begin;
     int64_t qpc;
+    // valid_fields bit18 marks an accepted frame-generated dispatch: context
+    // then contains its gesture decision QPC. Other calls retain the native pointer.
     uint64_t actor, owner, context, before, after, payload;
     uint32_t thread_id, input_key, before_key, after_key;
     int32_t bank, motion_key, timing_key;

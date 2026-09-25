@@ -1,4 +1,30 @@
-Nioh 1 read-only boss probe - research prototype
+Nioh 1 read-only boss probe
+
+Normal workflow: use the trainer's encounter recording controls. The engine
+finds the current process, recognizes configured boss action/motion signatures,
+and makes a new take automatically after loading, actor loss or a game restart.
+Explicit Stop preserves every completed JSONL record and reconstructs observed
+action strings. No game monitor, video, screenshot, debugger or CE is involved.
+
+Standalone source CLI (Python only required for source development):
+  python encounter_recording.py --boss-id okatsu --outdir encounter-okatsu
+Create encounter-okatsu/STOP to stop. Existing captures are resumed without
+overwriting prior takes; remove STOP only when intentionally resuming recording.
+To recover/reconstruct an interrupted raw capture offline:
+  python encounter_recording.py --boss-id okatsu --outdir report --reconstruct take1/events.jsonl
+
+Boss names and fingerprints come from the maintained move workbook. Okatsu, Jin Hayabusa
+and Maria are configured. Okatsu requires both C64/1220 and C66/1230 in one
+actor's source banks. Another boss can use --signature signature.json, a JSON
+array such as [{"action_id":3172,"motion_id":1220}]. Identity checks must be
+specific to that source. Unknown bosses retain unassigned actor observations;
+selecting a boss name does not prove that every observed actor is that boss.
+Unassigned scout takes refresh discovery every 30 seconds to catch later spawns.
+Reconstruction never connects strings across retries, corrupt/truncated records,
+sampling gaps, object changes or unreadable states. Strings are sampled temporal
+sequences, not automatically verified combos, cancel windows or frame timings.
+
+The lower-level commands below are optional research utilities.
 
 Requires Windows x64 and Python 3.10+ (standard library only).
 Supports only the exact Nioh executable SHA-256 checked by boss_probe.py.

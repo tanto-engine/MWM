@@ -1,0 +1,10 @@
+{
+  "supported_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "source": "Live William sword timing4210, sound event at frame27, verified 2026-09-25",
+  "name": "AV_WILLIAM_ATTACK_MIDDLE",
+  "hash": "97933946",
+  "sound_row_hex": "0000000000000000000000000000000000000000010000000200000046399397000000000000000000000000ffffffff50000000ffffffffffffffff000000000c0000000000000000000000",
+  "routing": "Native timing sound handler RVA9670A0 with the original William state/owner; substitutes only the two proven imported Okatsu voice cues. No boss data is changed.",
+  "name_resolution": "Native audio interface vtable13D1FF8, lookup1006940: tree at interface+498, unsigned hash at node+30, resource at node+38, name at resource+30.",
+  "verification": "Metadata/name/routing verified; audible gameplay result pending."
+}

@@ -1,4 +1,4 @@
-"""Read the native observer's existing shared-memory trace; no game access."""
+# Read the native observer's existing shared-memory trace; no game access.
 import argparse
 import ctypes as C
 from ctypes import wintypes as W
@@ -14,6 +14,9 @@ SIZE = HEADER.size + CAPACITY * RECORD.size
 
 
 def decode(raw, expected):
+    # Decode one fixed-layout native trace record.
+    # Require matching begin and end sequence markers.
+    # Reject torn or overwritten records before exposing their fields.
     values = RECORD.unpack(raw)
     if values[0] != expected or values[-1] != expected:
         return None
@@ -28,6 +31,9 @@ def decode(raw, expected):
 
 class Trace:
     def __init__(self, pid, prefix='NiohResearchTrace_v1', tag=None):
+        # Open the observer's existing read-only shared mapping.
+        # Check the namespace tag and binary header before consuming records.
+        # Close partial resources if protocol validation fails.
         if prefix not in ('NiohResearchTrace_v1', 'NiohDispatchTrace_v1', 'NiohBossTrace_v1', 'NiohBossRepeatTrace_v1', 'NiohBossRepeatTrace_v2'):
             raise ValueError('Unknown trace mapping prefix')
         if prefix.endswith('_v2') and (not isinstance(tag, str) or len(tag) != 16 or any(c not in '0123456789abcdef' for c in tag)):
@@ -57,6 +63,9 @@ class Trace:
             raise
 
     def close(self):
+        # Unmap the trace view and close its Windows handle.
+        # Clear references after releasing each resource.
+        # Support cleanup after construction or reading failures.
         if self.address:
             self.kernel.UnmapViewOfFile(self.address)
             self.address = None
@@ -65,6 +74,9 @@ class Trace:
             self.handle = None
 
     def header(self):
+        # Decode and validate the shared ring-buffer header.
+        # Require expected record size, capacity and clock frequency.
+        # Expose producer progress without opening game memory.
         values = HEADER.unpack(C.string_at(self.address, HEADER.size))
         if values[:4] != (0x3152494e, 1, CAPACITY, RECORD.size) or values[4] <= 0:
             raise ValueError('Unexpected trace protocol header')
@@ -72,6 +84,9 @@ class Trace:
                     enabled=values[8], hook_address=hex(values[9]), module_base=hex(values[10]))
 
     def record(self, sequence):
+        # Copy the ring slot corresponding to a sequence number.
+        # Validate both copied markers and recheck the live first marker.
+        # Reject an overwrite that occurs while the record is being copied.
         address = self.address + HEADER.size + (sequence-1) % CAPACITY * RECORD.size
         raw = C.string_at(address, RECORD.size)
         result = decode(raw, sequence)
@@ -82,7 +97,10 @@ class Trace:
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    # Export a bounded observation window from the existing native ring.
+    # Report overwritten sequences and races alongside retained records.
+    # Close the view even if output or protocol reading fails.
+    parser = argparse.ArgumentParser(description='Read an existing native observer trace.')
     parser.add_argument('--pid', type=int, required=True)
     parser.add_argument('--seconds', type=float, default=0)
     parser.add_argument('--out', type=Path, required=True)

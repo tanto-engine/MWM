@@ -1,0 +1,51 @@
+Nioh 1 Skill Expanded
+
+Current build: sword-only stabilization; gameplay acceptance pending.
+The user will verify gameplay later. Do not infer acceptance from offline tests.
+
+Run from this repository in PowerShell:
+  .\Start-Trainer.ps1       Source UI, preset editing and runtime controls
+  .\Start-Okatsu.ps1        Start or wait for Nioh with the saved preset
+  .\Stop-Okatsu.ps1         Cooperative disarm and resource restoration
+  .\Test-Offline.ps1        The two maintained test entrypoints
+  .\Sync-Catalogue.ps1      Reconcile and synchronize the Downloads workbook
+
+Build native changes with:
+  .\outputs\okatsu-prototype\native\build-runtime.ps1
+No mission-specific compilation or EXE packaging.
+
+Configuration:
+  outputs/okatsu-prototype/controller-binding.json is the single schema2 preset.
+  Saved device mapping remains in controller-calibration.json; reuse it.
+  Low Triangle taps: Jin string D, C6E/2400 -> C6F/2410 -> C70/2420.
+  Low Triangle hold: C79/5014 upward launcher. Mid/high held trials are disabled.
+  LB + Circle tap/release: Charged Rush; hold: Leaping Slash.
+  One hold_seconds setting governs both gestures; default0.25.
+  LT + RT custom string is disabled. Native sword running attacks remain native.
+  Saving a changed preset recovers and reattaches the active engine.
+  A null choice disables that replacement. Source signatures/indices are engine-owned.
+  Native animation timing is centralized in boss_support.h::boss_move_timing.
+  Spreadsheet Tuning documents these values; editing it does not modify the DLL.
+
+Data:
+  outputs/Nioh1-Sword-Move-Observations.xlsx is the metadata authority.
+  Downloads/Nioh1-Sword-Move-Observations.xlsx must be reconciled before overwrite.
+  Distinct sword strings are grouped; constituent source IDs and evidence remain.
+  Recording imports enrich known sword IDs; new move discovery is deferred.
+  Non-sword moves and redundant held-string constituents are excluded from choices.
+  Whole retained action/motion/timing/camera packages are shared dependencies.
+  Their verified hashes and native layout prevent safely pruning individual records.
+
+Verification still required in actual gameplay:
+  Held launcher while standing, walking, locked on and buffering after another attack.
+  Low-heavy hitboxes, final spin, guardian effects, native sprint attacks and stance.
+  R1 Pulse, recoverable Ki and learned Living Water in each stance; early/late dodge.
+  Animation startup, recovery and next-action responsiveness after C79 and Okatsu.
+  William vocals, contact/paired cleanup, cold missions, menus, death and reloads.
+  DS4, DualSense, Xbox and SCUF latency/reconnect behavior.
+  The grapple still starts with William's stab; the requested opening hop is absent.
+  Full launcher-to-Izuna and Flying Swallow remain incomplete; no new move trials.
+
+Use no game monitor control/capture, synthetic input or repeated calibration.
+Check play-status.json instead of trusting saved process IDs.
+Owner TODOs and current evidence distinguish code verification from player acceptance.

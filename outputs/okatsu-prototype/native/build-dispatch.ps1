@@ -1,3 +1,4 @@
+# One-shot research dispatch builds; ordinary play uses build-runtime.ps1.
 param([string]$MinHook = (Join-Path $PSScriptRoot '..\..\..\third_party\minhook'))
 $ErrorActionPreference = 'Stop'
 $source = $PSScriptRoot

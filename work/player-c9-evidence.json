@@ -1,0 +1,36 @@
+{
+  "t": 136.447358,
+  "kind": "metadata",
+  "object": "0x1a090ff88a0",
+  "role": "player_candidate",
+  "address": "0x1a090af03b0",
+  "descriptor_bytes": "c9000000a0010000000000000000000000000000000000000000000000000000f0713190a0010000e0d3c5eaa0010000000000000000000050d3c5eaa00100000100000000000000e0bbd190a00100000b0000000000000070bcd190a0010000000000000000000070bcd190a0010000000000000000000070bcd190a001000065102300000000007062d390a001000000000000000000007062d390a001000000000000000000007062d390a001000000000000000000007062d390a001000000000000000000000000000000000000",
+  "action_key_u32": 201,
+  "action_key_hex": "0x000000C9",
+  "word0_u16": 201,
+  "word0_hex": "0x00C9",
+  "payload": "0x1a0903171f0",
+  "transition_slice": {
+    "table": "0x1a090d1bc70",
+    "start": 4197,
+    "count": 35
+  },
+  "unknown_semantics": "No frame, damage or hitbox fields identified",
+  "payload_prefix": {
+    "address": "0x1a0903171f0",
+    "bytes": "01000000000010000000ff03c900ffffff080000000000000000d2130800000028000000ffffffffffff000001000200ffffff00ffffffff",
+    "key_0x0c_i16": 201,
+    "flags_0x18_u64": "0x813d20000",
+    "motion_id": 40,
+    "timing_override": -1,
+    "timing_id": 40,
+    "flag_bit34": false,
+    "flag_bit35": true,
+    "sentinel_0x20_i32": 40,
+    "related_key_0x30_i16": -1
+  },
+  "transition_entries": [],
+  "entries_requested": 0,
+  "entries_omitted": 35,
+  "matches_preceding_state": true
+}

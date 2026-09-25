@@ -1,4 +1,4 @@
-"""Offline PE/disassembly helpers for this exact Nioh build."""
+# Offline PE/disassembly helpers for this exact Nioh build.
 import bisect
 import hashlib
 import json
@@ -15,6 +15,9 @@ HASH = '0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389'
 
 class Native:
     def __init__(self):
+        # Load the supported executable and index its unwind function intervals.
+        # Initialize the disassembler and optionally attach saved live text bytes.
+        # Reject mismatched builds before interpreting researched offsets.
         self.file = EXE.read_bytes()
         assert hashlib.sha256(self.file).hexdigest() == HASH
         pe = struct.unpack_from('<I', self.file, 0x3c)[0]
@@ -39,6 +42,9 @@ class Native:
             self.live_text_rva = info['rva']
 
     def bytes(self, rva, size):
+        # Read an RVA span from saved live text or a file-backed PE section.
+        # Prefer captured text when the entire requested span is available there.
+        # Reject unmapped ranges rather than silently returning truncated bytes.
         if self.live_text is not None and self.live_text_rva <= rva and rva + size <= self.live_text_rva + len(self.live_text):
             at = rva-self.live_text_rva
             return self.live_text[at:at+size]
@@ -49,19 +55,31 @@ class Native:
         raise ValueError(f'Not in a file-backed section: {rva:x}/{size:x}')
 
     def function(self, rva):
+        # Find the unwind interval containing an RVA by binary search.
+        # Use a bounded preview only when no unwind record covers the address.
+        # Keep leaf-function previews distinct from known function boundaries.
         i = bisect.bisect_right(self.begins, rva) - 1
         if i >= 0 and self.functions[i][0] <= rva < self.functions[i][1]:
             return self.functions[i]
         return (rva, rva + 96, 0)  # leaf function; bounded preview, not a size claim
 
     def instructions(self, rva):
+        # Disassemble the byte span selected by the function lookup.
+        # Retain detailed instruction operands for research queries.
+        # Share one PE and instruction decoder across offline analysis scripts.
         start, end, _ = self.function(rva)
         return list(self.cs.disasm(self.bytes(start, end-start), start))
 
     def text(self, rva):
+        # Format the decoded function as addresses, mnemonics and operands.
+        # Preserve image-relative addresses in each row.
+        # Produce readable research evidence without invoking native code.
         return '\n'.join(f'{i.address:08x}  {i.mnemonic:8} {i.op_str}' for i in self.instructions(rva))
 
     def vtable(self, rva, count):
+        # Read a bounded array of image-based function pointers.
+        # Subtract the preferred image base from each entry.
+        # Return RVAs usable with the same offline disassembly helpers.
         return [p - self.base for p in struct.unpack('<'+'Q'*count, self.bytes(rva, count*8))]
 
 

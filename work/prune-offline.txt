@@ -1,0 +1,66 @@
+...........................................................................................................................F.................................................E......E.........................F....
+======================================================================
+ERROR: test_hold_adapters_encode_contact_and_reject_unresolved_or_forced_pairing (runtime_session_cases.RuntimeSessionTests.test_hold_adapters_encode_contact_and_reject_unresolved_or_forced_pairing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\tests\support\runtime_session_cases.py", line 146, in test_hold_adapters_encode_contact_and_reject_unresolved_or_forced_pairing
+    selected=[manifest['candidates']['D'][0],manifest['hold_entry'],*manifest['paired_actions']]
+                                                                     ~~~~~~~~^^^^^^^^^^^^^^^^^^
+KeyError: 'paired_actions'
+
+======================================================================
+ERROR: test_three_stance_holds_keep_native_dependencies_and_owned_templates (runtime_session_cases.RuntimeSessionTests.test_three_stance_holds_keep_native_dependencies_and_owned_templates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\tests\support\runtime_session_cases.py", line 208, in test_three_stance_holds_keep_native_dependencies_and_owned_templates
+    self.assertEqual((manifest['hold_variant'],manifest['hold_milliseconds']), (4,250))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\prepare_session.py", line 204, in configured_replacements
+    configuration = validate_preset(configuration if configuration is not None else read_json(CURRENT_CONFIG))
+                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\engine_config.py", line 81, in read_json
+    handle = kernel.CreateFileW(str(Path(path)), 0x80000000, 7, None, 3, 0x80, None)
+                                    ^^^^^^^^^^
+  File "C:\Users\vikna\AppData\Local\Scoop\persist\uv\python\versions\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 1162, in __init__
+    super().__init__(*args)
+  File "C:\Users\vikna\AppData\Local\Scoop\persist\uv\python\versions\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 373, in __init__
+    raise TypeError(
+TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'SimpleNamespace'
+
+======================================================================
+FAIL: test_filtered_encounters_keep_hashes_lines_and_sequence_boundaries (move_catalogue_cases.CatalogueTests.test_filtered_encounters_keep_hashes_lines_and_sequence_boundaries)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\tests\support\move_catalogue_cases.py", line 49, in test_filtered_encounters_keep_hashes_lines_and_sequence_boundaries
+    self.assertEqual(observed, action['source']['action_id'])
+AssertionError: None != 3172
+
+======================================================================
+FAIL: test_open_trainer_adopts_other_runtime_before_applying_pending_edit (trainer_review_cases.RuntimeRegistryTests.test_open_trainer_adopts_other_runtime_before_applying_pending_edit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\trainer.py", line 318, in apply
+    self.adopt_active_runtime()
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\trainer.py", line 252, in adopt_active_runtime
+    preset = validate_preset(read_json(runtime/'controller-binding.json'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\engine_config.py", line 108, in validate_preset
+    raise ValueError('Unsupported moveset version')
+ValueError: Unsupported moveset version
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\tests\support\trainer_review_cases.py", line 175, in test_open_trainer_adopts_other_runtime_before_applying_pending_edit
+    self.assertTrue(trainer.Trainer.apply(app))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\outputs\okatsu-prototype\trainer.py", line 326, in apply
+    self.error(error)
+  File "C:\Users\vikna\Downloads\GitHub\nioh1-skill-expanded\tests\support\trainer_review_cases.py", line 167, in <lambda>
+    self.fail(str(error))
+AssertionError: Unsupported moveset version
+
+----------------------------------------------------------------------
+Ran 211 tests in 38.170s
+
+FAILED (failures=2, errors=2)

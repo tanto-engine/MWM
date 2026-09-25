@@ -1,4 +1,4 @@
-"""Inspect only Nioh's loaded executable; never request write/debug access."""
+# Inspect only Nioh's loaded executable; never request write/debug access.
 import ctypes as C
 from ctypes import wintypes as W
 
@@ -34,6 +34,9 @@ kernel.VirtualQueryEx.argtypes = [W.HANDLE, C.c_void_p, C.POINTER(MEMORY_BASIC_I
 kernel.VirtualQueryEx.restype = SIZE
 
 def modules(pid):
+    # Enumerate module names, paths and image ranges through Toolhelp.
+    # Close the snapshot even when enumeration fails.
+    # Supply executable identity without requesting write access.
     snap = kernel.CreateToolhelp32Snapshot(0x18, pid)
     if snap == C.c_void_p(-1).value:
         raise C.WinError(C.get_last_error())
@@ -53,6 +56,9 @@ def modules(pid):
         kernel.CloseHandle(snap)
 
 def read(handle, address, count):
+    # Copy exactly the requested bytes from a read-only process handle.
+    # Check both the API result and the actual byte count.
+    # Partial reads must fail before callers decode native structures.
     buf = C.create_string_buffer(count)
     n = SIZE()
     ok = kernel.ReadProcessMemory(handle, address, buf, count, C.byref(n))

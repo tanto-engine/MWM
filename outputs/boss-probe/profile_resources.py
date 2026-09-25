@@ -1,8 +1,7 @@
-"""Read-only, fresh-session action/motion/timing resource comparison.
-
-Heap addresses come exclusively from --discovery. Role names mean matching the
-researched C64 motion fingerprints, not an independently proven character ID.
-"""
+# Read-only, fresh-session action/motion/timing resource comparison.
+#
+# Heap addresses come exclusively from --discovery. Role names mean matching the
+# researched C64 motion fingerprints, not an independently proven character ID.
 import argparse
 import ctypes as C
 from ctypes import wintypes as W
@@ -22,6 +21,9 @@ ROLE_KEYS = {1220: 'boss_fingerprint', 2033: 'player_fingerprint'}
 
 
 def birth(game):
+    # Read the process creation time through its existing handle.
+    # Combine the FILETIME words into one stable identity value.
+    # Distinguish a restarted executable from a reused PID.
     values = [W.FILETIME() for _ in range(4)]
     if not kernel.GetProcessTimes(game.handle, *(C.byref(v) for v in values)):
         raise C.WinError(C.get_last_error())
@@ -29,6 +31,9 @@ def birth(game):
 
 
 def validate_discovery(game, discovery):
+    # Compare discovery provenance against the current process and build.
+    # Recheck creation time and liveness before resource profiling.
+    # Prevent saved heap addresses from crossing process lifetimes.
     for key in ('pid', 'creation_filetime', 'build_sha256', 'module_base', 'vtable'):
         if str(discovery.get(key)) != str(game.identity[key]):
             raise ValueError(f'Discovery session mismatch: {key}')
@@ -38,10 +43,16 @@ def validate_discovery(game, discovery):
 
 class StableReads:
     def __init__(self, game):
+        # Start a registry of byte ranges that define resource identity.
+        # Share the caller's read-only game connection.
+        # Later checks compare the same ranges after dependent reads finish.
         self.game = game
         self.ranges = {}
 
     def pin(self, address, count, expected=None):
+        # Read and retain a resource range under its address and length.
+        # Compare repeated reads or supplied expected bytes immediately.
+        # Detect replacement before mixing old and new resource structures.
         if not count:
             return b''
         raw = self.game.bytes(address, count)
@@ -52,6 +63,9 @@ class StableReads:
         return raw
 
     def check(self):
+        # Re-read every retained identity range using fresh region queries.
+        # Fail when any bytes differ from the recorded profile.
+        # Bracket a multi-object inspection without claiming atomicity.
         self.game.begin_sample()
         for (address, count), expected in self.ranges.items():
             if self.game.bytes(address, count) != expected:
@@ -59,6 +73,9 @@ class StableReads:
 
 
 def inspect_candidate(game, stable, candidate):
+    # Resolve the researched action key for one discovered actor.
+    # Pin owner, bank tables and selected descriptor identities.
+    # Classify fingerprints while retaining unmatched actor evidence.
     actor = int(candidate['object'], 0)
     before, state = game.snapshot(actor)
     owner = int(state['owner_like'], 0)
@@ -115,6 +132,9 @@ def inspect_candidate(game, stable, candidate):
 
 
 def resources(game, stable, actor):
+    # Read motion and timing components from a verified actor owner.
+    # Pin their slot arrays and sample current playback separately.
+    # Separate stable dependencies from transient animation state.
     owner = int(actor['owner'], 0)
     motion = U64(stable.pin(owner + 0x38, 8), 0)
     timing = U64(stable.pin(owner + 0x68, 8), 0)
@@ -130,6 +150,9 @@ def resources(game, stable, actor):
 
 
 def pin_hash(stable, table):
+    # Retain a bounded key-to-index table and its header.
+    # Reject implausible counts before copying the entry array.
+    # Resource lookups depend on both header and entry stability.
     head = stable.pin(table, 24)
     count, pairs = U32(head, 8), U64(head, 16)
     if not 0 < count <= 32768:
@@ -138,6 +161,9 @@ def pin_hash(stable, table):
 
 
 def inspect_motion(game, stable, bank, key):
+    # Inspect one motion lookup while pinning its dependent pointers.
+    # Classify absence, ambiguity and empty clips explicitly.
+    # Avoid treating a failed lookup as proof that an asset is absent.
     tail = stable.pin(bank + 0x468, 0x20)
     array, table = U64(tail, 0), U64(tail, 0x18)
     pin_hash(stable, table)
@@ -156,6 +182,9 @@ def inspect_motion(game, stable, bank, key):
 
 
 def inspect_timing(game, stable, wrapper, key):
+    # Inspect one timing lookup and pin its event record dependencies.
+    # Follow relative offsets only after the shared lookup validates them.
+    # Detect changed timing data before accepting the profile.
     head = stable.pin(wrapper, 16)
     data, table = U64(head, 0), U64(head, 8)
     pin_hash(stable, table)
@@ -181,6 +210,9 @@ def inspect_timing(game, stable, wrapper, key):
 
 
 def summarize(rows):
+    # Separate present slots from unresolved resource observations.
+    # Claim absence only when every slot has a definite absent result.
+    # Keep read failures from becoming false missing-resource conclusions.
     present = [r['slot'] for r in rows if r['presence'] == 'present']
     unknown = [r['slot'] for r in rows if r['presence'] not in ('present', 'absent', 'empty_slot')]
     return dict(present_slots=present, unresolved_slots=unknown,
@@ -188,6 +220,9 @@ def summarize(rows):
 
 
 def profile(game, discovery):
+    # Compare boss and player fingerprints within one process lifetime.
+    # Cache repeated resource lookups and recheck all pinned ranges.
+    # Produce research evidence for dependencies and missing player resources.
     validate_discovery(game, discovery)
     game.begin_sample()
     stable = StableReads(game)
@@ -211,6 +246,9 @@ def profile(game, discovery):
     source['timing_key_rule'] = 'payload+0x34 < 0 uses motion key; verified native RVA0x6FF7C3..0x6FF7DB'
     cache = {}
     def lookup_resources(motion_banks, timing_banks, wanted_motion, wanted_timing):
+        # Resolve requested motion and timing keys across each populated slot.
+        # Cache by resource kind, pointer and key within this profile.
+        # Retain per-slot failures without repeatedly reading shared banks.
         info = {}
         for kind, banks, key, inspect in [('motion', motion_banks, wanted_motion, inspect_motion),
                                           ('timing', timing_banks, wanted_timing, inspect_timing)]:
@@ -257,7 +295,10 @@ def profile(game, discovery):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    # Run an explicit read-only resource comparison from saved discovery.
+    # Require matching PID and a new output destination.
+    # Leave production attachment to the engine supervisor.
+    parser = argparse.ArgumentParser(description='Compare action, motion and timing resource metadata.')
     parser.add_argument('--pid', type=int, required=True)
     parser.add_argument('--discovery', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)

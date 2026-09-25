@@ -1,9 +1,8 @@
-"""Bounded input/native-action observation on the same Windows QPC clock.
-
-Does not write game memory or synthesize inputs. The passive hook must already
-be started by capture_native.py, which owns stopping it. Temporal proximity is
-evidence of timing, not proof that an OS input caused a particular action.
-"""
+# Bounded input/native-action observation on the same Windows QPC clock.
+#
+# Does not write game memory or synthesize inputs. The passive hook must already
+# be started by capture_native.py, which owns stopping it. Temporal proximity is
+# evidence of timing, not proof that an OS input caused a particular action.
 import argparse
 import ctypes as C
 from ctypes import wintypes as W
@@ -20,16 +19,30 @@ from controller_reader import ControllerReader, WinMMBackend, XInputBackend
 
 
 def player_identity_matches(record, actor, owner):
+    # Match both actor and owner against a valid native record.
+    # Require the native validity bit before trusting either pointer.
+    # Avoid attributing another actor's actions to William after address reuse.
     return bool(record['valid_fields'] & 1 and int(record['actor'], 0) == actor
                 and int(record['owner'], 0) == owner)
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    # Record controller observations and native calls on the same QPC clock.
+    # Revalidate player identity and report overwritten or racing trace slots.
+    # Keep temporal association separate from proof of accepted game input.
+    parser = argparse.ArgumentParser(description='Record controller inputs and native actions on one clock.')
     parser.add_argument('--pid', type=int, required=True)
     parser.add_argument('--creation-filetime', required=True)
-    parser.add_argument('--player', type=lambda x: int(x, 0), required=True)
-    parser.add_argument('--owner', type=lambda x: int(x, 0), required=True)
+    parser.add_argument('--player', type=lambda x: (
+        # Parse an explicit CLI address or action key.
+        # Accept decimal and prefixed hexadecimal through Python integer parsing.
+        # Reject malformed values before the command can attach to a process.
+        int(x, 0)), required=True)
+    parser.add_argument('--owner', type=lambda x: (
+        # Parse an explicit CLI address or action key.
+        # Accept decimal and prefixed hexadecimal through Python integer parsing.
+        # Reject malformed values before the command can attach to a process.
+        int(x, 0)), required=True)
     parser.add_argument('--calibration', type=Path, required=True)
     parser.add_argument('--seconds', type=float, required=True)
     parser.add_argument('--out', type=Path, required=True)
@@ -50,6 +63,9 @@ def main():
         raise C.WinError(C.get_last_error())
 
     def qpc():
+        # Read the native counter used by both input and action evidence.
+        # Raise when the OS cannot provide a timestamp.
+        # An invented timestamp would invalidate latency comparisons.
         value = C.c_int64()
         if not kernel.QueryPerformanceCounter(C.byref(value)):
             raise C.WinError(C.get_last_error())
@@ -60,6 +76,9 @@ def main():
             raise ValueError('Process birth mismatch')
 
         def validate():
+            # Verify the original process still owns the selected player object.
+            # Refresh region checks before reading its owner.
+            # End capture rather than silently following a replacement actor.
             if not game.alive():
                 raise ValueError('Game process exited')
             game.begin_sample()
@@ -81,6 +100,9 @@ def main():
             args.out.parent.mkdir(parents=True, exist_ok=True)
             with args.out.open('x', encoding='utf8') as output:
                 def emit(value):
+                    # Append a complete timestamped evidence object as one JSON line.
+                    # Preserve the producer's timing and identity fields.
+                    # The final summary shares this stream with all preceding observations.
                     output.write(json.dumps(value) + '\n')
                 started = qpc()
                 emit(dict(kind='session', **game.identity, frequency=frequency.value,

@@ -1,0 +1,23 @@
+{
+  "classification": "CAE/5220 is the player-identified finish of a five-hit light attack string. Its weapon remains unclassified, so no sword import or choice is offered. It is not Flying Swallow.",
+  "shared_source": "Immutable mixed source packages shared by sword strings C/D and C79. Native resource constructors and hash identities require whole actions, timing, motion and camera containers. Non-sword metadata and selections are excluded; repacking binary resources is unsupported.",
+  "sequence_policy": "A filtered recording breaks at removed action identities. Source IDs and animation similarity alone do not establish duplication or a combo.",
+  "pruning": {
+    "moves_before": 142,
+    "moves_after": 18,
+    "retained_source_actions": 37,
+    "observations_before": 384,
+    "observations_after": 1,
+    "encounters_before": 6,
+    "encounters_after": 5,
+    "jin_imports_before": 22,
+    "jin_imports_after": 9,
+    "workbook_bytes_before": 716863,
+    "workbook_bytes_after": 144712,
+    "downloads_identical": true,
+    "shared_asset_hashes_verified": 12,
+    "cached_catalogue_read_median_ms": 17.187,
+    "merge_function_lines_before": 104,
+    "merge_function_lines_after": 83
+  }
+}

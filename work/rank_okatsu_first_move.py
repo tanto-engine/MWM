@@ -1,4 +1,4 @@
-"""Offline action-record ranking; makes no attack/animation-name identification."""
+# Offline action-record ranking; makes no attack/animation-name identification.
 from collections import Counter
 import json
 from pathlib import Path
@@ -45,13 +45,20 @@ for word in sorted({r["word0"] for r in runs}):
         "native_target_keys": sorted({entry["target_key_0x14_i16"] for entry in meta["transition_entries"]}),
         "interpretation": "Unclassified action record; entry count is not an attack count.",
     })
-ranking.sort(key=lambda row: (-row["observed_entries"], -row["segments_including_initial_censored"], row["word0"]))
+ranking.sort(key=lambda row: (
+    # Prioritize repeatedly observed action entries for identification.
+    # Sort by entry count, segment count and then the stable action word.
+    # Keep the initial censored segment distinct from an observed attack start.
+    (-row["observed_entries"], -row["segments_including_initial_censored"], row["word0"])))
 shared = []
 for word in sorted(metas["boss_candidate"].keys() & metas["player_candidate"].keys()):
     boss, player = metas["boss_candidate"][word], metas["player_candidate"][word]
     b_raw = bytes.fromhex(boss["payload_prefix"]["bytes"])
     p_raw = bytes.fromhex(player["payload_prefix"]["bytes"])
     def item(e):
+        # Select comparable action metadata from one saved observation.
+        # Preserve payload flags, selector fields and transition slice information.
+        # Show why equal action numbers need not identify equal moves.
         return {"descriptor": e["address"], "payload": e["payload"],
                 "payload_key_0x0c_i16": e["payload_prefix"]["key_0x0c_i16"],
                 "payload_flags_0x18": e["payload_prefix"]["flags_0x18_u64"],

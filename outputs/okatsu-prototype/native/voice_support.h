@@ -1,20 +1,40 @@
 #pragma once
 
-// Native9670A0 handles timing type10 sound entries. The two hashes resolve to
-// AV_OKATSU_SKILL_SHORT and AV_OKATSU_ATTACK_STRONG in the loaded audio name tree.
-// This predicate changes no metadata and leaves every other sound request alone.
+// Copied from William's sword timing4210/frame27. The native sound-name tree
+// resolves 97933946 to AV_WILLIAM_ATTACK_MIDDLE. Keep its native probability,
+// owner routing and variation; the imported timing only supplies the cue time.
+// Static storage also covers any deferred native use of the sound row.
+struct PlayerVoiceTiming {
+    uint32_t header[9], event[3], sound[19];
+};
+static PlayerVoiceTiming william_attack_voice = {
+    {0, 1, 0x24, 0, 0x30, 0, 0, 0, 0}, {0, 10, 0},
+    {0, 0, 0, 0, 0, 1, 2, 0x97933946, 0, 0, 0, 0xffffffff, 80,
+     0xffffffff, 0xffffffff, 0, 12, 0, 0}
+};
+static_assert(offsetof(PlayerVoiceTiming, sound) == 0x30, "Native sound row offset");
+
+// Native9670A0 handles timing type10 sound entries. Configured rows include
+// AV_OKATSU_SKILL_SHORT and AV_OKATSU_ATTACK_STRONG from the native name tree.
+// This predicate leaves every other actor and sound request alone.
 static bool boss_suppress_voice(void* state, void* timing_record, void* event) {
+    // Recognize only configured boss-vocal events belonging to the imported player.
+    // Check action ownership, timing record, event bounds and the exact source sound hash.
+    // The boss's own audio and unrelated combat sounds must retain their original handler path.
+    // TODO: verify the replacement William attack vocal audibly during play.
+    // Exact event routing and retained native probability are covered offline;
+    // those checks cannot establish that a particular playback was heard.
     if (!InterlockedCompareExchange(&boss_active, 0, 0)
         || boss_active_player != boss_session.player
         || boss_active_owner != boss_session.player_owner || !boss_player_valid()) return false;
     uint64_t current = 0;
     if (!copy_field(boss_session.player + 0x58, current)) return false;
-    unsigned slot = 2;
-    for (unsigned i = 0; i != 2; ++i)
+    unsigned slot = boss_import_count;
+    for (unsigned i = 0; i != boss_import_count; ++i)
         if (boss_private_actions[i].ready && current == boss_private_descriptor_address(i)) slot = i;
-    if (slot == 2) return false;
+    if (slot == boss_import_count) return false;
     const uint64_t record = reinterpret_cast<uint64_t>(timing_record);
-    const uint64_t expected_record = slot ? boss_session.charge_timing_record : boss_session.source_timing_record;
+    const uint64_t expected_record = boss_imports[slot].timing_record;
     const uint64_t state_address = reinterpret_cast<uint64_t>(state);
     if (record != expected_record || record < 0x10000 || record > UINT64_MAX - 0x20000
         || !same_field(state_address, 8, boss_session.player_owner)
@@ -28,9 +48,12 @@ static bool boss_suppress_voice(void* state, void* timing_record, void* event) {
     const uint64_t start = record + event_offset;
     if (address < start || address - start >= uint64_t(count) * 12 || (address - start) % 12) return false;
     uint32_t fields[3]{};
-    if (!copy_bytes(address, fields, sizeof(fields)) || fields[1] != 10
-        || fields[0] != (slot ? 46u : 30u) || fields[2] != (slot ? 16u : 11u)) return false;
-    uint32_t sound_hash = 0;
-    return copy_field(record + sound_offset + uint64_t(fields[2]) * 0x4c + 0x1c, sound_hash)
-        && sound_hash == (slot ? 0xF519B456u : 0x0E077D36u);
+    if (!copy_bytes(address,fields,sizeof(fields)) || fields[1] != 10) return false;
+    for (unsigned i = 0; i != boss_imports[slot].voice_count; ++i) {
+        const auto& voice = boss_imports[slot].voices[i];
+        if (fields[0] != voice.frame || fields[2] != voice.index) continue;
+        uint32_t hash = 0;
+        return copy_field(record+sound_offset+uint64_t(fields[2])*0x4c+0x1c,hash) && hash == voice.hash;
+    }
+    return false;
 }

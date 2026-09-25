@@ -1,7 +1,10 @@
-"""Read-only motion resource lookup; callers supply all live addresses."""
+# Read-only motion resource lookup; callers supply all live addresses.
 from boss_probe import U32, I32, U64
 
 def motion_lookup(game, bank, key):
+    # Resolve a motion key through a bank's key-to-index table.
+    # Bound the table and clip index before following pointers.
+    # Recheck headers to detect resource replacement during inspection.
     header = game.bytes(bank, 0x488)
     pointers, lookup = U64(header, 0x468), U64(header, 0x480)
     table = game.bytes(lookup, 0x18)
@@ -24,6 +27,9 @@ def motion_lookup(game, bank, key):
     return answer
 
 def inspect(game, actor, expected_owner):
+    # Inspect motion and timing owners associated with an action actor.
+    # Probe populated motion slots while retaining individual read failures.
+    # Recheck the owner so mixed-lifetime resource evidence is rejected.
     raw, before = game.snapshot(actor)
     owner = int(before['owner_like'], 0)
     if owner != expected_owner:
