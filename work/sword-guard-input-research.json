@@ -4,7 +4,7 @@
   "scope": "Read-only source/native research; no activation, game writes or gameplay acceptance.",
   "source": {
     "path": "work/player-low-heavy-evidence.json",
-    "sha256": "bf0765cb009f896ea5d97e2b990829e65d460cae23d69fca6fa451b7431816cb",
+    "sha256": "bdb7e8941b90175f6a27a18755ce92d886eb0885cc69b6e74244545ea3e43e33",
     "rows": [
       {
         "action": "0xce7",
