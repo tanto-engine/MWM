@@ -81,20 +81,39 @@
     "measurement_scope": "Memory discovery only; not gameplay FPS or input latency"
   },
   "final_verification": {
-    "offline_checks": 171,
+    "offline_checks": 172,
     "crash_checks": 8,
     "entrypoints": [
       "tests/test_move_readiness.py --offline",
       "tests/test_resource_crashes.py"
     ],
-    "trainer": "Nioh 1 Sword Mod; 995x702 requested layout fits1030x760; defaultMidIzuna/Highslice/LowFlyingSwallow",
-    "workbook_sha256": "aed5b0558a1fdd46a5e84ecfb7fa4a15ba0734f633bb80dd2bf4a26ba979c2f3",
+    "trainer": "Hidden UI preset roundtrip passed for Jin somersault and Native;995x730 requested layout fits1030x760.",
+    "workbook_sha256": "c1ddd87db0efd36afebee816b44948ee931d4470de9654eed761b8c8ea0f4d84",
     "runtime_dlls": {
-      "boss_repeat_0000000000000000.dll": "c6fb325cdd7d2960bb7edeb28a9875a4f607d65ccd52b2b555f2984c0052c259",
-      "nioh_resources.dll": "2cd0bf9c636f044d0d37d8ea8d1cab8530c1f690c84b6a2c04c935a27de2841e",
-      "nioh_skill_runtime.dll": "eb1b54675224193b74b1110ede2f99ac0510b6f664024d814d0b022256df9bbc"
+      "nioh_skill_runtime.dll": "c18b58dc9255cdc7b957d30e1c52062841d1aa6a318eb0c05530b6a0dc1ccad8",
+      "nioh_resources.dll": "cdf79e5589420001ba36c3ae1fb099a99577210d889759de8112755da7f16a66"
     },
     "gameplay": "Not assessed on the modified build; user previously requested prepare/publish and testing later",
     "scratch_deletion": "Automatic approval review rejected deletion as blocked by policy; untracked disposable takes/models excluded from publication"
+  },
+  "high_guard_light": {
+    "binding": "High stance LB + Square (PlayStation) / LB + X (Xbox)",
+    "source": "work/jin-aerial-20260925/take-0001/events.jsonl",
+    "native_input_evidence": "work/sword-guard-input-research.json",
+    "graph": "C81/1050 -> C82/5050 -> C83/5051",
+    "timing": "Native accepted guard-held/Square-pressed row. All phases run at1x; C82 Ki10 carries40% recoverable Ki to C83 frame30. Landing clip37 and non-audio events through29 retained.",
+    "verification": "32 selector positive/rejection cases, actual guard lookup plus both native follow-ups and resource restoration tested with owned buffers; gameplay pending"
+  },
+  "held_binding_collision": {
+    "reproduction": "With low hold C79 before low Frost C71, last matching kind2 selection chose C71 on ordinary Triangle; empty-Ki D4A used the first match.",
+    "correction": "Shared first enabled stance hold selection excludes C71/C81 and uses compiler ordering of real holds before optional skill imports.",
+    "verification": "Owned slot-order and ordinary/grapple regressions passed; gameplay pending"
+  },
+  "import_pruning": {
+    "before_okatsu_imports": 7,
+    "after_okatsu_imports": 3,
+    "default_total_imports": 21,
+    "removed_transition_rows": 57,
+    "scope": "Disabled standalone string imports only; retained source packages and ABI allocation unchanged. No FPS claim."
   }
 }

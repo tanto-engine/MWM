@@ -11,15 +11,18 @@ static uint64_t boss_native_bindings;
 static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
 
-static bool flying_swallow(const MoveImport& move, const MoveAdapter& adapter) {
-    // Recognize four exact source phases with a low-stance owner.
-    // Only the jump is an entry; dash/descent/landing require native continuation.
+static bool airborne_sword(const MoveImport& move, const MoveAdapter& adapter) {
+    // Recognize recorded airborne phases with their exact stance owners.
+    // Only the two jumps are entries; the remaining phases require native continuation.
     // Other zero-flag actions cannot acquire the airborne policy.
-    if (move.key<0xC71 || move.key>0xC74 || adapter.player_key!=0xCF5) return false;
-    const unsigned phase=move.key-0xC71;
-    constexpr int motions[]={1050,5000,5001,5002},counts[]={18,17,18,75};
+    const bool swallow=move.key>=0xC71 && move.key<=0xC74 && adapter.player_key==0xCF5;
+    const bool somersault=move.key>=0xC81 && move.key<=0xC83 && adapter.player_key==0xC7A;
+    if (!swallow && !somersault) return false;
+    const unsigned phase=swallow ? move.key-0xC71 : move.key-0xC81+4;
+    constexpr int motions[]={1050,5000,5001,5002,1050,5050,5051}, counts[]={18,17,18,75,18,18,75};
     return move.motion==motions[phase] && move.transition_count==counts[phase]
-        && move.flags==(phase==3 ? 0x1BCE0000ULL : 0) && adapter.kind==(phase ? 4u : 2u)
+        && move.flags==((phase==3 || phase==6) ? 0x1BCE0000ULL : 0)
+        && adapter.kind==((phase==0 || phase==4) ? 2u : 4u)
         && move.recovery_frame==(phase==3 ? 20 : -1) && move.next_variant==-1;
 }
 
@@ -27,7 +30,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
-    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || config.native_bindings>7
+    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || config.native_bindings>15
         || config.hold_stances>7 || config.frost_milliseconds<100 || config.frost_milliseconds>1500
         || config.frost_speed<1 || config.frost_speed>8)
         return false;
@@ -45,7 +48,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     } else if (config.hold_milliseconds || config.hold_camera_bank) return false;
     const MoveImport empty{};
     const MoveAdapter no_adapter{};
-    bool grapple_target=false;
+    bool grapple_target=false, somersault=false;
     for (unsigned i = config.import_count; i != 24; ++i)
         if (memcmp(&config.imports[i], &empty, sizeof(empty))
             || memcmp(&config.adapters[i], &no_adapter, sizeof(no_adapter))) return false;
@@ -59,7 +62,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         if (move.key==0x361 && move.motion==1311 && move.flags==0x8078000000ULL && !adapter.kind) grapple_target=true;
         const bool replacement = adapter.kind == 1 || adapter.kind == 2 || adapter.kind == 4;
         const bool izuna_bridge = adapter.kind==4 && move.key==0xC7A && move.motion==1050 && !move.flags;
-        const bool flying=flying_swallow(move,adapter);
+        const bool airborne=airborne_sword(move,adapter);
+        if (airborne && move.key==0xC81) somersault=true;
         if (adapter.kind) {
             if (adapter.kind > 4) return false;
             const uint64_t dependencies[] = {adapter.action_resource,adapter.timing_resource,adapter.bank,
@@ -76,7 +80,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                         || (adapter.player_key==0xC7A && adapter.player_motion==2300
                         && adapter.transition_count==42 && adapter.recovery_frame==46))))
                 || !adapter.transition_count || adapter.transition_count > 63
-                || adapter.recovery_frame <= 0 || (!izuna_bridge && !flying && move.flags != 0x194C0000 && (adapter.kind == 1 || move.flags != 0x200194C0000ULL))
+                || adapter.recovery_frame <= 0 || (!izuna_bridge && !airborne && move.flags != 0x194C0000 && (adapter.kind == 1 || move.flags != 0x200194C0000ULL))
                 || (izuna_bridge && adapter.player_key!=0xCB7)
                 || (adapter.kind == 1 && move.next_variant != -1)) return false;
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
@@ -132,7 +136,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     const auto& first = config.imports[0];
     const auto& second = config.imports[1];
     const auto& legacy = config.session;
-    return (!(config.native_bindings&1) || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
+    return (!(config.native_bindings&8) || somersault) && (!(config.native_bindings&1) || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
         && first.key == 0xC64 && first.motion == 1220 && second.key == 0xC66 && second.motion == 1230
         && first.descriptor == legacy.source_descriptor && first.payload == legacy.source_payload
         && first.clip == legacy.source_clip && first.timing_record == legacy.source_timing_record
@@ -153,7 +157,7 @@ static DWORD load_runtime_session(const void* parameter) {
     if (incoming.magic != RUNTIME_SESSION_MAGIC || incoming.version != RUNTIME_SESSION_VERSION
         || incoming.size != sizeof(incoming) || incoming.pid != GetCurrentProcessId()
         || !incoming.config_tag) return ERROR_INVALID_DATA;
-    if (incoming.native_bindings > 7) return ERROR_INVALID_DATA;
+    if (incoming.native_bindings > 15) return ERROR_INVALID_DATA;
     FILETIME born{}, exited{}, kernel_time{}, user_time{};
     if (!GetProcessTimes(GetCurrentProcess(), &born, &exited, &kernel_time, &user_time)) return GetLastError();
     const uint64_t creation = (uint64_t(born.dwHighDateTime) << 32) | born.dwLowDateTime;

@@ -138,7 +138,7 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             raise ValueError('Loaded source Ki cost differs')
         start, transitions = struct.unpack_from('<HH', desc, 0x80)
         if (move['transition_count'] is not None and transitions != move['transition_count']
-                or not 1 <= transitions <= (128 if move['flags'] in (0x194C0000, 0x200194C0000) else 28)
+                or not 1 <= transitions <= (128 if move.get('adapter_kind') in (1,2,4) else 28)
                 or start + transitions > 65536):
             raise ValueError('Loaded source transition count differs')
         pointers = stable.pin(U64(desc, 0x78) + start * 8, transitions * 8)
@@ -148,7 +148,7 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             for target in move['native_followups']:
                 if target not in by_id or not any(struct.unpack_from('<h', row, 0x14)[0] == by_id[target]['key']
                         and row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
-                              or (move['flags'] == PLAYER_PAIRED_FLAGS or move['key']==0xC73) and struct.unpack_from('<H', row)[0] == 0
+                              or (move['flags'] == PLAYER_PAIRED_FLAGS or move['key'] in (0xC73,0xC82)) and struct.unpack_from('<H', row)[0] == 0
                             or row[10] == 0 and row[:10] == b'\xff'*10) for row in rows):
                     raise ValueError('Configured native continuation is absent from the source rows')
             if move['id']=='jin_hayabusa.izuna_drop' and not any(
@@ -200,7 +200,19 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
     return resolved, imports
 
 
-def configured_replacements(configuration=None):
+def configured_imports(configuration):
+    # Keep the two chord slots and only the enabled Okatsu dependencies.
+    # The disabled standalone string contributes no runtime descriptors or voice copies.
+    # Whole source packages stay retained because their internal data is shared.
+    manifest=read_import_manifest(IMPORT_MANIFEST)
+    if not configuration['string_enabled']:
+        manifest['moves']=[move for index,move in enumerate(manifest['moves'])
+                           if index<2 or configuration['okatsu_grapple'] and move['key']==0x361]
+        manifest['string_variant']=0
+    return manifest
+
+
+def configured_replacements(configuration=None, baseline=None):
     # Resolve one validated sword preset into native imports and stance templates.
     # Expand selected strings once and derive every runtime index from stable IDs.
     # Disabling low-heavy taps must not disable an independent held skill.
@@ -208,6 +220,8 @@ def configured_replacements(configuration=None):
     candidate = HEAVY_STRINGS.get(configuration['low_heavy'])
     entries=list(dict.fromkeys((stance,identifier) for bindings in ('stance_holds','frost_moon')
                                for stance,identifier in configuration[bindings].items() if identifier))
+    if configuration['high_guard_light']:
+        entries.append(('high',configuration['high_guard_light']))
     hold = bool(entries)
     if candidate is None and not hold:
         return None
@@ -239,7 +253,8 @@ def configured_replacements(configuration=None):
                 move['replacement'] = dict(player_key=player_key, player_motion=motion,
                                            transition_count=count, recovery_frame=recovery)
             selected = selected + chain
-        if len(set(selected)) != len(selected) or len(selected) + 7 > IMPORT_LIMIT:
+        baseline=baseline if baseline is not None else configured_imports(configuration)
+        if len(set(selected)) != len(selected) or len(selected) + len(baseline['moves']) > IMPORT_LIMIT:
             raise ValueError('Selected holds duplicate imports or exceed the runtime table')
     positions = {identifier:index for index,identifier in enumerate(selected)}
     all_moves = manifest['moves']
@@ -286,7 +301,8 @@ def fresh_profile(game):
     # Resolve imports and camera slot zero, then recheck all pinned identities.
     # Boss objects and stale session pointers never supply resources.
     configuration = validate_preset(read_json(CURRENT_CONFIG))
-    replacement_manifest = configured_replacements(configuration)
+    manifest = configured_imports(configuration)
+    replacement_manifest = configured_replacements(configuration,manifest)
     action_resource, timing_resource, motion_bank, camera_bank, node, owner = load_resources(game)
     replacement_handles = None
     if replacement_manifest is not None:
@@ -300,7 +316,6 @@ def fresh_profile(game):
         raise ValueError('Native player candidate changed before profiling')
     bank = U64(stable.pin(action_resource + 0x468, 8), 0)
     timing_wrapper = U64(stable.pin(timing_resource + 0x468, 8), 0)
-    manifest = read_import_manifest(IMPORT_MANIFEST)
     moves, imports = resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest)
     adapters = [None] * len(imports)
     hold_variant = hold_milliseconds = hold_camera_bank = 0
@@ -365,7 +380,8 @@ def fresh_profile(game):
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
-                tiger_sprint=configuration['tiger_sprint'],mid_light_ender=configuration['mid_light_ender'])
+                tiger_sprint=configuration['tiger_sprint'],mid_light_ender=configuration['mid_light_ender'],
+                high_guard_light=bool(configuration['high_guard_light']))
 
 
 def boss_fields(profile):
@@ -398,7 +414,7 @@ def boss_fields(profile):
     fields.update(imports=profile['imports'], adapters=profile['adapters'], string_variant=profile['string_variant'])
     fields.update((field,profile[field]) for field in ('hold_variant','hold_milliseconds','hold_camera_bank'))
     fields['native_grapple'] = profile.get('native_grapple', False)
-    fields.update((field,profile.get(field,False)) for field in ('tiger_sprint','mid_light_ender'))
+    fields.update((field,profile.get(field,False)) for field in ('tiger_sprint','mid_light_ender','high_guard_light'))
     fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed'))
     return fields, originals
 

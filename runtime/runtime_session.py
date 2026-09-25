@@ -1,7 +1,7 @@
 # Stable runtime startup ABI. A move identity never contains these pointers.
 import re
 import struct
-from move_imports import check_import_topology, is_izuna_bridge, is_flying_swallow, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_SKILL_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
+from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_SKILL_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
     'player', 'player_owner', 'source_action_resource', 'source_timing_resource', 'vtable',
@@ -61,7 +61,7 @@ def encode_session(config, pid, creation_filetime):
                         *voices, *([0] * (9-len(voices)))])
         adapter = adapters[index]
         if adapter is None:
-            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_flying_swallow(move):
+            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move):
                 raise ValueError('Player replacement is missing its native adapter')
             encoded_adapters.extend([0] * 11)
             continue
@@ -82,8 +82,8 @@ def encode_session(config, pid, creation_filetime):
             encoded_adapters.extend([*replacement_pointers, *fields, kind])
             continue
         expected = PLAYER_TEMPLATES
-        if (move['flags'] not in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) and not (is_izuna_bridge(move) or is_flying_swallow(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
-                or is_flying_swallow(move) and fields[0]!=0xCF5
+        if (move['flags'] not in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) and not (is_izuna_bridge(move) or is_airborne_sword(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
+                or is_airborne_sword(move) and fields[0]!=(0xCF5 if move['key']<0xC81 else 0xC7A)
                 or tuple(fields[1:]) != expected[fields[0]] or kind == 1 and fields[0] in player_keys
                 or kind == 1 and fields[0] not in (0xCF5, 0xCF6, 0xCF7)
                 or kind in (2, 4) and fields[0] not in STANCE_OPENERS.values()):
@@ -106,7 +106,7 @@ def encode_session(config, pid, creation_filetime):
         frost_slots=config.get('frost_variants',[])
         if not isinstance(frost_slots,list):
             raise ValueError('Frost Moon requires three variant slots')
-        hold_keys = [adapters[index-1]['player_key'] for index in hold_slots if index not in frost_slots]
+        hold_keys = [adapters[index-1]['player_key'] for index in hold_slots if index not in frost_slots and moves[index-1]['key']!=0xC81]
         if len(set(hold_keys)) != len(hold_keys):
             raise ValueError('Only one held entry may own a player stance opener')
         for index, adapter in enumerate(adapters):
@@ -130,11 +130,13 @@ def encode_session(config, pid, creation_filetime):
                                   for move, adapter in zip(moves, adapters)):
         raise ValueError('Native grapple requires the retained Okatsu paired follow-through')
     native_bindings=int(native_grapple)
-    for bit,field in ((2,'tiger_sprint'),(4,'mid_light_ender')):
+    for bit,field in ((2,'tiger_sprint'),(4,'mid_light_ender'),(8,'high_guard_light')):
         enabled=config.get(field,False)
         if type(enabled) is not bool:
             raise ValueError('Native binding must be a boolean: '+field)
         if enabled: native_bindings|=bit
+    if native_bindings&8 and not any(move['key']==0xC81 and is_airborne_sword(move) for move in moves):
+        raise ValueError('High guard light requires the somersault entry')
     hold_stances=config.get('hold_stances',7 if hold_variant else 0)
     frost=config.get('frost_variants',[0,0,0]); window=config.get('frost_milliseconds',750)
     speed=config.get('frost_speed',8)

@@ -89,7 +89,7 @@ class Trainer:
         self.last_buttons = 0
         self.status = tk.StringVar(value='Ready')
         self.inputs = tk.StringVar(value='Waiting for saved controller')
-        self.notice = tk.StringVar(value='Low Triangle: Jin string D taps, launcher hold. Mid/high use native attacks.')
+        self.notice = tk.StringVar(value='Low Triangle: Jin string D taps, launcher hold. High LB + Square: Jin somersault.')
         self.record_status = tk.StringVar(value='Record action data during a fight. Imports update known sword moves.')
         self.exe_path = tk.StringVar(value=read_json(RUNTIME/'trainer-settings.json', {}).get('nioh_exe', os.environ.get('NIOH_EXE', '')))
         if self.exe_path.get():
@@ -154,6 +154,10 @@ class Trainer:
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
         for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint uses Okatsu dash'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
             ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')
+        self.guard_choices={'Native':None,'Jin somersault':'jin_hayabusa.action_0c81'}
+        self.guard_light=tk.StringVar()
+        self.control_row(frost,8,'High LB + Square',ttk.Combobox(frost,textvariable=self.guard_light,
+            values=list(self.guard_choices),state='readonly',width=24))
         controls = ttk.Frame(play)
         controls.grid(row=10, column=0, columnspan=2, sticky='w', pady=12)
         for title, command in (('Apply', self.apply), ('Save moveset…', self.save), ('Load moveset…', self.load), ('Restore baseline', self.baseline)):
@@ -256,6 +260,7 @@ class Trainer:
             field.set(next(label for label,identifier in self.frost_choices.items() if identifier==preset['frost_moon'][stance]))
         self.frost_window.set(str(preset['frost_window_seconds'])); self.frost_speed.set(str(preset['frost_startup_speed']))
         for field,variable in self.native_toggles.items(): variable.set(preset[field])
+        self.guard_light.set(next(label for label,identifier in self.guard_choices.items() if identifier==preset['high_guard_light']))
         for key,field in self.native_fields.items():
             choices=self.native_choices if key=='low_heavy' else self.skill_choices
             value=preset[key] if key=='low_heavy' else preset['stance_holds'][key]
@@ -269,6 +274,7 @@ class Trainer:
             hold_move=self.move_names[self.hold.get()], modifier_mask=self.button_choices[self.modifier.get()],
             trigger_mask=self.button_choices[self.trigger.get()], hold_seconds=float(self.threshold.get()),
             low_heavy=self.native_choices[self.native_fields['low_heavy'].get()],
+            high_guard_light=self.guard_choices[self.guard_light.get()],
             frost_moon={stance:self.frost_choices[field.get()] for stance,field in self.frost_fields.items()},
             frost_window_seconds=float(self.frost_window.get()),frost_startup_speed=int(self.frost_speed.get()),
             **{field:variable.get() for field,variable in self.native_toggles.items()},

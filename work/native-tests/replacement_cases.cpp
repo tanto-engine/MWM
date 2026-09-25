@@ -266,19 +266,50 @@ static void hold_reset(unsigned stance=2) {
     bindings(false);
 }
 
+static void held_slot_cases() {
+    // Frost/guard entries share native heavy templates but do not own held Triangle.
+    // Place optional entries before and after a real hold to reproduce both selection orders.
+    // Ordinary heavy and empty-Ki grapple must resolve the same configured hold slot.
+    for (unsigned stance : {2u,1u}) {
+        boss_hold_stances=7; hold_reset(stance); pending_heavy={};
+        boss_imports[6]=boss_imports[5]; boss_adapters[6]=boss_adapters[5]; boss_import_count=7;
+        boss_imports[6].key=stance==2 ? 0xC71 : 0xC81;
+        assert(!observed_action(player.data(),0xBC0,nullptr));
+        assert(pending_heavy.active && pending_heavy.hold==5);
+        if (stance==2) {
+            pending_heavy={};
+            assert(!observed_action(player.data(),0xD4A,nullptr));
+            assert(pending_heavy.active && pending_heavy.hold==5);
+        }
+        const uint32_t key=boss_adapters[5].player_key;
+        boss_imports[4]=boss_imports[6]; boss_adapters[4]=boss_adapters[6];
+        assert(stance_hold(key)==5); // Exclude optional entries even before the held import.
+        boss_imports[6].key=boss_imports[5].key;
+        assert(stance_hold(key)==5); // A later matching template cannot override compiler order.
+        boss_adapters[5].kind=0; boss_adapters[6].kind=0;
+        assert(stance_hold(key)==boss_import_count);
+        boss_hold_stances=0;
+        assert(stance_hold(key)==boss_import_count);
+    }
+    boss_hold_stances=7;
+}
+
 static void airborne_cases() {
     // Replay exact recorded source graphs against owned immutable action storage.
     // Assert stance isolation, native contact/landing branches and unchanged paired clocks.
     // Source bytes and counters prove adapter behavior, never successful gameplay contact.
-    hold_reset(0); pending_heavy={}; boss_import_count=15;
-    static uint8_t descriptors[9][0xD0],payloads[9][0xB0],rows[9][128][0x30];
-    static uint64_t pointers[9][128];
-    static uint8_t low_descriptor[0xD0],low_payload[0xB0];
+    hold_reset(0); pending_heavy={}; boss_import_count=18;
+    static uint8_t descriptors[12][0xD0],payloads[12][0xB0],rows[12][128][0x30];
+    static uint64_t pointers[12][128];
+    static uint8_t low_descriptor[0xD0],low_payload[0xB0],high_descriptor[0xD0],high_payload[0xB0];
     memcpy(low_descriptor,heavy_descriptors[0].data(),sizeof(low_descriptor));
     memcpy(low_payload,heavy_payloads[0].data(),sizeof(low_payload));
     put(low_descriptor,0,uint32_t(0xCF5)); put(low_descriptor,0x20,address(low_payload));
     put(low_descriptor,0x82,uint16_t(46)); put(low_payload,0x20,int32_t(4300)); put(low_payload,0x24,int16_t(38));
-    for (unsigned phase=0;phase<9;++phase) {
+    memcpy(high_descriptor,low_descriptor,sizeof(high_descriptor));memcpy(high_payload,low_payload,sizeof(high_payload));
+    put(high_descriptor,0,uint32_t(0xC7A));put(high_descriptor,0x20,address(high_payload));put(high_descriptor,0x82,uint16_t(42));
+    put(high_payload,0x20,int32_t(2300));put(high_payload,0x24,int16_t(46));
+    for (unsigned phase=0;phase<12;++phase) {
         const auto& source=airborne_sources[phase]; const unsigned slot=phase+5;
         auto& move=boss_imports[slot]; move={}; boss_private_actions[slot]={};
         move.key=source.key;move.motion=source.motion;move.flags=source.flags;
@@ -300,20 +331,21 @@ static void airborne_cases() {
         put(descriptors[phase],0x82,move.transition_count);
         boss_adapters[slot]=boss_adapters[5];
         auto& adapter=boss_adapters[slot];
-        adapter.kind=phase==0 || phase==5 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
+        adapter.kind=phase==0 || phase==5 || phase==9 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
         if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
         if (phase>=5) {adapter.player_descriptor=address(low_descriptor);adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
+        if (phase>=9) {adapter.player_descriptor=address(high_descriptor);adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;}
     }
-    boss_imports[14]=boss_imports[5];boss_adapters[14]=boss_adapters[5];boss_adapters[14].player_key=0xCF5;
+    boss_imports[17]=boss_imports[5];boss_adapters[17]=boss_adapters[5];boss_adapters[17].player_key=0xCF5;
     boss_frost_variants[0]=11;boss_frost_variants[1]=6;
-    assert(boss_native_successor(5,0xC7A)==6 && boss_native_successor(14,0xC7A)==-1);
+    assert(boss_native_successor(5,0xC7A)==6 && boss_native_successor(17,0xC7A)==-1);
     assert(boss_native_successor(13,0xC79)==-1);
     assert(boss_native_successor(5,0x3B2)==-1 && boss_native_successor(6,0x3B2)==7);
     assert(boss_native_successor(7,0x3B4)==8 && boss_native_successor(8,0x3B6)==9);
-    for (unsigned slot=5;slot<14;++slot) assert(boss_prepare_private_action(slot));
-    assert(boss_move_timing(5).startup_speed==8 && boss_move_timing(14).startup_speed==2);
+    for (unsigned slot=5;slot<17;++slot) assert(boss_prepare_private_action(slot));
+    assert(boss_move_timing(5).startup_speed==8 && boss_move_timing(17).startup_speed==2);
     for (unsigned slot=7;slot<=9;++slot) assert(boss_move_timing(slot).startup_speed==1);
-    for (unsigned phase : {1u,2u,3u,5u,6u,7u}) {
+    for (unsigned phase : {1u,2u,3u,5u,6u,7u,9u,10u}) {
         const auto& clone=boss_private_actions[phase+5];
         assert(clone.transition_count==airborne_sources[phase].count);
         assert(!memcmp(clone.transition_bodies,rows[phase],clone.transition_count*0x30));
@@ -325,8 +357,42 @@ static void airborne_cases() {
     memcpy(&onset,dash.payload+0x38,2);memcpy(&cost,dash.payload+0x16,2);
     assert(dash.payload[0x33]==40 && onset==-1 && cost==20 && dash.payload[9]==0xFA);
     assert(boss_private_actions[13].payload[0x33]==40 && boss_private_actions[13].transition_count>46);
+    assert(boss_native_successor(14,0xC82)==15 && boss_native_successor(15,0xC83)==16);
+    assert(boss_native_successor(13,0xC81)==-1 && boss_native_successor(16,0xC79)==-1);
+    assert(boss_move_timing(14).startup_speed==1 && boss_move_timing(16).recovery==30);
+    memcpy(&onset,boss_private_actions[15].payload+0x38,2);memcpy(&cost,boss_private_actions[15].payload+0x16,2);
+    assert(onset==-1 && cost==10 && boss_private_actions[15].payload[0x33]==40);
+    for (unsigned offset : {0x24u,0x26u,0x38u}) {memcpy(&onset,boss_private_actions[16].payload+offset,2);assert(onset==30);}
     rows[1][1][0]=0;assert(!boss_prepare_private_action(6));rows[1][1][0]=22;
     assert(boss_prepare_private_action(6));
+    // Commit the actual guard lookup and all three native phases with owned retained resources.
+    // Selector-only tests cannot catch a source-validation or resource-borrowing failure here.
+    // Ordinary completion must restore the four player slots after the imported landing.
+    static uint8_t guard[0xD0]{},skill[0xD0]{},guard_row[0x30]{};
+    static uint64_t guard_pointer=address(guard_row),source_entries[12];
+    for (unsigned phase=0;phase<12;++phase) source_entries[phase]=address(descriptors[phase]);
+    put(jin_bank.data(),0x128,address(source_entries));put(jin_bank.data(),0x130,uint32_t(12));
+    put(guard,0x78,address(&guard_pointer));put(guard,0x82,uint16_t(1));
+    guard_row[0x0B]=5;guard_row[0x0C]=0;guard_row[0x0D]=0;guard_row[0x0E]=1;
+    put(guard_row,0x14,int16_t(0xFA2));put(skill,0,uint32_t(0xFA2));skill[0x40]=1;
+    high_payload[0x0B]=1;put(player.data(),0x470,uint32_t(1));
+    put(player.data(),0x58,address(guard));put(player.data(),0x90,address(guard_row));
+    original_lookup=[](void*,uint32_t,uint32_t* bank) { *bank=0;return address(skill); };
+    boss_native_bindings=8;publish();
+    {
+        DispatchReason reason=Disabled;DispatchCommand request{};ReplacementScope scope(player.data(),request,reason);
+        uint32_t bank=0;
+        assert(observed_lookup(player.data()+0x70,0xFA2,&bank)==boss_private_descriptor_address(14));
+        assert(bank==1 && reason==Accepted && boss_active && boss_active_slot==14);
+    }
+    put(player.data(),0x58,boss_private_descriptor_address(14));boss_finish_call(player.data());
+    for (unsigned slot : {15u,16u}) {
+        SetLastError(FRAME_ERROR);
+        assert(observed_action(player.data(),boss_imports[slot].key,nullptr));
+        assert(boss_active_slot==slot && grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot)));
+    }
+    put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());assert(!boss_active);bindings(false);
+    boss_native_bindings=0;original_lookup=native_lookup;
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
 
@@ -391,6 +457,7 @@ int main() {
     // Run the three moves through ordinary setter calls with no armed controller gesture.
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
+    held_slot_cases();
     airborne_cases();
     frost_cases();
     // Empty-Ki selection resolves D4A before the ordinary heavy opener.

@@ -168,8 +168,9 @@ class RuntimeSessionTests(unittest.TestCase):
         from engine_config import DEFAULT_PRESET
         settings=copy.deepcopy(DEFAULT_PRESET)
         manifest=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xCAC,0xCAD])
+        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xCAC,0xCAD,0xC81,0xC82,0xC83])
         self.assertEqual((manifest['hold_stances'],manifest['frost_variants'],manifest['frost_milliseconds']), (1,[5,9,14],750))
+        settings['high_guard_light']=None
         settings['frost_moon']=dict(low=None,mid=None,high=None)
         manifest=prepare.configured_replacements(settings)
         self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79])
@@ -220,7 +221,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # A shared animation cannot authorize another source family or a forced paired entry.
         import prepare_session as prepare
         from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET);settings['frost_moon']['low']=None
+        settings=copy.deepcopy(DEFAULT_PRESET);settings['frost_moon']['low']=None;settings['high_guard_light']=None
         manifest=prepare.configured_replacements(settings)
         moves=manifest['moves']; low,izuna,bridge=moves[3:6]
         check_import_topology(moves,None)
@@ -258,7 +259,7 @@ class RuntimeSessionTests(unittest.TestCase):
                          [0xC6E,0xC6F,0xC70,0xC79,0xCAC,0xCAD])
         settings=copy.deepcopy(DEFAULT_PRESET)
         complete=prepare.configured_replacements(settings)
-        self.assertEqual((len(complete['moves']),complete['hold_stances']), (15,1))
+        self.assertEqual((len(complete['moves']),complete['hold_stances']), (18,1))
         flying=[move for move in complete['moves'] if 0xC71<=move['key']<=0xC74]
         self.assertEqual([(move['key'],move['ki_cost']) for move in flying],[(0xC71,0),(0xC72,20),(0xC73,0),(0xC74,0)])
         for source in flying:
@@ -274,6 +275,47 @@ class RuntimeSessionTests(unittest.TestCase):
             bad=copy.deepcopy(self.config);bad['imports'][index][field]=value
             with self.subTest(phase=index,field=field),self.assertRaises(ValueError):
                 encode_session(bad,self.pid,self.born)
+
+    def test_default_guard_binding_prunes_disabled_strings_and_encodes_all_phases(self):
+        # Compile the complete selected preset with its actual baseline dependency filter.
+        # Encode the guard graph alongside both launcher aliases and all Frost bindings.
+        # Disabled strings must not consume slots or remap grapple to a stale index.
+        import prepare_session as prepare
+        from engine_config import DEFAULT_PRESET
+        settings=copy.deepcopy(DEFAULT_PRESET)
+        baseline=prepare.configured_imports(settings)
+        self.assertEqual([move['key'] for move in baseline['moves']],[0xC64,0xC66,0x361])
+        self.config['imports']=[self.config['imports'][index] for index in (0,1,6)]
+        self.config['adapters']=[None]*3;self.config['string_variant']=0
+        compiled=prepare.configured_replacements(settings,baseline)
+        for source in compiled['moves']:
+            move=copy.deepcopy(source);address=0x500000+move['key']*0x1000
+            move.update(descriptor=address,payload=address+0x100,clip=address+0x200,timing_record=address+0x300)
+            if move['next_variant']>=0: move['next_variant']+=3
+            template=move.get('replacement',dict(player_key=0,player_motion=0,transition_count=0,recovery_frame=0))
+            adapter=dict(action_resource=0x910000,timing_resource=0x920000,bank=0x930000,
+                         motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
+                         player_descriptor=0xA00000+template['player_key']*0x100 if template['player_key'] else 0,**template)
+            self.config['imports'].append(move);self.config['adapters'].append(adapter)
+        self.config.update(hold_variant=compiled['hold_variant']+3,hold_milliseconds=250,hold_camera_bank=0x960000,
+            hold_stances=1,frost_variants=[slot+3 for slot in compiled['frost_variants']],
+            high_guard_light=True,native_grapple=True,tiger_sprint=True,mid_light_ender=True)
+        values=SESSION_CONFIG.unpack(encode_session(self.config,self.pid,self.born))
+        self.assertEqual((values[9],values[42]),(15,21))
+        self.assertEqual([move['key'] for move in self.config['imports'][-3:]],[0xC81,0xC82,0xC83])
+        for index,field,value in ((18,'motion',1051),(19,'ki_cost',0),(20,'transition_count',74)):
+            bad=copy.deepcopy(self.config);bad['imports'][index][field]=value
+            with self.subTest(index=index,field=field),self.assertRaises(ValueError):
+                encode_session(bad,self.pid,self.born)
+        settings['high_guard_light']=None
+        self.assertNotIn(0xC81,[move['key'] for move in prepare.configured_replacements(settings)['moves']])
+        settings['okatsu_grapple']=False
+        self.assertEqual(len(prepare.configured_imports(settings)['moves']),2)
+        settings['string_enabled']=True
+        self.assertEqual(len(prepare.configured_imports(settings)['moves']),7)
+        settings['high_guard_light']='jin_hayabusa.action_0c81'
+        with self.assertRaisesRegex(ValueError,'exceed the runtime table'):
+            prepare.configured_replacements(settings)
 
     def test_native_pair_cannot_become_a_timed_or_direct_combo_link(self):
         # Keep paired success separate from timed links and direct gesture entry.

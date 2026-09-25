@@ -51,14 +51,14 @@ struct MoveAdapter {
     int32_t player_motion;
     uint16_t transition_count;
     int16_t recovery_frame;
-    uint32_t kind; // 0 baseline, 1 native replacement, 2 held entry, 3 native paired continuation.
+    uint32_t kind; // 0 baseline, 1 native replacement, 2 skill entry, 3 paired, 4 ordinary continuation.
 };
 static_assert(sizeof(MoveAdapter) == 64, "Adapter ABI size");
 
 struct RuntimeSessionConfig {
     uint32_t magic, version, size, pid;
     uint64_t creation_filetime, config_tag;
-    uint64_t hold_variant, hold_milliseconds, hold_camera_bank, native_bindings; // grapple1, Tiger Sprint2, mid ender4
+    uint64_t hold_variant, hold_milliseconds, hold_camera_bank, native_bindings; // grapple1, Tiger Sprint2, mid ender4, high guard light8
     uint64_t hold_stances, frost_variants[3], frost_milliseconds, frost_speed;
     BossSession session;
     uint32_t import_count, string_variant;

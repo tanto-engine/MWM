@@ -19,12 +19,13 @@ PLAYER_TEMPLATES = {0xCF5: (4300, 46, 38), 0xCF6: (4310, 46, 29), 0xCF7: (4320, 
 STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xCB7, 'high': 0xC7A}
 
 
-def is_flying_swallow(move):
-    # Admit the complete recorded jump, dash, descent and landing graph.
+def is_airborne_sword(move):
+    # Admit the recorded Flying Swallow and somersault graphs.
     # Bound zero-flag airborne imports by exact source identity and adapter role.
     # Grounded sword adaptation is used only after the landing action begins.
     return (move.get('key'),move.get('motion'),move.get('flags'),move.get('adapter_kind')) in (
-        (0xC71,1050,0,2),(0xC72,5000,0,4),(0xC73,5001,0,4),(0xC74,5002,0x1BCE0000,4))
+        (0xC71,1050,0,2),(0xC72,5000,0,4),(0xC73,5001,0,4),(0xC74,5002,0x1BCE0000,4),
+        (0xC81,1050,0,2),(0xC82,5050,0,4),(0xC83,5051,0x1BCE0000,4))
 
 
 def is_izuna_bridge(move):
@@ -57,7 +58,7 @@ def check_import_topology(moves, string_variant):
         raise ValueError('Import table requires 2 to 24 moves')
     if any(not isinstance(move, dict) for move in moves):
         raise ValueError('Import rows must be objects')
-    replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_flying_swallow(move) for move in moves)
+    replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) for move in moves)
     if not replacement_only and (type(string_variant) is not int or not 0 <= string_variant < len(moves)):
         raise ValueError('String entry is outside the import table')
     ids, keys = set(), {}
@@ -70,8 +71,8 @@ def check_import_topology(moves, string_variant):
         ids.add(move['id']); keys[move['key']]=move
         flags = move['flags']
         bridge=is_izuna_bridge(move)
-        flying=is_flying_swallow(move)
-        replacement = flags in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) or bridge or flying
+        airborne=is_airborne_sword(move)
+        replacement = flags in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) or bridge or airborne
         if replacement and (move['adapter_kind'] not in (1, 2, 4)
                 or flags == STANCE_SKILL_FLAGS and move['adapter_kind'] not in (2, 4)):
             raise ValueError('Source action family requires a supported native adapter')
@@ -80,13 +81,14 @@ def check_import_topology(moves, string_variant):
                 ('next_variant', -1, len(moves)-1), ('next_start', 0, 0x7fff), ('next_end', 0, 0x7fff)):
             if type(move[field]) is not int or not lower <= move[field] <= upper:
                 raise ValueError(f'Import {field} is outside supported bounds')
-        if type(flags) is not int or not (bridge or flying) and flags not in (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS):
+        if type(flags) is not int or not (bridge or airborne) and flags not in (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS):
             raise ValueError('Unsupported source action family')
         if bridge and (move['recovery_frame'],move['ki_cost'],move['transition_count']) != (-1,0,19):
             raise ValueError('Izuna contact bridge differs from its recorded source')
-        if flying and (move['recovery_frame'],move['ki_cost'],move['transition_count'],move['next_variant']) != {
-                0xC71:(-1,0,18,-1),0xC72:(-1,20,17,-1),0xC73:(-1,0,18,-1),0xC74:(20,0,75,-1)}[move['key']]:
-            raise ValueError('Flying Swallow differs from its recorded native graph')
+        if airborne and (move['recovery_frame'],move['ki_cost'],move['transition_count'],move['next_variant']) != {
+                0xC71:(-1,0,18,-1),0xC72:(-1,20,17,-1),0xC73:(-1,0,18,-1),0xC74:(20,0,75,-1),
+                0xC81:(-1,0,18,-1),0xC82:(-1,10,18,-1),0xC83:(-1,0,75,-1)}[move['key']]:
+            raise ValueError('Airborne sword move differs from its recorded native graph')
         if ((flags == SUPPORTED_SOURCE_FLAGS or replacement and move['adapter_kind'] == 1) and move['recovery_frame'] <= 0
                 or flags in (GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_PAIRED_FLAGS) and move['recovery_frame'] != -1):
             raise ValueError('Recovery policy differs from the source action family')
@@ -122,7 +124,7 @@ def check_import_topology(moves, string_variant):
                     raise ValueError('Izuna contact must enter the recorded paired lift')
             elif target['flags'] == PLAYER_PAIRED_FLAGS or ((move['flags'] == GRAB_ATTEMPT_FLAGS) != (target['flags'] == PAIRED_ATTACKER_FLAGS)):
                 raise ValueError('Only the native grab-success link may enter a paired action')
-    if not replacement_only and (moves[string_variant]['flags'] in (PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(moves[string_variant]) or is_flying_swallow(moves[string_variant])):
+    if not replacement_only and (moves[string_variant]['flags'] in (PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(moves[string_variant]) or is_airborne_sword(moves[string_variant])):
         raise ValueError('A paired or player-replacement action cannot be the direct string entry')
     for start in range(len(moves)):
         visited = set()
@@ -168,8 +170,8 @@ def read_import_manifest(path, catalogue_path=None):
                 continue
             adapter = move['replacement']
             values = tuple(adapter[field] for field in ('player_motion', 'transition_count', 'recovery_frame'))
-            if (move['adapter_kind'] not in (1, 2, 4) or not (move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) or is_izuna_bridge(move) or is_flying_swallow(move)) or type(adapter['player_key']) is not int
-                    or is_flying_swallow(move) and adapter['player_key']!=0xCF5
+            if (move['adapter_kind'] not in (1, 2, 4) or not (move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move)) or type(adapter['player_key']) is not int
+                    or is_airborne_sword(move) and adapter['player_key']!=(0xCF5 if move['key']<0xC81 else 0xC7A)
                     or adapter['player_key'] not in PLAYER_TEMPLATES or values != PLAYER_TEMPLATES[adapter['player_key']]
                     or move['adapter_kind'] == 1 and adapter['player_key'] not in (0xCF5, 0xCF6, 0xCF7)
                     or move['adapter_kind'] in (2, 4) and adapter['player_key'] not in STANCE_OPENERS.values()

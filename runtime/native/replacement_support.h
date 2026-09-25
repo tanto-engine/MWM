@@ -252,6 +252,18 @@ static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigne
 
 #include "sword_bindings.h"
 
+static unsigned stance_hold(uint32_t key) {
+    // Compiled holds precede optional Frost Moon and guard imports sharing their template.
+    // Never let Flying Swallow or the guard somersault consume ordinary held Triangle.
+    // Native stance masks and compiler order decide the first eligible held entry.
+    const unsigned stance=key==0xCF5 ? 1 : key==0xCB7 ? 2 : key==0xC7A ? 4 : 0;
+    if (boss_hold_variant && (boss_hold_stances&stance))
+        for (unsigned slot=0;slot<boss_import_count;++slot)
+            if (boss_adapters[slot].kind==2 && boss_adapters[slot].player_key==key
+                && boss_imports[slot].key!=0xC71 && boss_imports[slot].key!=0xC81) return slot;
+    return boss_import_count;
+}
+
 static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_index) {
     // Replace only the concrete low-heavy action selected by native input resolution.
     // Match William's exact descriptor after stance/running rules, then share the import adapter.
@@ -267,6 +279,12 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
     }
     if (*bank_index==0 && boss_native_bindings) {
         DispatchCommand command{};
+        const int guard_slot=high_guard_light_slot(key,descriptor,*bank_index,command);
+        if (guard_slot>=0) {
+            if (const uint64_t adapted=native_skill_import(unsigned(guard_slot),key,command)) {
+                *bank_index=1; SetLastError(native_error); return adapted;
+            }
+        }
         if ((boss_native_bindings&4) && key>=0xCB3 && key<=0xCB5 && native_binding_context(command)) {
             const uint64_t adapted=mid_light_ender(context,key,descriptor);
             SetLastError(native_error); return adapted ? adapted : descriptor;
@@ -276,14 +294,8 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
             if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
                 && grapple_field(descriptor,0x82,uint16_t(21)) && copy_field(descriptor+0x20,payload)
                 && grapple_field(payload,0x18,uint64_t(0x40017C00000ULL)) && grapple_field(payload,0x20,int32_t(5090))) {
-                const auto& move=boss_imports[0];
-                command.reserved[1]=0; command.desired_key=move.key; command.expected_motion=move.motion;
-                command.expected_descriptor=move.descriptor; command.expected_payload=move.payload;
-                uint32_t forwarded=key; void* unused=nullptr; uint64_t banks[3]{}; auto reason=Accepted;
-                if (boss_prepare_call(replacement_call.actor,key,reason,command,forwarded,unused,banks) && reason==Accepted) {
-                    *replacement_call.command=command; *replacement_call.reason=Accepted; *bank_index=1;
-                    InterlockedIncrement64(&dispatch->control.dispatch_count);
-                    SetLastError(native_error); return boss_private_descriptor_address(0);
+                if (const uint64_t adapted=native_skill_import(0,key,command)) {
+                    *bank_index=1; SetLastError(native_error); return adapted;
                 }
             }
         }
@@ -295,17 +307,15 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
     // Empty-Ki Triangle resolves to D4A instead of CF5. Delay its verified native
     // entry before contact; a tap keeps its target checks and paired ownership.
     if (key==0xD4A && *bank_index==0 && boss_hold_variant && (boss_hold_stances&1)) {
-        uint64_t payload=0;
-        if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
+        uint64_t payload=0; const unsigned hold=stance_hold(0xCF5); DispatchCommand command{};
+        if (hold<boss_import_count && grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
             && grapple_field(descriptor,0x82,uint16_t(37)) && copy_field(descriptor+0x20,payload)
-            && grapple_field(payload,0x18,uint64_t(0x194C0000)) && grapple_field(payload,0x20,int32_t(5050)))
-            for (unsigned hold=0;hold<boss_import_count;++hold) {
-                const auto& adapter=boss_adapters[hold]; DispatchCommand command{};
-                if (adapter.kind!=2 || adapter.player_key!=0xCF5 || !replacement_context(command,adapter)) continue;
-                if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,hold,command)) {
-                    SetLastError(native_error); return deferred;
-                }
+            && grapple_field(payload,0x18,uint64_t(0x194C0000)) && grapple_field(payload,0x20,int32_t(5050))
+            && replacement_context(command,boss_adapters[hold])) {
+            if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,hold,command)) {
+                SetLastError(native_error); return deferred;
             }
+        }
     }
     for (unsigned slot=0; slot<boss_import_count; ++slot) {
         const auto& adapter = boss_adapters[slot];
@@ -314,10 +324,7 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         // A fresh publisher is still required for lifecycle identity and Stop.
         // Native low-heavy requests remain independent of optional chord intent.
         if (!replacement_context(command,adapter)) break;
-        unsigned hold=boss_import_count;
-        if (boss_hold_variant) for (unsigned i=0;i<boss_import_count;++i)
-            if (boss_adapters[i].kind==2 && boss_adapters[i].player_key==key
-                && (boss_hold_stances&(key==0xCF5 ? 1 : key==0xCB7 ? 2 : 4))) hold=i;
+        const unsigned hold=stance_hold(key);
         if (hold<boss_import_count) {
             if (const uint64_t deferred=defer_heavy(player,key,adapter.kind==1 ? slot : UINT32_MAX,hold,command)) {
                 SetLastError(native_error);

@@ -48,7 +48,9 @@ static MoveTiming boss_move_timing(unsigned slot) {
     // C79 recovers after non-audio event53; clips and event cursors remain unchanged.
     // Paired actions retain their source lifecycle; gameplay acceptance of these values is pending.
     const auto& move=boss_imports[slot];
-    if (flying_swallow(move,boss_adapters[slot]) && move.key==0xC71)
+    if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC83)
+        return {30,0,1}; // Landing clip37; last non-audio event29.
+    if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC71)
         return {-1,19,boss_frost_variants[0]==slot+1 ? float(boss_frost_speed) : 1};
     if (boss_adapters[slot].kind==2 && move.key==0xCAC && move.motion==5110 && move.flags==0x200194C0000ULL)
         for (auto frost : boss_frost_variants) if (frost==slot+1) return {move.recovery_frame,28,float(boss_frost_speed)};
@@ -94,6 +96,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
         || (source.key==0xC79 && key==0xC7A) || (source.key==0xCAC && key==0xCAD)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
+        || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
         || ((source.key==0x3B2 || source.key==0x3B4) && (key==0x3B4 || key==0x3B6));
     if (!linked) return -1;
     for (unsigned next=0;next<boss_import_count;++next) {
@@ -353,10 +356,10 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (recovery_start != spec.recovery_frame || base_ki_cost < 0
         || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && base_ki_cost == 0)) return false;
     recovery_start=boss_move_timing(slot).recovery;
-    if (flying_swallow(spec,boss_adapters[slot]) && spec.key==0xC72) {
-        // Native71000A accumulates recoverable Ki from this dash's actual cost.
+    if (airborne_sword(spec,boss_adapters[slot]) && (spec.key==0xC72 || spec.key==0xC82)) {
+        // Native71000A accumulates recoverable Ki from the airborne attack's actual cost.
         // A negative onset keeps it pending throughout the airborne phases.
-        // Zero-cost C73/C74 preserve the balance; landing opens the native timer at20.
+        // Zero-cost follow-ups preserve the balance until their landing recovery frame.
         payload[0x33]=40;
         const int16_t pending=-1; memcpy(payload+0x38,&pending,2);
     }
@@ -378,7 +381,7 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     }
     uint8_t transitions[64][0x30]{}; uint16_t transition_count = 0;
     const bool izuna_bridge=boss_adapters[slot].kind==4 && spec.key==0xC7A && spec.motion==1050 && !spec.flags;
-    const bool airborne=flying_swallow(spec,boss_adapters[slot]) && spec.key!=0xC74;
+    const bool airborne=airborne_sword(spec,boss_adapters[slot]) && spec.key!=0xC74 && spec.key!=0xC83;
     if (!izuna_bridge && !airborne && (boss_adapters[slot].kind == 1 || boss_adapters[slot].kind == 2 || boss_adapters[slot].kind == 4)) {
         if (!boss_copy_player_transitions(slot,descriptor,transitions,transition_count)) return false;
     } else if (!boss_copy_pulse_transitions(slot, descriptor, transitions, transition_count)) return false;

@@ -51,28 +51,30 @@ int main() {
     // Mutate the seven-import ABI and drive owned frame recovery scenarios.
     // Stale process identities and reused actor pointers must not authorize native writes.
     auto incoming = config();
-    auto aerial=incoming; aerial.import_count=17; aerial.hold_variant=17; aerial.hold_milliseconds=250;
+    auto aerial=incoming; aerial.import_count=20; aerial.hold_variant=20; aerial.hold_milliseconds=250;
     aerial.hold_camera_bank=0x960000; aerial.hold_stances=1; aerial.frost_variants[0]=13; aerial.frost_variants[1]=8;
-    for (unsigned phase=0;phase<9;++phase) {
+    for (unsigned phase=0;phase<12;++phase) {
         const auto& source=airborne_sources[phase];const unsigned slot=phase+7;
         auto& move=aerial.imports[slot];move=incoming.imports[0];move.voice_count=0;memset(move.voices,0,sizeof(move.voices));
         move.descriptor=0x500000+source.key*0x100;move.payload=move.descriptor+0x20;move.clip=move.descriptor+0x40;move.timing_record=move.descriptor+0x60;
         move.key=source.key;move.motion=source.motion;move.flags=source.flags;
         move.recovery_frame=source.recovery;move.transition_count=uint16_t(source.count);move.next_variant=phase==1 ? 9 : -1;
         auto& adapter=aerial.adapters[slot];adapter={0x910000,0x920000,0x930000,0x940000,0x950000,0xA00000,0xCB7,3300,40,58,2};
-        adapter.kind=phase==0 || phase==5 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
+        adapter.kind=phase==0 || phase==5 || phase==9 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
         if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
         if (phase>=5) {adapter.player_descriptor=0xA10000;adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
+        if (phase>=9) {adapter.player_descriptor=0xA20000;adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;}
     }
-    aerial.imports[16]=aerial.imports[7];aerial.adapters[16]=aerial.adapters[12];
+    aerial.imports[19]=aerial.imports[7];aerial.adapters[19]=aerial.adapters[12];
+    aerial.native_bindings=8;
     assert(runtime_imports_valid(aerial));
-    for (unsigned slot : {7u,8u,9u,12u,13u,14u,15u,16u}) {
+    for (unsigned slot : {7u,8u,9u,12u,13u,14u,15u,16u,17u,18u,19u}) {
         auto invalid=aerial;invalid.imports[slot].flags^=1;
         assert(!runtime_imports_valid(invalid));
     }
-    auto invalid_alias=aerial;invalid_alias.imports[16].descriptor+=8;
+    auto invalid_alias=aerial;invalid_alias.imports[19].descriptor+=8;
     assert(!runtime_imports_valid(invalid_alias));
-    invalid_alias=aerial;invalid_alias.adapters[16]=aerial.adapters[7];
+    invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
     static_assert(RUNTIME_SESSION_VERSION==7 && sizeof(RuntimeSessionConfig)==4168
         && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632);

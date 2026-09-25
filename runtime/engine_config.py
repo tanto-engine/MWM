@@ -29,6 +29,7 @@ DEFAULT_PRESET = dict(schema_version=3, name='Sword baseline', weapon='sword',
                       low_heavy='jin_hayabusa.action_0c6e',
                       stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
                       okatsu_grapple=True, tiger_sprint=True, mid_light_ender=True, string_enabled=False,
+                      high_guard_light='jin_hayabusa.action_0c81',
                       frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.izuna_drop', high='jin_hayabusa.action_0cac'),
                       frost_window_seconds=.75, frost_startup_speed=8)
 
@@ -130,6 +131,8 @@ def validate_preset(value):
         raise ValueError('Hold threshold must be between 0.08 and 2 seconds')
     if result['weapon'] != 'sword' or result['low_heavy'] not in (None, *HEAVY_STRINGS):
         raise ValueError('Choose a supported sword string for low Triangle')
+    if result['high_guard_light'] not in (None, 'jin_hayabusa.action_0c81'):
+        raise ValueError('High LB + Square requires Jin somersault or Native')
     holds=result['stance_holds']
     if not isinstance(holds, dict) or set(holds) != {'low','mid','high'}:
         raise ValueError('Held Triangle requires low, mid and high entries')

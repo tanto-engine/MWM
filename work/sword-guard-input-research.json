@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "scope": "Read-only source/native research; no activation, game writes or gameplay acceptance.",
+  "source": {
+    "path": "work/player-low-heavy-evidence.json",
+    "sha256": "bf0765cb009f896ea5d97e2b990829e65d460cae23d69fca6fa451b7431816cb",
+    "rows": [
+      {
+        "action": "0xce7",
+        "motion": 2061,
+        "row": 6,
+        "kind": 0,
+        "target": "0xfa2",
+        "skill_condition": "0x3580",
+        "bytes": "ffffffffffffffffffff00050000010000000000a20f000800806464000000000080ff7fffffffffffffffff80350000"
+      },
+      {
+        "action": "0xcea",
+        "motion": 2064,
+        "row": 6,
+        "kind": 0,
+        "target": "0xfa2",
+        "skill_condition": "0x3580",
+        "bytes": "ffffffffffffffffffff00050000010000000000a20f000800806464000000000080ff7fffffffffffffffff80350000"
+      },
+      {
+        "action": "0xcea",
+        "motion": 2064,
+        "row": 8,
+        "kind": 255,
+        "target": "0xcf8",
+        "skill_condition": "0xffffffff",
+        "bytes": "ffffffffffffffffffffff050000010000000000f80c000300806464000000000080ff7fffffffffffffffffffffffff"
+      },
+      {
+        "action": "0xcec",
+        "motion": 1160,
+        "row": 3,
+        "kind": 255,
+        "target": "0xcf8",
+        "skill_condition": "0xffffffff",
+        "bytes": "ffffffffffffffffffffff050000010000000000f80c000300806464000000000080ff7fffffffffffffffffffffffff"
+      },
+      {
+        "action": "0xcec",
+        "motion": 1160,
+        "row": 6,
+        "kind": 0,
+        "target": "0xfa2",
+        "skill_condition": "0x3580",
+        "bytes": "ffffffffffffffffffff00050000010000000000a20f000800806464000000000080ff7fffffffffffffffff80350000"
+      }
+    ]
+  },
+  "input_contract": {
+    "row_bytes_0B_to_0E": [
+      5,
+      0,
+      0,
+      1
+    ],
+    "meaning": "Selector5/state0 guard held AND selector0/state1 light attack pressed. Selector1/state1 instead of selector0 identifies Triangle.",
+    "evaluator": "Native721010 tests row+0B/+0C through input virtual+C8, then tests row+0D/+0E through the same function. Existing native input/frame windows remain authoritative.",
+    "loadout": "Native720D50 checks condition+2C through action virtual+180. Recorded enabled rows selectFA2 with skill condition0x3580. CF8 fallbacks in these captures have kindFF and are excluded; these bytes do not establish its enabled use.",
+    "ordinary": "Ordinary/running light attack has selector0/state1 with secondary FF/FF. Guard+Triangle uses5/0/1/1; dodge uses other selectors. None matches5/0/0/1."
+  },
+  "selected_row_order": [
+    "Native710A66 stores selected transition pointer in action_node+90;710A70 loads signed row+14 target,710A77 calls virtual+1A0.",
+    "Supported action-node vtable11A3530+1A0 resolves70ECE0, the existing observed_action target.",
+    "70ED1B calls7119C0;711A04 calls73FA40 lookup before711C16 commits new action_node+58.",
+    "Thus selected row+90 belongs to the outgoing/current descriptor during the intercepted initial lookup.711B03 also sets+90 for redirect rows; requiring current-slice membership rejects unrelated redirect/stale rows."
+  ],
+  "implementation": {
+    "files": [
+      "runtime/native/sword_bindings.h",
+      "runtime/native/replacement_support.h"
+    ],
+    "guard": "native_bindings bit8; concrete player/native context; high stance1; bank0; no active imported graph; selected row belongs to current descriptor transition slice; row kind0/2; exact5/0/0/1 inputs; signed row target matches selected lookup key.",
+    "freshness": "Recheck selected row bytes, current/selected pointers and table/start/count before preparing the imported source graph.",
+    "replacement": "C81/1050 kind2 on highC7A template, followed by the separately validated C82/C83 graph. The original skill ID is intentionally not fixed.",
+    "disabled": "No matching native skill selection means no new action; dormant kindFF rows remain dormant."
+  },
+  "held_triangle_fix": {
+    "reproduction": "Owned fixture configured_hold5 selected_slot6 selected_keyC71 active1 before fix.",
+    "change": "Both ordinary Triangle and empty-Ki D4A use first eligible stance-held kind2 entry, excluding C71 Flying Swallow and C81 guard somersault.",
+    "verification": "Existing replacement_cases.cpp passes with later/before-held optional entries, first-match order and disabled stance checks."
+  },
+  "verification": {
+    "owned_tests": [
+      "work/native-tests/sword_bindings_cases.cpp",
+      "work/native-tests/replacement_cases.cpp"
+    ],
+    "result": "Both compile with -std=c++17 -O2 -Wall -Wextra -Werror and pass.32 guard selector cases cover alternative targets, stances, Square/running/dodge/Triangle, stale row, disabled/bank/target/kind/source/context rejection. C81-C83 source graph has separate root-owned tests.",
+    "limits": "Current recorded actor addresses are stale. Bounded passive reads did not revalidate a live player; actual high-stance input and somersault gameplay acceptance remain pending."
+  },
+  "native_windows": [
+    {
+      "rva": "0x710a58",
+      "size": 44,
+      "sha256": "0f7a4403cb49383a05ffb82ac4ac502340c85e95464372b01f374becb6b62b50"
+    },
+    {
+      "rva": "0x7119d8",
+      "size": 49,
+      "sha256": "2155f189206a278db631ad2786928cb5a5c2f425152e50be584adc8efe2affe8"
+    },
+    {
+      "rva": "0x711be2",
+      "size": 56,
+      "sha256": "3fd3eeeacfccf046c70428aa3aaa6cf4a9eccbcfb5f1df6cd82fca0a80f94199"
+    },
+    {
+      "rva": "0x721010",
+      "size": 190,
+      "sha256": "ddc75a5bfec2aeb2d7e0ab2927e7faaad3df332ae24886b87446450b0b292a13"
+    },
+    {
+      "rva": "0x720d50",
+      "size": 325,
+      "sha256": "eed07b6de2d917ac2a87e8c95883242913ede83cae4e9c2045198baf4fe7be29"
+    }
+  ]
+}
