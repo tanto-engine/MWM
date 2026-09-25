@@ -150,7 +150,7 @@ class Trainer:
         self.frost_window=tk.StringVar(); self.frost_speed=tk.StringVar()
         self.control_row(frost,3,'Window (seconds)',ttk.Spinbox(frost,textvariable=self.frost_window,from_=.1,to=1.5,increment=.05,width=8))
         self.control_row(frost,4,'Startup speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
-        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow is unassigned in the basic preset.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
+        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: Izuna Drop. High: overhead slice.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
         for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint uses Okatsu dash'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
             ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')

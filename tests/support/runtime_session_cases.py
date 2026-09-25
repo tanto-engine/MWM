@@ -168,8 +168,8 @@ class RuntimeSessionTests(unittest.TestCase):
         from engine_config import DEFAULT_PRESET
         settings=copy.deepcopy(DEFAULT_PRESET)
         manifest=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xCAC,0xCAD])
-        self.assertEqual((manifest['hold_stances'],manifest['frost_variants'],manifest['frost_milliseconds']), (1,[0,5,10],750))
+        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xCAC,0xCAD])
+        self.assertEqual((manifest['hold_stances'],manifest['frost_variants'],manifest['frost_milliseconds']), (1,[5,9,14],750))
         settings['frost_moon']=dict(low=None,mid=None,high=None)
         manifest=prepare.configured_replacements(settings)
         self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79])
@@ -220,7 +220,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # A shared animation cannot authorize another source family or a forced paired entry.
         import prepare_session as prepare
         from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET)
+        settings=copy.deepcopy(DEFAULT_PRESET);settings['frost_moon']['low']=None
         manifest=prepare.configured_replacements(settings)
         moves=manifest['moves']; low,izuna,bridge=moves[3:6]
         check_import_topology(moves,None)
@@ -256,7 +256,7 @@ class RuntimeSessionTests(unittest.TestCase):
         settings['frost_moon']['mid']=None
         self.assertEqual([move['key'] for move in prepare.configured_replacements(settings)['moves']],
                          [0xC6E,0xC6F,0xC70,0xC79,0xCAC,0xCAD])
-        settings=copy.deepcopy(DEFAULT_PRESET);settings['frost_moon']['low']='jin_hayabusa.action_0c71'
+        settings=copy.deepcopy(DEFAULT_PRESET)
         complete=prepare.configured_replacements(settings)
         self.assertEqual((len(complete['moves']),complete['hold_stances']), (15,1))
         flying=[move for move in complete['moves'] if 0xC71<=move['key']<=0xC74]

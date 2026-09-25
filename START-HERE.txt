@@ -31,7 +31,7 @@ Configuration:
   Its previous-action cancellation uses native Pulse availability, not animation end.
   Mid Frost Moon: RB + Square twice, C79 -> C7A contact -> 3B2/3B4 -> 3B6 Izuna.
   Its first8 launcher frames accelerate; the paired sequence retains native speed/camera.
-  Low Frost Moon is unassigned in the basic preset. Optional Flying Swallow runs
+  Low Frost Moon: R1 + X (PlayStation) / RB + A (Xbox), twice. Flying Swallow runs
   C71 jump -> C72 dash -> C73 descent -> C74 landing, preserving native transitions.
   Jump startup accelerates through19; dash Ki20 carries to the landing Pulse at20.
   Low launcher: grounded impulse12 ->16 plus50% native collision weight for its victim

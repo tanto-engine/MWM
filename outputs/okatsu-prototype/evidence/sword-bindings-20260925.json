@@ -10,7 +10,7 @@
     "startup": "CAC shared native motion/timing clock through frame28, first non-audio timing event. Configurable1..8x; default8. No event seek or clip truncation.",
     "previous_recovery": "May leave the previous action during its native Ki Pulse availability window; does not wait for animation end",
     "mid": "C79/5014 -> C7A/1050 native condition22 -> 3B2/5020, optional3B4/5021 -> 3B6/5022. Source recorded together with victims3B3/35300 and3B7/35302 in work/jin-izuna-retry2-20260925/events.jsonl. First8 launcher frames use configured startup; paired camera/speed unchanged.",
-    "low": "Basic unassigned; optional full C71/1050 jump -> C72/5000 dash -> C73/5001 descent -> C74/5002 landing. Source conditions unchanged; no grounded cancel rows during flight.",
+    "low": "Enabled in the default preset: full C71/1050 jump -> C72/5000 dash -> C73/5001 descent -> C74/5002 landing. Source conditions unchanged; no grounded cancel rows during flight.",
     "airborne_ki": "Native70FF6E resets Pulse only forpositivecost orpayloadflags&40200. C72 keeps Ki20 and setsprivatepercent40/start-1; zero-cost C73/C74 do notresetthependingbalance. Native71000A accumulatesactualadjustedcost; C74privatepercent40 andstart20 open7B59F0 through715118. No direct Ki writes; gameplay pending.",
     "graph_regression": "Reproduced C74 successor search leaking into separate low C79; now restrict source edges and stance ownership. Existing native replacement cases cover both graphs."
   },
@@ -87,8 +87,8 @@
       "tests/test_move_readiness.py --offline",
       "tests/test_resource_crashes.py"
     ],
-    "trainer": "Nioh 1 Sword Mod; 995x702 requested layout fits1030x760; defaultMidIzuna/Highslice/Lowdisabled",
-    "workbook_sha256": "90283c5a9b84dde762a4f7f1e9445631c5b83bc6015a7f7269a1ae11fecca60c",
+    "trainer": "Nioh 1 Sword Mod; 995x702 requested layout fits1030x760; defaultMidIzuna/Highslice/LowFlyingSwallow",
+    "workbook_sha256": "aed5b0558a1fdd46a5e84ecfb7fa4a15ba0734f633bb80dd2bf4a26ba979c2f3",
     "runtime_dlls": {
       "boss_repeat_0000000000000000.dll": "c6fb325cdd7d2960bb7edeb28a9875a4f607d65ccd52b2b555f2984c0052c259",
       "nioh_resources.dll": "2cd0bf9c636f044d0d37d8ea8d1cab8530c1f690c84b6a2c04c935a27de2841e",

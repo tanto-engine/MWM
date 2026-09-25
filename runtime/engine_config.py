@@ -29,7 +29,7 @@ DEFAULT_PRESET = dict(schema_version=3, name='Sword baseline', weapon='sword',
                       low_heavy='jin_hayabusa.action_0c6e',
                       stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
                       okatsu_grapple=True, tiger_sprint=True, mid_light_ender=True, string_enabled=False,
-                      frost_moon=dict(low=None, mid='jin_hayabusa.izuna_drop', high='jin_hayabusa.action_0cac'),
+                      frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.izuna_drop', high='jin_hayabusa.action_0cac'),
                       frost_window_seconds=.75, frost_startup_speed=8)
 
 
