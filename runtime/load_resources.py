@@ -1,4 +1,3 @@
-import ctypes as C
 import hashlib
 import json
 import mmap
@@ -13,7 +12,7 @@ import native_loader as loader
 from engine_config import atomic_json, read_json
 from resource_assets import read_asset
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 STATE = struct.Struct('<IIiiQ32s4QII2Q')
 loader.K.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
 loader.K.OpenFileMappingW.restype = W.HANDLE

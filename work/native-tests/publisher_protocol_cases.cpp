@@ -1,7 +1,7 @@
 // Parses a Python-published command from a file; never maps or patches a process.
 #include <cassert>
 #include <cstdio>
-#include "../../outputs/okatsu-prototype/native/dispatch_protocol.h"
+#include "../../runtime/native/dispatch_protocol.h"
 int main(int argc, char** argv) {
     // Verify Python-published command bytes against the native ABI and time policy.
     // Read the supplied owned fixture and test generations, expiry and consumption.

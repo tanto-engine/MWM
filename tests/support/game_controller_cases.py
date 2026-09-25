@@ -6,10 +6,10 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT/'outputs/okatsu-prototype'), str(ROOT/'outputs/boss-probe')]
+sys.path[:0] = [str(ROOT/'runtime'), str(ROOT/'runtime')]
 import game_controller as controller
 from controller_reader import ControllerReader
-from circle_gesture import CircleGesture
+from gestures import ControllerGesture
 
 DEVICE = dict(backend='winmm', slot=0, manufacturer=0x054c, product=0x09cc, name='DS4 fixture')
 
@@ -94,7 +94,7 @@ class GameInputTests(unittest.TestCase):
             # Device identity changes must be isolated from unrelated sample expiry.
             1.0
         ))
-        gate = CircleGesture({'device':DEVICE, 'lb_mask':16},
+        gate = ControllerGesture({'device':DEVICE, 'lb_mask':16},
                              {'device':DEVICE, 'lb_mask':16, 'circle_mask':4, 'hold_seconds':.25}, 1000)
         for sequence, slot, buttons, now in ((2,0,0,1000), (4,0,0x100,1010), (6,1,0x2100,1020)):
             self.sample(sequence, slot=slot, buttons=buttons)
@@ -114,7 +114,7 @@ class GameInputTests(unittest.TestCase):
                 # The configured 250-ms boundary must be driven by explicit gesture ticks.
                 1.0
             ))
-            gate = CircleGesture({'device':DEVICE, 'lb_mask':16},
+            gate = ControllerGesture({'device':DEVICE, 'lb_mask':16},
                                  {'device':DEVICE, 'lb_mask':16, 'circle_mask':4, 'hold_seconds':.25}, 1000)
             self.sample(2, buttons=0)
             for event in reader.poll(): gate.process(event, 1000)

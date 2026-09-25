@@ -30,7 +30,7 @@ Requires Windows x64 and Python 3.10+ (standard library only).
 Supports only the exact Nioh executable SHA-256 checked by boss_probe.py.
 The game must already be running. This tool does not start or control it.
 
-Run from this folder, replacing PID and paths:
+Run from runtime/, replacing PID and paths:
   python boss_probe.py scan --pid PID --out encounter.json
   python boss_probe.py record --config encounter.json --outdir take1 --seconds 120
   python boss_probe.py report --events take1/events.jsonl --outdir take1-report

@@ -22,11 +22,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SUPPORT = ROOT/'tests/support'
-sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'outputs/okatsu-prototype'), str(ROOT/'outputs/boss-probe')]
+sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime')]
 from catalogue import load_catalogue, save_catalogue, merge_recording
 from encounter_recording import reconstruct_capture
 from engine_config import DEFAULT_PRESET, binding_for_preset
-from circle_gesture import CircleGesture
+from gestures import ControllerGesture
 from run_dispatch import CommandMap
 from runtime_session import encode_session, SESSION_CONFIG
 from encounter_recording_cases import state, metadata
@@ -53,7 +53,7 @@ def runtime_fingerprint():
     # Offline tests must not imply acceptance for a missing or different executable build.
     digest = hashlib.sha256()
     for name in ('nioh_skill_runtime.dll','nioh_resources.dll'):
-        path = ROOT/'outputs/okatsu-prototype/native/build'/name
+        path = ROOT/'runtime/native/build'/name
         if not path.is_file():
             return None
         digest.update(name.encode())
@@ -114,7 +114,7 @@ class MoveWorkflow(unittest.TestCase):
                     self.assertEqual(move['source'][key],value)
                 for key in ('default_binding','adaptation','implementation'):
                     self.assertEqual(move[key],baseline[move['id']][key])
-        calibration = json.loads((ROOT/'outputs/okatsu-prototype/controller-calibration.json').read_text())
+        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
         binding = binding_for_preset(calibration,DEFAULT_PRESET)
         session = copy.deepcopy(BOSS)
         session['config_tag'] = '123456789abcdef0'
@@ -125,7 +125,7 @@ class MoveWorkflow(unittest.TestCase):
                       descriptor=session['source_descriptor'],payload=session['source_payload'],key=0xC64,motion=1220,
                       charged=dict(descriptor=session['charge_descriptor'],payload=session['charge_payload'],key=0xC66,motion=1230))
         for hold, move_id in ((False,DEFAULT_PRESET['tap_move']),(True,DEFAULT_PRESET['hold_move'])):
-            gate = CircleGesture(calibration,binding,1000)
+            gate = ControllerGesture(calibration,binding,1000)
             device = calibration['device']
             gate.process(dict(kind='input_device',**device),100)
             for buttons, now in ((0,101),(20,200)):

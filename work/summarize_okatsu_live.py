@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-status = json.loads((root / 'outputs/okatsu-prototype/play-status.json').read_text())
+status = json.loads((root / 'runtime/play-status.json').read_text())
 path = Path(status['trace']) / 'events.jsonl'
 events = []
 for line in path.read_text().splitlines():

@@ -8,8 +8,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT/'outputs/okatsu-prototype'))
-from play_okatsu import session_binary
+sys.path.insert(0, str(ROOT/'runtime'))
+from supervisor import session_binary
 from process_support import worker_command
 
 
@@ -32,16 +32,13 @@ class Portability(unittest.TestCase):
             with self.assertRaises(ValueError): session_binary(second, folder/'cache', '0123456789abcdef')
             with self.assertRaises(ValueError): session_binary(first, folder/'cache', '../../not-a-tag')
 
-    def test_frozen_workers_use_exe_entrypoint_with_literal_arguments(self):
-        # Forward literal worker arguments through the eventual frozen entrypoint.
-        # Construct worker commands for a frozen executable using arguments containing spaces.
-        # Command routing must preserve literal values without shell reconstruction.
+    def test_source_workers_keep_literal_arguments(self):
+        # Preserve script paths and DLL arguments containing spaces.
+        # Build a direct invocation using the current Python interpreter.
+        # The child must receive the exact arguments without shell parsing.
         script = Path('folder with spaces/native_loader.py')
-        with patch.object(sys, 'frozen', True, create=True), patch.object(sys, 'executable', 'trainer path/SkillExpanded.exe'):
-            self.assertEqual(worker_command(script, '--dll', 'my folder/runtime.dll'),
-                ['trainer path/SkillExpanded.exe', '--worker', 'native_loader', '--dll', 'my folder/runtime.dll'])
-        with patch.object(sys, 'frozen', False, create=True):
-            self.assertEqual(worker_command(script)[1:3], ['-B', str(script)])
+        self.assertEqual(worker_command(script, '--dll', 'my folder/runtime.dll'),
+                         [sys.executable, '-B', str(script), '--dll', 'my folder/runtime.dll'])
 
     def test_alternate_steam_library_keeps_exact_build_guard(self):
         # Preserve the exact-build guard when the Steam library path differs.
@@ -49,7 +46,7 @@ class Portability(unittest.TestCase):
         # Directory flexibility must never disable executable compatibility checking.
         alternate = ROOT/'work/Alternate Steam Library/nioh.exe'
         with patch.dict(os.environ, {'NIOH_EXE': str(alternate)}):
-            spec = importlib.util.spec_from_file_location('alternate_loader', ROOT/'outputs/okatsu-prototype/native_loader.py')
+            spec = importlib.util.spec_from_file_location('alternate_loader', ROOT/'runtime/native_loader.py')
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             self.assertEqual(module.NIOH, alternate)

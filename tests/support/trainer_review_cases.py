@@ -9,11 +9,11 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT/'outputs/okatsu-prototype'), str(ROOT/'outputs/boss-probe'), str(ROOT/'catalogue')]
+sys.path[:0] = [str(ROOT/'runtime'), str(ROOT/'catalogue')]
 import engine_config as config
 import process_support as process
 import trainer
-from circle_gesture import CircleGesture
+from gestures import ControllerGesture
 
 
 class PresetTests(unittest.TestCase):
@@ -49,9 +49,9 @@ class PresetTests(unittest.TestCase):
         # Prevent saved held mappings from firing immediately after reconnect.
         # Reload the saved calibration and reconnect with the bound controls held.
         # Persisted mappings remove recalibration work but do not authorize synthetic presses.
-        calibration = json.loads((ROOT/'outputs/okatsu-prototype/controller-calibration.json').read_text())
+        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
         binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
-        gate = CircleGesture(calibration, binding, 1000)
+        gate = ControllerGesture(calibration, binding, 1000)
         device = calibration['device']
         common = {k: device[k] for k in ('backend', 'slot')}
         gate.process(dict(kind='input_device', **device), 100)
@@ -129,7 +129,7 @@ class RuntimeRegistryTests(unittest.TestCase):
         # Adopt another active runtime before applying a pending trainer edit.
         # Present an already-running external runtime while the open trainer has a pending edit.
         # The trainer must adopt current ownership before deciding whether the edit can be applied.
-        calibration = json.loads((ROOT/'outputs/okatsu-prototype/controller-calibration.json').read_text())
+        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
         binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
         desired = dict(config.DEFAULT_PRESET, name='Pending user edit', hold_seconds=.35)
         with tempfile.TemporaryDirectory() as td:
@@ -181,16 +181,6 @@ class RuntimeRegistryTests(unittest.TestCase):
 
 
 class TrainerWorkerTests(unittest.TestCase):
-
-    def test_worker_help_is_forwarded_without_trainer_consuming_it(self):
-        # Forward worker help without consuming its arguments in the trainer.
-        # Invoke a delegated worker with its own help flag.
-        # Argument forwarding must let the worker describe its interface without starting the trainer UI.
-        with tempfile.TemporaryDirectory() as td, patch.object(trainer, 'RUNTIME', Path(td)), \
-             patch.object(trainer, 'attach_worker_streams'), patch('runpy.run_module') as run, patch.object(sys, 'argv', ['trainer.py']):
-            self.assertEqual(trainer.main(['--worker', 'prepare_session', '--help']), 0)
-            self.assertEqual(sys.argv, ['prepare_session', '--help'])
-            run.assert_called_once_with('prepare_session', run_name='__main__')
 
     def test_workbook_failure_does_not_hide_successful_catalogue_save(self):
         # Report catalogue save success separately from a blocked workbook update.

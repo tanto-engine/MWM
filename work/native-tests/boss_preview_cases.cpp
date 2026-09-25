@@ -6,7 +6,7 @@
 #include <cstring>
 #define RESEARCH_BOSS
 #define RESEARCH_DISPATCH
-#include "../../outputs/okatsu-prototype/native/observer.cpp"
+#include "../../runtime/native/observer.cpp"
 
 static unsigned disable_calls;
 extern "C" MH_STATUS WINAPI MH_Initialize() {

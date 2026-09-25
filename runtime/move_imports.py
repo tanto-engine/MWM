@@ -2,8 +2,8 @@ import json
 import sys
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[2]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from catalogue import load_catalogue, iter_moves
 
 # TODO: add adapters only after their native dependencies and gameplay behavior are verified.

@@ -8,23 +8,19 @@ import re
 from pathlib import Path
 import struct
 import sys
-import tempfile
 
 CODE = Path(__file__).resolve().parent
 HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', CODE))
-sys.path.insert(0, str(CODE.parent / 'boss-probe'))
-from boss_probe import LiveGame, discover, U64, U32, I32, kernel
+from boss_probe import LiveGame, U64, U32, I32, kernel
 from nioh_memory import modules
-from profile_resources import StableReads, inspect_candidate, resources, inspect_motion, inspect_timing, summarize
+from profile_resources import StableReads, inspect_candidate, resources, inspect_motion, inspect_timing
 from load_resources import load_resources
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
-from motion_resources import motion_lookup
-from timing_resources import lookup as timing_lookup
-from move_imports import read_import_manifest, SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT
-from engine_config import validate_preset, read_json, HEAVY_STRINGS
+from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT
+from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS
 
-IMPORT_MANIFEST = CODE.parents[1] / 'catalogue/imports/okatsu.json'
+IMPORT_MANIFEST = CODE.parent / 'catalogue/imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
 
 
@@ -276,7 +272,7 @@ def player_replacement(game, stable, player, move, group):
     return dict(group, player_descriptor=descriptor, kind=move['adapter_kind'], **expected)
 
 
-def fresh_profile(game, cached=None):
+def fresh_profile(game):
     # Profile the current player using engine-owned source packages.
     # Resolve imports and camera slot zero, then recheck all pinned identities.
     # Boss objects and stale session pointers never supply resources.
@@ -416,23 +412,6 @@ def config_tag(fields, originals):
     return digest.hexdigest()[:16]
 
 
-def atomic_text(path, text):
-    # Replace a generated session file without exposing partial JSON.
-    # Write a sibling temporary file and rename it after closing.
-    # Preparation failure leaves the previous complete file readable.
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = None
-    try:
-        with tempfile.NamedTemporaryFile('w', encoding='utf8', newline='\n', dir=path.parent,
-                                         prefix=path.name+'.', suffix='.tmp', delete=False) as stream:
-            temporary = Path(stream.name)
-            stream.write(text)
-        temporary.replace(path)
-    finally:
-        if temporary and temporary.exists():
-            temporary.unlink()
-
-
 def main():
     # Prepare one current-player generation for the source launcher.
     # Require stopped hooks, resolve owned resources and publish both session files.
@@ -440,27 +419,19 @@ def main():
     parser = argparse.ArgumentParser(description='Attach engine resources and reacquire the current player')
     parser.add_argument('--pid', type=int, help='Optional exact process; otherwise discover nioh.exe')
     parser.add_argument('--outdir', type=Path, default=HERE)
-    parser.add_argument('--profile', type=Path, help='Optional cached profile to revalidate')
     args = parser.parse_args()
     if C.sizeof(C.c_void_p) != 8:
         parser.error('64-bit Python is required')
     pid = args.pid if args.pid is not None else current_pid()
-    cached_path = args.profile or args.outdir / 'session-profile.json'
-    cached = None
-    if cached_path.exists():
-        try:
-            cached = json.loads(cached_path.read_text(encoding='utf-8-sig'))
-        except (OSError, ValueError):
-            pass  # An unreadable cache never supplies pointers.
     require_stopped(pid)
     with LiveGame(pid) as game:  # Exact executable hash, birth, RTTI and instruction guards.
-        result = fresh_profile(game, cached)
+        result = fresh_profile(game)
         fields, originals = boss_fields(result)
         require_stopped(pid)
     boss = dict(session=result['session'], **fields, originals=originals, config_tag=config_tag(fields, originals),
                 scope='Engine-owned resources; current player generation')
-    atomic_text(args.outdir / 'session-profile.json', json.dumps(result, indent=2))
-    atomic_text(args.outdir / 'boss-session.json', json.dumps(boss, indent=2))
+    atomic_json(args.outdir / 'session-profile.json', result)
+    atomic_json(args.outdir / 'boss-session.json', boss)
     print(f"Prepared player {fields['player']:#x}; engine owns action, motion and timing resources")
 
 

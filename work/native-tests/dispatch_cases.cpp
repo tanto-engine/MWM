@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #define RESEARCH_DISPATCH
-#include "../../outputs/okatsu-prototype/native/observer.cpp"
+#include "../../runtime/native/observer.cpp"
 
 extern "C" MH_STATUS WINAPI MH_Initialize() {
     // Stub hook-library startup inside the disposable test process.

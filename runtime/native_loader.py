@@ -14,8 +14,7 @@ import sys
 
 CODE = Path(__file__).resolve().parent
 HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', CODE))
-WORKSPACE = CODE.parent.parent
-sys.path.insert(0, str(CODE.parent / "boss-probe"))
+WORKSPACE = CODE.parent
 sys.path.insert(0, str(CODE))
 import nioh_memory as memory
 from runtime_session import encode_session

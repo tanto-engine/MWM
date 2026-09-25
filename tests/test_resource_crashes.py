@@ -16,11 +16,11 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'outputs/okatsu-prototype'))
+sys.path.insert(0, str(ROOT / 'runtime'))
 from resource_assets import read_asset
 from native_loader import NIOH
 import engine_config
-import play_okatsu
+import supervisor
 import load_resources as resources
 
 HARNESS = r'''
@@ -194,7 +194,7 @@ class ResourceCrashTests(unittest.TestCase):
             source, binary, asset = folder/'crash.cpp', folder/'crash.exe', folder/'motion.bin'
             source.write_text(HARNESS)
             subprocess.run(['g++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror', str(source),
-                            '-I', str(ROOT/'outputs/okatsu-prototype/native'), '-o', str(binary)], check=True)
+                            '-I', str(ROOT/'runtime/native'), '-o', str(binary)], check=True)
             for name in ('motion', 'camera'):
                 with self.subTest(package=name):
                     asset.write_bytes(read_asset(NIOH.parent / 'archive', manifest['assets'][name]))
@@ -369,15 +369,15 @@ cleaned.write_text('disarmed and recovered')
                         raise failure
                     write(path, value)
                 try:
-                    with patch.object(play_okatsu, 'HERE', runtime), \
-                         patch.object(play_okatsu.subprocess, 'run', return_value=SimpleNamespace(returncode=0)), \
-                         patch.object(play_okatsu.subprocess, 'Popen', side_effect=spawn), \
-                         patch.object(play_okatsu, 'read_json', side_effect=read_status), \
-                         patch.object(play_okatsu, 'atomic_json', side_effect=write_status), \
-                         patch.object(play_okatsu, 'process_identity', return_value={'publisher_pid':12}), \
+                    with patch.object(supervisor, 'HERE', runtime), \
+                         patch.object(supervisor.subprocess, 'run', return_value=SimpleNamespace(returncode=0)), \
+                         patch.object(supervisor.subprocess, 'Popen', side_effect=spawn), \
+                         patch.object(supervisor, 'read_json', side_effect=read_status), \
+                         patch.object(supervisor, 'atomic_json', side_effect=write_status), \
+                         patch.object(supervisor, 'process_identity', return_value={'publisher_pid':12}), \
                          contextlib.redirect_stdout(io.StringIO()):
                         with self.assertRaises(type(failure)) as raised:
-                            play_okatsu.supervise(argparse.Namespace(dll=dll))
+                            supervisor.supervise(argparse.Namespace(dll=dll))
                     self.assertIs(raised.exception, failure)
                     self.assertTrue(stopped.exists())
                     self.assertEqual(cleaned.read_text(), 'disarmed and recovered')

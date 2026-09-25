@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'outputs/okatsu-prototype'))
+sys.path.insert(0, str(ROOT / 'runtime'))
 import prepare_session as prepare
 
 from session_fixture import PROFILE, BOSS, FIXTURES
@@ -206,9 +206,9 @@ class PreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'resource absent'):
             prepare.boss_fields(bad)
 
-    def test_stale_cache_cannot_supply_current_actor_or_resources(self):
-        # Ignore stale cached actor pointers when resolving the current session.
-        # Provide stale saved pointers while current preparation resolves fresh identities.
+    def test_current_resource_owner_supplies_the_player_candidate(self):
+        # Resolve the current actor exclusively from the owned resource loader.
+        # Supply fresh identities and reject a changed native player candidate.
         # A previous session's cache must not replace runtime address discovery.
         game=type('Game', (), {'identity':PROFILE['session'], 'begin_sample':lambda self:(
             # Accept the stable-read sample boundary in this minimal player fixture.
@@ -218,13 +218,12 @@ class PreparationTests(unittest.TestCase):
         )})()
         handles=(BOSS['source_action_resource'], BOSS['source_timing_resource'], BOSS['source_motion_bank'],
                  BOSS['source_camera_bank'],BOSS['player']+0x1000,BOSS['player_owner']+0x1000)
-        stale={'player':{'actor':'0x1','owner':'0x2'}}
         with patch.object(prepare, 'load_resources', return_value=handles) as resources, \
              patch.object(prepare, 'StableReads'), \
              patch.object(prepare, 'inspect_candidate', return_value={'role':'replaced_actor'}) as inspect, \
-             patch.object(prepare, 'discover') as discover:
+             patch('boss_probe.discover') as discover:
             with self.assertRaisesRegex(ValueError, 'player candidate changed'):
-                prepare.fresh_profile(game, stale)
+                prepare.fresh_profile(game)
         resources.assert_called_once_with(game)
         self.assertEqual(inspect.call_args.args[2], {'object':hex(handles[4]),'owner_like':hex(handles[5])})
         discover.assert_not_called()
@@ -237,7 +236,7 @@ class PreparationTests(unittest.TestCase):
         with patch.object(prepare,'load_resources',side_effect=ValueError('resource generation changed')), \
              patch.object(prepare,'inspect_candidate') as inspect:
             with self.assertRaisesRegex(ValueError,'resource generation changed'):
-                prepare.fresh_profile(game, PROFILE)
+                prepare.fresh_profile(game)
         inspect.assert_not_called()
 
     def test_import_lookup_pins_native_actions_transitions_and_voice_rows(self):

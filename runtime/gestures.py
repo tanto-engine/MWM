@@ -1,9 +1,18 @@
-# Persistent DS4 LB+Circle mapping and release/hold gesture recognition.
-from calibrate_controller import identity
+# Recognize configured sword gestures using saved controller identities.
 import math
 
 
-class CircleGesture:
+def identity(event):
+    # Select the stable capability fields retained in a mapping.
+    # Omit observation timing and transient button state.
+    # Compare reconnects against the same device description.
+    keys = ("backend", "slot", "name", "manufacturer", "product", "num_buttons",
+            "num_axes", "axis_ranges", "caps_result")
+    return {key: event[key] for key in keys if key in event}
+
+
+
+class ControllerGesture:
     def __init__(self, calibration, binding, frequency, string_variant=None):
         # Create the tap/hold and held-string input state machine.
         # Validate the saved chord and convert seconds to the trace clock.

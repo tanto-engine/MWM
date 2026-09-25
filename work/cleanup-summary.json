@@ -1,0 +1,59 @@
+{
+  "before": {
+    ".py": {
+      "files": 97,
+      "lines": 14670
+    },
+    ".cpp": {
+      "files": 20,
+      "lines": 3898
+    },
+    ".h": {
+      "files": 15,
+      "lines": 2234
+    },
+    ".ps1": {
+      "files": 12,
+      "lines": 184
+    }
+  },
+  "after": {
+    ".py": {
+      "files": 89,
+      "lines": 12917
+    },
+    ".cpp": {
+      "files": 18,
+      "lines": 3891
+    },
+    ".h": {
+      "files": 15,
+      "lines": 2234
+    },
+    ".ps1": {
+      "files": 4,
+      "lines": 66
+    }
+  },
+  "net_source_lines_removed": 1878,
+  "scope": "Maintained source and tests, excluding third-party code and historical captures.",
+  "entrypoints": [
+    "Trainer.ps1",
+    "Test-Offline.ps1",
+    "Sync-Catalogue.ps1",
+    "runtime/native/Build.ps1"
+  ],
+  "verification": {
+    "baseline": [
+      210,
+      8
+    ],
+    "current": [
+      168,
+      8
+    ],
+    "retired_checks": "Removed 43 tests for deleted legacy modes; added one production startup/cleanup regression (net42 fewer).",
+    "gameplay": "Not assessed; this change retains gameplay adapters, bindings and saved mapping.",
+    "workbook": "Unchanged and identical to Downloads."
+  }
+}

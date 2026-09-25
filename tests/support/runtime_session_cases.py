@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'outputs/okatsu-prototype'))
+sys.path.insert(0, str(ROOT / 'runtime'))
 import native_loader as loader
 from runtime_session import encode_session, POINTER_FIELDS, SESSION_CONFIG, MOVE_IMPORT, MOVE_ADAPTER, MAGIC, VERSION
 from move_imports import read_import_manifest, check_import_topology
@@ -49,7 +49,7 @@ class RuntimeSessionTests(unittest.TestCase):
         for value in (1, None, 'true'):
             with self.subTest(grapple=value), self.assertRaisesRegex(ValueError, 'must be a boolean'):
                 encode_session(dict(self.config, native_grapple=value), self.pid, self.born)
-        header = (ROOT / 'outputs/okatsu-prototype/native/boss_session_schema.h').read_text()
+        header = (ROOT / 'runtime/native/boss_session_schema.h').read_text()
         import re
         self.assertEqual(re.findall(r'^    uint64_t (\w+);$', header, re.MULTILINE), list(POINTER_FIELDS))
 

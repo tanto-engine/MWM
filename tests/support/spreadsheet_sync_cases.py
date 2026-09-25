@@ -164,7 +164,7 @@ class SpreadsheetSyncTests(unittest.TestCase):
         # Use the visible move name as the engine's display-name authority.
         # Edit the workbook cell, resolve an import manifest, and synchronize both workbook copies.
         # Source signatures, bindings and every retained evidence record must survive unchanged.
-        sys.path.insert(0, str(ROOT/'outputs/okatsu-prototype'))
+        sys.path.insert(0, str(ROOT/'runtime'))
         from move_imports import read_import_manifest
         self.edit_cell('Moves', 'B3', 'Edited in the spreadsheet')
         loaded = load_catalogue(self.workbook)

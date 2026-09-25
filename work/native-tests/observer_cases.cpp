@@ -2,7 +2,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
-#include "../../outputs/okatsu-prototype/native/observer.cpp"
+#include "../../runtime/native/observer.cpp"
 
 static unsigned uninitialize_calls;
 extern "C" MH_STATUS WINAPI MH_Initialize() {

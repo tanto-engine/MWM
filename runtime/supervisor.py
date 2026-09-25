@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import sys
 import time
 from engine_config import atomic_json, read_json
 from process_support import PlayLock, process_identity, worker_command, register_runtime, unregister_runtime
@@ -59,7 +58,7 @@ def supervise(args):
             last_message = value
     source = args.dll or HERE / 'native/build/nioh_skill_runtime.dll'
     if not source.is_file():
-        status('runtime_missing', detail='Build the runtime with native/build-runtime.ps1.')
+        status('runtime_missing', detail='Build the runtime with runtime/native/Build.ps1.')
         return 1
     # Keep a completed build for this entire play session, including reattachment.
     snapshot = session / 'runtime.dll'
@@ -89,7 +88,7 @@ def supervise(args):
         status('starting', pid=boss['session']['pid'], trace=str(trace))
         with (session/f'run-{attempt}.stdout.txt').open('w') as out, (session/f'run-{attempt}.stderr.txt').open('w') as err:
             child = subprocess.Popen(worker_command(CODE/'run_dispatch.py',
-                '--profile', HERE/'session-profile.json', '--boss', '--repeat', '--seconds', '0',
+                '--profile', HERE/'session-profile.json', '--seconds', '0',
                 '--dll', dll, '--outdir', trace, '--stop-file', stop), stdout=out, stderr=err,
                 creationflags=subprocess.CREATE_NO_WINDOW)
             try:
@@ -127,7 +126,6 @@ def main(argv=None):
     # A second launch reuses the running supervisor instead of competing.
     parser = argparse.ArgumentParser(description='Keep configured moves active across Nioh sessions.')
     parser.add_argument('--dll', type=Path, help='Prebuilt runtime DLL')
-    parser.add_argument('--minhook', type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:
         lock = PlayLock()
@@ -136,7 +134,7 @@ def main(argv=None):
         return 0
     registration = None
     try:
-        root = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parents[2]
+        root = Path(__file__).resolve().parents[1]
         registration = register_runtime(HERE, os.environ.get('NIOH_CATALOGUE_PATH', root / 'outputs/Nioh1-Sword-Move-Observations.xlsx'))
         return supervise(args)
     finally:

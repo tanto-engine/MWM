@@ -5,8 +5,8 @@ import struct
 import sys
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'outputs/okatsu-prototype'))
-from circle_gesture import CircleGesture
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'runtime'))
+from gestures import ControllerGesture
 from run_dispatch import CommandMap
 
 DEVICE = dict(backend='winmm', slot=0, name='owned fixture')
@@ -19,7 +19,7 @@ class IntegrationReview(unittest.TestCase):
         # Initialize the baseline Circle binding with the saved device mapping.
         # Supply a neutral button event before testing combined input sequences.
         # Integration cases must distinguish new edges from attachment-time state.
-        g = CircleGesture(CALIBRATION, BINDING, 1000)
+        g = ControllerGesture(CALIBRATION, BINDING, 1000)
         g.process(dict(kind='input_device', **DEVICE), 100)
         self.input(g, 0, 101)
         return g

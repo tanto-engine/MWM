@@ -1,44 +1,14 @@
-# Read-only, fresh-session action/motion/timing resource comparison.
-#
-# Heap addresses come exclusively from --discovery. Role names mean matching the
-# researched C64 motion fingerprints, not an independently proven character ID.
-import argparse
-import ctypes as C
-from ctypes import wintypes as W
-import json
-from pathlib import Path
+# Inspect player action, motion and timing resources using verified live identities.
+# Every retained byte range is rechecked before session preparation completes.
 import struct
-import sys
-import time
 
-from boss_probe import LiveGame, U32, I32, U64, kernel, save_new
+from boss_probe import U32, I32, U64
 from action_banks import inspect_banks, resolve
 from motion_resources import motion_lookup
 from timing_resources import lookup as timing_lookup
 
 ACTION_KEY = 0xC64
 ROLE_KEYS = {1220: 'boss_fingerprint', 2033: 'player_fingerprint'}
-
-
-def birth(game):
-    # Read the process creation time through its existing handle.
-    # Combine the FILETIME words into one stable identity value.
-    # Distinguish a restarted executable from a reused PID.
-    values = [W.FILETIME() for _ in range(4)]
-    if not kernel.GetProcessTimes(game.handle, *(C.byref(v) for v in values)):
-        raise C.WinError(C.get_last_error())
-    return str((values[0].dwHighDateTime << 32) | values[0].dwLowDateTime)
-
-
-def validate_discovery(game, discovery):
-    # Compare discovery provenance against the current process and build.
-    # Recheck creation time and liveness before resource profiling.
-    # Prevent saved heap addresses from crossing process lifetimes.
-    for key in ('pid', 'creation_filetime', 'build_sha256', 'module_base', 'vtable'):
-        if str(discovery.get(key)) != str(game.identity[key]):
-            raise ValueError(f'Discovery session mismatch: {key}')
-    if birth(game) != game.identity['creation_filetime'] or not game.alive():
-        raise ValueError('Process identity changed or exited')
 
 
 class StableReads:
@@ -207,121 +177,3 @@ def inspect_timing(game, stable, wrapper, key):
         stable.pin(record + U32(prefix, 8), result['event_count'] * 12, bytes.fromhex(result['events']))
         result['presence'] = 'present'
     return result
-
-
-def summarize(rows):
-    # Separate present slots from unresolved resource observations.
-    # Claim absence only when every slot has a definite absent result.
-    # Keep read failures from becoming false missing-resource conclusions.
-    present = [r['slot'] for r in rows if r['presence'] == 'present']
-    unknown = [r['slot'] for r in rows if r['presence'] not in ('present', 'absent', 'empty_slot')]
-    return dict(present_slots=present, unresolved_slots=unknown,
-                absent_from_all_loaded_banks=not present and not unknown)
-
-
-def profile(game, discovery):
-    # Compare boss and player fingerprints within one process lifetime.
-    # Cache repeated resource lookups and recheck all pinned ranges.
-    # Produce research evidence for dependencies and missing player resources.
-    validate_discovery(game, discovery)
-    game.begin_sample()
-    stable = StableReads(game)
-    candidates = discovery.get('candidates', [])
-    if not 1 <= len(candidates) <= 256:
-        raise ValueError(f'Found {len(candidates)} candidates; expected 1..256')
-    addresses = [int(c['object'], 0) for c in candidates]
-    if len(set(addresses)) != len(addresses):
-        raise ValueError('Discovery contains duplicate actor pointers')
-    inspected = [inspect_candidate(game, stable, candidate) for candidate in candidates]
-    selected = {}
-    for key, role in ROLE_KEYS.items():
-        matches = [a for a in inspected if a['role'] == role]
-        if len(matches) != 1:
-            raise ValueError(f'Expected exactly one C64 motion-{key} fingerprint, found {len(matches)}')
-        selected[role] = matches[0]
-    source = selected['boss_fingerprint']
-    motion_key = source['motion_key']
-    timing_key = motion_key if source['timing_key'] < 0 else source['timing_key']
-    source['effective_timing_key'] = timing_key
-    source['timing_key_rule'] = 'payload+0x34 < 0 uses motion key; verified native RVA0x6FF7C3..0x6FF7DB'
-    cache = {}
-    def lookup_resources(motion_banks, timing_banks, wanted_motion, wanted_timing):
-        # Resolve requested motion and timing keys across each populated slot.
-        # Cache by resource kind, pointer and key within this profile.
-        # Retain per-slot failures without repeatedly reading shared banks.
-        info = {}
-        for kind, banks, key, inspect in [('motion', motion_banks, wanted_motion, inspect_motion),
-                                          ('timing', timing_banks, wanted_timing, inspect_timing)]:
-            rows = []
-            for slot, pointer in enumerate(banks):
-                if not pointer:
-                    rows.append(dict(slot=slot, presence='empty_slot'))
-                    continue
-                cache_key = (kind, pointer, key)
-                if cache_key not in cache:
-                    try:
-                        cache[cache_key] = inspect(game, stable, pointer, key)
-                    except (ValueError, OSError) as error:
-                        cache[cache_key] = dict(address=hex(pointer), presence='read_error', error=str(error))
-                rows.append(dict(slot=slot, **cache[cache_key]))
-            info[kind] = dict(lookup_key=key, banks=rows, **summarize(rows))
-        return info
-    for actor in selected.values():
-        info, motion_banks, timing_banks = resources(game, stable, actor)
-        info.update(lookup_resources(motion_banks, timing_banks, motion_key, timing_key))
-        for target in actor.get('target_actions', []):
-            if target['resolution']:
-                target['resources'] = lookup_resources(motion_banks, timing_banks,
-                                                      target['motion_key'], target['effective_timing_key'])
-        actor['resources'] = info
-    stable.check()
-    validate_discovery(game, discovery)
-    player = selected['player_fingerprint']
-    return dict(session=game.identity, recorded_at=time.time(), action_key=ACTION_KEY,
-                compact_config=dict(player_actor=player['actor'], player_owner=player['owner'],
-                                    player_action_context=player['action_context'], player_action_banks=player['action_banks'],
-                                    source_actor=source['actor'], source_owner=source['owner'],
-                                    source_action_context=source['action_context'], source_action_banks=source['action_banks'],
-                                    source_descriptor=source['action_resolution']['descriptor'],
-                                    source_payload=source['action_resolution']['payload']),
-                source=selected['boss_fingerprint'], player=selected['player_fingerprint'],
-                other_fingerprints=[dict(actor=a['actor'], role=a['role'], motion_key=a.get('motion_key'))
-                                    for a in inspected if a['role'] == 'unmatched'],
-                consistency=dict(process_birth_rechecked=True, stable_ranges=len(stable.ranges),
-                                 owner_action_and_resource_identities_rechecked=True,
-                                 atomic_snapshot=False),
-                role_basis='C64 motion-key fingerprints: 1220 boss, 2033 player; not an independent character ID',
-                game_modified=False)
-
-
-def main():
-    # Run an explicit read-only resource comparison from saved discovery.
-    # Require matching PID and a new output destination.
-    # Leave production attachment to the engine supervisor.
-    parser = argparse.ArgumentParser(description='Compare action, motion and timing resource metadata.')
-    parser.add_argument('--pid', type=int, required=True)
-    parser.add_argument('--discovery', type=Path, required=True)
-    parser.add_argument('--out', type=Path, required=True)
-    args = parser.parse_args()
-    if args.out.exists():
-        parser.error('Choose a new output path')
-    discovery = json.loads(args.discovery.read_text())
-    if discovery.get('pid') != args.pid:
-        parser.error('PID must match the discovery file')
-    with LiveGame(args.pid) as game:
-        result = profile(game, discovery)
-    save_new(args.out, result)
-    print(json.dumps(dict(out=str(args.out), source=result['source']['actor'], player=result['player']['actor'],
-                          source_motion=result['source']['resources']['motion']['present_slots'],
-                          source_timing=result['source']['resources']['timing']['present_slots'],
-                          player_motion_absent=result['player']['resources']['motion']['absent_from_all_loaded_banks'],
-                          player_timing_absent=result['player']['resources']['timing']['absent_from_all_loaded_banks'],
-                          stable_ranges=result['consistency']['stable_ranges'])))
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except (OSError, ValueError, KeyError, struct.error) as error:
-        print(json.dumps(dict(status='error', message=str(error))), file=sys.stderr)
-        raise SystemExit(1)

@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cwchar>
 #include <cstdio>
-#include "../../outputs/okatsu-prototype/native/repeat_namespace.h"
+#include "../../runtime/native/repeat_namespace.h"
 
 int main() {
     // Verify process and configuration identity in repeat mapping names.

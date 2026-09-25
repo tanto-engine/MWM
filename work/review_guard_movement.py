@@ -1,6 +1,6 @@
 import bisect, collections, json
 from pathlib import Path
-path=Path('outputs/okatsu-prototype/sessions/20260925-003117/trace-1/events.jsonl')
+path=Path('runtime/sessions/20260925-003117/trace-1/events.jsonl')
 events=[json.loads(line) for line in path.read_text().splitlines()]
 player=hex(events[0]['config']['player'])
 inputs=sorted((e for e in events if e['kind']=='input'),key=lambda e:(

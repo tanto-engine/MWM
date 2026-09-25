@@ -4,18 +4,18 @@ Current build: sword-only stabilization; gameplay acceptance pending.
 The user will verify gameplay later. Do not infer acceptance from offline tests.
 
 Run from this repository in PowerShell:
-  .\Start-Trainer.ps1       Source UI, preset editing and runtime controls
-  .\Start-Okatsu.ps1        Start or wait for Nioh with the saved preset
-  .\Stop-Okatsu.ps1         Cooperative disarm and resource restoration
-  .\Test-Offline.ps1        The two maintained test entrypoints
-  .\Sync-Catalogue.ps1      Reconcile and synchronize the Downloads workbook
+  .\Trainer.ps1           Source UI, preset editing and runtime controls
+  .\Trainer.ps1 -Enable   Start or wait for Nioh without opening the UI
+  .\Trainer.ps1 -Disable  Cooperative disarm and resource restoration
+  .\Test-Offline.ps1      The two maintained test entrypoints
+  .\Sync-Catalogue.ps1    Reconcile and synchronize the Downloads workbook
 
 Build native changes with:
-  .\outputs\okatsu-prototype\native\build-runtime.ps1
+  .\runtime\native\Build.ps1
 No mission-specific compilation or EXE packaging.
 
 Configuration:
-  outputs/okatsu-prototype/controller-binding.json is the single schema2 preset.
+  runtime/controller-binding.json is the single schema2 preset.
   Saved device mapping remains in controller-calibration.json; reuse it.
   Low Triangle taps: Jin string D, C6E/2400 -> C6F/2410 -> C70/2420.
   Low Triangle hold: C79/5014 upward launcher. Mid/high held trials are disabled.
@@ -24,7 +24,7 @@ Configuration:
   LT + RT custom string is disabled. Native sword running attacks remain native.
   Saving a changed preset recovers and reattaches the active engine.
   A null choice disables that replacement. Source signatures/indices are engine-owned.
-  Native animation timing is centralized in boss_support.h::boss_move_timing.
+  Native animation timing is centralized in runtime/native/boss_support.h::boss_move_timing.
   Spreadsheet Tuning documents these values; editing it does not modify the DLL.
 
 Data:

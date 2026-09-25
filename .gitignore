@@ -49,3 +49,15 @@ work/nioh-asset-index-inspection*.json
 work/cold-player.json
 work/cold-resource-load.json
 work/live-text-identity.json
+
+runtime/native/build/
+runtime/native/boss_session.h
+runtime/boss-session.json
+runtime/session-profile.json
+runtime/resource-owner.json
+runtime/resource-owners/
+runtime/play-process.json
+runtime/play-status.json
+runtime/stop.flag
+runtime/sessions/
+runtime/trainer-settings.json

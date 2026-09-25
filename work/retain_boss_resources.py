@@ -5,7 +5,7 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT/'outputs/okatsu-prototype'))
+sys.path.insert(0, str(ROOT/'runtime'))
 from resource_assets import read_asset
 
 archive = Path(r'C:\Program Files (x86)\Steam\steamapps\common\Nioh\archive')

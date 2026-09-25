@@ -16,9 +16,9 @@ import time
 import uuid
 
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from catalogue import load_catalogue
-BOSS_CATALOGUE = Path(__file__).resolve().parents[2] / 'outputs/Nioh1-Sword-Move-Observations.xlsx'
+BOSS_CATALOGUE = Path(__file__).resolve().parents[1] / 'outputs/Nioh1-Sword-Move-Observations.xlsx'
 BOSSES = {boss['id']: boss for boss in load_catalogue(BOSS_CATALOGUE)['bosses']}
 DEFAULT_SIGNATURES = {key: boss['capture_signature'] for key,boss in BOSSES.items() if 'capture_signature' in boss}
 PLAYER_SIGNATURE = [{'action_id': 0xC64, 'motion_id': 2033}]
@@ -440,7 +440,7 @@ def discover_encounter(game, stop_requested=lambda: (
     # Fall back to read-only discovery when no candidate can be revalidated.
     from boss_probe import discover
     from engine_config import read_json
-    runtime = BOSS_CATALOGUE.parents[1] / 'outputs/okatsu-prototype'
+    runtime = BOSS_CATALOGUE.parents[1] / 'runtime'
     status = read_json(runtime/'play-status.json',{})
     if status.get('pid') == game.pid and 'trace' in status:
         trace_path = Path(status['trace'])/'events.jsonl'
@@ -498,7 +498,6 @@ def record_encounter(boss_id, outdir, stop_file=None, signature=None, stop_event
             atomic_json(manifest_path, manifest)
         if backend is None:
             import boss_probe
-            sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'okatsu-prototype'))
             from prepare_session import current_pid
             backend = {'open': boss_probe.LiveGame, 'pid': current_pid, 'discover': discover_encounter,
                        'select': select_actors, 'record': boss_probe.record}

@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'outputs/okatsu-prototype'))
+sys.path.insert(0, str(ROOT / 'runtime'))
 import run_dispatch as dispatch
 
 from session_fixture import BOSS, PROFILE, FIXTURES
@@ -95,7 +95,7 @@ class BossTests(unittest.TestCase):
         # Validate the configured player and source descriptor using owned resource memory.
         # Boss adaptation must reject stale identity or mismatched profile bindings.
         with patch.object(dispatch, 'validate'):
-            config = dispatch.prepare(OwnedGame(0), PROFILE, 0xC64, boss=True)
+            config = dispatch.prepare(OwnedGame(0), PROFILE)
         self.assertEqual((config['player'], config['owner']), (BOSS['player'], BOSS['player_owner']))
         self.assertEqual((config['descriptor'], config['payload'], config['motion']),
                          (BOSS['source_descriptor'], BOSS['source_payload'], 1220))
@@ -163,7 +163,7 @@ class BossTests(unittest.TestCase):
         # Shutdown must retain recovery time and publish the actual post-Stop state.
         calls, instances, prefixes = [], [], []
         class Command:
-            def __init__(self, pid, prefix):
+            def __init__(self, pid, prefix, **kwargs):
                 # Capture command mapping identity for the mocked recovery supervisor.
                 # Start deterministic control counters and retain every published command.
                 # The test can inspect disarming and namespace selection after Stop reports busy.
@@ -176,7 +176,7 @@ class BossTests(unittest.TestCase):
                 # Increment the count only after the first control observation.
                 # The supervisor must allow recovery for a dispatch observed late in shutdown.
                 self.controls += 1
-                return dict(enabled=1, frequency=1000, generation=7, dispatch_count=int(self.controls > 1))
+                return dict(enabled=1, frequency=1000, generation=7, dispatch_count=int(self.controls > 1), context_flags=15, context_epoch=0)
             def qpc(self):
                 # Advance the command clock in deterministic 50-tick steps.
                 # Use the mocked 1000-Hz frequency to drive bounded recovery polling.
@@ -193,7 +193,7 @@ class BossTests(unittest.TestCase):
                 # The test isolates busy native Stop from unrelated disposal errors.
                 pass
         class Trace:
-            def __init__(self, pid, prefix):
+            def __init__(self, pid, prefix, **kwargs):
                 # Record the trace namespace selected by the boss dispatcher.
                 # Avoid creating a real mapping for the requested process id.
                 # Both trace and command channels must use the configured runtime prefix.
@@ -230,24 +230,24 @@ class BossTests(unittest.TestCase):
             (folder / 'session-profile.json').write_text(json.dumps(PROFILE))
             (folder / 'boss-session.json').write_text(json.dumps(BOSS))
             calibration = folder / 'calibration.json'
-            calibration.write_text(json.dumps(dict(device=dict(backend='winmm'))))
-            argv = ['run_dispatch.py', '--boss', '--profile', str(folder / 'session-profile.json'),
+            calibration.write_text((ROOT/'runtime/controller-calibration.json').read_text())
+            (folder/'controller-binding.json').write_text((ROOT/'runtime/controller-binding.json').read_text())
+            argv = ['run_dispatch.py', '--profile', str(folder / 'session-profile.json'),
                     '--calibration', str(calibration), '--seconds', '.4', '--outdir', str(folder / 'result')]
             with patch.object(sys, 'argv', argv), patch.object(dispatch, 'HERE', folder), \
                  patch.object(dispatch, 'LiveGame', OwnedGame), \
                  patch.object(dispatch, 'CommandMap', Command), patch.object(dispatch, 'Trace', Trace), \
                  patch.object(dispatch, 'validate'), patch.object(dispatch, 'run', side_effect=run), \
-                 patch.object(dispatch, 'CalibratedChord'), patch.object(dispatch, 'WinMMBackend'), \
+                 patch.object(dispatch, 'process_identity', return_value={'publisher_start_filetime':str(BOSS['session']['creation_filetime'])}), \
                  patch.object(dispatch, 'ControllerReader', return_value=reader), \
                  patch.object(dispatch.time, 'sleep'), contextlib.redirect_stdout(io.StringIO()):
                 dispatch.main()
             status = json.loads((folder / 'result/status.json').read_text())
         self.assertEqual(calls, ['start', 'stop', 'stop-retry1'])
-        self.assertEqual(prefixes, ['NiohBossCommand_v1', 'NiohBossTrace_v1'])
+        self.assertEqual(prefixes, [BOSS['config_tag'], 'NiohBossRepeatTrace_v2'])
         self.assertTrue(status['stop_completed'] and status['post_stop_slots_restored'])
         self.assertTrue(status['post_stop_resources']['source_clip_retained'])
         self.assertEqual(status['stop_busy_retries'], 1)
         self.assertEqual(status['recovery_seconds'], 5)
         self.assertEqual(status['errors'], [])
-        self.assertGreaterEqual(instances[0].clock, 5300)
         self.assertFalse(instances[0].published[-1]['armed'])

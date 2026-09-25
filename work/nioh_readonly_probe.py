@@ -8,7 +8,7 @@ import re
 import struct
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'outputs/boss-probe'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'runtime'))
 from nioh_memory import kernel, modules, read, MEMORY_BASIC_INFORMATION
 
 def probe(pid):

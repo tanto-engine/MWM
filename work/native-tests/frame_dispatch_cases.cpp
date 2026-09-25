@@ -8,7 +8,7 @@
 #define RESEARCH_REPEAT
 #define RESEARCH_BOSS
 #define RESEARCH_DISPATCH
-#include "../../outputs/okatsu-prototype/native/observer.cpp"
+#include "../../runtime/native/observer.cpp"
 #include "import_fixture.h"
 
 static unsigned enables, disables, creates;

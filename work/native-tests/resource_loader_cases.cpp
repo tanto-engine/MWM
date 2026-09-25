@@ -33,7 +33,7 @@ static void* WINAPI owned_view(HANDLE handle, DWORD access, DWORD high, DWORD lo
 }
 #define GetModuleHandleW owned_module
 #define MapViewOfFile owned_view
-#include "../../outputs/okatsu-prototype/native/resource_loader.cpp"
+#include "../../runtime/native/resource_loader.cpp"
 #undef MapViewOfFile
 #undef GetModuleHandleW
 

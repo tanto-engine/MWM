@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'outputs' / 'boss-probe'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'runtime'))
 from boss_probe import LiveGame, U32
 
 with LiveGame(12284) as game:

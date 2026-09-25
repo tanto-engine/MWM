@@ -1,7 +1,9 @@
-# One supervisor and the same worker entrypoints in source and frozen releases.
+# One registered supervisor with direct source worker entrypoints.
 import ctypes as C
 from ctypes import wintypes as W
 import os
+import json
+import subprocess
 from pathlib import Path
 import sys
 
@@ -55,11 +57,9 @@ def unregister_runtime(record):
 
 
 def worker_command(script, *arguments):
-    # Build literal worker arguments for source or frozen execution.
-    # Choose Python script invocation or the EXE's worker dispatch mode.
+    # Build a direct Python invocation for a source worker.
+    # Reuse the current interpreter and disable bytecode writes.
     # Paths with spaces remain arguments rather than shell fragments.
-    if getattr(sys, 'frozen', False):
-        return [sys.executable, '--worker', Path(script).stem, *map(str, arguments)]
     return [sys.executable, '-B', str(script), *map(str, arguments)]
 
 
@@ -123,3 +123,40 @@ def process_matches(record):
         return False
     actual = process_identity(record['publisher_pid'])
     return actual is not None and actual['publisher_start_filetime'] == str(record.get('publisher_start_filetime'))
+
+
+def loader_report(stdout, stderr=''):
+    # Extract a loader result from either worker output stream.
+    # Accept only recognized loader outcomes from valid JSON objects.
+    # Keep mutation provenance available when deciding whether to stop a hook.
+    for text in (stderr, stdout):
+        try:
+            value = json.loads(text)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(value, dict) and value.get('status') in ('error', 'export_returned'):
+            return value
+    return None
+
+
+class CommandFailure(RuntimeError):
+    def __init__(self, name, result):
+        # Retain the failing worker name and its loader report.
+        # Include stdout and stderr in the exception message.
+        # Runtime cleanup needs to distinguish failed start from later failures.
+        super().__init__(f'{name} failed ({result.returncode}): {result.stderr.strip()} {result.stdout.strip()}')
+        self.name = name
+        self.report = loader_report(result.stdout, result.stderr)
+
+
+def run(command, outdir, name):
+    # Run one hidden engine worker and persist both output streams.
+    # Raise with the worker identity when its exit code is nonzero.
+    # Keep command failures reviewable after the parent exits.
+    result = subprocess.run(worker_command(command[0], *command[1:]),
+                            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    (outdir / (name+'.stdout.txt')).write_text(result.stdout, encoding='utf8')
+    (outdir / (name+'.stderr.txt')).write_text(result.stderr, encoding='utf8')
+    if result.returncode:
+        raise CommandFailure(name, result)
+    return result.stdout

@@ -1,9 +1,9 @@
 import json, struct, sys
 from pathlib import Path
-sys.path.insert(0, str(Path('outputs/boss-probe').resolve()))
+sys.path.insert(0, str(Path('runtime').resolve()))
 from boss_probe import LiveGame, U32, I32, U64
 from action_banks import inspect_banks
-p = json.loads(Path('outputs/okatsu-prototype/session-profile.json').read_text())
+p = json.loads(Path('runtime/session-profile.json').read_text())
 with LiveGame(p['session']['pid']) as game:
     assert game.identity == p['session']
     game.begin_sample()

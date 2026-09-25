@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #define RESEARCH_REPEAT
-#include "../../outputs/okatsu-prototype/native/dispatch_protocol.h"
+#include "../../runtime/native/dispatch_protocol.h"
 static DispatchMapping mapping{};
 static DispatchMapping* dispatch = &mapping;
 template<class T> static bool copy_field(uint64_t address, T& value) {
@@ -25,7 +25,7 @@ static bool copy_bytes(uint64_t address, void* out, SIZE_T length) {
     return address >= 0x10000 && ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(address),
         out, length, &copied) && copied == length;
 }
-#include "../../outputs/okatsu-prototype/native/boss_support.h"
+#include "../../runtime/native/boss_support.h"
 #include "import_fixture.h"
 
 template<class T> static void put(void* p, size_t at, T value) {

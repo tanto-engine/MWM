@@ -2,8 +2,8 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include "../../outputs/okatsu-prototype/native/trace_protocol.h"
-#include "../../outputs/okatsu-prototype/native/controller_input.h"
+#include "../../runtime/native/trace_protocol.h"
+#include "../../runtime/native/controller_input.h"
 
 static DWORD codes[4] = {0, ERROR_DEVICE_NOT_CONNECTED, ERROR_DEVICE_NOT_CONNECTED, ERROR_DEVICE_NOT_CONNECTED};
 static unsigned calls[4];

@@ -3,7 +3,7 @@ import struct
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path('outputs/boss-probe').resolve()))
+sys.path.insert(0, str(Path('runtime').resolve()))
 from boss_probe import LiveGame, metadata
 from action_banks import inspect_banks, resolve
 

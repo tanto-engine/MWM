@@ -4,7 +4,7 @@ import struct
 import unittest
 from unittest.mock import patch
 
-path = Path(__file__).resolve().parents[2] / 'outputs/okatsu-prototype/trace_reader.py'
+path = Path(__file__).resolve().parents[2] / 'runtime/trace_reader.py'
 spec = importlib.util.spec_from_file_location('trace_reader', path)
 reader = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(reader)

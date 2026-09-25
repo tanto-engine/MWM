@@ -1,55 +1,28 @@
-# Standalone trainer UI and frozen worker entrypoint for the existing engine.
+# Source trainer UI for the sword runtime.
 # TODO: Revisit EXE packaging only after the gameplay readiness gate passes.
 import argparse
-import ctypes as C
-import importlib
-import io
-import json
 import os
 from pathlib import Path
 import subprocess
-import shutil
 import sys
-import tempfile
 import time
 
-FROZEN = getattr(sys, 'frozen', False)
-ROOT = Path(sys.executable).parent if FROZEN else Path(__file__).resolve().parents[2]
-RUNTIME = Path(os.environ.get('NIOH_RUNTIME_HOME', ROOT/'runtime' if FROZEN else ROOT/'outputs/okatsu-prototype'))
+ROOT = Path(__file__).resolve().parents[1]
+RUNTIME = Path(os.environ.get('NIOH_RUNTIME_HOME', ROOT/'runtime'))
 CODE = Path(__file__).resolve().parent
 os.environ['NIOH_RUNTIME_HOME'] = str(RUNTIME)
-for folder in (CODE, ROOT/'outputs/boss-probe', ROOT/'catalogue'):
+for folder in (CODE, ROOT/'catalogue'):
     sys.path.insert(0, str(folder))
 
-from catalogue import load_catalogue, save_catalogue
+from catalogue import load_catalogue
 from engine_config import DEFAULT_PRESET, MOVE_VARIANTS, atomic_json, read_json, validate_preset, binding_for_preset
 from game_controller import binding_buttons
 from process_support import active_runtime, process_matches, worker_command
 
 
-def attach_worker_streams():
-    # Restore inherited output streams for a windowless worker process.
-    # Wrap Windows standard handles when Python did not create streams.
-    # Keep loader diagnostics available in the parent worker logs.
-    # PyInstaller's windowed bootloader clears sys.std*. Reconnect explicitly to
-    # the inherited pipes/files so loader status is identical to source runs.
-    import msvcrt
-    kernel = C.WinDLL('kernel32', use_last_error=True)
-    kernel.GetStdHandle.argtypes = [C.c_ulong]
-    kernel.GetStdHandle.restype = C.c_void_p
-    for name, number in (('stdout', -11), ('stderr', -12)):
-        if getattr(sys, name) is None:
-            handle = kernel.GetStdHandle(number & 0xffffffff)
-            if handle and handle != C.c_void_p(-1).value:
-                fd = msvcrt.open_osfhandle(handle, os.O_WRONLY | os.O_BINARY)
-                setattr(sys, name, io.TextIOWrapper(os.fdopen(fd, 'wb', buffering=0), encoding='utf8', write_through=True))
-            else:
-                setattr(sys, name, open(os.devnull, 'w', encoding='utf8'))
-
-
 def launch(script, arguments, folder):
     # Start a hidden worker with stdout and stderr saved in its session folder.
-    # Use the common source-or-frozen command builder.
+    # Keep executable and script arguments separate, including paths with spaces.
     # Return the process handle so the UI can report worker exit.
     folder.mkdir(parents=True, exist_ok=True)
     with (folder/'stdout.txt').open('w') as out, (folder/'stderr.txt').open('w') as err:
@@ -65,8 +38,10 @@ def launch_engine():
         return None
     if process_matches(read_json(RUNTIME/'play-process.json')):
         return None
+    if not (RUNTIME/'native/build/nioh_skill_runtime.dll').is_file():
+        raise ValueError('Runtime is missing. Run runtime/native/Build.ps1 first.')
     (RUNTIME/'stop.flag').unlink(missing_ok=True)
-    return launch(CODE/'play_okatsu.py', [], RUNTIME/'sessions'/('launcher-'+str(time.time_ns())))
+    return launch(CODE/'supervisor.py', [], RUNTIME/'sessions'/('launcher-'+str(time.time_ns())))
 
 
 def disable_engine():
@@ -77,38 +52,6 @@ def disable_engine():
     runtime = Path(registration['runtime_path']) if registration else RUNTIME
     runtime.mkdir(parents=True, exist_ok=True)
     (runtime/'stop.flag').write_text('stop\n')
-
-
-def self_test(destination):
-    # Check bundled imports and catalogue-to-workbook synchronization offline.
-    # Exercise edits only on temporary copies of the catalogue and workbook.
-    # Verify packaging plumbing without discovering or opening Nioh.
-    # Package integrity test. Never discovers or opens a game process.
-    calibration = read_json(RUNTIME/'controller-calibration.json')
-    binding = binding_for_preset(calibration, read_json(RUNTIME/'controller-binding.json'))
-    from circle_gesture import CircleGesture
-    gate = CircleGesture(calibration, binding, 1000)
-    gate.process(dict(kind='input_device', **calibration['device']), 100)
-    gate.process(dict(kind='input', backend=calibration['device']['backend'], slot=calibration['device']['slot'], buttons=0), 101)
-    catalogue = load_catalogue(ROOT/'outputs/Nioh1-Sword-Move-Observations.xlsx')
-    assert catalogue and len(catalogue['moves']) >= 2
-    assert (RUNTIME/'native/build/nioh_skill_runtime.dll').is_file()
-    for module in ('play_okatsu', 'prepare_session', 'run_dispatch', 'native_loader', 'encounter_recording', 'catalogue', 'spreadsheet_sync'):
-        importlib.import_module(module)
-    from catalogue import rename_move
-    from spreadsheet_sync import sync_workbook
-    workbook = ROOT/'Nioh1-Sword-Move-Observations.xlsx' if FROZEN else ROOT/'outputs/Nioh1-Sword-Move-Observations.xlsx'
-    with tempfile.TemporaryDirectory(prefix='nioh-package-check-') as folder:
-        folder = Path(folder)
-        sample = folder/'moves.xlsx'
-        sheet = folder/'view.xlsx'
-        shutil.copy2(ROOT/'outputs/Nioh1-Sword-Move-Observations.xlsx', sample)
-        shutil.copy2(workbook, sheet)
-        rename_move(sample, 'okatsu.charged_rush', 'Owned package verification')
-        synchronized = sync_workbook(sample, sheet, folder/'downloads.xlsx')
-        assert sheet.read_bytes() == (folder/'downloads.xlsx').read_bytes()
-    atomic_json(destination, dict(passed=True, frozen=FROZEN, catalogue_moves=len(catalogue['moves']),
-                                 game_access=False, calibration_reused=True, standalone_workbook_sync=True))
 
 
 class Trainer:
@@ -413,7 +356,7 @@ class Trainer:
             stop = self.record_folder/'stop.flag'
             stop.unlink(missing_ok=True)
             self.record_logs = self.record_folder/'workers'/str(time.time_ns())
-            self.record_child = launch(ROOT/'outputs/boss-probe/encounter_recording.py',
+            self.record_child = launch(ROOT/'runtime/encounter_recording.py',
                 ['--boss-id', boss_id, '--outdir', folder, '--stop-file', stop], self.record_logs)
             self.record_status.set('Starting encounter recording. Existing takes are preserved.')
         except (OSError, ValueError) as error: self.error(error)
@@ -531,43 +474,16 @@ class Trainer:
 
 
 def main(argv=None):
-    # Route worker, offline-check and source UI invocations.
-    # Pass worker arguments through unchanged to their existing entrypoints.
-    # Keep UI startup separate from attachment and recorder execution.
-    parser = argparse.ArgumentParser(description='Run the skill engine with the saved controller mapping')
-    parser.add_argument('--worker', choices=['play_okatsu', 'prepare_session', 'run_dispatch', 'native_loader', 'encounter_recording'])
-    parser.add_argument('--self-test', type=Path)
-    parser.add_argument('--enable', action='store_true', help='Launch the saved moveset without opening the UI')
-    parser.add_argument('--disable', action='store_true', help='Disable the active engine without opening the UI')
+    # Route source UI and headless lifecycle controls through the same functions.
+    # Parse only maintained controls before constructing any widgets.
+    # Disable remains cooperative and can run without opening the trainer.
+    parser = argparse.ArgumentParser(description='Control the Nioh sword runtime')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--enable', action='store_true', help='Enable without opening the UI')
+    mode.add_argument('--disable', action='store_true', help='Cooperatively disable without opening the UI')
     parser.add_argument('--ui-smoke', type=Path, help=argparse.SUPPRESS)
-    argv = list(sys.argv[1:] if argv is None else argv)
-    # Worker options belong entirely to that worker, including --help. The
-    # trainer parser must never consume its options or mutate their ordering.
-    if argv and argv[0] == '--worker':
-        if len(argv) < 2:
-            parser.error('--worker requires an entrypoint')
-        worker = parser.parse_args(argv[:2]).worker
-        RUNTIME.mkdir(parents=True, exist_ok=True)
-        attach_worker_streams()
-        sys.argv = [worker, *argv[2:]]
-        import runpy
-        runpy.run_module(worker, run_name='__main__')
-        return 0
-    args, rest = parser.parse_known_args(argv)
+    args = parser.parse_args(argv)
     RUNTIME.mkdir(parents=True, exist_ok=True)
-    if args.worker:
-        attach_worker_streams()
-        sys.argv = [args.worker, *rest]
-        # runpy preserves each module's existing CLI error/exit behavior.
-        import runpy
-        runpy.run_module(args.worker, run_name='__main__')
-        return 0
-    if rest: parser.error('Unrecognized arguments: ' + ' '.join(rest))
-    if args.self_test:
-        self_test(args.self_test)
-        return 0
-    if args.enable and args.disable:
-        parser.error('Choose either --enable or --disable')
     if args.disable:
         disable_engine()
         return 0

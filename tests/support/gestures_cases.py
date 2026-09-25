@@ -1,8 +1,8 @@
 import json, sys, unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
-sys.path.insert(0,str(ROOT/'outputs/okatsu-prototype'))
-from circle_gesture import CircleGesture
+sys.path.insert(0,str(ROOT/'runtime'))
+from gestures import ControllerGesture
 FIXTURES=ROOT/'work/native-tests/fixtures'
 C=json.loads((FIXTURES/'controller-calibration.json').read_text())
 B=json.loads((FIXTURES/'controller-binding.json').read_text())
@@ -13,12 +13,12 @@ class Gestures(unittest.TestCase):
         # Create the saved Circle gesture and establish its device identity.
         # Feed a neutral initial observation before returning the recognizer.
         # Tap/hold tests must begin armed rather than exploit an unknown startup edge.
-        g=CircleGesture(C,B,1000)
+        g=ControllerGesture(C,B,1000)
         g.process(dict(kind='input_device',**C['device']),100)
         self.input(g,0,101,True)
         return g
     def input(self,g,buttons,t,unknown=False):
-        # Deliver a chosen raw button mask and QPC tick to CircleGesture.
+        # Deliver a chosen raw button mask and QPC tick to ControllerGesture.
         # Mark the edge as observed or unknown according to the fixture parameter.
         # Startup snapshots and real presses must remain distinguishable.
         return g.process(dict(kind='input',backend='winmm',slot=0,buttons=buttons,
@@ -82,7 +82,7 @@ class TriggerString(unittest.TestCase):
         # Exercise the inactive preset with the legacy string entry still available.
         # Attempt both Circle gestures and the two-trigger chord after neutral input.
         # Preserving imported moves must not preserve their disabled bindings.
-        g = CircleGesture(C, dict(B, variants=[None, None], string_enabled=False), 1000, 2)
+        g = ControllerGesture(C, dict(B, variants=[None, None], string_enabled=False), 1000, 2)
         g.process(dict(kind='input_device', **C['device']), 100)
         for t, buttons, lt, rt in ((101,0,0,0), (200,20,0,0), (250,16,0,0),
                                    (300,20,0,0), (800,20,0,0), (850,0,0,0),
@@ -94,7 +94,7 @@ class TriggerString(unittest.TestCase):
         # Create the trigger-string recognizer with entry variant two.
         # Register the saved device without inventing a neutral trigger observation.
         # Each test must explicitly establish neutral before arming the chain.
-        g=CircleGesture(C,B,1000,string_variant=2)
+        g=ControllerGesture(C,B,1000,string_variant=2)
         g.process(dict(kind='input_device',**C['device']),100)
         return g
 

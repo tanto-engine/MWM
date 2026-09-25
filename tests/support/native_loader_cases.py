@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-path = Path(__file__).resolve().parents[2] / "outputs/okatsu-prototype/native_loader.py"
+path = Path(__file__).resolve().parents[2] / "runtime/native_loader.py"
 spec = importlib.util.spec_from_file_location("native_loader", path)
 loader = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(loader)
