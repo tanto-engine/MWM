@@ -17,7 +17,7 @@ from profile_resources import StableReads, inspect_candidate, resources, inspect
 from load_resources import load_resources
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
-from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT
+from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
 from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS
 
 IMPORT_MANIFEST = CODE.parent / 'catalogue/imports/okatsu.json'
@@ -148,13 +148,20 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             for target in move['native_followups']:
                 if target not in by_id or not any(struct.unpack_from('<h', row, 0x14)[0] == by_id[target]['key']
                         and row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
+                              or (move['flags'] == PLAYER_PAIRED_FLAGS or move['key']==0xC73) and struct.unpack_from('<H', row)[0] == 0
                             or row[10] == 0 and row[:10] == b'\xff'*10) for row in rows):
                     raise ValueError('Configured native continuation is absent from the source rows')
+            if move['id']=='jin_hayabusa.izuna_drop' and not any(
+                    struct.unpack_from('<HH',row)==(20,207) and row[10:12]==b'\x02\xff'
+                    and struct.unpack_from('<h',row,20)[0]==0xC7A
+                    and struct.unpack_from('<hh',row,32)==(-32768,26) for row in rows):
+                raise ValueError('Izuna launcher lacks its recorded airborne continuation')
         if move['next_variant'] != -1:
             next_key = manifest['moves'][move['next_variant']]['key']
-            if move['flags'] == GRAB_ATTEMPT_FLAGS or move.get('adapter_kind') == 2:
+            if move['flags'] == GRAB_ATTEMPT_FLAGS or move.get('adapter_kind') == 2 or is_izuna_bridge(move):
                 native_success = any(struct.unpack_from('<h', row, 0x14)[0] == next_key
-                                     and struct.unpack_from('<H', row, 0)[0] == 22 for row in rows)
+                                     and struct.unpack_from('<H', row, 0)[0] == 22
+                                     and row[10:12]==b'\x00\xff' for row in rows)
                 if not native_success:
                     raise ValueError('Configured paired success is absent from native grab transitions')
             elif not any(struct.unpack_from('<h', row, 0x14)[0] == next_key
@@ -199,7 +206,9 @@ def configured_replacements(configuration=None):
     # Disabling low-heavy taps must not disable an independent held skill.
     configuration = validate_preset(configuration if configuration is not None else read_json(CURRENT_CONFIG))
     candidate = HEAVY_STRINGS.get(configuration['low_heavy'])
-    hold = any(configuration['stance_holds'].values())
+    entries=list(dict.fromkeys((stance,identifier) for bindings in ('stance_holds','frost_moon')
+                               for stance,identifier in configuration[bindings].items() if identifier))
+    hold = bool(entries)
     if candidate is None and not hold:
         return None
     manifest = read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
@@ -210,11 +219,8 @@ def configured_replacements(configuration=None):
     if candidate and [by_id[key]['replacement']['player_key'] for key in selected] != [0xCF5, 0xCF6, 0xCF7]:
         raise ValueError('Jin candidate must replace the three low-stance heavy descriptors in order')
     if hold:
-        stance_holds = configuration['stance_holds']
-        for stance, player_key in STANCE_OPENERS.items():
-            identifier = stance_holds[stance]
-            if identifier is None:
-                continue
+        for stance, identifier in entries:
+            player_key=STANCE_OPENERS[stance]
             if (identifier not in by_id or by_id[identifier]['adapter_kind'] not in (1, 2)
                     or identifier not in manifest['hold_chains']):
                 raise ValueError('Held entry has no supported input adapter')
@@ -244,6 +250,9 @@ def configured_replacements(configuration=None):
     manifest['hold_variant'] = next((index+1 for index,move in enumerate(manifest['moves'])
                                      if move['adapter_kind'] == 2), 0)
     manifest['hold_milliseconds'] = round(configuration['hold_seconds']*1000) if manifest['hold_variant'] else 0
+    manifest['hold_stances'] = sum(1<<i for i,stance in enumerate(STANCE_OPENERS) if configuration['stance_holds'][stance])
+    manifest['frost_variants'] = [positions[configuration['frost_moon'][stance]]+1 if configuration['frost_moon'][stance] else 0 for stance in STANCE_OPENERS]
+    manifest['frost_milliseconds'] = round(configuration['frost_window_seconds']*1000)
     manifest['candidate'] = candidate
     return manifest
 
@@ -295,6 +304,7 @@ def fresh_profile(game):
     moves, imports = resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest)
     adapters = [None] * len(imports)
     hold_variant = hold_milliseconds = hold_camera_bank = 0
+    hold_stances=0; frost_variants=[0,0,0]; frost_milliseconds=750
     base = int(game.identity['module_base'], 0)
     if U64(stable.pin(camera_bank, 8), 0) != base + 0x13C8FA0:
         raise ValueError('Owned camera resource has an unexpected type')
@@ -337,6 +347,9 @@ def fresh_profile(game):
         if replacement_manifest['hold_variant']:
             hold_variant = len(imports) + replacement_manifest['hold_variant']
             hold_milliseconds = replacement_manifest['hold_milliseconds']
+            hold_stances=replacement_manifest['hold_stances']
+            frost_variants=[slot+len(imports) if slot else 0 for slot in replacement_manifest['frost_variants']]
+            frost_milliseconds=replacement_manifest['frost_milliseconds']
             if any(move['adapter_kind']==3 for move in additional):
                 if U64(stable.pin(hold_camera,8),0)!=base+0x13C8FA0 or inspect_motion(game,stable,hold_camera,5020)['presence']!='present':
                     raise ValueError('Owned Jin paired camera5020 is unavailable')
@@ -347,9 +360,12 @@ def fresh_profile(game):
     return dict(session=game.identity, player=player, source=source, charged_candidate=moves[1], preset=configuration,
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
                 hold_variant=hold_variant, hold_milliseconds=hold_milliseconds, hold_camera_bank=hold_camera_bank,
+                hold_stances=hold_stances, frost_variants=frost_variants, frost_milliseconds=frost_milliseconds,
+                frost_speed=configuration['frost_startup_speed'],
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
-                resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple)
+                resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
+                tiger_sprint=configuration['tiger_sprint'],mid_light_ender=configuration['mid_light_ender'])
 
 
 def boss_fields(profile):
@@ -382,6 +398,8 @@ def boss_fields(profile):
     fields.update(imports=profile['imports'], adapters=profile['adapters'], string_variant=profile['string_variant'])
     fields.update((field,profile[field]) for field in ('hold_variant','hold_milliseconds','hold_camera_bank'))
     fields['native_grapple'] = profile.get('native_grapple', False)
+    fields.update((field,profile.get(field,False)) for field in ('tiger_sprint','mid_light_ender'))
+    fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed'))
     return fields, originals
 
 

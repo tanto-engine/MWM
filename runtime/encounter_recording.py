@@ -434,20 +434,28 @@ def discover_encounter(game, stop_requested=lambda: (
     # Provide the no-cancellation default for direct discovery callers.
     # Return false until a caller supplies its own stop predicate.
     # Use the same polling path for interactive and offline invocations.
-    False)):
+    False), seed=None, signature=None):
     # Try the running engine's recent actor trace before a heap scan.
     # Use only evidence belonging to the current process.
     # Fall back to read-only discovery when no candidate can be revalidated.
     from boss_probe import discover
     from engine_config import read_json
+    found=None
+    if seed and seed.is_file():
+        try:
+            found=discover(game,seed,stop_requested)
+            select_actors(game,found,signature or [],stop_requested)
+        except (OSError,ValueError):
+            found=None
     runtime = BOSS_CATALOGUE.parents[1] / 'runtime'
     status = read_json(runtime/'play-status.json',{})
-    if status.get('pid') == game.pid and 'trace' in status:
+    if found is None and status.get('pid') == game.pid and 'trace' in status:
         trace_path = Path(status['trace'])/'events.jsonl'
         if trace_path.is_file() and trace_path.stat().st_size:
             found = runtime_candidates(game,trace_path,stop_requested)
-            if found is not None: return found
-    return discover(game,stop_requested=stop_requested)
+    if found is None: found=discover(game,stop_requested=stop_requested)
+    if seed: atomic_json(seed,found)
+    return found
 
 
 def record_encounter(boss_id, outdir, stop_file=None, signature=None, stop_event=None,
@@ -497,9 +505,10 @@ def record_encounter(boss_id, outdir, stop_file=None, signature=None, stop_event
         else:
             atomic_json(manifest_path, manifest)
         if backend is None:
+            from functools import partial
             import boss_probe
             from prepare_session import current_pid
-            backend = {'open': boss_probe.LiveGame, 'pid': current_pid, 'discover': discover_encounter,
+            backend = {'open': boss_probe.LiveGame, 'pid': current_pid, 'discover': partial(discover_encounter,seed=outdir/'discovery.json',signature=signature),
                        'select': select_actors, 'record': boss_probe.record}
     except BaseException:
         lock.seek(0)

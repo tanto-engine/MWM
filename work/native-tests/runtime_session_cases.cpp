@@ -3,6 +3,7 @@
 #define main inherited_frame_test_main
 #include "frame_dispatch_cases.cpp"
 #undef main
+#include "airborne_fixture.h"
 
 static RuntimeSessionConfig config() {
     // Build a complete seven-import runtime ABI fixture with this process's birth.
@@ -10,6 +11,8 @@ static RuntimeSessionConfig config() {
     // Startup validation can then reject malformed contracts without accessing a game.
     RuntimeSessionConfig result{};
     result.magic = RUNTIME_SESSION_MAGIC; result.version = RUNTIME_SESSION_VERSION;
+    result.frost_milliseconds = 750;
+    result.frost_speed = 8;
     result.size = sizeof(result); result.pid = GetCurrentProcessId(); result.config_tag = 0x123456789abcdef0ULL;
     FILETIME born{}, ended{}, kernel{}, user{};
     assert(GetProcessTimes(GetCurrentProcess(), &born, &ended, &kernel, &user));
@@ -48,7 +51,61 @@ int main() {
     // Mutate the seven-import ABI and drive owned frame recovery scenarios.
     // Stale process identities and reused actor pointers must not authorize native writes.
     auto incoming = config();
-    auto grapple_config=incoming; grapple_config.native_grapple=1;
+    auto aerial=incoming; aerial.import_count=17; aerial.hold_variant=17; aerial.hold_milliseconds=250;
+    aerial.hold_camera_bank=0x960000; aerial.hold_stances=1; aerial.frost_variants[0]=13; aerial.frost_variants[1]=8;
+    for (unsigned phase=0;phase<9;++phase) {
+        const auto& source=airborne_sources[phase];const unsigned slot=phase+7;
+        auto& move=aerial.imports[slot];move=incoming.imports[0];move.voice_count=0;memset(move.voices,0,sizeof(move.voices));
+        move.descriptor=0x500000+source.key*0x100;move.payload=move.descriptor+0x20;move.clip=move.descriptor+0x40;move.timing_record=move.descriptor+0x60;
+        move.key=source.key;move.motion=source.motion;move.flags=source.flags;
+        move.recovery_frame=source.recovery;move.transition_count=uint16_t(source.count);move.next_variant=phase==1 ? 9 : -1;
+        auto& adapter=aerial.adapters[slot];adapter={0x910000,0x920000,0x930000,0x940000,0x950000,0xA00000,0xCB7,3300,40,58,2};
+        adapter.kind=phase==0 || phase==5 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
+        if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
+        if (phase>=5) {adapter.player_descriptor=0xA10000;adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
+    }
+    aerial.imports[16]=aerial.imports[7];aerial.adapters[16]=aerial.adapters[12];
+    assert(runtime_imports_valid(aerial));
+    for (unsigned slot : {7u,8u,9u,12u,13u,14u,15u,16u}) {
+        auto invalid=aerial;invalid.imports[slot].flags^=1;
+        assert(!runtime_imports_valid(invalid));
+    }
+    auto invalid_alias=aerial;invalid_alias.imports[16].descriptor+=8;
+    assert(!runtime_imports_valid(invalid_alias));
+    invalid_alias=aerial;invalid_alias.adapters[16]=aerial.adapters[7];
+    assert(!runtime_imports_valid(invalid_alias));
+    static_assert(RUNTIME_SESSION_VERSION==7 && sizeof(RuntimeSessionConfig)==4168
+        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632);
+    auto frost=incoming; frost.import_count=9; frost.hold_variant=8; frost.hold_milliseconds=250;
+    frost.frost_variants[2]=8;
+    for (unsigned i=7;i!=9;++i) {
+        auto& move=frost.imports[i]; move=incoming.imports[0];
+        move.descriptor=0x30000+i*0x1000;move.payload=move.descriptor+0x100;
+        move.clip=move.descriptor+0x200;move.timing_record=move.descriptor+0x300;
+        move.key=i==7?0xCAC:0xCAD;move.motion=i==7?5110:5111;move.flags=0x200194C0000ULL;
+        move.recovery_frame=i==7?115:65;move.transition_count=i==7?76:75;
+        frost.adapters[i]={0x90000,0x91000,0x92000,0x93000,0x94000,0x95000,0xC7A,2300,42,46,i==7?2u:4u};
+    }
+    assert(runtime_imports_valid(frost));
+    for (uint64_t slot : {9ULL,10ULL}) {
+        auto wrong=frost;wrong.frost_variants[2]=slot;
+        assert(!runtime_imports_valid(wrong));
+    }
+    auto wrong=frost;wrong.frost_variants[2]=0;wrong.frost_variants[0]=8;
+    assert(!runtime_imports_valid(wrong));
+    wrong=frost;wrong.hold_stances=8;
+    assert(!runtime_imports_valid(wrong));
+    for (uint64_t window : {99ULL,1501ULL}) {
+        wrong=frost;wrong.frost_milliseconds=window;
+        assert(!runtime_imports_valid(wrong));
+    }
+    for (uint64_t speed : {0ULL,9ULL}) {
+        wrong=frost;wrong.frost_speed=speed;
+        assert(!runtime_imports_valid(wrong));
+    }
+    wrong=frost;wrong.frost_speed=1;
+    assert(runtime_imports_valid(wrong));
+    auto grapple_config=incoming; grapple_config.native_bindings=1;
     assert(runtime_imports_valid(grapple_config));
     grapple_config.imports[6].motion=1312;
     assert(!runtime_imports_valid(grapple_config));
@@ -57,7 +114,7 @@ int main() {
     assert(load_runtime_session(&invalid) == ERROR_INVALID_DATA && !runtime_session_configured);
     invalid = incoming; invalid.creation_filetime += 1;
     assert(load_runtime_session(&invalid) == ERROR_INVALID_DATA && !runtime_session_configured);
-    invalid = incoming; invalid.native_grapple = 2;
+    invalid = incoming; invalid.native_bindings = 8;
     assert(load_runtime_session(&invalid) == ERROR_INVALID_DATA && !runtime_session_configured);
     invalid = incoming; invalid.session.player = 1;
     assert(load_runtime_session(&invalid) == ERROR_INVALID_DATA && !runtime_session_configured);
@@ -120,6 +177,12 @@ int main() {
     assert(BOSS_CONFIG_TAG == incoming.config_tag && !memcmp(&boss_session, &incoming.session, sizeof(boss_session)));
     assert(boss_import_count==7 && boss_string_variant==2 && !memcmp(boss_imports,incoming.imports,sizeof(boss_imports)));
     assert(load_runtime_session(&incoming) == 0);
+    invalid=incoming;invalid.frost_milliseconds=751;
+    assert(load_runtime_session(&invalid)==ERROR_INVALID_DATA);
+    invalid=incoming;invalid.hold_stances=1;
+    assert(load_runtime_session(&invalid)==ERROR_INVALID_DATA);
+    invalid=incoming;invalid.frost_speed=7;
+    assert(load_runtime_session(&invalid)==ERROR_INVALID_DATA);
     invalid = incoming; invalid.session.player += 0x100;
     assert(load_runtime_session(&invalid) == ERROR_INVALID_DATA);
     assert(!memcmp(&boss_session, &incoming.session, sizeof(boss_session)));

@@ -44,13 +44,23 @@ template<class T> static bool copy_field(uint64_t address, T& value) {
 #include "windup_support.h"
 #include "controller_input.h"
 #include "replacement_support.h"
+#include "frost_moon.h"
+#include "launcher_weight.h"
 #endif
 
-static bool observed_action_impl(void* actor, uint32_t key, void* context, bool frame_mode, bool chain_mode = false, bool heavy_mode = false) {
+enum class ActionRequest { Native, Gesture, Chain, Heavy, Frost };
+static bool observed_action_impl(void* actor, uint32_t key, void* context, ActionRequest request=ActionRequest::Native) {
     // Run the shared action hook with scoped gesture, chain and research policies.
     // Preserve native arguments and errors except for a fully validated imported substitution.
     // Trace evidence records both requested action and actual native result for later acceptance.
     const DWORD incoming_error = GetLastError();
+    const bool frame_mode=request!=ActionRequest::Native;
+#ifdef RESEARCH_REPEAT
+    if (key==0xD3A && dispatch && !InterlockedCompareExchange(&dispatch->control.enabled,0,0)
+        && reinterpret_cast<uint64_t>(actor)==boss_session.player && mid_light_active()) {
+        SetLastError(incoming_error); return false;
+    }
+#endif
 #ifdef RESEARCH_BOSS
     BossCallScope scope;
 #endif
@@ -62,19 +72,15 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, bool 
     DispatchCommand command{};
     DispatchReason reason = Disabled;
 #ifdef RESEARCH_REPEAT
-    if (record_this && heavy_mode) reason=choose_heavy(command);
-    else if (record_this && chain_mode) reason = choose_chain(actor, command);
+    if (record_this && request==ActionRequest::Frost) reason=choose_frost_moon(command);
+    else if (record_this && request==ActionRequest::Heavy) reason=choose_heavy(command);
+    else if (record_this && request==ActionRequest::Chain) reason = choose_chain(actor, command);
     else
-#else
-    (void)chain_mode;
-    (void)heavy_mode;
 #endif
     if (record_this) reason = choose_dispatch(actor, key, context, command, frame_mode);
     if (reason == Accepted || reason == NativeHeavyTap) forwarded_key = command.desired_key;
 #else
     (void)frame_mode;
-    (void)chain_mode;
-    (void)heavy_mode;
 #endif
 #ifdef RESEARCH_REPEAT
     if (frame_mode && reason != Accepted && reason != NativeHeavyTap) { SetLastError(incoming_error); return false; }
@@ -123,12 +129,17 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, bool 
     SetLastError(incoming_error);
 #ifdef RESEARCH_REPEAT
     ReplacementScope replacement_scope(actor, command, reason);
+    restore_launch_weights(reinterpret_cast<uint64_t>(actor),true);
+    const auto launch_hit=launcher_hit(actor);
+    SetLastError(incoming_error);
     const bool result = suppress_guard ? false : original_action(actor, forwarded_key, forwarded_context);
 #else
     const bool result = original_action(actor, forwarded_key, forwarded_context);
 #endif
     const DWORD native_error = GetLastError();
 #ifdef RESEARCH_REPEAT
+    restore_launch_weights(reinterpret_cast<uint64_t>(actor),false);
+    if (result) apply_launch_weight(actor,launch_hit);
     if (reason == Accepted && !frame_mode) {
         record.reserved = command.desired_key;
         record.valid_fields = (record.valid_fields & ~(255u << 8)) | (uint32_t(Accepted) << 8) | TRACE_SUBSTITUTED;
@@ -175,7 +186,7 @@ static bool observed_action(void* actor, uint32_t key, void* context) {
     // Expose the ordinary native action-setter hook with unchanged calling convention.
     // Delegate to the shared implementation without frame or chain dispatch permission.
     // Natural game traffic must not accidentally consume a pending controller gesture.
-    return observed_action_impl(actor, key, context, false);
+    return observed_action_impl(actor, key, context);
 }
 
 #ifdef RESEARCH_REPEAT
@@ -221,12 +232,17 @@ static float observed_frame(void* actor, float delta) {
     // Owned-memory checks do not establish the complete live lifecycle matrix.
     const DWORD incoming_error = GetLastError();
     BossCallScope scope; // Stop retains callbacks while one is in progress.
+    const bool player_frame=reinterpret_cast<uint64_t>(actor)==boss_session.player;
+    const bool restore_weights=InterlockedCompareExchange(&launch_weight_count,0,0)
+        && (!dispatch || !InterlockedCompareExchange(&dispatch->control.enabled,0,0) || (player_frame && !boss_player_valid()));
+    restore_launch_weights(reinterpret_cast<uint64_t>(actor),restore_weights,player_frame);
     if (trace && reinterpret_cast<uint64_t>(actor) == boss_session.player)
         observe_game_input(trace->header);
     SetLastError(incoming_error);
     float result = original_frame(actor, delta);
     const float native_delta = result;
     const DWORD native_error = GetLastError();
+    restore_launch_weights(reinterpret_cast<uint64_t>(actor),restore_weights,player_frame);
     // Reload/recovery paths can change the current descriptor without invoking
     // the setter hook. Restore on the player's ordinary game-thread frame.
     if (InterlockedCompareExchange(&boss_active, 0, 0)
@@ -240,6 +256,13 @@ static float observed_frame(void* actor, float delta) {
     // are changing. Epochs also invalidate gestures across sub-poll interruptions.
     const bool ready = dispatch && reinterpret_cast<uint64_t>(actor) == boss_session.player
         && publish_player_context(native_delta);
+    if (reinterpret_cast<uint64_t>(actor)==boss_session.player) {
+        if (!ready) frost_input={};
+        else if (boss_frost_variants[0] || boss_frost_variants[1] || boss_frost_variants[2]) {
+            SetLastError(native_error);
+            observed_action_impl(actor,0,nullptr,ActionRequest::Frost);
+        }
+    }
     if (reinterpret_cast<uint64_t>(actor)==boss_session.player && boss_hold_variant) {
         if (!ready) { triangle_input.pressed=0; triangle_input.neutral=false; }
         if (!ready && pending_heavy.active) { pending_heavy.active=false; pending_heavy.spent=true; }
@@ -249,7 +272,7 @@ static float observed_frame(void* actor, float delta) {
         }
         if (ready && pending_heavy.active) {
             SetLastError(native_error);
-            observed_action_impl(actor,0,nullptr,true,false,true);
+            observed_action_impl(actor,0,nullptr,ActionRequest::Heavy);
         }
     }
     if (InterlockedCompareExchange(&boss_active,0,0)
@@ -257,7 +280,7 @@ static float observed_frame(void* actor, float delta) {
         if (!ready) boss_chain_cancelled = true;
         else {
             SetLastError(native_error);
-            observed_action_impl(actor,0,nullptr,true,true);
+            observed_action_impl(actor,0,nullptr,ActionRequest::Chain);
         }
     }
     if (ready && trace && InterlockedCompareExchange(&trace->header.enabled, 0, 0)
@@ -268,7 +291,7 @@ static float observed_frame(void* actor, float delta) {
         if (snapshot_command(pending) && pending.armed == 1
             && pending.chord_sequence > uint64_t(InterlockedCompareExchange64(&dispatch->control.consumed_sequence, 0, 0))) {
             SetLastError(native_error);
-            observed_action_impl(actor, 0, nullptr, true);
+            observed_action_impl(actor, 0, nullptr, ActionRequest::Gesture);
         }
     }
     SetLastError(native_error);
@@ -456,6 +479,7 @@ static DWORD start_observer() {
     if (!frame_prologue_matches(frame_target)) return 5;
     voice_target = reinterpret_cast<char*>(main) + 0x9670a0;
     if (!voice_prologue_matches(voice_target)) return 5;
+    if (!resolve_weight_setter(reinterpret_cast<uint64_t>(main))) return 5;
     if (replacements_configured()) {
         lookup_target = reinterpret_cast<char*>(main) + 0x73fa40;
         const uint8_t prefix[] = {0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x20};
@@ -526,7 +550,11 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResearchStart(void* parameter)
     // A refreshed session must not overwrite descriptors still retained by the game.
     if (InterlockedCompareExchange(&lifecycle_lock, 1, 0)) return 9;
 #ifdef RESEARCH_BOSS
-    if (InterlockedCompareExchange(&boss_active, 0, 0) || InterlockedCompareExchange(&boss_inflight, 0, 0)) {
+    if (InterlockedCompareExchange(&boss_active, 0, 0) || InterlockedCompareExchange(&boss_inflight, 0, 0)
+#ifdef RESEARCH_REPEAT
+        || InterlockedCompareExchange(&launch_weight_count,0,0)
+#endif
+        ) {
         InterlockedExchange(&lifecycle_lock, 0); return ERROR_BUSY;
     }
 #endif
@@ -556,6 +584,12 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResearchStop(void*) {
         InterlockedExchange(&lifecycle_lock, 0);
         return ERROR_BUSY;
     }
+#ifdef RESEARCH_REPEAT
+    if (mid_light_active() || InterlockedCompareExchange(&launch_weight_count,0,0)) {
+        InterlockedExchange(&trace->header.status,2); InterlockedExchange(&lifecycle_lock,0);
+        return ERROR_BUSY;
+    }
+#endif
 #endif
 #ifdef RESEARCH_DISPATCH
     stop_dispatch();

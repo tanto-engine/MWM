@@ -61,3 +61,24 @@ runtime/play-status.json
 runtime/stop.flag
 runtime/sessions/
 runtime/trainer-settings.json
+
+# Disposable recording state and one-off workbook authoring; retain source events.
+work/**/STOP
+work/**/recorder.lock
+work/**/status.json
+work/**/reconstruction.json
+work/*discovery*.json
+work/*seed-*.json
+work/jin-izuna-isolated-20260925/
+work/jin-izuna-ready-20260925/
+work/sword-input-take-20260925/
+work/jin-aerial-20260925/take-0002/
+work/jin-aerial-20260925/encounter.json
+work/izuna-catalogue-additions.json
+work/izuna-owned-tests.txt
+work/frost-*.txt
+!work/frost-current-tests.txt
+!work/frost-build.txt
+work/spreadsheet/frost-*.json
+work/spreadsheet/frost-data.py
+work/spreadsheet/frost-edit.mjs

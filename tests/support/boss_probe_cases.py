@@ -8,7 +8,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "runtime"))
 import boss_probe as probe
@@ -45,6 +45,25 @@ def descriptor(payload=0x20000, table=0x30000, start=2, count=3):
 
 
 class ReadSafetyTests(unittest.TestCase):
+    def test_seed_scans_only_nearby_pool_and_rejects_a_previous_process(self):
+        # Find a rebuilt actor beside a retired address without scanning unrelated heap regions.
+        # Verify the exact read budget and reject a stale process birth before reading memory.
+        # Signature selection remains separate from this candidate-discovery optimization.
+        raw=bytearray(0x10000); struct.pack_into('<Q',raw,0x200,0x70000)
+        identity=dict(pid=10,creation_filetime='100',vtable='0x70000')
+        game=SimpleNamespace(pid=10,vtable=0x70000,identity=identity,
+            region=Mock(return_value=self.region(0x20000,0x10000)),bytes=Mock(return_value=raw),
+            snapshot=Mock(side_effect=[OSError('retired'),(b'',dict(current='0x0',owner_like='0x30000'))]))
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'seed.json'; seed=dict(identity,candidates=[dict(object='0x20010')])
+            path.write_text(json.dumps(seed)); result=probe.discover(game,path)
+            self.assertEqual(result['bytes_scanned'],0x10000)
+            self.assertEqual([item['object'] for item in result['candidates']],['0x20200'])
+            game.bytes.assert_called_once_with(0x20000,0x10000)
+            game.bytes.reset_mock(); seed['creation_filetime']='old'; path.write_text(json.dumps(seed))
+            with self.assertRaisesRegex(ValueError,'identity mismatch'): probe.discover(game,path)
+            game.bytes.assert_not_called()
+
     def game(self, regions):
         # Create a LiveGame instance without opening a process.
         # Replace its region query with the supplied committed/protected memory map.

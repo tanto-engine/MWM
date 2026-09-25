@@ -291,6 +291,271 @@
         "transition_count": 46,
         "recovery_frame": 38
       }
+    },
+    {
+      "id": "jin_hayabusa.izuna_drop",
+      "key": 3193,
+      "motion": 5014,
+      "flags": 424411136,
+      "ki_cost": 20,
+      "recovery_frame": -1,
+      "transition_count": 75,
+      "adapter_kind": 2,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 4,
+          "index": 10,
+          "hash": 465981000
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 4,
+          "index": 10,
+          "hash": 465981000
+        }
+      ],
+      "source_payload_prefix": "02000000000200000000ff01790cffff010900000000140000004c190000000096130000ffffffffffff000001000200ffffff00ffffffff",
+      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "replacement": {
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c7a"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c7a",
+      "key": 3194,
+      "motion": 1050,
+      "flags": 0,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 19,
+      "adapter_kind": 4,
+      "next": "jin_hayabusa.action_03b2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_payload_prefix": "00040100000200000000ff017a0cffff01ff00000000000000000000000000001a040000ffffffffffff030004000500ffffff00ffffffff",
+      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "replacement": {
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
+      }
+    },
+    {
+      "id": "jin_hayabusa.action_03b2",
+      "key": 946,
+      "motion": 5020,
+      "flags": 550695337984,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 4,
+      "adapter_kind": 3,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 40,
+          "index": 4,
+          "hash": 1727231044
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 40,
+          "index": 4,
+          "hash": 1727231044
+        }
+      ],
+      "source_payload_prefix": "02040200010000000000ff03b203ffffffff00000000000000000038800000009c130000ffffffff1027030004000500ffffff00ffffffff",
+      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "native_followups": [
+        "jin_hayabusa.action_03b4",
+        "jin_hayabusa.action_03b6"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_03b4",
+      "key": 948,
+      "motion": 5021,
+      "flags": 550695337984,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 4,
+      "adapter_kind": 3,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02040200000000000000ff03b403ffffffff00000000000000000038800000009d130000ffffffff1027030004000500ffffff00ffffffff",
+      "evidence": "catalogue/resource_assets/jin_hayabusa/actions.dat",
+      "native_followups": [
+        "jin_hayabusa.action_03b4",
+        "jin_hayabusa.action_03b6"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_03b6",
+      "key": 950,
+      "motion": 5022,
+      "flags": 550695337984,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 9,
+      "adapter_kind": 3,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02000200000000000000ff03b603ffffffff00000000000000000038800000009e130000ffffffff1027000001000200ffffff00ffffffff",
+      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl"
+    },
+    {
+      "id": "jin_hayabusa.action_0c71",
+      "key": 3185,
+      "motion": 1050,
+      "flags": 0,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 18,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_payload_prefix": "02040000010200000000ff01710cffff01ff00000000000000000000000000001a040000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c72"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c72",
+      "key": 3186,
+      "motion": 5000,
+      "flags": 0,
+      "ki_cost": 20,
+      "recovery_frame": -1,
+      "transition_count": 17,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 0,
+          "index": 3,
+          "hash": 546414952
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 0,
+          "index": 3,
+          "hash": 546414952
+        }
+      ],
+      "source_payload_prefix": "020400000102000000faff01720cffff01ff000000001400000000000000000088130000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c73"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c73",
+      "key": 3187,
+      "motion": 5001,
+      "flags": 0,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 18,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02040000000200000000ff01730cffffffff000000000000000000000000000089130000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c74"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c74",
+      "key": 3188,
+      "motion": 5002,
+      "flags": 466485248,
+      "ki_cost": 0,
+      "recovery_frame": 20,
+      "transition_count": 75,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02000000000010000000ff01740cffffff080000000000000000ce1b000000008a13000014002300ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
     }
   ],
   "evidence": "work/jin-heavy-research.json",
@@ -303,6 +568,19 @@
     ],
     "jin_hayabusa.action_0c79": [
       "jin_hayabusa.action_0c79"
+    ],
+    "jin_hayabusa.izuna_drop": [
+      "jin_hayabusa.izuna_drop",
+      "jin_hayabusa.action_0c7a",
+      "jin_hayabusa.action_03b2",
+      "jin_hayabusa.action_03b4",
+      "jin_hayabusa.action_03b6"
+    ],
+    "jin_hayabusa.action_0c71": [
+      "jin_hayabusa.action_0c71",
+      "jin_hayabusa.action_0c72",
+      "jin_hayabusa.action_0c73",
+      "jin_hayabusa.action_0c74"
     ]
   }
 }

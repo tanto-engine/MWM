@@ -32,10 +32,15 @@ The game must already be running. This tool does not start or control it.
 
 Run from runtime/, replacing PID and paths:
   python boss_probe.py scan --pid PID --out encounter.json
+  python boss_probe.py scan --pid PID --seed encounter.json --out retry.json
   python boss_probe.py record --config encounter.json --outdir take1 --seconds 120
   python boss_probe.py report --events take1/events.jsonl --outdir take1-report
 
 Scan after entering the encounter. Repeat after restart or encounter reload.
+For the same process, --seed checks prior actors and nearby64KiB allocation pools
+before role validation. Encounter recording reuses its discovery.json automatically;
+a missing source fingerprint falls back to a full scan. Wait for state=recording
+before starting a labeled attempt. Discovery itself does not record gameplay.
 To stop a capture, create an empty file named STOP inside its output folder.
 Use --seconds 20 for a short take that ends without a manual stop message.
 Losing either selected actor's object or owner identity stops the take early.

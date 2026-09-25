@@ -48,10 +48,15 @@ static MoveTiming boss_move_timing(unsigned slot) {
     // C79 recovers after non-audio event53; clips and event cursors remain unchanged.
     // Paired actions retain their source lifecycle; gameplay acceptance of these values is pending.
     const auto& move=boss_imports[slot];
+    if (flying_swallow(move,boss_adapters[slot]) && move.key==0xC71)
+        return {-1,19,boss_frost_variants[0]==slot+1 ? float(boss_frost_speed) : 1};
+    if (boss_adapters[slot].kind==2 && move.key==0xCAC && move.motion==5110 && move.flags==0x200194C0000ULL)
+        for (auto frost : boss_frost_variants) if (frost==slot+1) return {move.recovery_frame,28,float(boss_frost_speed)};
     if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
         return {move.recovery_frame,30,2};
     if (boss_adapters[slot].kind==2 && move.key==0xC79 && move.motion==5014
-        && move.flags==0x194C0000 && move.recovery_frame==-1) return {54,8,2};
+        && move.flags==0x194C0000 && move.recovery_frame==-1)
+        return {54,8,boss_frost_variants[1]==slot+1 ? float(boss_frost_speed) : 2};
     return {move.recovery_frame,0,1};
 }
 static uint64_t boss_private_descriptor_address(unsigned slot = 0) {
@@ -80,6 +85,26 @@ static constexpr uint8_t boss_dodge_template[0x30] = {
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 };
 
+static int boss_native_successor(unsigned slot, uint32_t key) {
+    // Keep ordinary automatic branches inside the entry's stance and source bank.
+    // Only an explicit contact link or an existing paired action can enter another paired phase.
+    // Low C79 and Mid Izuna share source bytes but must own different successor graphs.
+    const auto& owner=boss_adapters[slot];
+    const auto& source=boss_imports[slot];
+    const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
+        || (source.key==0xC79 && key==0xC7A) || (source.key==0xCAC && key==0xCAD)
+        || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
+        || ((source.key==0x3B2 || source.key==0x3B4) && (key==0x3B4 || key==0x3B6));
+    if (!linked) return -1;
+    for (unsigned next=0;next<boss_import_count;++next) {
+        const auto& candidate=boss_adapters[next];
+        if (boss_imports[next].key!=key || candidate.kind<2 || candidate.bank!=owner.bank) continue;
+        if (candidate.kind==3 ? (owner.kind==3 || boss_imports[slot].next_variant==int(next))
+            : (owner.kind!=3 && candidate.player_key==owner.player_key)) return int(next);
+    }
+    return -1;
+}
+
 static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor,
         uint8_t (&bodies)[64][0x30], uint16_t& total) {
     // Adapt source transitions without changing their animation timing.
@@ -100,6 +125,22 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
         uint8_t check[0x30];
         if (!copy_bytes(source_pointers[i], bodies[i], 0x30) || !copy_bytes(source_pointers[i], check, 0x30)
             || memcmp(bodies[i], check, 0x30)) return false;
+        if (boss_adapters[slot].kind==3) {
+            int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
+            if (target>=0xBB8 && boss_native_successor(slot,uint32_t(target))<0) {
+                target=0; memcpy(bodies[i]+0x14,&target,2);
+            }
+        }
+    }
+    if (boss_adapters[slot].kind==4 && boss_imports[slot].next_variant>=0) {
+        bool contact=false;
+        for (unsigned i=0;i<source_count;++i) {
+            uint16_t condition=0; int16_t target=0;
+            memcpy(&condition,bodies[i],2); memcpy(&target,bodies[i]+0x14,2);
+            if (condition==22 && bodies[i][0x0A]==0 && bodies[i][0x0B]==0xff
+                && target==int16_t(boss_imports[boss_imports[slot].next_variant].key)) contact=true;
+        }
+        if (!contact) return false;
     }
     // New chains own their follow-up policy. Remove the source controller's
     // unconditional combo requests so they cannot select William's colliding IDs.
@@ -226,10 +267,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
                 || memcmp(body,check_body,sizeof(body))) return false;
             memcpy(&target,body+0x14,2); memcpy(&condition,body,2);
             if (body[0x0B]!=0xff || target<0) continue;
-            bool owned=false;
-            for (unsigned next=0;next<boss_import_count;++next)
-                if (boss_adapters[next].kind>=2 && boss_adapters[next].bank==adapter.bank
-                    && boss_imports[next].key==uint32_t(target)) owned=true;
+            const bool owned=boss_native_successor(slot,uint32_t(target))>=0;
             if (!owned && body[0x0A]!=1) continue;
             if (count+added>=64) return false;
             if (owned && condition==22 && boss_imports[slot].next_variant>=0
@@ -263,7 +301,8 @@ static bool boss_copy_launcher_contact(unsigned slot, uint8_t* descriptor, uint8
     // Descriptor ownership keeps this adjustment contact-driven without touching enemy weight or physics.
     // TODO: verify grounded height and recovery against humans/yokai; keep airborne impulse unchanged.
     const auto& move=boss_imports[slot];
-    if (boss_adapters[slot].kind!=2 || move.key!=0xC79 || move.motion!=5014 || move.flags!=0x194C0000)
+    if (boss_adapters[slot].kind!=2 || boss_adapters[slot].player_key!=0xCF5
+        || move.key!=0xC79 || move.motion!=5014 || move.flags!=0x194C0000)
         return true;
     uint64_t table=0, row=0, after=0; uint16_t start=0, count=0;
     memcpy(&table,descriptor+0x48,8); memcpy(&start,descriptor+0x50,2); memcpy(&count,descriptor+0x52,2);
@@ -314,6 +353,13 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (recovery_start != spec.recovery_frame || base_ki_cost < 0
         || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && base_ki_cost == 0)) return false;
     recovery_start=boss_move_timing(slot).recovery;
+    if (flying_swallow(spec,boss_adapters[slot]) && spec.key==0xC72) {
+        // Native71000A accumulates recoverable Ki from this dash's actual cost.
+        // A negative onset keeps it pending throughout the airborne phases.
+        // Zero-cost C73/C74 preserve the balance; landing opens the native timer at20.
+        payload[0x33]=40;
+        const int16_t pending=-1; memcpy(payload+0x38,&pending,2);
+    }
     // Native71000A computes recoverable Ki from this percentage of the actual
     // game-adjusted cost. Native715118 opens its normal timed recovery when the
     // action crosses+0x38; 7B59F0 uses+0x3A/+0x3C as fill/hold durations.
@@ -331,7 +377,9 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
         memcpy(payload + 0x3C, &hold_frames, sizeof(hold_frames));
     }
     uint8_t transitions[64][0x30]{}; uint16_t transition_count = 0;
-    if (boss_adapters[slot].kind == 1 || boss_adapters[slot].kind == 2 || boss_adapters[slot].kind == 4) {
+    const bool izuna_bridge=boss_adapters[slot].kind==4 && spec.key==0xC7A && spec.motion==1050 && !spec.flags;
+    const bool airborne=flying_swallow(spec,boss_adapters[slot]) && spec.key!=0xC74;
+    if (!izuna_bridge && !airborne && (boss_adapters[slot].kind == 1 || boss_adapters[slot].kind == 2 || boss_adapters[slot].kind == 4)) {
         if (!boss_copy_player_transitions(slot,descriptor,transitions,transition_count)) return false;
     } else if (!boss_copy_pulse_transitions(slot, descriptor, transitions, transition_count)) return false;
     uint8_t combat[0x80]{};
@@ -614,7 +662,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
         // Only the game's successful-contact transition may enter the paired
         // action. Button holding never creates a victim or starts its camera.
         int paired_slot=-1;
-        if ((current.flags == 0x594C0000 || boss_adapters[boss_active_slot].kind == 2)
+        if ((current.flags == 0x594C0000 || boss_adapters[boss_active_slot].kind == 2 || boss_adapters[boss_active_slot].kind == 4)
             && current.next_variant >= 0 && key == boss_imports[current.next_variant].key)
             paired_slot=current.next_variant;
         if (boss_adapters[boss_active_slot].kind >= 2) {
@@ -623,9 +671,8 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
             for (unsigned row=0;row<clone.transition_count;++row) {
                 int16_t target=0; memcpy(&target,clone.transition_bodies[row]+0x14,2);
                 if (target < 0 || uint32_t(target)!=key) continue;
-                for (unsigned next=0;next<boss_import_count;++next)
-                    if (boss_adapters[next].kind>=2 && boss_imports[next].key==key
-                        && boss_adapters[next].bank==boss_adapters[boss_active_slot].bank) paired_slot=int(next);
+                const int next=boss_native_successor(boss_active_slot,key);
+                if (next>=0) paired_slot=next;
             }
         }
         if (paired_slot >= 0 && boss_player_valid()
@@ -655,7 +702,8 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
 #ifdef RESEARCH_REPEAT
     const unsigned private_slot = unsigned(command.reserved[1]);
     if (reason == Accepted) {
-        if ((boss_imports[private_slot].flags == 0x594C0000 || (boss_adapters[private_slot].kind==2 && boss_imports[private_slot].next_variant>=0))
+        const bool izuna=boss_imports[private_slot].key==0xC79 && boss_adapters[private_slot].player_key==0xCB7;
+        if ((boss_imports[private_slot].flags == 0x594C0000 || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0))
             && !boss_camera_available()) reason = BossBindingMismatch;
         int slot = int(private_slot);
         // Finish every reachable clone before starting the first attack. A
@@ -667,6 +715,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
         // Jin's paired graph has a native conditional branch beyond next_variant.
         if (boss_adapters[private_slot].kind==2) for (unsigned next=0;next<boss_import_count;++next)
             if (boss_adapters[next].kind>=2 && boss_adapters[next].bank==boss_adapters[private_slot].bank
+                && (boss_adapters[next].player_key==boss_adapters[private_slot].player_key || (izuna && boss_adapters[next].kind==3))
                 && !boss_prepare_private_action(next)) reason=BossSourceMismatch;
         if (reason == Accepted && boss_paired(boss_imports[private_slot].flags)
             && !boss_set_camera(true,private_slot)) reason = BossBindingMismatch;

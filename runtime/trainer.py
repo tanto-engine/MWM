@@ -71,7 +71,7 @@ class Trainer:
             registration = active_runtime()
             if registration:
                 self.set_runtime(registration)
-        root.title('Nioh 1 Skill Expanded')
+        root.title('Nioh 1 Sword Mod')
         root.geometry('1030x760')
         root.minsize(900, 680)
         self.catalogue_path = Path((self.runtime_registration or {}).get('catalogue_path', os.environ.get('NIOH_CATALOGUE_PATH', ROOT/'outputs/Nioh1-Sword-Move-Observations.xlsx')))
@@ -96,7 +96,7 @@ class Trainer:
             os.environ['NIOH_EXE'] = self.exe_path.get()
         outer = ttk.Frame(root, padding=16)
         outer.pack(fill='both', expand=True)
-        ttk.Label(outer, text='Nioh 1 Skill Expanded', font=('Segoe UI', 20, 'bold')).pack(anchor='w')
+        ttk.Label(outer, text='Nioh 1 Sword Mod', font=('Segoe UI', 20, 'bold')).pack(anchor='w')
         ttk.Label(outer, textvariable=self.status, font=('Segoe UI', 11)).pack(anchor='w', pady=(8, 4))
         bar = ttk.Frame(outer)
         bar.pack(fill='x')
@@ -139,6 +139,21 @@ class Trainer:
                 *[(stance,stance.title()+' Triangle hold',self.skill_choices) for stance in ('low','mid','high')]],6):
             self.native_fields[key]=tk.StringVar()
             self.control_row(play,row,label,ttk.Combobox(play,textvariable=self.native_fields[key],values=list(choices),state='readonly',width=42))
+        frost=ttk.LabelFrame(play,text='Frost Moon: RB + same stance button twice',padding=10)
+        frost.grid(row=0,column=2,rowspan=10,sticky='nw',padx=(24,0))
+        self.frost_choices={'Disabled':None,'Jin overhead slice':'jin_hayabusa.action_0cac',
+                            'Izuna Drop (Mid)':'jin_hayabusa.izuna_drop','Flying Swallow (Low)':'jin_hayabusa.action_0c71'}
+        self.frost_fields={stance:tk.StringVar() for stance in ('low','mid','high')}
+        for row,(stance,field) in enumerate(self.frost_fields.items()):
+            self.control_row(frost,row,stance.title(),ttk.Combobox(frost,textvariable=field,
+                values=list(self.frost_choices),state='readonly',width=24))
+        self.frost_window=tk.StringVar(); self.frost_speed=tk.StringVar()
+        self.control_row(frost,3,'Window (seconds)',ttk.Spinbox(frost,textvariable=self.frost_window,from_=.1,to=1.5,increment=.05,width=8))
+        self.control_row(frost,4,'Startup speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
+        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow is unassigned in the basic preset.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
+        self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
+        for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint uses Okatsu dash'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
+            ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')
         controls = ttk.Frame(play)
         controls.grid(row=10, column=0, columnspan=2, sticky='w', pady=12)
         for title, command in (('Apply', self.apply), ('Save moveset…', self.save), ('Load moveset…', self.load), ('Restore baseline', self.baseline)):
@@ -237,6 +252,10 @@ class Trainer:
         self.trigger.set(labels[preset['trigger_mask']])
         self.threshold.set(str(preset['hold_seconds']))
         self.preset=preset
+        for stance,field in self.frost_fields.items():
+            field.set(next(label for label,identifier in self.frost_choices.items() if identifier==preset['frost_moon'][stance]))
+        self.frost_window.set(str(preset['frost_window_seconds'])); self.frost_speed.set(str(preset['frost_startup_speed']))
+        for field,variable in self.native_toggles.items(): variable.set(preset[field])
         for key,field in self.native_fields.items():
             choices=self.native_choices if key=='low_heavy' else self.skill_choices
             value=preset[key] if key=='low_heavy' else preset['stance_holds'][key]
@@ -250,6 +269,9 @@ class Trainer:
             hold_move=self.move_names[self.hold.get()], modifier_mask=self.button_choices[self.modifier.get()],
             trigger_mask=self.button_choices[self.trigger.get()], hold_seconds=float(self.threshold.get()),
             low_heavy=self.native_choices[self.native_fields['low_heavy'].get()],
+            frost_moon={stance:self.frost_choices[field.get()] for stance,field in self.frost_fields.items()},
+            frost_window_seconds=float(self.frost_window.get()),frost_startup_speed=int(self.frost_speed.get()),
+            **{field:variable.get() for field,variable in self.native_toggles.items()},
             stance_holds={stance:self.skill_choices[self.native_fields[stance].get()] for stance in ('low','mid','high')}))
 
     def apply(self):

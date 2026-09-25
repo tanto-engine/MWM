@@ -3,12 +3,15 @@
 #include "frame_dispatch_cases.cpp"
 #undef main
 #include "low_heavy_fixture.h"
+#include "airborne_fixture.h"
 
 alignas(8) static std::array<uint8_t,0x478> jin_actions{}, jin_timing{};
 alignas(8) static std::array<uint8_t,0x490> jin_motion{};
 alignas(8) static std::array<uint8_t,0x138> jin_bank{};
 static std::array<std::array<uint8_t,0xD0>,3> jin_descriptors{}, heavy_descriptors{};
 static std::array<std::array<uint8_t,0xB0>,3> jin_payloads{}, heavy_payloads{};
+static std::array<uint8_t,0xD0> grapple_descriptor{};
+static std::array<uint8_t,0xB0> grapple_payload{};
 static std::array<std::array<std::array<uint8_t,0x30>,46>,3> player_rows{};
 static std::array<std::array<uint64_t,46>,3> player_pointers{};
 static uint64_t jin_entries[3];
@@ -18,6 +21,91 @@ static unsigned pad_mask=1;
 static unsigned pad_calls;
 static WORD pad_buttons;
 static bool publish_during_input;
+static unsigned weight_calls;
+static uint64_t weight_reaction;
+static bool weight_accept=true;
+
+static void owned_weight(void* actor, float weight) {
+    // Model Character::SetWeight with owned fields and the native negative sentinel.
+    // Updating the current collision component tests replacement rather than a saved pointer.
+    // Deliberately change LastError to expose wrappers that lose the native caller's result.
+    uint64_t owner=0,collision=0;assert(copy_field(address(actor)+0x50,owner));
+    assert(copy_field(owner+0x250,collision));put(actor,0x7BC,weight);
+    if (collision) put(reinterpret_cast<void*>(collision),0xB0,weight<0 ? 100.0f : weight);
+    ++weight_calls;SetLastError(999);
+}
+
+static bool weight_action(void* actor, uint32_t, void*) {
+    // Commit a controlled damage reaction through the existing global setter wrapper.
+    // The commit serial changes only on native success; the selected hit is consumed there.
+    // Failed and paired commits must never acquire the launcher override.
+    if (weight_accept) {
+        uint32_t serial=0;uint64_t owner=0,component=0;assert(copy_field(address(actor)+0xDC,serial));
+        put(actor,0x58,weight_reaction);put(actor,0xDC,serial+1);
+        assert(copy_field(address(actor)+0x50,owner) && copy_field(owner+0x230,component));
+        put(reinterpret_cast<void*>(component),0x90,uint64_t(0));
+    }
+    SetLastError(ACTION_ERROR);return weight_accept;
+}
+
+static void weight_cases() {
+    // Exercise the actual selected-hit/committed-reaction path with owned victim buffers.
+    // Cover rejection, nested acquisition, resource replacement and cooperative Stop restoration.
+    // No game process or native physics routine is called by these lifecycle regressions.
+    static uint8_t victim[0x800]{},victim_owner[0x260]{},component[0x98]{},collision[0xC0]{},changed_collision[0xC0]{};
+    static uint8_t event[0x120]{},reaction[0xD0]{},payload[0xB0]{};
+    native_set_weight=owned_weight;weight_calls=0;weight_reaction=address(reaction);
+    const auto saved_action=original_action;original_action=weight_action;
+    put(victim,0,boss_session.vtable);put(victim,0x50,address(victim_owner));
+    put(victim_owner,0x230,address(component));put(component,8,address(victim));
+    put(victim_owner,0x250,address(collision));put(reaction,0x20,address(payload));
+    for (unsigned failure=0;failure<8;++failure) {
+        put(victim,0x58,address(neutral.data()));put(victim,0x7BC,-1.0f);put(collision,0xB0,100.0f);
+        put(payload,0,uint32_t(0x40000));put(payload,0x18,uint64_t(0));
+        put(component,0x90,address(event));put(event,0xE8,boss_session.player_owner);put(event,0x100,address(victim_owner));
+        put(event,0xE0,address(boss_private_actions[5].combat_body));put(event,0x11C,int32_t(0));weight_accept=true;
+        if (failure==1) put(event,0xE0,uint64_t(0));
+        if (failure==2) put(event,0xE8,uint64_t(0));
+        if (failure==3) put(event,0x11C,int32_t(1));
+        if (failure==4) put(payload,0,uint32_t(0));
+        if (failure==5) put(payload,0x18,uint64_t(0x20000000));
+        if (failure==6) weight_accept=false;
+        if (failure==7) boss_adapters[5].player_key=0xCB7;
+        const auto hit=launcher_hit(victim);SetLastError(INCOMING);
+        assert(observed_action(victim,0x96,nullptr)==weight_accept && GetLastError()==ACTION_ERROR);
+        assert(launch_weight_count==(failure ? 0 : 1));
+        if (!failure) {
+            float actual=0;assert(copy_field(address(collision)+0xB0,actual) && actual==50);
+            const auto calls=weight_calls;apply_launch_weight(victim,hit);
+            assert(weight_calls==calls && launch_weight_count==1);
+            restore_launch_weights(boss_session.player,true);assert(launch_weight_count==1);
+            assert(NiohResearchStop(nullptr)==ERROR_BUSY && launch_weight_count==1 && weight_calls==calls);
+            SetLastError(INCOMING);observed_frame(player.data(),.25f);
+            assert(!launch_weight_count && GetLastError()==FRAME_ERROR);
+            assert(copy_field(address(victim)+0x7BC,actual) && actual==-1);
+            dispatch->control.enabled=1;
+        }
+        boss_adapters[5].player_key=0xCF5;
+    }
+    // Direct acquisition isolates descriptor, actor, component and third-party ownership endings.
+    for (unsigned ending=0;ending<6;++ending) {
+        put(victim,0,boss_session.vtable);put(victim,0x58,address(reaction));put(victim,0xDC,uint32_t(2));
+        put(victim,0x7BC,-1.0f);put(payload,0,uint32_t(0x40000));put(payload,0x18,uint64_t(0));
+        put(victim_owner,0x250,address(collision));put(collision,0xB0,100.0f);
+        apply_launch_weight(victim,{address(victim_owner),1});assert(launch_weight_count==1);
+        const auto calls=weight_calls;
+        if (ending==0) put(victim,0x58,address(neutral.data()));
+        if (ending==1) put(victim,0,boss_session.vtable+8);
+        if (ending==2) put(victim,0x7BC,75.0f);
+        if (ending==3) put(victim_owner,0x250,address(changed_collision));
+        if (ending==4) put(victim_owner,0x250,uint64_t(0));
+        restore_launch_weights(address(victim),ending==5);
+        assert(!launch_weight_count && weight_calls==calls+(ending==1 || ending==2 ? 0 : 1));
+        float actual=0;assert(copy_field(address(victim)+0x7BC,actual));
+        assert(actual==(ending==1 ? 50.0f : ending==2 ? 75.0f : -1.0f));
+    }
+    native_set_weight=nullptr;original_action=saved_action;weight_accept=true;
+}
 
 static DWORD WINAPI replacement_input(DWORD slot, XINPUT_STATE* sample) {
     // Supply deterministic in-process controller samples without opening a real device.
@@ -43,6 +131,7 @@ static uint64_t native_lookup(void*, uint32_t key, uint32_t* index) {
     // The replacement hook must decide from native resolution rather than controller masks.
     if (index) *index=0;
     SetLastError(ACTION_ERROR);
+    if (key==0xD4A) return address(grapple_descriptor.data());
     if (key==0xCB7 || key==0xC7A) return address(heavy_descriptors[0].data());
     return key>=0xCF5 && key<=0xCF7 ? address(heavy_descriptors[key-0xCF5].data()) : address(neutral.data());
 }
@@ -137,6 +226,12 @@ static void replacement_reset() {
     original_action=replacement_action; original_lookup=native_lookup; setter_rejects=false;
     command.armed=0; publish_player_context(.25f); publish();
     triangle_input={}; observe_game_input(trace->header);
+    grapple_descriptor.fill(0); grapple_payload.fill(0); grapple_descriptor[0x40]=1;
+    put(grapple_descriptor.data(),0,uint32_t(0xD4A));
+    put(grapple_descriptor.data(),0x20,address(grapple_payload.data()));
+    put(grapple_descriptor.data(),0x82,uint16_t(37));
+    put(grapple_payload.data(),0x18,uint64_t(0x194C0000));
+    put(grapple_payload.data(),0x20,int32_t(5050));
 }
 
 static void hold_reset(unsigned stance=2) {
@@ -171,11 +266,147 @@ static void hold_reset(unsigned stance=2) {
     bindings(false);
 }
 
+static void airborne_cases() {
+    // Replay exact recorded source graphs against owned immutable action storage.
+    // Assert stance isolation, native contact/landing branches and unchanged paired clocks.
+    // Source bytes and counters prove adapter behavior, never successful gameplay contact.
+    hold_reset(0); pending_heavy={}; boss_import_count=15;
+    static uint8_t descriptors[9][0xD0],payloads[9][0xB0],rows[9][128][0x30];
+    static uint64_t pointers[9][128];
+    static uint8_t low_descriptor[0xD0],low_payload[0xB0];
+    memcpy(low_descriptor,heavy_descriptors[0].data(),sizeof(low_descriptor));
+    memcpy(low_payload,heavy_payloads[0].data(),sizeof(low_payload));
+    put(low_descriptor,0,uint32_t(0xCF5)); put(low_descriptor,0x20,address(low_payload));
+    put(low_descriptor,0x82,uint16_t(46)); put(low_payload,0x20,int32_t(4300)); put(low_payload,0x24,int16_t(38));
+    for (unsigned phase=0;phase<9;++phase) {
+        const auto& source=airborne_sources[phase]; const unsigned slot=phase+5;
+        auto& move=boss_imports[slot]; move={}; boss_private_actions[slot]={};
+        move.key=source.key;move.motion=source.motion;move.flags=source.flags;
+        move.recovery_frame=source.recovery;move.transition_count=uint16_t(source.count);
+        move.next_variant=phase==1 ? 7 : -1;
+        move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
+        move.clip=0xF0000+phase*0x100;move.timing_record=0x100000+phase*0x100;
+        for (unsigned byte=0;byte<std::strlen(source.payload)/2;++byte) {
+            unsigned value=0;assert(std::sscanf(source.payload+byte*2,"%2x",&value)==1);payloads[phase][byte]=uint8_t(value);
+        }
+        for (unsigned row=0;row<source.count;++row) {
+            for (unsigned byte=0;byte<0x30;++byte) {
+                unsigned value=0;assert(std::sscanf(source.rows[row]+byte*2,"%2x",&value)==1);rows[phase][row][byte]=uint8_t(value);
+            }
+            pointers[phase][row]=address(rows[phase][row]);
+        }
+        put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
+        descriptors[phase][0x40]=1;put(descriptors[phase],0x78,address(pointers[phase]));
+        put(descriptors[phase],0x82,move.transition_count);
+        boss_adapters[slot]=boss_adapters[5];
+        auto& adapter=boss_adapters[slot];
+        adapter.kind=phase==0 || phase==5 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
+        if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
+        if (phase>=5) {adapter.player_descriptor=address(low_descriptor);adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
+    }
+    boss_imports[14]=boss_imports[5];boss_adapters[14]=boss_adapters[5];boss_adapters[14].player_key=0xCF5;
+    boss_frost_variants[0]=11;boss_frost_variants[1]=6;
+    assert(boss_native_successor(5,0xC7A)==6 && boss_native_successor(14,0xC7A)==-1);
+    assert(boss_native_successor(13,0xC79)==-1);
+    assert(boss_native_successor(5,0x3B2)==-1 && boss_native_successor(6,0x3B2)==7);
+    assert(boss_native_successor(7,0x3B4)==8 && boss_native_successor(8,0x3B6)==9);
+    for (unsigned slot=5;slot<14;++slot) assert(boss_prepare_private_action(slot));
+    assert(boss_move_timing(5).startup_speed==8 && boss_move_timing(14).startup_speed==2);
+    for (unsigned slot=7;slot<=9;++slot) assert(boss_move_timing(slot).startup_speed==1);
+    for (unsigned phase : {1u,2u,3u,5u,6u,7u}) {
+        const auto& clone=boss_private_actions[phase+5];
+        assert(clone.transition_count==airborne_sources[phase].count);
+        assert(!memcmp(clone.transition_bodies,rows[phase],clone.transition_count*0x30));
+    }
+    const auto& finish=boss_private_actions[9];
+    for (unsigned row=0;row<3;++row) {int16_t target=-1;memcpy(&target,finish.transition_bodies[row]+20,2);assert(target==0);}
+    int16_t weight=0;assert(copy_field(boss_private_payload_address(7)+0x28,weight) && weight==10000);
+    const auto& dash=boss_private_actions[11];int16_t onset=0,cost=0;
+    memcpy(&onset,dash.payload+0x38,2);memcpy(&cost,dash.payload+0x16,2);
+    assert(dash.payload[0x33]==40 && onset==-1 && cost==20 && dash.payload[9]==0xFA);
+    assert(boss_private_actions[13].payload[0x33]==40 && boss_private_actions[13].transition_count>46);
+    rows[1][1][0]=0;assert(!boss_prepare_private_action(6));rows[1][1][0]=22;
+    assert(boss_prepare_private_action(6));
+    boss_frost_variants[0]=boss_frost_variants[1]=0;
+}
+
+static void frost_cases() {
+    // Exercise same-stance rejection, genuine double edges and the exact750ms expiry.
+    // Keep sampling continuous while testing controller/lifecycle resets and conflicting inputs.
+    // Then pass the native Ki Pulse fields through the actual frame dispatcher and import adapter.
+    for (unsigned failure=0;failure<10;++failure) {
+        FrostMoonInput input{}; GameInput sample{}; unsigned fired=0;
+        for (unsigned tick=0;tick<90;++tick) {
+            sample.qpc=1+tick*10000; sample.buttons[0]=XINPUT_GAMEPAD_RIGHT_SHOULDER;
+            const unsigned second=failure==2 ? 76 : 30;
+            const WORD face=failure==1 ? XINPUT_GAMEPAD_A : XINPUT_GAMEPAD_Y;
+            if (tick==10 || tick==second || (failure==3 && tick>10 && tick<30)) sample.buttons[0]|=face;
+            if (failure==4 && tick==20) sample.buttons[0]=0;
+            if (failure==5 && tick==20) sample.buttons[0]|=XINPUT_GAMEPAD_B;
+            if (failure==6 && tick==20) sample.buttons[0]|=XINPUT_GAMEPAD_LEFT_SHOULDER;
+            sample.buttons[1]=sample.buttons[0];
+            sample.packets[0]=failure==9 && tick>=20 ? 1 : 10;
+            fired+=frost_edge(input,sample,failure==7 && tick>=20 ? 1 : 0,
+                tick<10 ? 0 : 2,failure==8 && tick>=20 ? 1 : 0,tick>=1 && tick<15,0x10000,1000000);
+        }
+        assert(fired==(failure==0 ? 3u : 0u));
+    }
+    FrostMoonInput continued{}; GameInput continuous{};
+    continuous.qpc=1; frost_edge(continued,continuous,0,0,0,false,0x10000,1000000);
+    continuous.qpc=10001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,25);
+    continuous.qpc=20001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,24);
+    assert(continued.opened==10001);
+    continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,25);
+    assert(continued.opened==30001); // A new attack resets native fill without an intervening false D5 sample.
+    for (bool damage : {false,true}) {
+    boss_hold_stances=7;
+    hold_reset(1); pending_heavy={}; frost_input={}; pad_buttons=0;
+    boss_hold_stances=1; boss_frost_variants[2]=6;
+    static std::array<uint8_t,0xA0> vitals{};
+    vitals.fill(0); put(owner.data(),0x240,address(vitals.data()));
+    put(player.data(),0x470,uint32_t(2)); publish(); tick();
+    // Ki Pulse opens in low stance before RB changes it to high.
+    // Consuming the native pulse on the first tap must not erase the double-tap window.
+    // The high-only Frost binding must leave ordinary high Triangle native.
+    put(vitals.data(),0x8C,25.0f); put(vitals.data(),0x90,25.0f);
+    publish(); tick();
+    assert(frost_input.opened && frost_input.origin==0);
+    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y;
+    put(player.data(),0x470,uint32_t(1)); publish(); tick();
+    assert(!boss_active && frost_input.choice==2);
+    if (damage) {
+        auto hurt=neutral; put(hurt.data(),0,uint32_t(0x3E8)); put(player.data(),0x58,address(hurt.data()));
+        publish(); tick(); assert(frost_input.spent); put(player.data(),0x58,address(neutral.data()));
+    }
+    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER; vitals.fill(0); publish(); tick();
+    pad_buttons|=XINPUT_GAMEPAD_Y; publish(); tick();
+    assert(bool(boss_active)==!damage && dispatch->control.dispatch_count==(damage ? 0 : 1));
+    publish(); tick(); assert(dispatch->control.dispatch_count==(damage ? 0 : 1));
+    boss_frost_variants[2]=0; boss_hold_stances=7; frost_input={};
+    }
+}
+
 int main() {
     // Stress native input priority, resource isolation and recovery under rejected commits.
     // Run the three moves through ordinary setter calls with no armed controller gesture.
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
+    airborne_cases();
+    frost_cases();
+    // Empty-Ki selection resolves D4A before the ordinary heavy opener.
+    // Hold must defer that exact native selection; release replays the grapple entry.
+    // Other stances and running descriptors must retain native selection.
+    for (bool held : {false,true}) {
+        hold_reset(); pending_heavy={};
+        assert(!observed_action(player.data(),0xD4A,nullptr));
+        assert(pending_heavy.active && !boss_active);
+        if (held) pending_heavy.started-=frequency/4;
+        else pad_buttons=0;
+        publish(); tick();
+        assert(!pending_heavy.active);
+        if (held) assert(boss_active && boss_active_slot==5);
+        else assert(!boss_active && same_field(address(player.data()),0x58,address(grapple_descriptor.data())));
+    }
     hold_reset();
     observe_game_input(trace->header); pad_calls=0;
     LARGE_INTEGER begin,end; QueryPerformanceCounter(&begin);
@@ -400,6 +631,7 @@ int main() {
         uint8_t actual=0; assert(copy_field(contact_row+byte,actual) && actual==launcher_combat[byte]);
     }
     assert(boss_prepare_private_action(5));
+    weight_cases();
     launcher_combat[0x10]^=1; // A changed source cannot silently overwrite a published combat row.
     assert(!boss_prepare_private_action(5)); launcher_combat[0x10]^=1;
     assert(boss_prepare_private_action(5));

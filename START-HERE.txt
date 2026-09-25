@@ -1,6 +1,6 @@
-Nioh 1 Skill Expanded
+Nioh 1 Sword Mod
 
-Current build: sword-only stabilization; gameplay acceptance pending.
+Current build: sword bindings and Frost Moon; gameplay acceptance pending.
 The user will verify gameplay later. Do not infer acceptance from offline tests.
 
 Run from this repository in PowerShell:
@@ -15,13 +15,29 @@ Build native changes with:
 No mission-specific compilation or EXE packaging.
 
 Configuration:
-  runtime/controller-binding.json is the single schema2 preset.
+  runtime/controller-binding.json is the single schema3 preset.
   Saved device mapping remains in controller-calibration.json; reuse it.
   Low Triangle taps: Jin string D, C6E/2400 -> C6F/2410 -> C70/2420.
   Low Triangle hold: C79/5014 upward launcher. Mid/high held trials are disabled.
   LB + Circle tap/release: Charged Rush; hold: Leaping Slash.
   One hold_seconds setting governs both gestures; default0.25.
   LT + RT custom string is disabled. Native sword running attacks remain native.
+  Native Tiger Sprint FAA/5090 now selects Okatsu Charged Rush.
+  After any mid light, LB + Triangle selects native Living Weapon heavy D3A/9210.
+  Low held Triangle overrides native empty-Ki grapple; a tap retains grapple.
+  High Frost Moon: hold RB and press Triangle twice, starting in low or mid stance.
+  Window:0.75 seconds from native Ki Pulse availability; no same-stance reuse.
+  Frost startup speed:1..8x, default8x through CAC frame28; timing events remain intact.
+  Its previous-action cancellation uses native Pulse availability, not animation end.
+  Mid Frost Moon: RB + Square twice, C79 -> C7A contact -> 3B2/3B4 -> 3B6 Izuna.
+  Its first8 launcher frames accelerate; the paired sequence retains native speed/camera.
+  Low Frost Moon is unassigned in the basic preset. Optional Flying Swallow runs
+  C71 jump -> C72 dash -> C73 descent -> C74 landing, preserving native transitions.
+  Jump startup accelerates through19; dash Ki20 carries to the landing Pulse at20.
+  Low launcher: grounded impulse12 ->16 plus50% native collision weight for its victim
+  reaction. Original weight returns on exit, interruption, replacement or cooperative Stop.
+  Weight changes push resistance; it is not a proportional airtime/gravity multiplier.
+  Paired/immovable reactions and Mid Izuna retain native weight and contact data.
   Saving a changed preset recovers and reattaches the active engine.
   A null choice disables that replacement. Source signatures/indices are engine-owned.
   Native animation timing is centralized in runtime/native/boss_support.h::boss_move_timing.
@@ -31,7 +47,8 @@ Data:
   outputs/Nioh1-Sword-Move-Observations.xlsx is the metadata authority.
   Downloads/Nioh1-Sword-Move-Observations.xlsx must be reconciled before overwrite.
   Distinct sword strings are grouped; constituent source IDs and evidence remain.
-  Recording imports enrich known sword IDs; new move discovery is deferred.
+  Recordings identified Flying Swallow C71-C74, aerial somersault C81-C83,
+  and the full attacker/victim Izuna sequence. Somersault remains unassigned.
   Non-sword moves and redundant held-string constituents are excluded from choices.
   Whole retained action/motion/timing/camera packages are shared dependencies.
   Their verified hashes and native layout prevent safely pruning individual records.
@@ -44,7 +61,7 @@ Verification still required in actual gameplay:
   William vocals, contact/paired cleanup, cold missions, menus, death and reloads.
   DS4, DualSense, Xbox and SCUF latency/reconnect behavior.
   The grapple still starts with William's stab; the requested opening hop is absent.
-  Full launcher-to-Izuna and Flying Swallow remain incomplete; no new move trials.
+  Izuna contact, victim/camera synchronization and Flying Swallow landing recovery.
 
 Use no game monitor control/capture, synthetic input or repeated calibration.
 Check play-status.json instead of trusting saved process IDs.

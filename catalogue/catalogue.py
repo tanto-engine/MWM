@@ -66,7 +66,7 @@ def validate_catalogue(data):
                 raise ValueError(f'{key}: selectable move requires engine profile')
         binding = move.get('default_binding')
         if binding:
-            if binding.get('gesture') not in ('tap_release','hold','held_chain','native_attack') or not binding.get('chord'):
+            if binding.get('gesture') not in ('tap_release','hold','held_chain','native_attack','native_skill','double_tap') or not binding.get('chord'):
                 raise ValueError(f'{key}: invalid binding')
             if binding['gesture'] == 'native_attack':
                 # Native attack replacements follow accepted stance-specific action descriptors.
@@ -75,7 +75,9 @@ def validate_catalogue(data):
                 if (binding.get('stance') != 'low' or binding.get('weapon') != 'sword'
                         or type(binding.get('chain_position')) is not int or not 1 <= binding['chain_position'] <= 3):
                     raise ValueError(f'{key}: invalid native attack context')
-            elif binding['gesture'] != 'held_chain' and not 0 < binding.get('hold_seconds',0) <= 5:
+            elif binding['gesture']=='double_tap' and not 0<binding.get('window_seconds',0)<=1.5:
+                raise ValueError(f'{key}: invalid double-tap window')
+            elif binding['gesture'] not in ('held_chain','native_skill','double_tap') and not 0 < binding.get('hold_seconds',0) <= 5:
                 raise ValueError(f'{key}: invalid hold threshold')
         # Evidence can refer to old logs by path/line; never copy address fields.
         def no_addresses(value):

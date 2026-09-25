@@ -10,7 +10,7 @@ struct PendingHeavy {
     int64_t started;
     uint64_t origin;
     uint32_t origin_key, epoch;
-    unsigned tap, controller, hold;
+    unsigned tap, controller, hold, native_key;
     bool active, spent;
 };
 static PendingHeavy pending_heavy{};
@@ -34,7 +34,7 @@ static bool heavy_button(unsigned& controller, bool& down, bool& interrupted) {
     return connected==1;
 }
 
-static bool replacement_context(DispatchCommand& command, const MoveAdapter& adapter) {
+static bool native_binding_context(DispatchCommand& command) {
     // Revalidate the publisher and concrete player's current resource identity.
     // Match heartbeat, generation, stance, epoch and all action banks before substitution.
     // Both immediate heavy replacement and delayed hold share this lifecycle boundary.
@@ -44,16 +44,23 @@ static bool replacement_context(DispatchCommand& command, const MoveAdapter& ada
     // heartbeat with time read afterward, never the earlier input-poll timestamp.
     LARGE_INTEGER now; QueryPerformanceCounter(&now);
     const int64_t frequency=dispatch->control.qpc_frequency;
-    uint32_t stance=0; uint64_t banks[3]{}, payload=0; uint8_t expected_stance=0xff;
-    if (!copy_field(adapter.player_descriptor+0x20,payload) || !copy_field(payload+0x0B,expected_stance)) return false;
-    // Native high=1, mid=0, low=2. CF6/CF7 use4 to retain the low opener's stance.
-    if (expected_stance==4 && adapter.player_key>=0xCF5 && adapter.player_key<=0xCF7) expected_stance=2;
+    uint64_t banks[3]{};
     return frequency>0 && command.heartbeat_qpc<=now.QuadPart
         && now.QuadPart-command.heartbeat_qpc<=frequency/10
         && command.generation==uint64_t(dispatch->control.generation)
         && player_context_status(command)==Accepted && command.player==boss_session.player
-        && expected_stance<=2 && copy_field(command.player+0x470,stance) && stance==expected_stance
         && copy_bytes(command.player+0x70,banks,sizeof(banks)) && !memcmp(banks,command.banks,sizeof(banks));
+}
+
+static bool replacement_context(DispatchCommand& command, const MoveAdapter& adapter) {
+    // Apply the shared lifecycle check before matching a stance-specific binding.
+    // Native high=1, mid=0, low=2; CF6/CF7 payload4 retains the opener's stance.
+    // Movement and lock-on never participate in this stance comparison.
+    uint32_t stance=0; uint64_t payload=0; uint8_t expected=0xff;
+    if (!native_binding_context(command) || !copy_field(adapter.player_descriptor+0x20,payload)
+        || !copy_field(payload+0x0B,expected)) return false;
+    if (expected==4 && adapter.player_key>=0xCF5 && adapter.player_key<=0xCF7) expected=2;
+    return expected<=2 && copy_field(command.player+0x470,stance) && stance==expected;
 }
 
 static DispatchReason choose_heavy(DispatchCommand& command) {
@@ -82,8 +89,8 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
     const unsigned slot=held ? pending_heavy.hold : pending_heavy.tap;
     pending_heavy.active=false; pending_heavy.spent=down;
     if (slot==UINT32_MAX) {
-        command.desired_key=boss_adapters[pending_heavy.hold].player_key;
-        return NativeHeavyTap; // Mid/high taps retain William's native heavy attack.
+        command.desired_key=pending_heavy.native_key;
+        return NativeHeavyTap; // Replay the exact native heavy or grapple selection.
     }
     const auto& move=boss_imports[slot];
     command.reserved[1]=slot; command.desired_key=move.key; command.expected_motion=move.motion;
@@ -227,6 +234,24 @@ static uint64_t replace_native_grapple(void* context, uint64_t descriptor) {
     return 0;
 }
 
+static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigned hold, const DispatchCommand& command) {
+    // Preserve the native-selected tap while deciding the physical Triangle hold.
+    // An empty redirect rejects commitment without resetting the current movement clock.
+    // Repeated lookups share the original press and never restart its deadline.
+    unsigned controller=0; bool down=false, interrupted=false;
+    uint64_t current=0; uint32_t current_key=0;
+    if (!heavy_button(controller,down,interrupted) || !down || interrupted || !triangle_input.pressed
+        || !copy_field(player+0x58,current) || !copy_field(current,current_key)) return 0;
+    if (!pending_heavy.active && !pending_heavy.spent)
+        pending_heavy={triangle_input.pressed,current,current_key,uint32_t(command.reserved[2]),tap,controller,hold,key,true,false};
+    static const int32_t payload[0xB0/4]={0,0,0,0,0,0,0,0,-1};
+    static const struct { uint8_t prefix[0x20]; const void* payload; uint8_t tail[0xA8]; }
+        deferred={{},payload,{}};
+    return reinterpret_cast<uint64_t>(&deferred);
+}
+
+#include "sword_bindings.h"
+
 static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_index) {
     // Replace only the concrete low-heavy action selected by native input resolution.
     // Match William's exact descriptor after stance/running rules, then share the import adapter.
@@ -240,9 +265,47 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         SetLastError(native_error);
         return descriptor;
     }
+    if (*bank_index==0 && boss_native_bindings) {
+        DispatchCommand command{};
+        if ((boss_native_bindings&4) && key>=0xCB3 && key<=0xCB5 && native_binding_context(command)) {
+            const uint64_t adapted=mid_light_ender(context,key,descriptor);
+            SetLastError(native_error); return adapted ? adapted : descriptor;
+        }
+        if ((boss_native_bindings&2) && key==0xFAA && native_binding_context(command)) {
+            uint64_t payload=0;
+            if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
+                && grapple_field(descriptor,0x82,uint16_t(21)) && copy_field(descriptor+0x20,payload)
+                && grapple_field(payload,0x18,uint64_t(0x40017C00000ULL)) && grapple_field(payload,0x20,int32_t(5090))) {
+                const auto& move=boss_imports[0];
+                command.reserved[1]=0; command.desired_key=move.key; command.expected_motion=move.motion;
+                command.expected_descriptor=move.descriptor; command.expected_payload=move.payload;
+                uint32_t forwarded=key; void* unused=nullptr; uint64_t banks[3]{}; auto reason=Accepted;
+                if (boss_prepare_call(replacement_call.actor,key,reason,command,forwarded,unused,banks) && reason==Accepted) {
+                    *replacement_call.command=command; *replacement_call.reason=Accepted; *bank_index=1;
+                    InterlockedIncrement64(&dispatch->control.dispatch_count);
+                    SetLastError(native_error); return boss_private_descriptor_address(0);
+                }
+            }
+        }
+    }
     if (key==0x301 && *bank_index==0) {
         const uint64_t paired=replace_native_grapple(context,descriptor);
         if (paired) { *bank_index=1; SetLastError(native_error); return paired; }
+    }
+    // Empty-Ki Triangle resolves to D4A instead of CF5. Delay its verified native
+    // entry before contact; a tap keeps its target checks and paired ownership.
+    if (key==0xD4A && *bank_index==0 && boss_hold_variant && (boss_hold_stances&1)) {
+        uint64_t payload=0;
+        if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
+            && grapple_field(descriptor,0x82,uint16_t(37)) && copy_field(descriptor+0x20,payload)
+            && grapple_field(payload,0x18,uint64_t(0x194C0000)) && grapple_field(payload,0x20,int32_t(5050)))
+            for (unsigned hold=0;hold<boss_import_count;++hold) {
+                const auto& adapter=boss_adapters[hold]; DispatchCommand command{};
+                if (adapter.kind!=2 || adapter.player_key!=0xCF5 || !replacement_context(command,adapter)) continue;
+                if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,hold,command)) {
+                    SetLastError(native_error); return deferred;
+                }
+            }
     }
     for (unsigned slot=0; slot<boss_import_count; ++slot) {
         const auto& adapter = boss_adapters[slot];
@@ -253,22 +316,12 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         if (!replacement_context(command,adapter)) break;
         unsigned hold=boss_import_count;
         if (boss_hold_variant) for (unsigned i=0;i<boss_import_count;++i)
-            if (boss_adapters[i].kind==2 && boss_adapters[i].player_key==key) hold=i;
+            if (boss_adapters[i].kind==2 && boss_adapters[i].player_key==key
+                && (boss_hold_stances&(key==0xCF5 ? 1 : key==0xCB7 ? 2 : 4))) hold=i;
         if (hold<boss_import_count) {
-            unsigned controller=0; bool down=false, interrupted=false;
-            if (heavy_button(controller,down,interrupted) && down && !interrupted && triangle_input.pressed) {
-                uint64_t current=0; uint32_t current_key=0;
-                if (!copy_field(player+0x58,current) || !copy_field(current,current_key)) break;
-                if (!pending_heavy.active && !pending_heavy.spent)
-                    pending_heavy={triangle_input.pressed,current,current_key,uint32_t(command.reserved[2]),adapter.kind==1 ? slot : UINT32_MAX,controller,hold,true,false};
-                // Native711A75 rejects an empty redirect before committing its descriptor.
-                // Returning current restarts its animation at711D29; returning zero selects idle.
-                // No transition pointer can escape this immutable, module-lifetime redirect.
-                static const int32_t payload[0xB0/4]={0,0,0,0,0,0,0,0,-1};
-                static const struct { uint8_t prefix[0x20]; const void* payload; uint8_t tail[0xA8]; }
-                    deferred={{},payload,{}};
+            if (const uint64_t deferred=defer_heavy(player,key,adapter.kind==1 ? slot : UINT32_MAX,hold,command)) {
                 SetLastError(native_error);
-                return reinterpret_cast<uint64_t>(&deferred);
+                return deferred;
             }
         }
         if (adapter.kind==2) break;
@@ -295,7 +348,7 @@ static bool replacements_configured() {
     // Decide whether this session needs the native action-lookup hook.
     // Search its small immutable adapter table for an enabled replacement.
     // Baseline Okatsu sessions keep their established three-hook path.
-    if (boss_native_grapple) return true;
+    if (boss_native_bindings || boss_native_grapple) return true;
     for (unsigned i=0; i<boss_import_count; ++i) if (boss_adapters[i].kind==1 || boss_adapters[i].kind==2) return true;
     return false;
 }

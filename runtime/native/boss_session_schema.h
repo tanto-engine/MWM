@@ -58,13 +58,14 @@ static_assert(sizeof(MoveAdapter) == 64, "Adapter ABI size");
 struct RuntimeSessionConfig {
     uint32_t magic, version, size, pid;
     uint64_t creation_filetime, config_tag;
-    uint64_t hold_variant, hold_milliseconds, hold_camera_bank, native_grapple;
+    uint64_t hold_variant, hold_milliseconds, hold_camera_bank, native_bindings; // grapple1, Tiger Sprint2, mid ender4
+    uint64_t hold_stances, frost_variants[3], frost_milliseconds, frost_speed;
     BossSession session;
     uint32_t import_count, string_variant;
     MoveImport imports[24];
     MoveAdapter adapters[24];
 };
-static_assert(sizeof(RuntimeSessionConfig) == 4120 && offsetof(RuntimeSessionConfig, imports) == 280,
+static_assert(sizeof(RuntimeSessionConfig) == 4168 && offsetof(RuntimeSessionConfig, imports) == 328,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 6;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 7;

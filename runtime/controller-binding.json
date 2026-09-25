@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "name": "Sword baseline",
   "weapon": "sword",
   "tap_move": "okatsu.charged_rush",
@@ -14,5 +14,10 @@
     "high": null
   },
   "okatsu_grapple": true,
-  "string_enabled": false
+  "tiger_sprint": true,
+  "mid_light_ender": true,
+  "string_enabled": false,
+  "frost_moon": {"low": null, "mid": "jin_hayabusa.izuna_drop", "high": "jin_hayabusa.action_0cac"},
+  "frost_window_seconds": 0.75,
+  "frost_startup_speed": 8
 }

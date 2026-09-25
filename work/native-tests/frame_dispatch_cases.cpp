@@ -47,7 +47,7 @@ extern "C" MH_STATUS WINAPI MH_DisableHook(void*) {
 }
 
 alignas(8) static std::array<uint8_t,0x800> player{};
-alignas(8) static std::array<uint8_t,0x100> owner{};
+alignas(8) static std::array<uint8_t,0x248> owner{};
 alignas(8) static std::array<uint8_t,0x478> source{}, source_owner{};
 alignas(8) static std::array<uint8_t,0x100> motion{}, timing{}, source_motion{}, source_timing{};
 alignas(8) static std::array<uint8_t,0x138> bank{}, player_bank{};

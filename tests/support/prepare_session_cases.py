@@ -49,6 +49,7 @@ class ImportMemory:
                     struct.pack_into('<hh',row,0x20,move['next_start'],move['next_end'])
                     if move['flags'] == prepare.GRAB_ATTEMPT_FLAGS:
                         struct.pack_into('<H',row,0,22)
+                        row[11]=0xff
                 self.put(address,row)
             self.rows[index] = pointer_table+0x1000
             timing = bytearray(0x100+(max(voice['index'] for voice in move['voices'])+1)*0x4c)
@@ -196,8 +197,10 @@ class PreparationTests(unittest.TestCase):
         # Encode owned resource fields without requiring a source boss actor.
         # Prepare a session using only the player and engine-owned resource fields.
         # The encoded ABI must not require any borrowed source boss object.
-        fields, originals = prepare.boss_fields(PROFILE)
-        self.assertEqual(fields, {key:BOSS[key] for key in fields})
+        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=750,frost_speed=8,tiger_sprint=False,mid_light_ender=False)
+        fields, originals = prepare.boss_fields(dict(PROFILE,**bindings))
+        expected=dict(BOSS,**bindings)
+        self.assertEqual(fields, {key:expected[key] for key in fields})
         self.assertEqual(originals, BOSS['originals'])
         self.assertNotIn('source_actor', fields)
         self.assertNotIn('source_owner', fields)

@@ -1,0 +1,100 @@
+{
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "verification": "Owned-memory checks and source recordings; modified gameplay acceptance pending",
+  "frost_moon": {
+    "input": "RB held with two separate presses of one different-stance face button",
+    "window_seconds": 0.75,
+    "clock": "Wall time from first player-frame observation of native conditionD5 becoming available; frame-sampling quantization remains",
+    "native_availability": "736CB0 condition tableD5 selects7397FD; owner+240+40 passed to7AFDF0. Reads vitals+8C,+90,+94,+98: total duration positive and fill or hold remaining positive.",
+    "high": "CAC/5110 to CAD/5111; native condition20 continuation retained",
+    "startup": "CAC shared native motion/timing clock through frame28, first non-audio timing event. Configurable1..8x; default8. No event seek or clip truncation.",
+    "previous_recovery": "May leave the previous action during its native Ki Pulse availability window; does not wait for animation end",
+    "mid": "C79/5014 -> C7A/1050 native condition22 -> 3B2/5020, optional3B4/5021 -> 3B6/5022. Source recorded together with victims3B3/35300 and3B7/35302 in work/jin-izuna-retry2-20260925/events.jsonl. First8 launcher frames use configured startup; paired camera/speed unchanged.",
+    "low": "Basic unassigned; optional full C71/1050 jump -> C72/5000 dash -> C73/5001 descent -> C74/5002 landing. Source conditions unchanged; no grounded cancel rows during flight.",
+    "airborne_ki": "Native70FF6E resets Pulse only forpositivecost orpayloadflags&40200. C72 keeps Ki20 and setsprivatepercent40/start-1; zero-cost C73/C74 do notresetthependingbalance. Native71000A accumulatesactualadjustedcost; C74privatepercent40 andstart20 open7B59F0 through715118. No direct Ki writes; gameplay pending.",
+    "graph_regression": "Reproduced C74 successor search leaking into separate low C79; now restrict source edges and stance ownership. Existing native replacement cases cover both graphs."
+  },
+  "tiger_sprint": {
+    "recording": "work/tiger-sprint-full-20260925/events.jsonl",
+    "label": "User explicitly performed only full-length Tiger Sprints",
+    "observed": "Ten FAA/5090 starts, FAB/5091 continuation, nine full FBB/5003 endings and one FAC/5003 ending",
+    "replacement": "Native-selected FAA/5090 flags0x40017C00000,21rows becomes OkatsuC64/1220. E2/D46 preparation and native input/skill selection remain native.",
+    "modified_playback": "Pending"
+  },
+  "mid_light_ender": {
+    "source": "work/sword-skills-live-20260925.json",
+    "light_actions": [
+      "CB3/3100",
+      "CB4/3110",
+      "CB5/3120"
+    ],
+    "native_heavy": "D34/9200 selector1 routesD3A/9210; D3A flags0x194C0000,Ki90,recovery70,cancel87",
+    "binding": "Native selector1/state1 Triangle press plus selector5/state0 guard held",
+    "buffered_windows": [
+      [
+        10,
+        39
+      ],
+      [
+        10,
+        43
+      ],
+      [
+        10,
+        51
+      ]
+    ],
+    "direct_windows": [
+      [
+        40,
+        70
+      ],
+      [
+        44,
+        74
+      ],
+      [
+        52,
+        82
+      ]
+    ],
+    "adaptation": "Two DLL-lifetime rows precede the unchanged native mid-light transitions; targetD3A and no learned Kick gate. Native motion, damage, Ki and exit behavior preserved.",
+    "modified_playback": "Pending"
+  },
+  "low_hold_grapple": {
+    "reproduction": "Owned D4A selection committed immediately instead of entering PendingHeavy",
+    "replacement": "Exact native D4A/5050,flags0x194C0000,37rows participates in low Triangle decision. Tap replaysD4A; hold chooses launcher. Native contact still owns pairing.",
+    "tests": "work/native-tests/replacement_cases.cpp",
+    "modified_playback": "Pending"
+  },
+  "launcher_weight": {
+    "mechanism": "Native Character::SetWeight at745FA0; selected private low-C79 hit and committed nonpaired reaction identify victim. Effective colliderweight\u00d70.5; restore exact actor+7BC original override through same native setter on exit/Stop.",
+    "grounded_impulse": "Private combat+17:12\u219216; airborne+1B stays12; Mid Izuna retains source combat row.",
+    "evidence": "work/launcher-weight-research.json",
+    "verification": "Owned callback and lifecycle regressions passed; modified gameplay pending"
+  },
+  "recording_discovery": {
+    "full_scan_bytes": 6070980608,
+    "seeded_scan_bytes": 131072,
+    "seed_failed_reads": 0,
+    "mechanism": "Process-birth/build-bound seed;64KiB neighborhoods recover nearby replacement actors; fingerprint validation and full-scan fallback remain.",
+    "measurement_scope": "Memory discovery only; not gameplay FPS or input latency"
+  },
+  "final_verification": {
+    "offline_checks": 171,
+    "crash_checks": 8,
+    "entrypoints": [
+      "tests/test_move_readiness.py --offline",
+      "tests/test_resource_crashes.py"
+    ],
+    "trainer": "Nioh 1 Sword Mod; 995x702 requested layout fits1030x760; defaultMidIzuna/Highslice/Lowdisabled",
+    "workbook_sha256": "90283c5a9b84dde762a4f7f1e9445631c5b83bc6015a7f7269a1ae11fecca60c",
+    "runtime_dlls": {
+      "boss_repeat_0000000000000000.dll": "c6fb325cdd7d2960bb7edeb28a9875a4f607d65ccd52b2b555f2984c0052c259",
+      "nioh_resources.dll": "2cd0bf9c636f044d0d37d8ea8d1cab8530c1f690c84b6a2c04c935a27de2841e",
+      "nioh_skill_runtime.dll": "eb1b54675224193b74b1110ede2f99ac0510b6f664024d814d0b022256df9bbc"
+    },
+    "gameplay": "Not assessed on the modified build; user previously requested prepare/publish and testing later",
+    "scratch_deletion": "Automatic approval review rejected deletion as blocked by policy; untracked disposable takes/models excluded from publication"
+  }
+}

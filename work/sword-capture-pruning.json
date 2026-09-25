@@ -1,0 +1,14 @@
+{
+  "work/jin-aerial-20260925/take-0001/events.jsonl": {
+    "before_bytes": 2120681,
+    "after_bytes": 1478040,
+    "removed_records": 171,
+    "sha256": "6a43701eee67c5dce7eb55ccfee165774689faa6af54aab8ec247d97e3c0977e"
+  },
+  "work/jin-izuna-retry2-20260925/events.jsonl": {
+    "before_bytes": 6945997,
+    "after_bytes": 5608606,
+    "removed_records": 709,
+    "sha256": "8715ef2697a314050b8141e56ec1c2b356a388f71e884f898cc78201f8cbc4b9"
+  }
+}

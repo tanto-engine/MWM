@@ -23,12 +23,14 @@ if os.name == 'nt':
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
 HELD_MOVES = {'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0cac'}
-DEFAULT_PRESET = dict(schema_version=2, name='Sword baseline', weapon='sword',
+DEFAULT_PRESET = dict(schema_version=3, name='Sword baseline', weapon='sword',
                       tap_move='okatsu.charged_rush', hold_move='okatsu.leaping_slash',
                       modifier_mask=16, trigger_mask=4, hold_seconds=.25,
                       low_heavy='jin_hayabusa.action_0c6e',
                       stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
-                      okatsu_grapple=True, string_enabled=False)
+                      okatsu_grapple=True, tiger_sprint=True, mid_light_ender=True, string_enabled=False,
+                      frost_moon=dict(low=None, mid='jin_hayabusa.izuna_drop', high='jin_hayabusa.action_0cac'),
+                      frost_window_seconds=.75, frost_startup_speed=8)
 
 
 def atomic_json(path, value):
@@ -104,7 +106,7 @@ def validate_preset(value):
     # Reject movesets the current runtime cannot execute.
     # Check schema, implemented move IDs, distinct button bits and hold time.
     # Corrupt settings cannot silently become a different binding.
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 2:
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 3:
         raise ValueError('Unsupported moveset version')
     missing = [key for key in DEFAULT_PRESET if key not in value]
     if missing:
@@ -136,7 +138,24 @@ def validate_preset(value):
         raise ValueError('Held Triangle requires a standalone sword move')
     if len(enabled) != len(set(enabled)):
         raise ValueError('Stance holds cannot duplicate imports')
-    if any(type(result[key]) is not bool for key in ('okatsu_grapple','string_enabled')):
+    frost=result['frost_moon']
+    if not isinstance(frost,dict) or set(frost)!=set(holds):
+        raise ValueError('Frost Moon requires low, mid and high entries')
+    for stance,identifier in frost.items():
+        if identifier not in (None,'jin_hayabusa.action_0cac','jin_hayabusa.izuna_drop','jin_hayabusa.action_0c71'):
+            raise ValueError('Frost Moon requires a supported sword skill')
+        if identifier=='jin_hayabusa.izuna_drop' and stance!='mid':
+            raise ValueError('Izuna Drop requires the mid-stance Frost Moon binding')
+        if identifier=='jin_hayabusa.action_0c71' and stance!='low':
+            raise ValueError('Flying Swallow requires the low-stance Frost Moon binding')
+        if identifier and any(value==identifier and other!=stance for other,value in (*holds.items(),*frost.items())):
+            raise ValueError('A skill must use the same stance across bindings')
+    seconds=result['frost_window_seconds']
+    if type(seconds) not in (int,float) or not math.isfinite(seconds) or not .1<=seconds<=1.5:
+        raise ValueError('Frost Moon window must be between 0.1 and 1.5 seconds')
+    if type(result['frost_startup_speed']) is not int or not 1<=result['frost_startup_speed']<=8:
+        raise ValueError('Frost Moon startup speed must be an integer from 1 to 8')
+    if any(type(result[key]) is not bool for key in ('okatsu_grapple','tiger_sprint','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
     return result
 

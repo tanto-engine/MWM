@@ -312,6 +312,26 @@ def discover(game, seed=None, stop_requested=None):
         if "creation_filetime" in old and any(old.get(k) != v for k, v in game.identity.items()):
             raise ValueError("Seed process/build identity mismatch; run a fresh scan")
         found = {int(o["object"], 0) for o in old["candidates"]}
+        # Retries often rebuild actors nearby in the same native allocation pool.
+        # Search only their64KiB neighborhoods after exact process-birth validation.
+        # This read-only bounded path avoids a multi-gigabyte scan between deaths.
+        if "creation_filetime" in old:
+            windows=set(); needle=struct.pack('<Q',game.vtable)
+            for address in tuple(found):
+                if stop_requested and stop_requested(): raise InterruptedError('Discovery cancelled')
+                try:
+                    region=game.region(address)
+                    if not readable(region): continue
+                    start=max(region.BaseAddress,address & ~0xffff)
+                    end=min(region.BaseAddress+region.RegionSize,start+0x10000)
+                    if (start,end) in windows: continue
+                    windows.add((start,end)); raw=game.bytes(start,end-start); scanned+=len(raw)
+                    position=raw.find(needle)
+                    while position!=-1:
+                        if (start+position)%8==0: found.add(start+position)
+                        position=raw.find(needle,position+1)
+                except OSError:
+                    failures+=1
     else:
         needle = struct.pack("<Q", game.vtable)
         cursor = 0
@@ -692,7 +712,7 @@ def main():
     scan = commands.add_parser("scan")
     scan.add_argument("--pid", type=int, required=True)
     scan.add_argument("--out", type=Path, required=True)
-    scan.add_argument("--seed", type=Path, help="Revalidate earlier addresses; does not discover newly spawned actors")
+    scan.add_argument("--seed", type=Path, help="Revalidate this process's earlier actors and nearby64KiB allocation blocks")
     rec = commands.add_parser("record")
     rec.add_argument("--config", type=Path, required=True)
     rec.add_argument("--outdir", type=Path, required=True)

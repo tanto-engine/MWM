@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "scope": "Read-only native analysis for true weight x0.5 on the single low C79 launcher; no game writes or gameplay acceptance.",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "sources": [
+    "work/nioh_native.py",
+    "work/live-text.bin",
+    "work/live-text-identity.json",
+    "runtime/native/observer.cpp",
+    "runtime/native/boss_support.h"
+  ],
+  "address_kind": "All addresses are RVAs relative to the supported executable module base.",
+  "named_weight_path": {
+    "registration": "0x11F1470: Character::SetWeight (string 0x11F4348) -> 0x893C10; Character::ResetWeight (string 0x11F4360) -> 0x88FB50",
+    "set": "0x893C10 -> 0x76B7D0 -> 0x745FA0 -> 0x720040 -> 0x782F30",
+    "reset": "0x88FB50 -> 0x76A570 -> 0x742810 -> 0x720040",
+    "setter_abi": "void __fastcall(void* action_node, float weight): RCX=node, XMM1=weight; stores node+0x7BC then tail-calls weight resolution.",
+    "setter_bytes": "f30f1189bc070000e993a0fdff",
+    "resolution": "0x720040: nonnegative float node+0x7BC overrides signed i16 current_descriptor.payload+0x28; negative payload weight falls back to uint32 owner.profile(+0xE90)+0xD8.",
+    "effective": "owner=*(node+0x50); collision=*(owner+0x250); effective float collision+0xB0.",
+    "propagation": "0x782F30 stores collision+0xB0 and copies it to registered shape-data+0x10 via each shape+0x60.",
+    "restore": "Save exact original node+0x7BC, including -1 sentinel; restore via 0x745FA0, letting native current-action/profile resolution recompute effective weight.",
+    "thread": "Setter/propagation has no allocation or WinAPI calls but traverses mutable collider arrays without locks. Only invoke on native game-thread callbacks; preserve wrapper/native LastError."
+  },
+  "weight_consumers": [
+    {
+      "path": "Pair collision callback 0x7D09A0",
+      "reads": [
+        "0x7D0EA0: float [rbx+0x10]",
+        "0x7D0EA5: float [r14+0x10]"
+      ],
+      "ownership": "0x7D09F6/0x7D09FA get data from the two native shapes+0x60; 0x7D0A2B..36 orders RBX/R14.",
+      "operation": "For shape flags bit24 on both: r=clamp((weightA-weightB+100)/200,0,1). Split contact separation vector by complementary r and (1-r). >=10000 makes that participant immovable. Accumulate vectors in data+0x20..., increment data+0x14 count.",
+      "application": "0x783F7E reads shape+0x60; 0x783F94 calls0x7D24F0 to combine corrections; 0x783FB7..FEC adds corrections to position; 0x783FF1 clears count."
+    },
+    {
+      "path": "Contact movement application 0x741B90",
+      "read": "0x741C7E: float victim_collision+0xB0",
+      "operation": "0x741C86 compares against float10000 at0x1588B60; >=10000 skips movement through0x741DE6. Below threshold, no proportional weight scaling in this routine. Horizontal/vertical increments are accumulated at movement_state+0x10/+0x14, then vertical velocity clamped."
+    }
+  ],
+  "separate_impulse_path": {
+    "function": "0x71A460..0x71A6FC; void __fastcall(void* hit_event, int mode), RCX/EDX.",
+    "prologue": "48895c2408574883ec2033ff488bd985",
+    "fields": "hit_event+0xE0 combat row; +0xE8 attacker entity; +0x100 victim entity; int32+0x11C impact mode; outputs float+0x138 horizontal,+0x13C vertical,+0x140 angle.",
+    "mode": "mode==0 is normal impact, not grounded. Native query victim vtable+0x150(condition3) selects grounded vs airborne response.",
+    "grounded": "0x71A5DB u8 combat+0x16 horizontal; 0x71A5EE signed i8 combat+0x17 vertical.",
+    "airborne": "0x71A56D u8 combat+0x1A horizontal; 0x71A580 signed i8 combat+0x1B vertical; positive values capped at20.",
+    "descriptor": "This function does not commit a victim action. Its state query and 0x72FB20 direction calculation use the existing action.",
+    "do_not_conflate": "Changing combat+0x17 from12 to16 is vertical impulse, not weight x0.5. Halving weight is not proved to scale gravity, height or airtime."
+  },
+  "existing_action_hook_contract": {
+    "no_additional_hook": true,
+    "acquire_before_original": "In observed_action(actor,...), owner=*(actor+0x50), component=*(owner+0x230), selected_event=*(component+0x90). Snapshot fields before original_action can clear/free event.",
+    "selected_event_proof": "0x715EE6/EF7 passes victim_component+0x58 to0x741270. 0x7415E3 stores eligible selected event at damageblock+0x38 => component+0x90.",
+    "event_constructor": "0x6F9100 copies source combat row to event+0xE0 (0x6F9205), source attack-record+0x28 entity to event+0xE8 (0x6F924B), incoming victim R8 to event+0x100 (0x6F92B2).",
+    "match": [
+      "event+0xE8 == boss_session.player_owner",
+      "event+0x100 == victim owner; victim != player",
+      "event+0xE0 == exact ready low-C79 private combat_body address",
+      "int32 event+0x11C ==0",
+      "low import key0xC79, motion5014, adapter_kind2, player_key0xCF5; exclude Mid CB7 Izuna duplicate"
+    ],
+    "commit_order": [
+      "0x70ED1B calls0x7119C0; successful action selection writes actor+0x58 at0x711C16 and increments action serial actor+0xDC at0x711D21.",
+      "0x70EF93..EFA3 reads NEW descriptor payload and requires uint32(payload+0)&0x40000 (bit18) before selected-hit processing.",
+      "0x70F046 calls0x71F3C0(damageblock,...); 0x71F531 loads block+0x38 selected event; 0x71F54A calls0x71A460 with its mode.",
+      "0x70F0E4 clears native hit queue through0x721EC0; 0x721F61 nulls block+0x38. Do not dereference saved event after original returns.",
+      "0x70F580 refreshes effective native weight after the new action is selected. Apply x0.5 only after original_action returns with a committed bit18 reaction and validated identity."
+    ],
+    "paired_exclusion": "Require (uint64(payload+0x18)&0x20000000)==0. Bit29 is the native paired-partner relation gate at0x741418..42F and0x710508..51C. Existing boss_paired compares only two exact imported flag constants; that is too narrow for arbitrary victims.",
+    "weight_guard": "Read current effective collision+B0 after native selection; finite 0<weight<10000. Halve once, never compound on repeat events. Save old override and exact node/owner/collision/vtable/descriptor identity.",
+    "restoration": "Restore before any subsequent setter for tracked victim; restore on observed_frame descriptor exit/disabled session. Skip writes and retire only on positive identity replacement/unmapped memory. Do not carry override into native paired actions.",
+    "stop": "Stop can disable new overrides, but must retain callbacks/ERROR_BUSY until game-thread restoration completes; do not run collider setter on loader/control thread.",
+    "last_error": "Preserve incoming error before native call and native result error afterward around our memory checks/setter calls."
+  },
+  "remaining_limits": [
+    "No runtime implementation or live activation/restoration was tested by this audit.",
+    "The hit-queue/bit18 contract proves attribution at action entry; exact low-launch reaction IDs and landing/death variants still require observed gameplay.",
+    "Restore-before-any-next-setter is a conservative single-reaction boundary; multi-phase airborne continuation may end the override earlier than landing.",
+    "Frame-only first-next-descriptor attribution is not justified: native hit events are cleared/freed during updates and unrelated actions could follow.",
+    "Fixed-slot exhaustion, duplicate target hits, Stop while paused, death/unload, native external override changes and owner reuse need owned-memory tests plus gameplay verification.",
+    "Weight changes collision response; evidence does not establish a continuous proportional ballistic mass consumer. Preserve separate impulse tuning for requested height."
+  ],
+  "native_windows": [
+    {
+      "name": "hit_calculation",
+      "rva": "0x71a460",
+      "size": 669,
+      "sha256": "4a29dd5a051a3396c9c1c7be4a3884bb2e0542582485a9f69c4a9d7e0bc3c64d"
+    },
+    {
+      "name": "weight_setter",
+      "rva": "0x745fa0",
+      "size": 13,
+      "sha256": "ecfd1f8e8cab53cb36c66549b23266eb9c65f502525e2c41ca0edaff0445cf9d"
+    },
+    {
+      "name": "weight_resolver",
+      "rva": "0x720040",
+      "size": 110,
+      "sha256": "495c3365249c3370819f722a0fae03dfa3c1ab0d8a9e92ed3c6345ad232965de"
+    },
+    {
+      "name": "weight_propagation",
+      "rva": "0x782f30",
+      "size": 130,
+      "sha256": "62fc601e95e6615b7b87760a3e425aeb267f652ba23d183732438c796bd70960"
+    },
+    {
+      "name": "pair_weight_consumer",
+      "rva": "0x7d09a0",
+      "size": 2536,
+      "sha256": "1561c284f849adfaf72836c56f06d558eeb971fabac564debd036c97346a2b91"
+    },
+    {
+      "name": "velocity_weight_gate",
+      "rva": "0x741b90",
+      "size": 634,
+      "sha256": "754cd174bd931d183648296c45bb6364d56b5937eb0dc3e7faf7895f62bed91e"
+    },
+    {
+      "name": "event_constructor",
+      "rva": "0x6f9100",
+      "size": 514,
+      "sha256": "bc036501210c24e8dbf940cd8519f11aa9f4245cdc4b968dd59b83541226d876"
+    },
+    {
+      "name": "reaction_event_processing",
+      "rva": "0x71f3c0",
+      "size": 458,
+      "sha256": "3df43839a7a6dcb6f6c2239729feff3755b13fb39c6e6c9fd54a77e538eb3304"
+    },
+    {
+      "name": "setter_reaction_gate",
+      "rva": "0x70ef69",
+      "size": 399,
+      "sha256": "14965d75dc3898b7517dc993c2ec7edfe5f69e603bb8a6391924a8a594b4c2fa"
+    },
+    {
+      "name": "action_commit",
+      "rva": "0x711be2",
+      "size": 339,
+      "sha256": "92315a62b055871508b5452390bc1cfe7962f8c0b74f9f3557d47d3555734111"
+    }
+  ]
+}

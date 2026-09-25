@@ -1,5 +1,4 @@
 #pragma once
-#ifdef RESEARCH_RUNTIME_SESSION
 #include "boss_session_schema.h"
 static uint64_t BOSS_CONFIG_TAG;
 static BossSession boss_session{};
@@ -8,14 +7,36 @@ static MoveAdapter boss_adapters[24]{};
 static uint32_t boss_import_count, boss_string_variant;
 static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank;
 static uint64_t boss_native_grapple;
+static uint64_t boss_native_bindings;
+static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
+
+static bool flying_swallow(const MoveImport& move, const MoveAdapter& adapter) {
+    // Recognize four exact source phases with a low-stance owner.
+    // Only the jump is an entry; dash/descent/landing require native continuation.
+    // Other zero-flag actions cannot acquire the airborne policy.
+    if (move.key<0xC71 || move.key>0xC74 || adapter.player_key!=0xCF5) return false;
+    const unsigned phase=move.key-0xC71;
+    constexpr int motions[]={1050,5000,5001,5002},counts[]={18,17,18,75};
+    return move.motion==motions[phase] && move.transition_count==counts[phase]
+        && move.flags==(phase==3 ? 0x1BCE0000ULL : 0) && adapter.kind==(phase ? 4u : 2u)
+        && move.recovery_frame==(phase==3 ? 20 : -1) && move.next_variant==-1;
+}
 
 static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
-    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || config.native_grapple>1)
+    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || config.native_bindings>7
+        || config.hold_stances>7 || config.frost_milliseconds<100 || config.frost_milliseconds>1500
+        || config.frost_speed<1 || config.frost_speed>8)
         return false;
+    constexpr uint32_t openers[]={0xCF5,0xCB7,0xC7A};
+    for (unsigned stance=0;stance<3;++stance) {
+        const auto slot=config.frost_variants[stance];
+        if (slot && (slot>config.import_count || config.adapters[slot-1].kind!=2
+            || config.adapters[slot-1].player_key!=openers[stance])) return false;
+    }
     if (config.imports[config.string_variant].flags == 0x8078000000ULL) return false;
     if (config.hold_variant) {
         if (config.hold_variant > config.import_count || config.adapters[config.hold_variant-1].kind != 2
@@ -37,6 +58,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         if (adapter.kind==3 && !config.hold_camera_bank) return false;
         if (move.key==0x361 && move.motion==1311 && move.flags==0x8078000000ULL && !adapter.kind) grapple_target=true;
         const bool replacement = adapter.kind == 1 || adapter.kind == 2 || adapter.kind == 4;
+        const bool izuna_bridge = adapter.kind==4 && move.key==0xC7A && move.motion==1050 && !move.flags;
+        const bool flying=flying_swallow(move,adapter);
         if (adapter.kind) {
             if (adapter.kind > 4) return false;
             const uint64_t dependencies[] = {adapter.action_resource,adapter.timing_resource,adapter.bank,
@@ -53,7 +76,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                         || (adapter.player_key==0xC7A && adapter.player_motion==2300
                         && adapter.transition_count==42 && adapter.recovery_frame==46))))
                 || !adapter.transition_count || adapter.transition_count > 63
-                || adapter.recovery_frame <= 0 || (move.flags != 0x194C0000 && (adapter.kind == 1 || move.flags != 0x200194C0000ULL))
+                || adapter.recovery_frame <= 0 || (!izuna_bridge && !flying && move.flags != 0x194C0000 && (adapter.kind == 1 || move.flags != 0x200194C0000ULL))
+                || (izuna_bridge && adapter.player_key!=0xCB7)
                 || (adapter.kind == 1 && move.next_variant != -1)) return false;
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
                 if (config.adapters[prior].kind == 1 && config.adapters[prior].player_key == adapter.player_key) return false;
@@ -61,7 +85,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                 || adapter.transition_count || adapter.recovery_frame || move.flags != 0x8038000000ULL) return false;
         } else if (memcmp(&adapter, &no_adapter, sizeof(adapter))) return false;
         const bool simple = move.flags == 0x184C0000 || replacement;
-        const bool attempt = move.flags == 0x594C0000 || (adapter.kind == 2 && move.next_variant>=0);
+        const bool attempt = move.flags == 0x594C0000 || ((adapter.kind == 2 || izuna_bridge) && move.next_variant>=0);
         const bool paired = move.flags == 0x8078000000ULL || move.flags == 0x8038000000ULL;
         if ((!simple && !attempt && !paired) || (replacement ? (move.recovery_frame == 0 || move.recovery_frame < -1 || (adapter.kind==1 && move.recovery_frame<0)) : (simple ? move.recovery_frame <= 0 : move.recovery_frame != -1)))
             return false;
@@ -77,8 +101,14 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             if (attempt ? (move.next_start || move.next_end) :
                 (paired || move.next_start > move.next_end || !move.next_end)) return false;
         }
-        for (unsigned prior = 0; prior != i; ++prior)
-            if (move.key == config.imports[prior].key) return false;
+        for (unsigned prior = 0; prior != i; ++prior) if (move.key == config.imports[prior].key) {
+            const auto& earlier=config.imports[prior]; const auto& owner=config.adapters[prior];
+            if (move.key!=0xC79 || move.motion!=5014 || move.flags!=0x194C0000 || adapter.kind!=2 || owner.kind!=2
+                || adapter.player_key==owner.player_key || earlier.motion!=move.motion || earlier.flags!=move.flags
+                || earlier.descriptor!=move.descriptor || earlier.payload!=move.payload || earlier.clip!=move.clip
+                || earlier.timing_record!=move.timing_record || earlier.transition_count!=move.transition_count
+                || earlier.recovery_frame!=move.recovery_frame) return false;
+        }
         const MoveVoice no_voice{};
         for (unsigned voice = 0; voice != 3; ++voice) {
             const auto& event = move.voices[voice];
@@ -102,7 +132,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     const auto& first = config.imports[0];
     const auto& second = config.imports[1];
     const auto& legacy = config.session;
-    return (!config.native_grapple || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
+    return (!(config.native_bindings&1) || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
         && first.key == 0xC64 && first.motion == 1220 && second.key == 0xC66 && second.motion == 1230
         && first.descriptor == legacy.source_descriptor && first.payload == legacy.source_payload
         && first.clip == legacy.source_clip && first.timing_record == legacy.source_timing_record
@@ -123,7 +153,7 @@ static DWORD load_runtime_session(const void* parameter) {
     if (incoming.magic != RUNTIME_SESSION_MAGIC || incoming.version != RUNTIME_SESSION_VERSION
         || incoming.size != sizeof(incoming) || incoming.pid != GetCurrentProcessId()
         || !incoming.config_tag) return ERROR_INVALID_DATA;
-    if (incoming.native_grapple > 1) return ERROR_INVALID_DATA;
+    if (incoming.native_bindings > 7) return ERROR_INVALID_DATA;
     FILETIME born{}, exited{}, kernel_time{}, user_time{};
     if (!GetProcessTimes(GetCurrentProcess(), &born, &exited, &kernel_time, &user_time)) return GetLastError();
     const uint64_t creation = (uint64_t(born.dwHighDateTime) << 32) | born.dwLowDateTime;
@@ -147,7 +177,10 @@ static DWORD load_runtime_session(const void* parameter) {
             && incoming.import_count == boss_import_count && incoming.string_variant == boss_string_variant
             && incoming.hold_variant == boss_hold_variant && incoming.hold_milliseconds == boss_hold_milliseconds
             && incoming.hold_camera_bank == boss_hold_camera_bank
-            && incoming.native_grapple == boss_native_grapple
+            && incoming.native_bindings == boss_native_bindings
+            && incoming.hold_stances==boss_hold_stances && incoming.frost_milliseconds==boss_frost_milliseconds
+            && incoming.frost_speed==boss_frost_speed
+            && !memcmp(incoming.frost_variants,boss_frost_variants,sizeof(boss_frost_variants))
             && !memcmp(incoming.adapters, boss_adapters, sizeof(boss_adapters))
             && !memcmp(incoming.imports, boss_imports, sizeof(boss_imports)) ? 0 : ERROR_INVALID_DATA;
     }
@@ -159,13 +192,10 @@ static DWORD load_runtime_session(const void* parameter) {
     boss_hold_variant = incoming.hold_variant;
     boss_hold_milliseconds = incoming.hold_milliseconds;
     boss_hold_camera_bank = incoming.hold_camera_bank;
-    boss_native_grapple = incoming.native_grapple;
+    boss_native_bindings = incoming.native_bindings; boss_native_grapple=boss_native_bindings&1;
+    boss_hold_stances=incoming.hold_stances; boss_frost_milliseconds=incoming.frost_milliseconds; boss_frost_speed=incoming.frost_speed;
+    memcpy(boss_frost_variants,incoming.frost_variants,sizeof(boss_frost_variants));
     BOSS_CONFIG_TAG = incoming.config_tag;
     runtime_session_configured = true;
     return 0;
 }
-#else
-// Only research preview/test builds use a generated or owned-buffer header.
-#include "boss_session.h"
-static constexpr uint64_t boss_native_grapple = 0;
-#endif
