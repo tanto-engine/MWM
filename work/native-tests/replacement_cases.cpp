@@ -532,22 +532,41 @@ static void airborne_cases() {
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
 
+static void weapon_policy_cases() {
+    // Reproduce Jin's stance-conditioned weapon selection on imported sword actions.
+    // Only the two exact source equipment effects may be removed from the private schedule.
+    // Other events and the shared source payload remain unchanged.
+    replacement_reset();
+    static uint8_t effects[2][0x80]{};static uint64_t pointers[58]{};
+    const char* raw="0000ffff000000000000ffffffffffff00000000ffffffffffffffffffff000000000000000000000000ff02ff00ffffffffffff00000000000000000000ffffffff6464646464646464ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5100ffffffffffffffffffffffffffffffffffff";
+    for (unsigned i=0;i<2;++i) {
+        for (unsigned j=0;j<0x80;++j) {unsigned v=0;assert(std::sscanf(raw+j*2,"%2x",&v)==1);effects[i][j]=uint8_t(v);}
+        effects[i][0x2B]+=uint8_t(i);effects[i][0x6C]+=uint8_t(i);pointers[46+i]=address(effects[i]);
+        put(jin_payloads[0].data(),0x40+i*6,int16_t(46+i));
+    }
+    put(jin_bank.data(),0x80,address(pointers));put(jin_bank.data(),0x88,uint16_t(58));
+    const auto before=jin_payloads[0];assert(boss_prepare_private_action(2));
+    assert(grapple_field(boss_private_payload_address(2),0x40,int16_t(-1)));
+    assert(grapple_field(boss_private_payload_address(2),0x46,int16_t(-1)) && before==jin_payloads[0]);
+    boss_private_actions[2]={};effects[0][0x18]=0;assert(!boss_prepare_private_action(2));effects[0][0x18]=0xff;
+}
+
 static void mid_string_cases() {
-    // Give each of four source strikes the same verified Mid heavy input template.
+    // Give each of five source strikes the same verified Mid heavy input template.
     // The native buffered/direct rows request the next source only after another Triangle press.
     // Confirm source isolation, native exits, final termination and unchanged stance ownership.
-    hold_reset(1,false);pending_heavy={};boss_hold_stances=0;boss_import_count=9;
-    static uint8_t descriptors[4][0xD0]{},payloads[4][0xB0]{},rows[4][75][0x30]{};
-    static uint64_t pointers[4][75];
+    hold_reset(1,false);pending_heavy={};boss_hold_stances=0;boss_import_count=10;
+    static uint8_t descriptors[5][0xD0]{},payloads[5][0xB0]{},rows[5][75][0x30]{};
+    static uint64_t pointers[5][75];
     const auto base=boss_imports[5];const auto adapter=boss_adapters[5];
     const char* follows[]={"ffff5100ffffffffffff020101ffff00000000007b0c0000ff806464000040000a002900ffffffffffffffffffffffff",
         "ffff5100ffffffffffff000101ffff00000000007b0c000400806464000040002a003400ffffffffffffffffffffffff"};
     for (unsigned r=0;r<2;++r) for (unsigned b=0;b<0x30;++b) {
         unsigned byte=0;assert(std::sscanf(follows[r]+b*2,"%2x",&byte)==1);player_rows[0][7+r][b]=uint8_t(byte);
     }
-    for (unsigned phase=0;phase<4;++phase) {
-        auto& move=boss_imports[5+phase];move=base;move.key=0xC67+phase;move.motion=2200+10*int(phase);
-        move.recovery_frame=phase==0 ? 20 : phase==2 ? 25 : 30;move.transition_count=75;
+    for (unsigned phase=0;phase<5;++phase) {
+        auto& move=boss_imports[5+phase];move=base;move.key=phase ? 0xC62+phase : 0xBBF;move.motion=2100+10*int(phase);
+        move.recovery_frame=phase==0 ? 20 : phase==1 ? 25 : phase==2 ? 35 : 30;move.transition_count=75;
         memcpy(descriptors[phase],jin_descriptors[0].data(),0xD0);memcpy(payloads[phase],jin_payloads[0].data(),0xB0);
         move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
         put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
@@ -556,15 +575,15 @@ static void mid_string_cases() {
         memset(rows[phase],0xff,sizeof(rows[phase]));for (unsigned r=0;r<75;++r)pointers[phase][r]=address(rows[phase][r]);
         boss_adapters[5+phase]=adapter;boss_adapters[5+phase].kind=phase ? 4 : 2;boss_private_actions[5+phase]={};
     }
-    for (unsigned phase=0;phase<4;++phase) {
+    for (unsigned phase=0;phase<5;++phase) {
         const unsigned slot=5+phase;assert(boss_prepare_private_action(slot));
         const auto& clone=boss_private_actions[slot];
         for (unsigned r : {7u,8u}) {
-            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase<3 ? 0xC68+phase : -1)));
+            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase<4 ? 0xC63+phase : -1)));
             assert(clone.transition_bodies[r][0x0B]==1 && clone.transition_bodies[r][0x0C]==1);
         }
         assert(grapple_field(address(player_rows[0][7].data()),0x14,int16_t(0xC7B)));
-        assert(boss_native_successor(slot,0xC68+phase)==(phase<3 ? int(slot+1) : -1));
+        assert(boss_native_successor(slot,0xC63+phase)==(phase<4 ? int(slot+1) : -1));
         assert(clone.payload[0x0B]==4);
     }
 }
@@ -573,12 +592,12 @@ static void tracking_cases() {
     // Follow moving targets after startup while bounding each turn by real frame delta.
     // Range, paired/source ownership and locked-handle changes reject without position writes.
     // Pauses and NPC callbacks never accumulate turns or change camera data.
-    static uint8_t controller[0x80]{},movement[0x100]{},target[0xF00]{},target_actor[0x800]{},component[0x10]{},profile[0x10]{},target_current[0xD0]{},target_payload[0xB0]{};
+    static uint8_t controller[0xA0]{},movement[0x100]{},target[0xF00]{},target_actor[0x800]{},component[0x10]{},profile[0x10]{},target_current[0xD0]{},target_payload[0xB0]{};
     static uint64_t registry=0x123456,handle=0x1234000000012345ULL,result=0,camera=0x987654;
     static unsigned calls=0,scenario=0;
     native_set_yaw=[](void* node,float angle) {assert(node==movement);put(node,0x54,angle);++calls;SetLastError(990);};
     native_locked_target=[](const uint64_t* value) {
-        assert(*value==handle);
+        assert(scenario<24 && *value==handle);
         if (scenario==13) put(player.data(),8,uint64_t(0));
         if (scenario==14) put(controller,0x40,handle+1);
         if (scenario==15) put(player.data(),0x38,uint64_t(0));
@@ -586,8 +605,8 @@ static void tracking_cases() {
         if (scenario==17) put(player.data(),0x58,address(neutral.data()));
         SetLastError(991);return result;
     };
-    tracking_registry=address(&registry);
-    for (scenario=0;scenario<24;++scenario) {
+    tracking_registry=address(&registry);tracking_controller_vtable=0x765432;
+    for (scenario=0;scenario<27;++scenario) {
         boss_hold_stances=7;hold_reset(0,false);pending_heavy={};
         boss_import_count=7;boss_imports[5].key=0xC79;boss_imports[5].motion=5014;boss_imports[5].recovery_frame=-1;boss_imports[5].clip=0x123450;
         boss_imports[6]=boss_imports[5];boss_imports[6].key=scenario==8 ? 0 : 0xC7A;
@@ -596,7 +615,9 @@ static void tracking_cases() {
         put(boss_private_actions[5].descriptor,0x20,boss_private_payload_address(5));
         put(boss_private_actions[5].payload,0x18,uint64_t(scenario==7 ? 0x20000000 : 0x194C0000));
         put(player.data(),0x58,boss_private_descriptor_address(5));put(player.data(),8,address(controller));
-        put(controller,0x40,handle);put(player.data(),0xDC,uint32_t(50));put(movement,0x54,0.0f);
+        put(controller,0,scenario==26 ? uint64_t(0) : tracking_controller_vtable);
+        put(controller,0x90,scenario>=24 ? address(target) : uint64_t(0));
+        put(controller,0x40,scenario>=24 ? uint64_t(0) : handle);put(player.data(),0xDC,uint32_t(50));put(movement,0x54,0.0f);
         put(player.data(),0x38,scenario==19 ? uint64_t(0) : address(movement));put(player.data(),0x18,address(movement));
         put(player.data(),0x28,scenario==9 ? 26.0f : scenario==18 ? std::numeric_limits<float>::quiet_NaN() : 0.0f);
         put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);put(motion.data(),0x58,boss_imports[5].clip);
@@ -604,7 +625,7 @@ static void tracking_cases() {
         put(target,0,handle);put(target,0xF0,scenario==5 || scenario==21 ? 300.0f : scenario==20 ? -100.0f : 100.0f);
         put(target,0xF4,scenario==22 ? 700.0f : 0.0f);put(target,0xF8,scenario==5 || scenario==21 ? 100.0f : scenario==6 ? 700.0f : 300.0f);
         if (scenario==11) put(target,0xF0,std::numeric_limits<float>::infinity());
-        if (scenario==12) put(target,4,uint16_t(1));
+        if (scenario==12 || scenario==25) put(target,4,uint16_t(1));
         put(target,0xE90,address(profile));put(profile,0xC,uint32_t(scenario==3 ? 1 : 0));
         put(target,0x230,address(component));put(component,8,address(target_actor));put(target_actor,0,boss_session.vtable);
         put(target_actor,0x50,scenario==4 ? uint64_t(0) : address(target));
@@ -615,7 +636,7 @@ static void tracking_cases() {
         boss_session.player_camera_slot=address(&camera);const auto before_camera=camera;
         uint8_t before_player[12],before_target[12];memcpy(before_player,owner.data()+0xF0,12);memcpy(before_target,target+0xF0,12);
         const unsigned before=calls;SetLastError(ACTION_ERROR);boss_advance_clock(player.data(),1);
-        const bool accepted=scenario==0 || scenario==5 || scenario==19 || scenario==20 || scenario==21 || scenario==22;
+        const bool accepted=scenario==0 || scenario==5 || scenario==19 || scenario==20 || scenario==21 || scenario==22 || scenario==24;
         if (calls!=before+unsigned(accepted)) std::fprintf(stderr,"tracking scenario%u calls%u expected%u\n",scenario,calls-before,unsigned(accepted));
         assert(calls==before+unsigned(accepted));
         assert(!memcmp(before_player,owner.data()+0xF0,12) && !memcmp(before_target,target+0xF0,12) && camera==before_camera);
@@ -843,6 +864,7 @@ int main() {
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     held_slot_cases();
+    weapon_policy_cases();
     airborne_cases();
     mid_string_cases();
     tracking_cases();

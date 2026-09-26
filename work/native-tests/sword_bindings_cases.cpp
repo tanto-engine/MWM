@@ -183,18 +183,18 @@ int main() {
     }
     // Triangle dodge selects BC8/BC9 before the shared D52/D53 attack, not CFD.
     // Keep Square dodge, running, wrong stances and stale rows out of this binding.
-    // Both buffered and immediate native Triangle selections enter Jin's second strike.
-    for (uint32_t key : {0xBC8u,0xBC9u}) for (unsigned failure=0;failure<5;++failure) {
-        sword_reset(0);put(player.data(),0x470,uint32_t(2));
+    // Both buffered and immediate selections enter the configured Low or Mid string slot.
+    for (unsigned stance : {1u,2u}) for (uint32_t key : {0xBC8u,0xBC9u}) for (unsigned failure=0;failure<5;++failure) {
+        sword_reset(0);put(player.data(),0x470,stance);
         put(light.data(),0,key);put(light.data(),0x82,uint16_t(key==0xBC8 ? 18 : 19));
         put(light_payload.data(),0x20,int32_t(-1));put(light_payload.data(),0x18,uint64_t(0));
         put(player.data(),0x58,address(neutral.data()));put(neutral.data(),0x78,address(light_pointers.data()));
         put(neutral.data(),0x80,uint16_t(0));put(neutral.data(),0x82,uint16_t(46));
         auto& row=light_rows[0];row.fill(0xff);row[0x0A]=key==0xBC8 ? 2 : 0;row[0x0B]=1;row[0x0C]=1;
         put(row.data(),0x14,int16_t(key));put(player.data(),0x90,address(row.data()));
-        boss_skill_bindings[0]={1,1,2,0xBC8,-1,18,0};
+        boss_skill_bindings[0]={1,1u<<(2-stance),2,0xBC8,-1,18,0};
         if (failure==1) row[0x0B]=0;
-        if (failure==2) put(player.data(),0x470,uint32_t(1));
+        if (failure==2) put(player.data(),0x470,uint32_t(0));
         if (failure==3) put(player.data(),0x90,address(dodge_row.data()));
         if (failure==4) {put(light.data(),0,uint32_t(0xCFC));put(light_payload.data(),0x20,int32_t(4720));}
         DispatchCommand dodge{};assert(native_bound_slot(key,address(light.data()),dodge)==(failure ? -1 : 1));

@@ -1,0 +1,97 @@
+[
+  {
+    "key": 3007,
+    "motion": 2100,
+    "flags": 424411136,
+    "ki_cost": 10,
+    "recovery_frame": 20,
+    "transition_count": 75,
+    "voices": [
+      {
+        "frame": 4,
+        "index": 9,
+        "hash": 1943050345
+      }
+    ],
+    "payload": "02000000000100000000ff01bf0bffff0109000000000a0000004c19000000003408000014002800ffff000001000200ffffff00ffffffff000000000000ffff24270000060011270600ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff",
+    "successor_rows": [
+      "ffffffffffffffffffff020001ffff0000000000630c0000ff8064640000000000800f00ffffffffffffffffffffffff"
+    ]
+  },
+  {
+    "key": 3171,
+    "motion": 2110,
+    "flags": 424411136,
+    "ki_cost": 10,
+    "recovery_frame": 25,
+    "transition_count": 75,
+    "voices": [
+      {
+        "frame": 6,
+        "index": 9,
+        "hash": 1943050345
+      }
+    ],
+    "payload": "02000000000100000000ff01630cffff0109000000000a0000004c19000000003e08000019002d00ffff000001000200ffffff00ffffffff000000000000ffffffff0000ffff1127000004000c000400060011270a00ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff",
+    "successor_rows": [
+      "ffffffffffffffffffff020001ffff0000000000640c0000ff8064640000000000801300ffffffffffffffffffffffff"
+    ]
+  },
+  {
+    "key": 3172,
+    "motion": 2120,
+    "flags": 424411136,
+    "ki_cost": 10,
+    "recovery_frame": 35,
+    "transition_count": 75,
+    "voices": [
+      {
+        "frame": 16,
+        "index": 10,
+        "hash": 2543008070
+      }
+    ],
+    "payload": "02000000000100000000ff01640cffff0109000000000a0000004c19000000004808000023004100ffff000001000200ffffff00ffffffff000000000000ffffffff0000ffff112700000800090008000a0011271200ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff",
+    "successor_rows": [
+      "ffffffffffffffffffff020001ffff0000000000650c0000ff8064640000000000801c00ffffffffffffffffffffffff"
+    ]
+  },
+  {
+    "key": 3173,
+    "motion": 2130,
+    "flags": 424411136,
+    "ki_cost": 10,
+    "recovery_frame": 30,
+    "transition_count": 75,
+    "voices": [
+      {
+        "frame": 6,
+        "index": 8,
+        "hash": 1943050345
+      }
+    ],
+    "payload": "02000000000100000000ff01650cffff0109000000000a0000004c1900000000520800001e003200ffff000001000200ffffff00ffffffff000000000000ffffffff0000ffff1127000008000c000800060011270e00ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff",
+    "successor_rows": [
+      "ffffffffffffffffffff020001ffff0000000000660c0000ff8064640000000000801400ffffffffffffffffffffffff"
+    ]
+  },
+  {
+    "key": 3174,
+    "motion": 2140,
+    "flags": 424411136,
+    "ki_cost": 10,
+    "recovery_frame": 30,
+    "transition_count": 74,
+    "voices": [
+      {
+        "frame": 16,
+        "index": 9,
+        "hash": 2543008070
+      }
+    ],
+    "payload": "02000000000100000000ff01660cffff0109000000000a0000004c19000000005c0800001e004100ffff000001000200ffffff00ffffffff000000000000ffffffff0000ffff112700000800090008000a0011271200ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff",
+    "successor_rows": [
+      "5d00ffffffffffffffff000c01ffff0000000000670c000400806464000000000080ff7fffffffffffffffffffffffff"
+    ]
+  }
+]

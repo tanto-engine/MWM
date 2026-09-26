@@ -145,6 +145,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         }
         for (unsigned prior = 0; prior != i; ++prior) if (move.key == config.imports[prior].key) {
             const auto& earlier=config.imports[prior]; const auto& owner=config.adapters[prior];
+            if ((adapter.kind ? adapter.bank : config.session.source_bank)
+                !=(owner.kind ? owner.bank : config.session.source_bank)) continue;
             const bool alias=(move.key==0xC79 && move.motion==5014 && move.flags==0x194C0000 && adapter.kind==2 && owner.kind==2 && adapter.player_key!=owner.player_key)
                 || (move.key==0xC71 && move.motion==1050 && !move.flags && ((adapter.kind==5 && owner.kind==2) || (adapter.kind==2 && owner.kind==5)));
             if (!alias || earlier.motion!=move.motion || earlier.flags!=move.flags

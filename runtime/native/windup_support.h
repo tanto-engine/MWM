@@ -19,6 +19,7 @@ using TrackingTargetFn = uint64_t (*)(const uint64_t*);
 static TrackingYawFn native_set_yaw;
 static TrackingTargetFn native_locked_target;
 static uint64_t tracking_registry;
+static uint64_t tracking_controller_vtable;
 
 static bool resolve_tracking_helpers(uint64_t module) {
     // Pin the native yaw-only setter and exact-handle registry lookup for this executable.
@@ -27,29 +28,37 @@ static bool resolve_tracking_helpers(uint64_t module) {
     const uint8_t yaw[]={0x0f,0x2f,0x0d,0x8d,0x6c,0xe7,0,0x76,0x0e,0xf3,0x0f,0x5c,0x0d,0xbb,0x6c,0xe7};
     const uint8_t target[]={0x48,0x8b,0xd1,0x48,0x8b,0x0d,0xae,0xab,0x14,0x01,0xe9,0xc1,0xfd,0xff,0xff};
     const uint8_t lookup[]={0x8b,0x02,0x4c,0x8b,0xd1,0x44,0x0f,0xb7,0x4a,0x06,0x45,0x33,0xc0,0x48,0x8b,0x12};
-    uint8_t bytes[16];native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;
+    const uint8_t lock[]={0x48,0x8b,0x81,0x90,0,0,0,0xc3};
+    uint8_t bytes[16];native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;tracking_controller_vtable=0;
     if (!copy_bytes(module+0x711DD0,bytes,sizeof(yaw)) || memcmp(bytes,yaw,sizeof(yaw))
         || !copy_bytes(module+0x755890,bytes,sizeof(target)) || memcmp(bytes,target,sizeof(target))
-        || !copy_bytes(module+0x755660,bytes,sizeof(lookup)) || memcmp(bytes,lookup,sizeof(lookup))) return false;
+        || !copy_bytes(module+0x755660,bytes,sizeof(lookup)) || memcmp(bytes,lookup,sizeof(lookup))
+        || !copy_bytes(module+0x73F6C0,bytes,sizeof(lock)) || memcmp(bytes,lock,sizeof(lock))
+        || !same_field(module+0x11A4970,0xA8,module+0x73F6C0)) return false;
     native_set_yaw=reinterpret_cast<TrackingYawFn>(module+0x711DD0);
     native_locked_target=reinterpret_cast<TrackingTargetFn>(module+0x755890);
-    tracking_registry=module+0x18A0448;return true;
+    tracking_registry=module+0x18A0448;tracking_controller_vtable=module+0x11A4970;return true;
 }
 
 static void track_locked_target(uint64_t player, unsigned slot, float delta, unsigned group) {
     // Follow the current lock target through each supported attack phase with bounded horizontal turning.
     // Native711DD0 writes yaw alone; rate times unaccelerated delta preserves per-second turn speed.
     // Recheck identities each callback and retain no target, position, camera or accumulated-turn state.
-    uint32_t serial=0,human=1;uint16_t type=1;uint64_t controller=0,handle=0,registry=0,preferred=0,movement=0;
+    uint32_t serial=0,human=1;uint16_t type=1;uint64_t controller=0,handle=0,registry=0,preferred=0,movement=0,locked=0;
     uint64_t profile=0,component=0,target_actor=0,target_current=0,target_payload=0,flags=0;
     if (!native_set_yaw || !native_locked_target || !copy_field(player+0xDC,serial)
         || !copy_field(boss_private_payload_address(slot)+0x18,flags) || (flags&0x20000000ULL)
-        || !copy_field(player+8,controller) || !copy_field(controller+0x40,handle) || !handle
+        || !copy_field(player+8,controller) || !same_field(controller,0,tracking_controller_vtable)
+        || !copy_field(controller+0x90,locked) || !copy_field(controller+0x40,handle)
         || !copy_field(tracking_registry,registry) || !registry || !copy_field(player+0x38,preferred)) return;
     movement=preferred;
     if (!movement && !copy_field(player+0x18,movement)) return;
-    const uint64_t target=native_locked_target(&handle);
-    if (!target || target==boss_session.player_owner || !same_field(target,0,handle)
+    // Player73F6C0 returns the actual lock at+90; +40 is an optional AI/attack override.
+    // Native732190 also falls back to this player target when that handle is empty.
+    // Resolve and recheck the current reference; never retain a target across callbacks.
+    const uint64_t target=locked ? locked : native_locked_target(&handle);
+    uint64_t identity=0;
+    if (!target || target==boss_session.player_owner || !copy_field(target,identity) || (!locked && identity!=handle)
         || !copy_field(target+4,type) || type || !copy_field(target+0xE90,profile)
         || !copy_field(profile+0x0C,human) || (!group && human) || !copy_field(target+0x230,component)
         || !copy_field(component+8,target_actor) || target_actor==player || !same_field(target_actor,0,boss_session.vtable)
@@ -65,9 +74,10 @@ static void track_locked_target(uint64_t player, unsigned slot, float delta, uns
     const float aim=std::atan2(dx,dz),difference=std::remainder(aim-yaw,2*pi);
     const float step=boss_tracking_rates[group]*delta*pi/(60*180);
     if (std::abs(difference)<0.00001f || !windup_writable_float(movement+0x54)
-        || !boss_player_valid() || !same_field(player,8,controller) || !same_field(controller,0x40,handle)
+        || !boss_player_valid() || !same_field(player,8,controller) || !same_field(controller,0,tracking_controller_vtable)
+        || !same_field(controller,0x90,locked) || (!locked && !same_field(controller,0x40,handle))
         || !same_field(player,0x58,boss_private_descriptor_address(slot)) || !same_field(player,0x38,preferred)
-        || (!preferred && !same_field(player,0x18,movement)) || !same_field(target,0,handle)
+        || (!preferred && !same_field(player,0x18,movement)) || !same_field(target,0,identity)
         || !same_field(target,0x230,component) || !same_field(component,8,target_actor)
         || !same_field(target_actor,0x50,target) || !same_field(target_actor,0x58,target_current)) return;
     uint32_t after=0;if (!copy_field(player+0xDC,after) || after!=serial) return;

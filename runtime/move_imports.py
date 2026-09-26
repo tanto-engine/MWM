@@ -68,9 +68,10 @@ def check_import_topology(moves, string_variant):
         for field in ('id', 'name'):
             if not isinstance(move[field], str) or not move[field].strip():
                 raise ValueError('Import IDs and names must be nonempty strings')
-        if move['id'] in ids or move['key'] in keys and not shared_source(keys[move['key']],move):
+        identity=(move['id'].partition('.')[0],move['key'])
+        if move['id'] in ids or identity in keys and not shared_source(keys[identity],move):
             raise ValueError('Duplicate move ID or action key')
-        ids.add(move['id']); keys[move['key']]=move
+        ids.add(move['id']); keys[identity]=move
         flags = move['flags']
         bridge=is_izuna_bridge(move)
         airborne=is_airborne_sword(move)

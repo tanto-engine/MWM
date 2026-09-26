@@ -1,0 +1,114 @@
+{
+  "base_commit": "d4e7515",
+  "recording": "work/combat-state-20260926.jsonl",
+  "weapon_switches": [
+    {
+      "t": 14955.0,
+      "key": "0xc81",
+      "motion": 1050,
+      "frame": 9.0,
+      "weapon_slot": 1
+    },
+    {
+      "t": 14965.25,
+      "key": "0xc71",
+      "motion": 1050,
+      "frame": 9.0,
+      "weapon_slot": 0
+    },
+    {
+      "t": 14976.718,
+      "key": "0xc81",
+      "motion": 1050,
+      "frame": 1.0,
+      "weapon_slot": 1
+    },
+    {
+      "t": 14977.921,
+      "key": "0xc71",
+      "motion": 1050,
+      "frame": 9.0,
+      "weapon_slot": 0
+    },
+    {
+      "t": 14982.14,
+      "key": "0xc81",
+      "motion": 1050,
+      "frame": 9.0,
+      "weapon_slot": 1
+    },
+    {
+      "t": 14998.296,
+      "key": "0xc79",
+      "motion": 5014,
+      "frame": 3.0,
+      "weapon_slot": 0
+    },
+    {
+      "t": 15052.125,
+      "key": "0xc81",
+      "motion": 1050,
+      "frame": 9.0,
+      "weapon_slot": 1
+    }
+  ],
+  "resolved_AI_targets_in_capture": 0,
+  "weapon_cause": {
+    "schedule": "payload+40,16 six-byte entries",
+    "source_effects": [
+      46,
+      47
+    ],
+    "native_schedule": "704E50",
+    "native_equipment_apply": "709002..7092EF",
+    "effect_field": "+2B",
+    "meanings": {
+      "2": "slot1",
+      "3": "slot0"
+    },
+    "private_change": "Disable only exact128-byte source effect identities in Jin schedules",
+    "regression": "weapon_policy_cases failed before change and passed afterward"
+  },
+  "tracking_cause": {
+    "old": "controller+40 attack/AI handle only",
+    "new": "controller+90 actual player lock; fallback to +40",
+    "native_player_methods": [
+      "73C950",
+      "73F6C0"
+    ],
+    "native_contact_target": "732190 falls back to player target",
+    "default_rates": {
+      "izuna": 720,
+      "somersault": 720,
+      "flying_swallow": 540
+    },
+    "position_writes": false
+  },
+  "mid_heavy": {
+    "source": "work/jin-five-source.json",
+    "keys": [
+      "BBF",
+      "C63",
+      "C64",
+      "C65",
+      "C66"
+    ],
+    "entry": [
+      "native C7A Mid heavy",
+      "native BC8/BC9 Mid Triangle dodge"
+    ],
+    "collision_scope": "Source banks, because Jin C64/C66 and Okatsu C64/C66 are different actions"
+  },
+  "verification": {
+    "readiness": 172,
+    "crash": 8,
+    "catalogue_after_edit": 15,
+    "gameplay": "pending; Nioh exited before revised build could attach",
+    "sheath": "pending after equipment-policy correction",
+    "airborne_izuna": "pending after lock-target correction",
+    "dll_sha256": {
+      "nioh_resources.dll": "85d09f74f46424d32553b9ecbb1f3afd830f6a22755b488c794e8b8bf04caaf1",
+      "nioh_skill_runtime.dll": "6bd2f7fe979eb98a2c2df63b19c6c379f3f865c6895cafa5e6eb5b8d2cfc94d2"
+    }
+  }
+}

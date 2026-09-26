@@ -42,6 +42,34 @@ struct BossPrivateAction {
     bool ready;
 };
 static BossPrivateAction boss_private_actions[32]{};
+static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
+    // Native704E50 schedules these source effects;709002 applies their equipment command.
+    // Jin rows46/47 select weapon slots by stance, so remove only those exact pure commands.
+    // Preserve every other event and all shared source data; reject changed effect identities.
+    if (!boss_adapters[slot].kind) return true;
+    static const uint8_t expected[0x80]={
+        0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,
+        0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x02,0xff,0x00,0xff,0xff,
+        0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,
+        0xff,0xff,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x51,0x00,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
+    };
+    for (unsigned offset=0x40;offset<0xA0;offset+=6) {
+        int16_t effect=-1;memcpy(&effect,payload+offset,2);
+        if (effect!=46 && effect!=47) continue;
+        uint64_t table=0,row=0;uint16_t count=0;uint8_t bytes[0x80];
+        const uint64_t bank=boss_adapters[slot].bank;
+        if (!copy_field(bank+0x80,table) || !copy_field(bank+0x88,count) || count!=58
+            || !copy_field(table+uint64_t(effect)*8,row) || !copy_bytes(row,bytes,sizeof(bytes))) return false;
+        if (effect==47) {--bytes[0x2B];--bytes[0x6C];}
+        if (memcmp(bytes,expected,sizeof(bytes))) return false;
+        const int16_t disabled=-1;memcpy(payload+offset,&disabled,2);
+    }
+    return true;
+}
 static int boss_native_successor(unsigned slot, uint32_t key);
 struct MoveTiming { int16_t recovery; float startup_end, startup_speed; };
 static MoveTiming boss_move_timing(unsigned slot) {
@@ -104,7 +132,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
-        || (source.key>=0xC67 && source.key<=0xC69 && key==source.key+1)
+        || (source.key==0xBBF && key==0xC63) || (source.key>=0xC63 && source.key<=0xC65 && key==source.key+1)
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
         || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
@@ -259,11 +287,13 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             }
         }
         int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
-        if (boss_imports[slot].key>=0xC67 && boss_imports[slot].key<=0xC6A && target==int16_t(adapter.player_key+1)) {
+        const uint32_t source_key=boss_imports[slot].key;
+        if ((source_key==0xBBF || (source_key>=0xC63 && source_key<=0xC66)) && target==int16_t(adapter.player_key+1)) {
             // One physical Triangle per strike, using William's buffered/direct heavy rows.
-            // All four source phases retain the selected stance and native exits.
-            // The fourth strike disables this continuation instead of restarting the string.
-            target=boss_native_successor(slot,boss_imports[slot].key+1)>=0 ? int16_t(boss_imports[slot].key+1) : int16_t(-1);
+            // All five source phases retain the selected stance and native exits.
+            // The fifth strike disables this continuation instead of restarting the string.
+            const uint32_t next=source_key==0xBBF ? 0xC63 : source_key+1;
+            target=boss_native_successor(slot,next)>=0 ? int16_t(next) : int16_t(-1);
             memcpy(bodies[i]+0x14,&target,2);
             continue;
         }
@@ -373,6 +403,7 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     // redirects/pending-action modes that could require another context lookup.
     if (key != expected_key || !descriptor[0x40] || source_payload != expected_payload
         || motion != expected_motion || flags != spec.flags) return false;
+    if (!boss_preserve_weapon(slot,payload)) return false;
     payload[0x0B] = 4; // Native0x70F3A3: keep current+0x470, retain+0x47C=1 behavior.
     for (unsigned stance=0;stance<3;++stance)
         if (boss_frost_variants[stance]==slot+1) payload[0x0B]=uint8_t(2-stance);

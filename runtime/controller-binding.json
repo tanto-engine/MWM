@@ -35,7 +35,12 @@
     {
       "source": "heavy_attack",
       "stance": "mid",
-      "move": "jin_hayabusa.action_0c67"
+      "move": "jin_hayabusa.action_0bbf"
+    },
+    {
+      "source": "dodge_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0bbf"
     }
   ],
   "frost_moon": {
@@ -59,8 +64,8 @@
   ],
   "air_juggle_boost": 2,
   "tracking_rates": {
-    "izuna": 540,
-    "somersault": 420,
-    "flying_swallow": 180
+    "izuna": 720,
+    "somersault": 720,
+    "flying_swallow": 540
   }
 }

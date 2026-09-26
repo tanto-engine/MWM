@@ -147,7 +147,7 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             by_id = {item['id']: item for item in manifest['moves']}
             for target in move['native_followups']:
                 if target not in by_id or not any(struct.unpack_from('<h', row, 0x14)[0] == by_id[target]['key']
-                        and ((0xC67<=move['key']<=0xC69 and row[10:13]==b'\x02\x0c\x01') or row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
+                        and (((move['key']==0xBBF or 0xC63<=move['key']<=0xC65) and row[10:13]==b'\x02\x00\x01') or row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
                               or (move['flags'] == PLAYER_PAIRED_FLAGS or move['key'] in (0xC73,0xC82)) and struct.unpack_from('<H', row)[0] == 0
                             or row[10] == 0 and row[:10] == b'\xff'*10)) for row in rows):
                     raise ValueError('Configured native continuation is absent from the source rows')

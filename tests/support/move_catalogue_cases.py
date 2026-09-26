@@ -25,8 +25,8 @@ class CatalogueTests(unittest.TestCase):
         for key in (0xC6C,0xC6D,0xCA9,0xCAC,0xCAD,0xC7B,0xC7C,0xC7F,0xC6B,0xCAE):
             self.assertNotIn(f'jin_hayabusa.action_{key:04x}', groups)
         manifest = json.loads((ROOT/'catalogue/imports/jin_hayabusa.json').read_text())
-        self.assertEqual(len(manifest['moves']), 27)
-        self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0c67','jin_hayabusa.action_0c79','jin_hayabusa.action_0c75',
+        self.assertEqual(len(manifest['moves']), 28)
+        self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0bbf','jin_hayabusa.action_0c79','jin_hayabusa.action_0c75',
                                                        'jin_hayabusa.izuna_drop','jin_hayabusa.action_0c71','jin_hayabusa.action_0c81'})
 
     def test_filtered_encounters_keep_hashes_lines_and_sequence_boundaries(self):

@@ -22,12 +22,12 @@ if os.name == 'nt':
 # TODO: gameplay acceptance remains separate from validation of a supported preset.
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
-HELD_MOVES = {'jin_hayabusa.action_0c67', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
+HELD_MOVES = {'jin_hayabusa.action_0bbf', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
 NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000),
                  'dodge_attack': (0xBC8,-1,18,0), 'heavy_attack': (0xC7A,2300,42,0x8000000594C0000)}
 LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14),
                    dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
-TRACKING_RATES = dict(izuna=540,somersault=420,flying_swallow=180)
+TRACKING_RATES = dict(izuna=720,somersault=720,flying_swallow=540)
 DEFAULT_PRESET = dict(schema_version=6, name='Sword baseline', weapon='sword',
                       tap_move='okatsu.charged_rush', hold_move=None,
                       modifier_mask=16, trigger_mask=4, hold_seconds=.25,
@@ -37,7 +37,8 @@ DEFAULT_PRESET = dict(schema_version=6, name='Sword baseline', weapon='sword',
                       skill_bindings=[dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'),
                                       dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop'),
                                       dict(source='dodge_attack',stance='low',move='jin_hayabusa.action_0c6f'),
-                                      dict(source='heavy_attack',stance='mid',move='jin_hayabusa.action_0c67')],
+                                      dict(source='heavy_attack',stance='mid',move='jin_hayabusa.action_0bbf'),
+                                      dict(source='dodge_attack',stance='mid',move='jin_hayabusa.action_0bbf')],
                       frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high='jin_hayabusa.action_0c75'),
                       frost_window_seconds=0, frost_startup_speed=8, launch_profiles=LAUNCH_PROFILES, air_juggle_boost=2, tracking_rates=TRACKING_RATES)
 

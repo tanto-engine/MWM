@@ -194,19 +194,20 @@ class RuntimeSessionTests(unittest.TestCase):
         from engine_config import DEFAULT_PRESET
         settings=copy.deepcopy(DEFAULT_PRESET);compiled=self.configured_fixture(settings)
         self.assertEqual([move['key'] for move in compiled['moves']],
-            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xC67,0xC68,0xC69,0xC6A])
+            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xBBF,0xC63,0xC64,0xC65,0xC66])
         self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,12]))
         from engine_config import binding_for_preset
         binding=binding_for_preset(dict(device={},lb_mask=1),settings,self.config['imports'])
         self.assertEqual(binding['variants'],[0,None])
         self.assertEqual(self.config['adapters'][22]['kind'],2)
         encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
-        self.assertEqual((values[9],values[42],len(encoded)),(5,26,5752))
+        self.assertEqual((values[9],values[42],len(encoded)),(5,27,5752))
         self.assertEqual(self.config['skill_bindings'],[
             dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
             dict(kind=2,stances=4,variant=18,key=0,motion=0,transition_count=0,flags=0),
             dict(kind=1,stances=1,variant=5,key=0xBC8,motion=-1,transition_count=18,flags=0),
             dict(kind=1,stances=2,variant=23,key=0xC7A,motion=2300,transition_count=42,flags=0x8000000594C0000),
+            dict(kind=1,stances=2,variant=23,key=0xBC8,motion=-1,transition_count=18,flags=0),
             dict(kind=3,stances=1,variant=7,key=0,motion=0,transition_count=0,flags=0)])
         for field,value in (('kind',4),('stances',True),('variant',0),('key',0xFAB),('flags',0),('transition_count',20)):
             bad=copy.deepcopy(self.config);bad['skill_bindings'][0][field]=value
