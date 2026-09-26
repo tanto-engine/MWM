@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "jin_hayabusa.resources.v1",
+  "boss_id": "jin_hayabusa",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "offline_proposed_resources_pending_loaded_source_validation",
+  "cold_launch_supported": false,
+  "ownership": "Immutable mixed source packages shared by sword strings C/D and C79. Native resource constructors and hash identities require whole actions, timing, motion and camera containers. Non-sword metadata and selections are excluded; repacking binary resources is unsupported.",
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 144,
+      "source_name": "/62FDF151EFE5EF81988F36FB19A6CDF5869E4DA3A5831A11F91D616C8AABF3E9",
+      "size": 104716,
+      "sha256": "571180052e6683cb91f08a88ec1f4dc70877efd5751228763fad662bb8a7b8a0",
+      "evidence": "Unique exact match of all six saved 56-byte payload prefixes, at offsets 28268,28444,28620,28796,28972,29148; all uncompressed archive entries from 56 bytes through 2 MB inspected."
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4330,
+      "source_name": "/42D9A9783DD4184AF1502760A8552D8685D4C992268CE44897F21990DC2EDDCC",
+      "size": 204688,
+      "sha256": "9c5420e93f0f3c3761038ee99da02e3048ffe55103b09fc3c54bda5ea4a0c2e6",
+      "format": "TMG_PACK",
+      "record_count": 162,
+      "hash_slots": 325,
+      "evidence": "Only one of 197 TMG_PACK packages contains all six 2300/2310/2320/2400/2410/2420 keys. Contains 95 of 107 Jin source-bank motion keys. Saved capture has no timing-resource bytes for direct equivalence; identity remains structurally inferred."
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4331,
+      "source_name": "/9124BA577B9FE6B6C48D87C1837B4F3344EA2B6A0EE0470C2CC0AD672A8EBEB1",
+      "size": 2468896,
+      "sha256": "29c7c5f5d3adf05bb08d6171da18d8f40794d097e6df7ca11ddd9039479a2763",
+      "format": "G2A_PACK",
+      "record_count": 110,
+      "hash_slots": 221,
+      "evidence": "Adjacent to unique timing candidate, contains 97 of107 Jin source-bank motion keys. Other all-six-key match is William common pack archive10/721, matching only52 source keys. Saved capture lacks decoded clip bytes; identity remains structurally inferred."
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4328,
+      "source_name": "/B95B1EE66273589BE0509BDC67B5A002FC6F065AF69251ABCC1373B030496166",
+      "size": 432,
+      "sha256": "28b8741a71446b98d9370259391aaad3761e4a421ce6b93cfb0e0ead3efcc6e7"
+    }
+  },
+  "moves": {
+    "0BC0": {
+      "motion_key": 2300,
+      "timing_key": 2300,
+      "timing_index": 44,
+      "timing_record_offset": 55776,
+      "timing_event_count": 17,
+      "motion_index": 43,
+      "motion_record_offset": 761248
+    },
+    "0C6C": {
+      "motion_key": 2310,
+      "timing_key": 2310,
+      "timing_index": 45,
+      "timing_record_offset": 57408,
+      "timing_event_count": 18,
+      "motion_index": 44,
+      "motion_record_offset": 789568
+    },
+    "0C6D": {
+      "motion_key": 2320,
+      "timing_key": 2320,
+      "timing_index": 46,
+      "timing_record_offset": 59072,
+      "timing_event_count": 18,
+      "motion_index": 45,
+      "motion_record_offset": 819104
+    },
+    "0C6E": {
+      "motion_key": 2400,
+      "timing_key": 2400,
+      "timing_index": 47,
+      "timing_record_offset": 60864,
+      "timing_event_count": 21,
+      "motion_index": 46,
+      "motion_record_offset": 844384
+    },
+    "0C6F": {
+      "motion_key": 2410,
+      "timing_key": 2410,
+      "timing_index": 48,
+      "timing_record_offset": 62816,
+      "timing_event_count": 21,
+      "motion_index": 47,
+      "motion_record_offset": 880096
+    },
+    "0C70": {
+      "motion_key": 2420,
+      "timing_key": 2420,
+      "timing_index": 49,
+      "timing_record_offset": 64768,
+      "timing_event_count": 23,
+      "motion_index": 48,
+      "motion_record_offset": 913472
+    }
+  },
+  "limitations": [
+    "Action package exactly matches saved payloads; timing and motion package associations are structurally inferred pending loaded-source checks.",
+    "String D visually identified as a vertical strike and two cyclone spins. String C remains a distinct heavy string; whole-string gameplay acceptance is pending.",
+    "No live combat, direction, lock-on, sprint exclusion, low-stance or Ki Pulse acceptance is established by this offline research."
+  ]
+}
