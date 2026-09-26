@@ -14,27 +14,44 @@ static uint64_t native_skill_import(unsigned slot, uint32_t key, DispatchCommand
     return boss_private_descriptor_address(slot);
 }
 
-static bool selected_guard_light(uint32_t key) {
+static bool selected_sword_row(uint32_t key, uint8_t* row) {
     // Native710A66 publishes the selected row before calling the setter/lookup.
-    // Keep its guard-held/Square-pressed timing and skill gates, independent of loadout ID.
+    // Snapshot that row after native input and skill gates select its target.
     // Membership in the current action excludes old rows and ordinary/running Square.
     const uint64_t player=boss_session.player;
     uint64_t current=0,selected=0,table=0; uint16_t start=0,count=0;
-    uint8_t row[0x30],check[0x30]; int16_t target=-1;
+    uint8_t check[0x30]; int16_t target=-1;
     if (!copy_field(player+0x58,current) || !copy_field(player+0x90,selected)
-        || !copy_bytes(selected,row,sizeof(row)) || (row[0x0A]!=0 && row[0x0A]!=2)
-        || row[0x0B]!=5 || row[0x0C]!=0 || row[0x0D]!=0 || row[0x0E]!=1) return false;
+        || !copy_bytes(selected,row,0x30) || (row[0x0A]!=0 && row[0x0A]!=2)) return false;
     memcpy(&target,row+0x14,2);
     if (target<0 || uint32_t(target)!=key || !copy_field(current+0x78,table)
         || !copy_field(current+0x80,start) || !copy_field(current+0x82,count) || !count || count>128) return false;
     uint64_t pointers[128]{}; bool owned=false;
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return false;
     for (unsigned index=0;index<count;++index) owned=owned || pointers[index]==selected;
-    if (!owned || !copy_bytes(selected,check,sizeof(check)) || memcmp(row,check,sizeof(row))
+    if (!owned || !copy_bytes(selected,check,sizeof(check)) || memcmp(row,check,sizeof(check))
         || !grapple_field(player,0x58,current) || !grapple_field(player,0x90,selected)
         || !grapple_field(current,0x78,table) || !grapple_field(current,0x80,start)
         || !grapple_field(current,0x82,count)) return false;
     return true;
+}
+
+static bool tiger_sprint_entry(uint32_t key, uint64_t descriptor, uint64_t payload) {
+    // BBA is the native sheathe redirect; D46 is the shared Iai/Tiger preparation.
+    // Require the selected sword-skill input and the native current-stance Tiger assignment.
+    // The existing player lookup substitutes before either preparation owns an animation.
+    const bool sheath=key==0xBBA;
+    uint8_t row[0x30];uint64_t gate=0;int32_t skill=0;
+    if ((!sheath && key!=0xD46) || !grapple_field(payload,0x20,int32_t(sheath ? -1 : 5000))
+        || !grapple_field(payload,0x18,uint64_t(sheath ? 0 : 0x194C0000))
+        || !grapple_field(descriptor,0x82,uint16_t(sheath ? 13 : 49))
+        || !selected_sword_row(key,row) || row[0x0B]!=0x14 || row[0x0C]>1
+        || row[0x0D]!=0xff || row[0x0E]!=0xff) return false;
+    memcpy(&skill,row+0x2C,4);
+    if (skill!=(sheath ? -1 : 0x4AFB) || !copy_field(boss_session.vtable+0x180,gate) || !gate) return false;
+    // Exact-build vtable+180 is73D2C0: the same read-only skill/loadout gate used by720E71.
+    using SkillFn=bool (*)(void*,int32_t);
+    return reinterpret_cast<SkillFn>(gate)(reinterpret_cast<void*>(boss_session.player),0x4AFB);
 }
 
 static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand& command) {
@@ -49,9 +66,15 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
     const unsigned mask=1u<<(2-stance);
     for (const auto& binding : boss_skill_bindings) {
         if (!binding.kind || binding.kind==3 || !(binding.stances&mask)) continue;
-        if (binding.kind==1 ? (key!=binding.key || !grapple_field(payload,0x20,binding.motion)
-                || !grapple_field(payload,0x18,binding.flags) || !grapple_field(descriptor,0x82,uint16_t(binding.transition_count)))
-            : !selected_guard_light(key)) continue;
+        if (binding.kind==1) {
+            const bool exact=key==binding.key && grapple_field(payload,0x20,binding.motion)
+                && grapple_field(payload,0x18,binding.flags) && grapple_field(descriptor,0x82,uint16_t(binding.transition_count));
+            if (!exact && !(binding.key==0xFAA && stance==1 && (key==0xBBA || key==0xD46) && native_binding_context(command)
+                && tiger_sprint_entry(key,descriptor,payload))) continue;
+        } else {
+            uint8_t row[0x30];
+            if (!selected_sword_row(key,row) || row[0x0B]!=5 || row[0x0C]!=0 || row[0x0D]!=0 || row[0x0E]!=1) continue;
+        }
         if (native_binding_context(command)) return int(binding.variant-1);
     }
     return -1;

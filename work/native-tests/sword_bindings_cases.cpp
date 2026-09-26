@@ -7,6 +7,15 @@ static std::array<uint8_t,0xB0> light_payload{},living_payload{},tiger_payload{}
 static std::array<std::array<uint8_t,0x30>,46> light_rows{};
 static std::array<uint64_t,46> light_pointers{};
 static uint32_t sword_bank;
+static bool tiger_assigned;
+
+static bool sword_skill(void* actor, int32_t skill) {
+    // Model the native stance/loadout gate used by the recorded Tiger transition.
+    // Require the concrete fixture player and Tiger's recorded skill identifier.
+    // Changing assignment must retain ordinary sheathing and Iai behavior.
+    assert(actor==player.data() && skill==0x4AFB);
+    return tiger_assigned;
+}
 
 static uint64_t sword_lookup(void*, uint32_t key, uint32_t* bank) {
     // Resolve owned William descriptors independently of the source boss imports.
@@ -88,12 +97,50 @@ static void guard_binding_cases() {
     }
 }
 
+static void tiger_entry_cases() {
+    // Reproduce the two preparation entries before the recorded FAA attack.
+    // Test native input ownership, stance assignment and disabled/stale contexts.
+    // Mid Tiger must substitute immediately while unrelated sheathing remains native.
+    static std::array<uint64_t,49> methods{};
+    for (uint32_t key : {0xBBAu,0xD46u}) for (unsigned failure=0;failure<12;++failure) {
+        sword_reset(0);boss_native_bindings=0;tiger_assigned=failure!=1;
+        methods[0x180/8]=reinterpret_cast<uint64_t>(sword_skill);
+        boss_session.vtable=address(methods.data());put(player.data(),0,boss_session.vtable);
+        command.vtable=boss_session.vtable;publish();
+        boss_skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};
+        put(light.data(),0,key);put(light_payload.data(),0x20,int32_t(key==0xBBA ? -1 : 5000));
+        put(light_payload.data(),0x18,uint64_t(key==0xBBA ? 0 : 0x194C0000));
+        put(light.data(),0x82,uint16_t(key==0xBBA ? 13 : 49));
+        put(player.data(),0x58,address(neutral.data()));put(neutral.data(),0x78,address(light_pointers.data()));
+        put(neutral.data(),0x80,uint16_t(0));put(neutral.data(),0x82,uint16_t(46));
+        auto& row=light_rows[0];row.fill(0xff);row[0x0A]=0;row[0x0B]=0x14;row[0x0C]=1;
+        put(row.data(),0x14,int16_t(key));put(row.data(),0x2C,int32_t(key==0xBBA ? -1 : 0x4AFB));
+        put(player.data(),0x90,address(row.data()));
+        if (failure==2 || failure==3) put(player.data(),0x470,uint32_t(failure==2 ? 0 : 2));
+        if (failure==4) row[0x0B]=0;
+        if (failure==5) row[0x0C]=3;
+        if (failure==6) put(player.data(),0x90,address(dodge_row.data()));
+        if (failure==7) boss_skill_bindings[0]={};
+        if (failure==8) dispatch->control.enabled=0;
+        if (failure==9) put(light_payload.data(),0x20,int32_t(2004));
+        if (failure==10) boss_skill_bindings[0].stances=1;
+        if (failure==11) put(row.data(),0x2C,int32_t(2020));
+        DispatchCommand request{};
+        assert(native_bound_slot(key,address(light.data()),request)==(failure ? -1 : 0));
+        DispatchReason reason=Disabled;ReplacementScope scope(player.data(),request,reason);uint32_t bank=0;
+        const auto result=observed_lookup(player.data()+0x70,key,&bank);
+        assert(result==(failure ? address(light.data()) : boss_private_descriptor_address(0)));
+        assert(bank==(failure ? 0u : 1u));
+    }
+}
+
 int main() {
     // Verify native trigger ownership, untouched running actions, source isolation and Stop.
     // Exercise both replacement branches through the actual scoped lookup hook.
     // These checks establish descriptor behavior; actual combat playback still needs the player.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     guard_binding_cases();
+    tiger_entry_cases();
     for (unsigned index=0;index<3;++index) {
         sword_reset(index); const auto before=light; const auto rows=light_rows;
         DispatchReason reason=Disabled; DispatchCommand request{}; ReplacementScope scope(player.data(),request,reason);
