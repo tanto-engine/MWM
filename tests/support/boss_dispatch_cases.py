@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 sys.path.insert(0, str(ROOT / 'runtime'))
 import run_dispatch as dispatch
 
@@ -230,8 +231,8 @@ class BossTests(unittest.TestCase):
             (folder / 'session-profile.json').write_text(json.dumps(PROFILE))
             (folder / 'boss-session.json').write_text(json.dumps(BOSS))
             calibration = folder / 'calibration.json'
-            calibration.write_text((ROOT/'runtime/controller-calibration.json').read_text())
-            (folder/'controller-binding.json').write_text((ROOT/'runtime/controller-binding.json').read_text())
+            calibration.write_text((MOD_ROOT/'data/controller-calibration.json').read_text())
+            (folder/'controller-binding.json').write_text((MOD_ROOT/'data/preset.json').read_text())
             argv = ['run_dispatch.py', '--profile', str(folder / 'session-profile.json'),
                     '--calibration', str(calibration), '--seconds', '.4', '--outdir', str(folder / 'result')]
             with patch.object(sys, 'argv', argv), patch.object(dispatch, 'HERE', folder), \

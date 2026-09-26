@@ -21,8 +21,9 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 SUPPORT = ROOT/'tests/support'
-sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime')]
+sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime'), str(ROOT.parent/'tanto-recorder/src')]
 from catalogue import load_catalogue, save_catalogue, merge_recording
 from encounter_recording import reconstruct_capture
 from engine_config import DEFAULT_PRESET, binding_for_preset
@@ -114,7 +115,7 @@ class MoveWorkflow(unittest.TestCase):
                     self.assertEqual(move['source'][key],value)
                 for key in ('default_binding','adaptation','implementation'):
                     self.assertEqual(move[key],baseline[move['id']][key])
-        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
+        calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
         preset=dict(DEFAULT_PRESET,hold_move='okatsu.leaping_slash')
         binding = binding_for_preset(calibration,preset)
         session = copy.deepcopy(BOSS)

@@ -11,8 +11,8 @@ import json
 import re
 from pathlib import Path
 
-DEFAULT_PATH = Path(__file__).resolve().parents[1] / 'outputs/Nioh1-Sword-Move-Observations.xlsx'
-CATALOGUE_CACHE = None
+from project_paths import DATA
+DEFAULT_PATH = DATA/'moves.json'
 ID = re.compile(r'^[a-z0-9][a-z0-9_.-]*$')
 ADDRESS_KEYS = {'address','object','owner','owner_like','current','previous','payload','pointer','ptr','pid','module_base','descriptor_bytes'}
 
@@ -97,32 +97,19 @@ def validate_catalogue(data):
 
 
 def load_catalogue(path=DEFAULT_PATH):
-    # Read the single maintained workbook through its catalogue schema gate.
-    # Reuse parsed cells only while the file identity, timestamp and size match.
-    # Return an independent copy so a caller cannot mutate another reader's catalogue.
-    if __package__:
-        from .spreadsheet_sync import read_workbook_catalogue
-    else:
-        from spreadsheet_sync import read_workbook_catalogue
-    global CATALOGUE_CACHE
-    path = Path(path).resolve()
-    info = path.stat()
-    signature = (path, info.st_ino, info.st_mtime_ns, info.st_size)
-    if CATALOGUE_CACHE is None or CATALOGUE_CACHE[0] != signature:
-        CATALOGUE_CACHE = (signature, validate_catalogue(read_workbook_catalogue(path)))
-    return copy.deepcopy(CATALOGUE_CACHE[1])
+    # Load versioned product data without a spreadsheet dependency.
+    # Validate its source identities before exposing independent caller-owned values.
+    # JSON files are build inputs; process state never belongs in them.
+    return validate_catalogue(json.loads(Path(path).read_text(encoding='utf8')))
 
 
 def save_catalogue(path, data):
-    # Commit catalogue changes and their visible workbook views together.
-    # Reuse the maintained workbook as the layout when creating a temporary copy.
-    # Canonical edits also synchronize the user's Downloads copy.
-    if __package__:
-        from .spreadsheet_sync import write_workbook_catalogue
-    else:
-        from spreadsheet_sync import write_workbook_catalogue
-    path = Path(path).resolve()
-    write_workbook_catalogue(path, data, None if path == DEFAULT_PATH else False, DEFAULT_PATH)
+    # Persist developer edits through the same schema gate as reads.
+    # Write a complete sibling file before atomic replacement.
+    # Product metadata stays independent of capture exports and GUI state.
+    path=Path(path); temporary=path.with_suffix(path.suffix+'.tmp')
+    temporary.write_text(json.dumps(validate_catalogue(data),indent=2,ensure_ascii=True)+'\n',encoding='utf8')
+    temporary.replace(path)
 
 
 def rename_move(catalogue_path, move_id, name, category=None):

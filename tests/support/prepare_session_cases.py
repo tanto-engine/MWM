@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 sys.path.insert(0, str(ROOT / 'runtime'))
 import prepare_session as prepare
 
@@ -23,7 +24,7 @@ class ImportMemory:
         # Encode pointers and source fields in their actual native layouts.
         # Preparation must validate current source bytes rather than reuse cached move assumptions.
         self.memory = {}
-        self.manifest = prepare.read_import_manifest(ROOT/'catalogue/imports/okatsu.json')
+        self.manifest = prepare.read_import_manifest(MOD_ROOT/'data/imports/okatsu.json')
         self.bank, self.table = 0x110000, 0x120000
         self.put(self.bank, bytes(0x138))
         self.put(self.bank+0x128, struct.pack('<QI',self.table,len(BOSS['imports'])))

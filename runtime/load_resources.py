@@ -1,6 +1,7 @@
 import hashlib
 import json
 import mmap
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -12,7 +13,7 @@ import native_loader as loader
 from engine_config import atomic_json, read_json
 from resource_assets import read_asset
 
-ROOT = Path(__file__).resolve().parents[1]
+from project_paths import DATA
 STATE = struct.Struct('<IIiiQ32s4QII2Q')
 loader.K.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
 loader.K.OpenFileMappingW.restype = W.HANDLE
@@ -28,7 +29,7 @@ def resource_identity(profile):
     return hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).digest()
 
 
-def load_resources(game, profile_path=ROOT / 'catalogue/resource_profiles/okatsu.json'):
+def load_resources(game, profile_path=DATA/'resources/okatsu.json'):
     # Request engine-owned action, motion, timing and camera resources.
     # Validate archive assets, reuse their immutable profile owner and poll its native phase.
     # No source boss pointer is needed, and incomplete loads remain explicit.
@@ -42,15 +43,17 @@ def load_resources(game, profile_path=ROOT / 'catalogue/resource_profiles/okatsu
     birth = int(game.identity['creation_filetime'])
     identity = resource_identity(profile)
     tag = identity.hex()
-    owner_file = Path(__file__).parent / 'resource-owners' / f'{tag}.json'
+    state = Path(os.environ.get('NIOH_RUNTIME_HOME', Path(__file__).parent))
+    code = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).parent))
+    owner_file = state / 'resource-owners' / f'{tag}.json'
     owner = read_json(owner_file)
     if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 5
             and owner['resource_identity'] == tag):
         dll = Path(owner['dll'])
     else:
-        source = Path(__file__).parent / 'native/build/nioh_resources.dll'
+        source = code / 'native/build/nioh_resources.dll'
         digest = hashlib.sha256(source.read_bytes()).hexdigest()[:16]
-        dll = Path(__file__).parent / 'sessions/runtime' / f'resources_{digest}_{tag}.dll'
+        dll = state / 'sessions/runtime' / f'resources_{digest}_{tag}.dll'
         dll.parent.mkdir(parents=True, exist_ok=True)
         if not dll.exists():
             shutil.copy2(source, dll)

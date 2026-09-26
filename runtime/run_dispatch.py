@@ -21,8 +21,9 @@ from game_controller import GameController, game_binding
 from boss_probe import LiveGame, U64, I32, U32
 from controller_reader import ControllerReader
 
-HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', Path(__file__).resolve().parent))
-CODE = Path(__file__).resolve().parent
+from project_paths import MOD_ROOT
+HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', MOD_ROOT/'runtime'))
+CODE = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).resolve().parent))
 CONTROL = struct.Struct('<IIIIqQiiqqii')
 COMMAND = struct.Struct('<qqqq10QIiII3Qq')
 assert CONTROL.size == 64 and COMMAND.size == 160

@@ -1,73 +1,34 @@
-# Nioh 1 Sword Skills Expanded
+# Tanto Engine
 
-This private repository contains the sword configuration app, an exact-build native adaptation engine, and a curated source-action catalogue. It imports selected boss sword actions into William's moveset. It does not implement a general animation editor. Gameplay verification of the latest tracking, airborne Izuna contact, weapon preservation and dodge continuations is **pending**. Offline verification cannot establish hit contact or animation quality.
+Private developer tooling and native runtime implementation for building game mods. This repository has no user-facing GUI. Products select a backend, data and capabilities, then build independent executables. Users never need the development checkout.
 
-The active `runtime/controller-binding.json` is intentionally empty for the next Jin recording session. The revised gameplay configuration is preserved in `app/sword-expanded.json`. The engine is stopped; recording is user-started. William's full moveset capture and EXE packaging remain deferred.
+| Repository | Owns | Consumer distribution |
+|---|---|---|
+| neuriv/tanto-engine | Native integration, ownership/lifecycle, private policy, validation, builds and tests | None |
+| neuriv/tanto-recorder | Read-only recording, boss signatures, annotations, export and capture archive | TantoRecorder.exe |
+| neuriv/tanto-sword-mod | Sword definitions, import/resource profiles, default bindings and product UI | TantoSword.exe with selected micro-runtime |
 
-## Running and maintaining the source build
+The first backend is the existing exact-build Nioh 1 sword implementation. The framework does not yet implement arbitrary weapons or asset formats. Additional mods need validated adapters and content definitions; putting an unknown move ID in JSON is insufficient. Engine-owned policies such as enemy weight/impulse and tracking are compiled/configured by developers, not exposed as unrestricted GUI fields.
 
-Use Windows x64, Python 3.10+ and MinGW GCC/G++. Run these commands from the repository in PowerShell. Enable waits for a supported game process; Disable requests cooperative recovery rather than tearing an imported action out of the game mid-frame.
+## Developer workflow
+
+Keep the three repositories as sibling checkouts. Use Python 3.10+ and Windows x64 GCC/G++ for native development. Build-only dependencies are pinned in requirements-build.txt. Product Build.ps1 scripts verify their engine commit before building. build_product.py stages an explicit capability subset and emits a SHA-256 file manifest. Recorder includes only read-only process/bank/controller readers. Sword includes its required runtime and native DLLs; recording/report CLI and catalogue editing are cut from the staged runtime.
 
 ```powershell
-.\Trainer.ps1                         # Configuration and recording app
-.\Trainer.ps1 -Enable                 # Explicitly attach the selected preset
-.\Trainer.ps1 -Disable                # Restore owned state, then stop
-.\runtime\native\Build.ps1            # Build native libraries, no game access
-.\Test-Offline.ps1                    # Both maintained test entrypoints
-.\Sync-Catalogue.ps1                  # Reconcile the Downloads workbook
-python -B -m catalogue.recordings     # Rebuild occurrence report from indexed evidence
+.\runtime\native\Build.ps1
+.\Test-Offline.ps1
+python -B build_product.py ..\tanto-recorder --stage-only
+python -B build_product.py ..\tanto-sword-mod --onedir
+python -B build_product.py ..\tanto-sword-mod
 ```
 
-To restore the gameplay configuration, import `app/sword-expanded.json` in the app and apply it. The app's baseline button also loads that preset into the form. Applying a preset saves the active configuration; an enabled supervisor restarts its session after native recovery. Merely editing a file is not a successful gameplay test.
+The two maintained test entrypoints remain tests/test_move_readiness.py and tests/test_resource_crashes.py. They exercise source logic, native owned-memory fixtures, cross-repository integration, contributor export and package boundaries. Clone both product repositories alongside this checkout for integration tests. The resource crash test also reads the supported local game archives. Passing tests does not certify live gameplay.
 
-The supported executable SHA-256 is `0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389`. Addresses and structure layouts below belong to that build. A mismatch must fail validation, not fall back to guessed offsets.
+`runtime/` holds the backend and reusable development interfaces. `tests/` holds fixtures and checks. `third_party/minhook/` is required by current native detours and is built into Sword runtime libraries. Recorder does not receive it. Removing MinHook without replacing those detours breaks the backend. Resource profiles belong to the mod because they specify the actual assets that product loads.
 
-## Ownership boundaries
+There is no outputs/, research/ or capture catalogue in this engine checkout. Old investigations and the workbook remain recoverable from history; local archival copies also exist outside the repositories. The Downloads workbook is historical, not an engine dependency. Retained source captures and labels live in Tanto Recorder.
 
-`app/` owns the user interface and the shipped Sword Skills Expanded preset. `runtime/engine_config.py` validates its public schema. `runtime/engine_policy.py`, the native engine and `catalogue/imports/` own implementation policy: supported native signatures, resource identity, contact rules, weight/impulse tuning and tracking. `catalogue/` owns the curated sword identities and indexed source evidence. `research/` retains mechanical findings; it is not loaded as gameplay configuration. `tests/native/` contains fixtures exercised by the two existing test entrypoints.
-
-This is a source-level separation, not yet a separately packaged public SDK. The Python app still launches private engine workers. A future public distribution should expose a narrow validated settings interface to a compiled engine. Do not publish this repository, its technical research, import recipes or this engine README as the public app repository. A private source repository keeps source private only until someone is given it.
-
-No locally distributed EXE can guarantee that an experienced owner cannot extract, inspect or modify its engine. Compilation, signing and obfuscation can raise the cost and establish publisher identity; they cannot make local code inaccessible. OWASP explicitly treats obfuscation as increased reverse-engineering effort, not prevention: [binary obfuscation guidance](https://mas.owasp.org/MASWE/MASVS-RESILIENCE/MASWE-0059/). Keeping code off the client is the stronger confidentiality boundary, but remote execution is unsuitable for these latency-sensitive local game callbacks. No DRM or anti-debug framework is introduced here.
-
-### Public configuration
-
-Schema 7 accepts stable move IDs, stance selection, supported skill replacements, custom chord selection, a hold threshold and bounded Frost Moon timing. It rejects unknown fields. Schema 4–6 presets migrate their bindings but discard historical `launch_profiles`, `air_juggle_boost`, `tracking_rates` and `izuna_tracking_degrees`; these are now private engine policy. The input document is not mutated during migration.
-
-```json
-{
-  "source": "tiger_sprint",
-  "stance": "any",
-  "move": "okatsu.charged_rush"
-}
-```
-
-This is an entry in `skill_bindings`, not a complete preset. Tiger Sprint is a **native skill override**: native eligibility and assignment determine where it can run. In Mid stance its validated entry can redirect immediately, avoiding the sheath preparation. Other stances retain their native trigger path. Removing Tiger Sprint from a stance does not independently enable this replacement there. This is the abstraction to extend when more native skill signatures have been recorded.
-
-`guard_light` is a **custom input override**, not an identified native skill. High `guard_light` currently means LB + Square and can replace whichever guard-light skill would otherwise run. `heavy_attack` and `dodge_attack` are validated action adapters. Their source IDs, motion, transition count and flags are checked. Arbitrary native skills or arbitrary captured boss records cannot be enabled by inventing a JSON identifier.
-
-Public custom chords currently provide one modifier and trigger bit, tap/hold choices from implemented adapters, and `hold_seconds` in 0.08–2 seconds (baseline 0.25). Stance holds and Frost Moon each use explicit low/mid/high maps. At most eight native/chord bindings are supported, with overlap validation. One imported Jin graph must have one stance across its bindings. These are current adapter limitations, not promises about a future GUI.
-
-```python
-from engine_config import validate_preset
-public_preset = validate_preset(document)   # unknown fields and unsafe policy rejected
-# prepare_session injects private LAUNCH_PROFILES/TRACKING_RATES itself.
-```
-
-### Speed sliders and frame controls
-
-The current implementation already has a small timing abstraction: `MoveTiming { recovery, startup_end, startup_speed }` in `boss_support.h`. `boss_advance_clock` applies it on the player's native callback. It scales both player speed at `+0x6A8` and delta at `+0x24`, then stops acceleration at the startup boundary. Animation and timing events advance through their shared native clock. The original native tick recomputes these fields; there is no persistent global speed patch.
-
-```cpp
-const float remaining = boundary - frame;
-float accelerated = delta * timing.startup_speed;
-if (accelerated > remaining) accelerated = remaining;
-// Apply only when accelerated > delta; do not seek either event cursor.
-```
-
-We are **not** arbitrarily deleting animation frames or changing a byte string for each speed slider value. Recovery editing changes when native cancellation/Pulse becomes available; an uncancelled tail can finish normally. Some adaptations also change private transition and payload bytes, so the structural edits must remain documented independently of speed policy.
-
-The current public speed control is the shared integer `frost_startup_speed` in 1–8. It also accelerates the Izuna opener. It is not a generic per-move speed slider and does not implement slow motion or arbitrary start-frame seeking. For a future per-move slider, expose a stable move ID and a multiplier bounded by an engine-owned phase policy. A future start/end-frame option must be restricted to validated event-safe boundaries: jumping over hit registration, root motion or paired-action setup can break gameplay. The private engine should own allowed ranges and paired-camera exclusions; public configuration should never supply offsets or raw bytes.
+Compilation and selective packaging reduce what is distributed; they cannot make local code unextractable. No engine development GUI, general plugin loader, DRM framework or automatic data upload is introduced. The products are privately published prereleases; gameplay verification remains deferred.
 
 ## Runtime lifecycle and resource ownership
 
@@ -99,7 +60,7 @@ The saved gameplay preset uses Low full Flying Swallow, Mid somersault and High 
 
 ## Engine-owned tuning inventory
 
-The following are policy values, not inferred universal Nioh rules. `outputs/Nioh1-Sword-Move-Observations.xlsx` contains the human-readable Tuning ledger; `catalogue/imports/` contains source requirements and graph recipes. Source bytes and current implementation remain authoritative when revising a policy. Do not conflate source recovery values with adapted cancellation frames.
+The following are policy values, not inferred universal Nioh rules. The archived Downloads workbook contains the historical human-readable Tuning ledger; `../tanto-sword-mod/data/imports/` contains source requirements and graph recipes. Source bytes and current implementation remain authoritative when revising a policy. Do not conflate source recovery values with adapted cancellation frames.
 
 | Policy | Current value and scope | Implementation |
 |---|---|---|
@@ -137,48 +98,3 @@ Every change needs the boss/source-bank identity, full action key, motion and ti
 The less visible hardcoded adaptations also need that ledger: source flags and exact signature checks; private descriptor/payload offsets; transition pruning and replacement; completion stance/sheath behavior; weapon effect filtering; native input debounce/suppression; recovery, Living Water and running-priority rows; source resource lifetime; camera borrowing; voice cue substitution; launch classification, weight ownership, impulse changes and air-hit exclusions; tracking target resolution, rate and phase/range limits. These are not exposed as arbitrary user-editable bytes.
 
 Build-specific ABI constants are contracts rather than sliders. `boss_probe.py` and `action_banks.py` describe read layouts; `boss_session_schema.h`, `dispatch_protocol.h` and `trace_protocol.h` define process interfaces; `boss_session_config.h` validates them. Exact expected byte signatures and RVAs live beside the native helper that uses them. Preserving those source locations avoids a second unsynchronized offset dictionary. Shared action/motion/timing packages cannot safely be pruned record-by-record without proving internal reference closure; the playable catalogue is sword-only while shared packages may contain unused source records.
-
-## Recording, inference and contributor workflow
-
-`boss_probe.py` opens the exact supported process for read-only observation. It samples action state changes every 10 ms and captures bounded metadata (up to 128 transition rows and 16 combat rows in the encounter path). Metadata must match its preceding owner-validated descriptor/payload state. Reads are non-atomic; races, missing objects and gaps are recorded. A process address is never a permanent identity.
-
-`encounter_recording.py` wraps this in continuous takes. It finds source actors by the workbook's action/motion fingerprints, reacquires after actor loss or reload, and preserves existing takes. A recognized boss take can run for 86400 seconds; an unassigned scout take refreshes after 30 seconds. Selecting a boss name does not prove the observed actor is that boss. Cooperative stop flushes the take and reconstructs it. A runtime trace can seed discovery, but process birth and ownership must be revalidated.
-
-```powershell
-python -B runtime\encounter_recording.py --boss-id jin_hayabusa --outdir runtime\recordings\jin-session
-# Wait for status.json state=recording before starting a described attempt.
-New-Item runtime\recordings\jin-session\STOP -ItemType File
-python -B runtime\encounter_recording.py --boss-id jin_hayabusa --outdir runtime\recordings\report --reconstruct runtime\recordings\jin-session\take-0001\events.jsonl
-```
-
-The app already provides Record, Stop and Import. **Describe recent string** now appends a description to the active recording after the user pauses the game. Capture continues; the app neither pauses nor controls Nioh. The label includes boss, take, latest complete persisted timestamp and notice wall time. It explicitly does not claim that the timestamp is the exact last frame of the described move. Mention an intervening attack or death in the description.
-
-Reconstruction binds full action/motion/timing identities in two passes, keeps unknown low-word records uncertain and splits actor sequences at gaps, corruption, identity changes and timestamp regressions. Sequences are bounded to 64 actions. Repeated state samples increment `observations`; only a changed descriptor/action counter increments `observed_entries`. The first observation after a gap is `censored_observations`, because its start was not seen. A same-action recommit remains visible instead of being merged away.
-
-`catalogue/recordings/index.json` is the common source index for old Okatsu, Jin and Maria captures and retained human descriptions. Raw captures and labels are hash-checked and remain unchanged. `catalogue/recordings/summary.json` is regenerated by `python -B -m catalogue.recordings`. The workbook remains the single curated move/label authority; the report joins those labels instead of inventing another maintained catalogue. Duplicate raw hashes are counted once. Aliases such as the standalone launcher and Izuna opener share a source identity and are not double-counted.
-
-The report ranks only known sword identities observed on an attributed boss. The workbook occurrence sheet is a snapshot of that report; rebuilding the JSON report alone does not rewrite the workbook. Maria's sampled trace lacks proven boss attribution and its native trace uses a different event format with potential overlap, so it is retained but excluded from common occurrence ranking. Counts describe these targeted captures, not natural boss move probabilities. State-sample counts, observed starts and uncertain first sightings remain distinct. Ranking a string should use its verified opener, not add all hit counts and call that string frequency.
-
-The next useful inference step is to combine three evidence types: repeated observed sequences, decoded native transition conditions/windows, and user annotations. Repeated adjacency alone is a candidate; a decoded gated edge supports a possible native continuation; a clean labeled isolated recording supports the intended move name. Preserve alternative branches and uncertainty instead of collapsing them into one guessed combo. Compare motion/timing, conditions and resource identity to identify new variants; do not merge them just because their low-word IDs match.
-
-For a contributor-facing app, use the same flow: select boss, wait for verified recording, fight, manually pause, describe the recent sequence, resume, then stop/export. A timeline should let the contributor adjust the proposed label range and mark uncertainty. The current description button is the first part of this flow; editable segmentation and a polished export wizard are not implemented yet.
-
-The proposed standalone recorder should have its own repository and portable Windows package, used by contributors and maintainers alike. Extract one maintained read-only backend from the existing probe/reconstruction code. Replace its workbook/trainer dependencies with a small versioned boss-signature manifest. Keep the private gameplay engine, physics policy and native hooks out of that package. The mod should consume the recorder's versioned output instead of maintaining a second recorder implementation.
-
-Its UI should need no terminal, Python installation, controller calibration or hexadecimal IDs. Start recording finds Nioh and displays Waiting for game, Finding boss, Recording, Recovering after reload or Stopped. Show Ready to fight only after validated boss sampling begins. Continuous capture lets the user pause after a move rather than predict it. Describe last move accepts ordinary language plus New, Repeat, Unsure or Interrupted. Proposed time ranges remain editable because a pause is not an exact animation boundary.
-
-Stop and Export should produce one shareable file in Downloads and open its folder. No account or automatic upload is needed for the first release. Our importer should validate schemas and hashes, deduplicate captures and preserve uncertain labels before any catalogue promotion. Repeated sequences and native transition gates can suggest strings; they cannot reliably supply every move name or prove every observed sequence is a combo. Human descriptions remain review evidence, never gameplay configuration.
-
-The portable package must be checked on a clean Windows machine without developer tools, including death/retry, mission reload, interrupted capture and unsupported game builds. Its backend needs process query/read access; it does not need gameplay modification capabilities. See Microsoft's [ReadProcessMemory contract](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory). Packaging and the separate recorder repository are proposed next work, not implemented by this cleanup.
-
-Export should produce a local ZIP in Downloads containing a versioned manifest, raw JSONL takes, labels and a readable spreadsheet summary. The manifest should include build/schema version, capture hashes, boss attribution and sampling gaps. Spreadsheet columns should show move IDs, motion/timing, description, take/time range, observed entries and confidence/evidence. Keep raw structural evidence in JSONL, not thousands of opaque byte cells. Contributors can send the bundle manually; automatic uploads are not implemented or required. Do not include unrelated process logs or absolute personal paths in a public export.
-
-## Validation and unresolved work
-
-`tests/test_move_readiness.py --offline` and `tests/test_resource_crashes.py` are the only maintained test entrypoints. They exercise Python validation, lifecycle/reconstruction behavior and native harnesses. Native cases live under `tests/native/`; moving them does not add a third test runner. `Test-Offline.ps1` runs both. Build and fixture success are implementation checks, not gameplay approval.
-
-The player previously accepted all Frost routes, High slash speed, Flying Swallow speed and immediate Mid Tiger Sprint. Subsequent Mid five-hit/dodge, tracking, airborne catch and weapon/sheath preservation changes require another gameplay pass. The next requested data task is fresh continuous Jin recording with pause-time descriptions; William recording is deferred. No recording should be announced ready merely because discovery has started.
-
-Cleanup removes obsolete packaging, duplicate captures, generated reports, old build/test logs and one-off research scripts. Unique capture evidence, human descriptions, mechanical findings, active engine modules, native fixtures and required MinHook code remain. Git history retains removed historical tools. Runtime output stays under ignored `runtime/` state directories; maintained evidence belongs under `catalogue/recordings/` or `research/`, not a growing scratch folder.
-
-The second cleanup removes unreferenced historical investigations, capture-side discovery dumps, unused extracted assets and the duplicate MinHook license. The engine and crash tests read assets from the installed game archives. The small Jin action package remains because curated evidence references it. Indexed raw captures, labels, evidence dependencies and active code remain. Removed material is recoverable from commit `c91aded`, with local copies retained outside the repository. History has not been rewritten: this trims checkout contents, not historical Git objects.

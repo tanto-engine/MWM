@@ -9,7 +9,8 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT/'app'), str(ROOT/'runtime'), str(ROOT/'catalogue')]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
+sys.path[:0] = [str(MOD_ROOT/'app'), str(ROOT/'runtime')]
 import engine_config as config
 import process_support as process
 import trainer
@@ -91,7 +92,7 @@ class PresetTests(unittest.TestCase):
         # Prevent saved held mappings from firing immediately after reconnect.
         # Reload the saved calibration and reconnect with the bound controls held.
         # Persisted mappings remove recalibration work but do not authorize synthetic presses.
-        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
+        calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
         binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
         gate = ControllerGesture(calibration, binding, 1000)
         device = calibration['device']
@@ -171,7 +172,7 @@ class RuntimeRegistryTests(unittest.TestCase):
         # Adopt another active runtime before applying a pending trainer edit.
         # Present an already-running external runtime while the open trainer has a pending edit.
         # The trainer must adopt current ownership before deciding whether the edit can be applied.
-        calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
+        calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
         binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
         desired = dict(config.DEFAULT_PRESET, name='Pending user edit', hold_seconds=.35)
         with tempfile.TemporaryDirectory() as td:
@@ -220,23 +221,3 @@ class RuntimeRegistryTests(unittest.TestCase):
             saved = json.loads((other/'controller-binding.json').read_text())
             self.assertEqual(saved, desired)
             self.assertEqual(json.loads((local/'controller-binding.json').read_text()), config.DEFAULT_PRESET)
-
-
-class TrainerWorkerTests(unittest.TestCase):
-
-    def test_workbook_failure_does_not_hide_successful_catalogue_save(self):
-        # Report catalogue save success separately from a blocked workbook update.
-        # Save a catalogue change and then simulate Excel locking the workbook.
-        # The result must distinguish persisted configuration from incomplete spreadsheet synchronization.
-        messages = []
-        app = SimpleNamespace(catalogue_path='fixture.json', notice=SimpleNamespace(set=messages.append))
-        def locked(path):
-            # Simulate an Excel lock only at the workbook synchronization step.
-            # Raise PermissionError after the catalogue update has already succeeded.
-            # The trainer must report partial completion without undoing saved move configuration.
-            raise PermissionError('Workbook is open in Excel')
-        fake_sync = SimpleNamespace(sync_workbook=locked)
-        with patch.dict(sys.modules, {'spreadsheet_sync': fake_sync}):
-            trainer.Trainer.sync_catalogue_workbook(app, 'Catalogue name saved.')
-        self.assertIn('Catalogue name saved.', messages[0])
-        self.assertIn('Excel', messages[0])

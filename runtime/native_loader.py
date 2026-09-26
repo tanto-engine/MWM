@@ -12,8 +12,9 @@ from pathlib import Path
 import struct
 import sys
 
-CODE = Path(__file__).resolve().parent
-HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', CODE))
+from project_paths import MOD_ROOT
+CODE = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).resolve().parent))
+HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', MOD_ROOT/'runtime'))
 WORKSPACE = CODE.parent
 sys.path.insert(0, str(CODE))
 import nioh_memory as memory
@@ -22,7 +23,7 @@ from runtime_session import encode_session
 K = memory.kernel
 NIOH = Path(os.environ.get("NIOH_EXE") or r"C:\Program Files (x86)\Steam\steamapps\common\Nioh\nioh.exe")
 NIOH_HASH = "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389"
-HARNESS = WORKSPACE / "work" / "native-tests" / "nioh_hook_harness.exe"
+HARNESS = WORKSPACE / "tests" / "native" / "nioh_hook_harness.exe"
 START, STOP = "NiohResearchStart", "NiohResearchStop"
 PROGRESS = {}
 

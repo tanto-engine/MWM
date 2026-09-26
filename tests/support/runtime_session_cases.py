@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 sys.path.insert(0, str(ROOT / 'runtime'))
 import native_loader as loader
 from runtime_session import encode_session, POINTER_FIELDS, SESSION_CONFIG, MOVE_IMPORT, MOVE_ADAPTER, MAGIC, VERSION
@@ -69,7 +70,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Append the recorded D candidate with three independent William replacement descriptors.
         # Inspect the exact adapter ABI offset, then corrupt pointer, mapping and source-family fields.
         # A valid Jin table must preserve every Okatsu slot and cannot redirect another player action.
-        manifest = read_import_manifest(ROOT/'catalogue/imports/jin_hayabusa.json')
+        manifest = read_import_manifest(MOD_ROOT/'data/imports/jin_hayabusa.json')
         selected = {move['id']: move for move in manifest['moves']}
         for index, identifier in enumerate(manifest['candidates']['D']):
             move = copy.deepcopy(selected[identifier])
@@ -102,7 +103,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Reject malformed import topology and unsupported source action families.
         # Introduce duplicate keys, unsupported families, bad indices and chain cycles.
         # Configuration-only imports must not bypass capability or topology constraints.
-        manifest = read_import_manifest(ROOT/'catalogue/imports/okatsu.json')
+        manifest = read_import_manifest(MOD_ROOT/'data/imports/okatsu.json')
         self.assertEqual([move['next_variant'] for move in manifest['moves']], [-1,-1,3,4,5,6,-1])
         cases = [(2,'next_variant',16), (2,'next_variant',2), (4,'next_variant',2),
                  (2,'next_start',46), (4,'next_end',9), (2,'key',0xC64),
@@ -126,7 +127,7 @@ class RuntimeSessionTests(unittest.TestCase):
         for value in (-1,7,True,6):
             with self.assertRaises(ValueError):
                 check_import_topology(self.config['imports'],value)
-        raw=json.loads((ROOT/'catalogue/imports/okatsu.json').read_text())
+        raw=json.loads((MOD_ROOT/'data/imports/okatsu.json').read_text())
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'imports.json'
             for change in ({'string_entry':'absent'},{'string_entry':'okatsu.action_0361'}):

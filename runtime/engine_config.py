@@ -26,7 +26,8 @@ HELD_MOVES = {'jin_hayabusa.action_0bbf', 'jin_hayabusa.action_0c75', 'jin_hayab
 from engine_policy import NATIVE_SKILLS
 
 PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon frost_window_seconds frost_startup_speed'.split())
-DEFAULT_PRESET = json.loads((Path(__file__).resolve().parents[1]/'app/sword-expanded.json').read_text(encoding='utf8'))
+from project_paths import DATA
+DEFAULT_PRESET = json.loads((DATA/'preset.json').read_text(encoding='utf8'))
 
 
 def atomic_json(path, value):

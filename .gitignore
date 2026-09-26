@@ -10,7 +10,6 @@ __pycache__/
 *.xlsx.inspect.ndjson
 node_modules/
 analysisdeps/
-research/live-text-identity.json
 tests/native/build/
 tests/native/offline-test-result.txt
 runtime/native/build/

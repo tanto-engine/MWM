@@ -9,10 +9,12 @@ from pathlib import Path
 import struct
 import sys
 
-CODE = Path(__file__).resolve().parent
-HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', CODE))
+from project_paths import MOD_ROOT
+CODE = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).resolve().parent))
+HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', MOD_ROOT/'runtime'))
 from boss_probe import LiveGame, U64, U32, I32, kernel
-from nioh_memory import modules
+from nioh_memory import modules, current_pid
+from project_paths import DATA
 from profile_resources import StableReads, inspect_candidate, resources, inspect_motion, inspect_timing
 from load_resources import load_resources
 from trace_reader import Trace
@@ -21,45 +23,8 @@ from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST
 from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES
 
-IMPORT_MANIFEST = CODE.parent / 'catalogue/imports/okatsu.json'
+IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
-
-
-class PROCESSENTRY32W(C.Structure):
-    _fields_ = [('dwSize', W.DWORD), ('cntUsage', W.DWORD), ('th32ProcessID', W.DWORD),
-                ('th32DefaultHeapID', C.c_size_t), ('th32ModuleID', W.DWORD),
-                ('cntThreads', W.DWORD), ('th32ParentProcessID', W.DWORD),
-                ('pcPriClassBase', W.LONG), ('dwFlags', W.DWORD), ('szExeFile', W.WCHAR * 260)]
-
-
-def current_pid():
-    # Find the single current Nioh process without a saved PID.
-    # Enumerate processes and reject zero or multiple matching executables.
-    # Attachment must not guess between concurrent game instances.
-    kernel.Process32FirstW.argtypes = [W.HANDLE, C.POINTER(PROCESSENTRY32W)]
-    kernel.Process32FirstW.restype = W.BOOL
-    kernel.Process32NextW.argtypes = kernel.Process32FirstW.argtypes
-    kernel.Process32NextW.restype = W.BOOL
-    handle = kernel.CreateToolhelp32Snapshot(2, 0)
-    if handle == C.c_void_p(-1).value:
-        raise C.WinError(C.get_last_error())
-    try:
-        entry = PROCESSENTRY32W()
-        entry.dwSize = C.sizeof(entry)
-        matches = []
-        okay = kernel.Process32FirstW(handle, C.byref(entry))
-        while okay:
-            if entry.szExeFile.lower() == 'nioh.exe':
-                matches.append(entry.th32ProcessID)
-            okay = kernel.Process32NextW(handle, C.byref(entry))
-        error = C.get_last_error()
-        if error != 18:  # ERROR_NO_MORE_FILES
-            raise C.WinError(error)
-        if len(matches) != 1:
-            raise ValueError(f'Expected exactly one running nioh.exe; found {len(matches)}')
-        return matches[0]
-    finally:
-        kernel.CloseHandle(handle)
 
 
 def require_stopped(pid):
@@ -329,7 +294,7 @@ def fresh_profile(game):
     action_resource, timing_resource, motion_bank, camera_bank, node, owner = load_resources(game)
     replacement_handles = None
     if replacement_manifest is not None:
-        replacement_handles = load_resources(game, IMPORT_MANIFEST.parent.parent / 'resource_profiles/jin_hayabusa.json')
+        replacement_handles = load_resources(game, IMPORT_MANIFEST.parent.parent / 'resources/jin_hayabusa.json')
         if replacement_handles[-2:] != (node, owner):
             raise ValueError('Player identity changed between resource-profile loads')
     game.begin_sample()

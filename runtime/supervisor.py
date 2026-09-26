@@ -9,8 +9,9 @@ import time
 from engine_config import atomic_json, read_json
 from process_support import PlayLock, process_identity, worker_command, register_runtime, unregister_runtime
 
-HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', Path(__file__).resolve().parent))
-CODE = Path(__file__).resolve().parent
+from project_paths import MOD_ROOT
+HERE = Path(os.environ.get('NIOH_RUNTIME_HOME', MOD_ROOT/'runtime'))
+CODE = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).resolve().parent))
 
 
 def sleep_until(seconds, stop):
@@ -134,8 +135,8 @@ def main(argv=None):
         return 0
     registration = None
     try:
-        root = Path(__file__).resolve().parents[1]
-        registration = register_runtime(HERE, os.environ.get('NIOH_CATALOGUE_PATH', root / 'outputs/Nioh1-Sword-Move-Observations.xlsx'))
+        from project_paths import DATA
+        registration = register_runtime(HERE, DATA/'moves.json')
         return supervise(args)
     finally:
         try:

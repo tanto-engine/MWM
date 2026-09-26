@@ -6,6 +6,7 @@ from pathlib import Path
 from move_imports import read_import_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 FIXTURES = ROOT / 'tests/native/fixtures'
 PROFILE = json.loads((FIXTURES / 'session-profile.json').read_text())
 BOSS = json.loads((FIXTURES / 'boss-session.json').read_text())
@@ -24,7 +25,7 @@ PROFILE['camera'] = dict(source_bank=hex(BOSS['source_camera_bank']),
 for name in ('source_actor', 'source_owner', 'source_motion', 'source_timing'):
     BOSS.pop(name)
 
-manifest = read_import_manifest(ROOT/'catalogue/imports/okatsu.json')
+manifest = read_import_manifest(MOD_ROOT/'data/imports/okatsu.json')
 BOSS['imports'] = manifest['moves']
 BOSS['string_variant'] = manifest['string_variant']
 BOSS['adapters'] = [None] * len(BOSS['imports'])

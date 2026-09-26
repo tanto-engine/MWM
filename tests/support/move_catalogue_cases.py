@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 sys.path.insert(0,str(ROOT))
 from catalogue import iter_moves, load_catalogue, save_catalogue, validate_catalogue, merge_reconstruction, merge_recording, rename_move
 
@@ -16,7 +17,7 @@ class CatalogueTests(unittest.TestCase):
         # Inspect nested constituent identities and the retained sword import topology.
         # Non-sword trials and constituent heavy attacks cannot remain standalone choices.
         records = list(iter_moves(self.catalogue))
-        self.assertEqual((len(self.catalogue['moves']), len(records)), (22, 51))
+        self.assertEqual((len(self.catalogue['moves']), len(records)), (14, 39))
         self.assertEqual({move['weapon'] for move in records}, {'sword'})
         groups = {move['id']: move for move in self.catalogue['moves']}
         for key, actions in ((0xBC0, [0xBC0,0xC6C,0xC6D]), (0xC6E, [0xC6E,0xC6F,0xC70]), (0xC75,[0xC75,0xC77,0xC78])):
@@ -24,7 +25,7 @@ class CatalogueTests(unittest.TestCase):
             self.assertEqual([move['source']['action_id'] for move in iter_moves({'moves':[group]})], actions)
         for key in (0xC6C,0xC6D,0xCA9,0xCAC,0xCAD,0xC7B,0xC7C,0xC7F,0xC6B,0xCAE):
             self.assertNotIn(f'jin_hayabusa.action_{key:04x}', groups)
-        manifest = json.loads((ROOT/'catalogue/imports/jin_hayabusa.json').read_text())
+        manifest = json.loads((MOD_ROOT/'data/imports/jin_hayabusa.json').read_text())
         self.assertEqual(len(manifest['moves']), 28)
         self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0bbf','jin_hayabusa.action_0c79','jin_hayabusa.action_0c75',
                                                        'jin_hayabusa.izuna_drop','jin_hayabusa.action_0c71','jin_hayabusa.action_0c81'})

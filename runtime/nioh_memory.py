@@ -65,3 +65,40 @@ def read(handle, address, count):
     if not ok or n.value != count:
         raise OSError(f'Read failed at {address:#x}: {n.value}/{count}; error {C.get_last_error()}')
     return buf.raw
+
+
+class PROCESSENTRY32W(C.Structure):
+    _fields_ = [('dwSize', W.DWORD), ('cntUsage', W.DWORD), ('th32ProcessID', W.DWORD),
+                ('th32DefaultHeapID', C.c_size_t), ('th32ModuleID', W.DWORD),
+                ('cntThreads', W.DWORD), ('th32ParentProcessID', W.DWORD),
+                ('pcPriClassBase', W.LONG), ('dwFlags', W.DWORD), ('szExeFile', W.WCHAR * 260)]
+
+
+def current_pid():
+    # Find the single current Nioh process without a saved PID.
+    # Enumerate processes and reject zero or multiple matching executables.
+    # Attachment must not guess between concurrent game instances.
+    kernel.Process32FirstW.argtypes = [W.HANDLE, C.POINTER(PROCESSENTRY32W)]
+    kernel.Process32FirstW.restype = W.BOOL
+    kernel.Process32NextW.argtypes = kernel.Process32FirstW.argtypes
+    kernel.Process32NextW.restype = W.BOOL
+    handle = kernel.CreateToolhelp32Snapshot(2, 0)
+    if handle == C.c_void_p(-1).value:
+        raise C.WinError(C.get_last_error())
+    try:
+        entry = PROCESSENTRY32W()
+        entry.dwSize = C.sizeof(entry)
+        matches = []
+        okay = kernel.Process32FirstW(handle, C.byref(entry))
+        while okay:
+            if entry.szExeFile.lower() == 'nioh.exe':
+                matches.append(entry.th32ProcessID)
+            okay = kernel.Process32NextW(handle, C.byref(entry))
+        error = C.get_last_error()
+        if error != 18:  # ERROR_NO_MORE_FILES
+            raise C.WinError(error)
+        if len(matches) != 1:
+            raise ValueError(f'Expected exactly one running nioh.exe; found {len(matches)}')
+        return matches[0]
+    finally:
+        kernel.CloseHandle(handle)

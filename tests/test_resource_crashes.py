@@ -16,6 +16,7 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
+MOD_ROOT = ROOT.parent/'tanto-sword-mod'
 sys.path.insert(0, str(ROOT / 'runtime'))
 from resource_assets import read_asset
 from native_loader import NIOH
@@ -173,7 +174,7 @@ class ResourceCrashTests(unittest.TestCase):
         # Bind owner identity to the exact resource content and source profile.
         # Change every stable asset field independently while leaving editorial notes variable.
         # Revised assets require a new native owner, but documentation edits must reuse loaded objects.
-        profile = json.loads((ROOT/'catalogue/resource_profiles/okatsu.json').read_text())
+        profile = json.loads((MOD_ROOT/'data/resources/okatsu.json').read_text())
         identity = resources.resource_identity(profile)
         profile['assets']['actions']['evidence'] = 'Different research wording'
         profile['status'] = 'different editorial status'
@@ -188,7 +189,7 @@ class ResourceCrashTests(unittest.TestCase):
         # Reject corrupt real packages and every clip-allocation failure without crashing.
         # Decode the actual motion and camera archives while exhausting every allocation position.
         # Malformed bounds or partial construction must fail before a native access violation.
-        manifest = json.loads((ROOT / 'catalogue/resource_profiles/okatsu.json').read_text())
+        manifest = json.loads((MOD_ROOT / 'data/resources/okatsu.json').read_text())
         with tempfile.TemporaryDirectory(prefix='nioh-crash-check-') as folder:
             folder = Path(folder)
             source, binary, asset = folder/'crash.cpp', folder/'crash.exe', folder/'motion.bin'

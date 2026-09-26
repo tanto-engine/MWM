@@ -464,7 +464,6 @@ class CatalogueIntegrationTests(unittest.TestCase):
         # Missing source identity cannot repopulate the removed observation ledger.
         sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'catalogue'))
         from catalogue import load_catalogue, merge_reconstruction
-        from spreadsheet_sync import workbook_rows
         original = load_catalogue()
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / 'events.jsonl'
@@ -475,7 +474,6 @@ class CatalogueIntegrationTests(unittest.TestCase):
             self.assertEqual(merged, merge_reconstruction(merged, recorded))
             self.assertEqual(merged['moves'], original['moves'])
             self.assertEqual(merged, original)
-            self.assertEqual(workbook_rows(merged), workbook_rows(original))
 
     def test_source_semantics_survive_import_without_promoting_a_move(self):
         # Retain source semantics without treating a captured move as implemented.

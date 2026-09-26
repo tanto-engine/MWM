@@ -60,6 +60,8 @@ def worker_command(script, *arguments):
     # Build a direct Python invocation for a source worker.
     # Reuse the current interpreter and disable bytecode writes.
     # Paths with spaces remain arguments rather than shell fragments.
+    if getattr(sys, 'frozen', False):
+        return [sys.executable, '--worker', Path(script).stem, *map(str, arguments)]
     return [sys.executable, '-B', str(script), *map(str, arguments)]
 
 
