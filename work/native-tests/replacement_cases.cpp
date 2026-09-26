@@ -432,6 +432,80 @@ static void airborne_cases() {
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
 
+static void slam_cases() {
+    // Use captured C75/C77/C78 payloads and automatic rows with the existing high-stance adapter.
+    // Verify actual Frost dispatch, ordinary source continuations, idle exit and Ki Pulse recovery.
+    // Clock checks preserve the full20..28 hit window and the un-cancelled87-frame terminal clip.
+    boss_hold_stances=7;hold_reset(1);pending_heavy={};frost_input={};pad_buttons=0;
+    boss_hold_stances=0;for (auto& binding : boss_skill_bindings) binding={};
+    for (auto& frost : boss_frost_variants) frost=0;
+    boss_frost_variants[2]=6;boss_frost_speed=8;boss_import_count=8;
+    static uint8_t descriptors[3][0xD0]{},payloads[3][0xB0]{},rows[3][74][0x30]{};
+    static uint64_t pointers[3][74],entries[3],combat_pointer;
+    static uint8_t combat[0x80]{},vitals[0xA0]{};
+    constexpr uint32_t keys[]={0xC75,0xC77,0xC78};constexpr int motions[]={5010,5012,5013};
+    const char* bodies[]={"02000100000200000000ff01750cffff010900000000000000004c190000000092130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff45270000ffff09000000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff","02000100000200000000ff01770cffff010900000000000000004c190000000094130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff45270000ffff11270000ffff01000000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff","02000000000200000000ff01780cffff010900000000140000004c190000000095130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff24270000050011270500ffff1b000a001200ffff0000ffffffff0000ffff142700001e00ffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffffffff0000ffff2e000000ffff2f000000ffffffffffffffffffffffffffffffffffff"};
+    const char* automatic[]={"ffffffffffffffffffff01ffffffff0000000000770c000800806464040000000080ff7fffffffffffffffffffffffff","ffffffffffffffffffff01ffffffff0000000000780c0000ff806464040000000080ff7fffffffffffffffffffffffff","ffffffffffffffffffff01ffffffff0000000000b80b0000ff806464040000000080ff7fffffffffffffffffffffffff"};
+    const auto adapter=boss_adapters[5];
+    for (unsigned phase=0;phase<3;++phase) {
+        const unsigned slot=phase+5;boss_private_actions[slot]={};
+        auto& move=boss_imports[slot];move={};move.key=keys[phase];move.motion=motions[phase];
+        move.flags=0x194C0000;move.recovery_frame=-1;move.transition_count=74;move.next_variant=-1;
+        move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
+        move.clip=0xF3000+phase*0x100;move.timing_record=0xF4000+phase*0x100;
+        for (unsigned byte=0;byte<0xB0;++byte) {unsigned v=0;assert(std::sscanf(bodies[phase]+byte*2,"%2x",&v)==1);payloads[phase][byte]=uint8_t(v);}
+        memset(rows[phase],0xff,sizeof(rows[phase]));
+        for (unsigned byte=0;byte<0x30;++byte) {unsigned v=0;assert(std::sscanf(automatic[phase]+byte*2,"%2x",&v)==1);rows[phase][0][byte]=uint8_t(v);}
+        for (unsigned row=0;row<74;++row) pointers[phase][row]=address(rows[phase][row]);
+        memset(descriptors[phase],0,sizeof(descriptors[phase]));descriptors[phase][0x40]=1;
+        put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
+        put(descriptors[phase],0x38,address(jin_bank.data()));put(descriptors[phase],0x78,address(pointers[phase]));
+        put(descriptors[phase],0x82,uint16_t(74));entries[phase]=move.descriptor;
+        boss_adapters[slot]=adapter;boss_adapters[slot].kind=phase ? 4 : 2;
+    }
+    combat_pointer=address(combat);put(descriptors[2],0x48,address(&combat_pointer));put(descriptors[2],0x52,uint16_t(1));
+    put(jin_bank.data(),0x128,address(entries));put(jin_bank.data(),0x130,uint32_t(3));
+    assert(boss_native_successor(5,0xC77)==6 && boss_native_successor(6,0xC78)==7);
+    assert(boss_native_successor(5,0xC76)==-1 && boss_native_successor(7,0xC71)==-1);
+    for (unsigned slot=5;slot<8;++slot) assert(boss_prepare_private_action(slot));
+    for (unsigned phase=0;phase<3;++phase) assert(!memcmp(boss_private_actions[phase+5].transition_bodies[0],rows[phase][0],0x30));
+    for (unsigned offset : {0x24u,0x26u,0x38u}) {int16_t recovery=0;assert(copy_field(boss_private_payload_address(7)+offset,recovery) && recovery==29);}
+    int16_t cost=0;assert(copy_field(boss_private_payload_address(7)+0x16,cost) && cost==20);
+    assert(boss_private_actions[7].payload[0x33]==40 && grapple_field(boss_private_descriptor_address(7),0x48,address(&combat_pointer)));
+    unsigned pulses=0;
+    for (unsigned row=0;row<boss_private_actions[7].transition_count;++row)
+        if (grapple_field(address(boss_private_actions[7].transition_bodies[row]),0x14,int16_t(0xD5F))) {
+            assert(grapple_field(address(boss_private_actions[7].transition_bodies[row]),0x20,int16_t(29)));++pulses;
+        }
+    assert(pulses);
+    boss_frost_variants[2]=0;assert(boss_move_timing(5).startup_speed==1 && boss_move_timing(6).startup_speed==1);
+    boss_frost_variants[2]=6;boss_adapters[6].player_key=0xCB7;assert(boss_move_timing(6).startup_speed==1);
+    boss_adapters[6]=adapter;boss_adapters[6].kind=4;
+    memset(vitals,0,sizeof(vitals));put(owner.data(),0x240,address(vitals));
+    put(player.data(),0x470,uint32_t(2));publish();tick();
+    put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);publish();tick();assert(frost_input.opened);
+    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y;put(player.data(),0x470,uint32_t(1));publish();tick();
+    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER;memset(vitals,0,sizeof(vitals));publish();tick();
+    pad_buttons|=XINPUT_GAMEPAD_Y;publish();tick();assert(boss_active_slot==5 && boss_active && dispatch->control.dispatch_count==1);
+    constexpr float ends[]={24,40,20};
+    for (unsigned phase=0;phase<3;++phase) {
+        const unsigned slot=phase+5;assert(boss_active_slot==slot);
+        put(motion.data(),0x58,boss_imports[slot].clip);
+        for (float frame : {0.0f,ends[phase]-2,ends[phase]}) {
+            put(player.data(),0x28,frame);put(player.data(),0x6A8,1.0f);put(player.data(),0x24,1.0f);
+            const float expected=frame==0 ? 8.0f : frame<ends[phase] ? 2.0f : 1.0f;
+            assert(boss_advance_clock(player.data(),1)==expected && grapple_field(address(player.data()),0x28,frame));
+        }
+        if (phase<2) {SetLastError(FRAME_ERROR);assert(observed_action(player.data(),keys[phase+1],nullptr));}
+    }
+    for (float frame : {20.0f,24.0f,28.0f,29.0f,86.0f}) {
+        put(player.data(),0x28,frame);put(player.data(),0x6A8,1.0f);put(player.data(),0x24,1.0f);
+        assert(boss_advance_clock(player.data(),1)==1);
+    }
+    SetLastError(INCOMING);assert(observed_action(player.data(),0xBB8,nullptr));assert(!boss_active);bindings(false);
+    boss_frost_variants[2]=0;boss_hold_stances=7;frost_input={};
+}
+
 static void frost_cases() {
     // Exercise same-stance rejection, genuine double edges and the exact750ms expiry.
     // Keep sampling continuous while testing controller/lifecycle resets and conflicting inputs.
@@ -530,6 +604,7 @@ int main() {
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     held_slot_cases();
     airborne_cases();
+    slam_cases();
     frost_cases();
     // Empty-Ki selection resolves D4A before the ordinary heavy opener.
     // Hold must defer that exact native selection; release replays the grapple entry.

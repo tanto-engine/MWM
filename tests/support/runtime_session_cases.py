@@ -194,13 +194,13 @@ class RuntimeSessionTests(unittest.TestCase):
         from engine_config import DEFAULT_PRESET
         settings=copy.deepcopy(DEFAULT_PRESET);compiled=self.configured_fixture(settings)
         self.assertEqual([move['key'] for move in compiled['moves']],
-            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC79,0xC7A,0x3B2,0x3B4,0x3B6])
-        self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,0]))
+            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6])
+        self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,12]))
         encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
-        self.assertEqual((values[9],values[42],len(encoded)),(5,19,4424))
+        self.assertEqual((values[9],values[42],len(encoded)),(5,22,4424))
         self.assertEqual(self.config['skill_bindings'],[
             dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
-            dict(kind=2,stances=4,variant=15,key=0,motion=0,transition_count=0,flags=0),
+            dict(kind=2,stances=4,variant=18,key=0,motion=0,transition_count=0,flags=0),
             dict(kind=3,stances=1,variant=7,key=0,motion=0,transition_count=0,flags=0)])
         for field,value in (('kind',4),('stances',True),('variant',0),('key',0xFAB),('flags',0),('transition_count',20)):
             bad=copy.deepcopy(self.config);bad['skill_bindings'][0][field]=value
@@ -223,13 +223,13 @@ class RuntimeSessionTests(unittest.TestCase):
         # Neither source duplication nor configuration can force a paired action without contact.
         from engine_config import DEFAULT_PRESET
         compiled=self.configured_fixture(copy.deepcopy(DEFAULT_PRESET))
-        moves=compiled['moves'];low,izuna=moves[3],moves[11]
+        moves=compiled['moves'];low,izuna=moves[3],moves[14]
         check_import_topology(moves,None)
         self.assertEqual((low['replacement']['player_key'],izuna['replacement']['player_key']),(0xCF5,0xC7A))
-        for index,field,value in ((11,'id','jin_hayabusa.third_launcher'),(11,'motion',5013),
-                (11,'source_payload_prefix','00'),(11,'replacement',low['replacement']),
-                (12,'key',0xC7B),(12,'adapter_kind',2),(12,'recovery_frame',0),(12,'ki_cost',1),
-                (12,'transition_count',20),(12,'next_variant',15),(12,'next_end',1),
+        for index,field,value in ((14,'id','jin_hayabusa.third_launcher'),(14,'motion',5013),
+                (14,'source_payload_prefix','00'),(14,'replacement',low['replacement']),
+                (15,'key',0xC7B),(15,'adapter_kind',2),(15,'recovery_frame',0),(15,'ki_cost',1),
+                (15,'transition_count',20),(15,'next_variant',18),(15,'next_end',1),
                 (4,'flags',1),(5,'ki_cost',0),(6,'adapter_kind',2),(7,'recovery_frame',-1),
                 (8,'motion',1051),(9,'ki_cost',0),(10,'transition_count',74)):
             bad=copy.deepcopy(moves);bad[index][field]=value

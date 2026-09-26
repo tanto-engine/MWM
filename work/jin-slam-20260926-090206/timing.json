@@ -1,0 +1,295 @@
+{
+  "identity": "New player-identified downwards sword slash; older Kusa label superseded. No imported gameplay acceptance.",
+  "capture": "take-0001/events.jsonl",
+  "capture_sha256": "9249d15e7b1ce77d609a379b3eb0f170e4055362f2eff680f938983ce077f735",
+  "source_graph": "C75/5010 -> C77/5012 -> C78/5013 -> BB8. Every link is source row0 unconditional animation-end; no contact/paired dependency. C76 is not part of the observed path.",
+  "timing_policy": "Shared clock startup24/40/20 at configured Frost speed only for a matching C75 Frost graph; C78 active20..28 remains1x; recovery/cancel/Pulse29; full87-frame uncancelled terminal clip remains1x. Late noncombat events70/75 and audio76 remain on the native timeline, interruptible by ordinary recovery.",
+  "moves": [
+    {
+      "key": "0xc75",
+      "motion": 5010,
+      "metadata_line": 541,
+      "captured_payload_prefix_match": true,
+      "payload_offset": 30028,
+      "payload_sha256": "7adf0238ca715620340118b4bffee4f46d9495e1a43dcf08c65dd294ab3a0c01",
+      "flags": "0x194C0000",
+      "source_mode_byte": 1,
+      "ki_cost": 0,
+      "source_recovery": -1,
+      "transition_count": 74,
+      "combat_rows": 0,
+      "clip_frames": 24,
+      "startup_cap": 24,
+      "source_voice_events": [],
+      "events": [
+        [
+          0,
+          10,
+          1
+        ],
+        [
+          0,
+          10,
+          2
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          12,
+          10,
+          0
+        ],
+        [
+          15,
+          0,
+          0
+        ]
+      ],
+      "motion_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/motion.dat",
+        "index": 83,
+        "offset": 1696864,
+        "bytes": 9376,
+        "sha256": "3231a8c5134c23142e67b3ea58fef227ebfd75b5029c4c721e219389320776fb"
+      },
+      "timing_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/timing.dat",
+        "index": 133,
+        "offset": 164768,
+        "bytes": 512,
+        "sha256": "4e134fd765ec401f3c69e5a9478df82e08eb46f9399a33cbd01332d2ef79945a"
+      }
+    },
+    {
+      "key": "0xc77",
+      "motion": 5012,
+      "metadata_line": 543,
+      "captured_payload_prefix_match": true,
+      "payload_offset": 30380,
+      "payload_sha256": "bd29d8553c653c5cfd2b56f71803edbaf110f82517460f3dad93d07821ab6539",
+      "flags": "0x194C0000",
+      "source_mode_byte": 1,
+      "ki_cost": 0,
+      "source_recovery": -1,
+      "transition_count": 74,
+      "combat_rows": 0,
+      "clip_frames": 40,
+      "startup_cap": 40,
+      "source_voice_events": [],
+      "events": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          40,
+          1,
+          0
+        ]
+      ],
+      "motion_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/motion.dat",
+        "index": 85,
+        "offset": 1712768,
+        "bytes": 4736,
+        "sha256": "c0fc3b8055a928591b189a9ed721e5b820fe6146f483b3aa3643836ea6b4c60b"
+      },
+      "timing_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/timing.dat",
+        "index": 135,
+        "offset": 165728,
+        "bytes": 352,
+        "sha256": "f807641735a459f8fca00911a72245c64ddac1cce03495edcf4c1d490bb45574"
+      }
+    },
+    {
+      "key": "0xc78",
+      "motion": 5013,
+      "metadata_line": 546,
+      "captured_payload_prefix_match": true,
+      "payload_offset": 30556,
+      "payload_sha256": "5d520f1a991ca65425c2aaaec49d05550a6d254e54ac70e355c36e601f4f44b3",
+      "flags": "0x194C0000",
+      "source_mode_byte": 1,
+      "ki_cost": 20,
+      "source_recovery": -1,
+      "transition_count": 74,
+      "combat_rows": 1,
+      "clip_frames": 87,
+      "startup_cap": 20,
+      "source_voice_events": [
+        {
+          "frame": 4,
+          "index": 8,
+          "hash": "0x1bc64e48",
+          "category": 12
+        }
+      ],
+      "events": [
+        [
+          0,
+          0,
+          6
+        ],
+        [
+          0,
+          10,
+          6
+        ],
+        [
+          0,
+          10,
+          7
+        ],
+        [
+          0,
+          10,
+          11
+        ],
+        [
+          0,
+          10,
+          12
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          4,
+          10,
+          0
+        ],
+        [
+          4,
+          10,
+          8
+        ],
+        [
+          7,
+          1,
+          6
+        ],
+        [
+          8,
+          11,
+          11
+        ],
+        [
+          10,
+          0,
+          2
+        ],
+        [
+          10,
+          10,
+          1
+        ],
+        [
+          14,
+          10,
+          7
+        ],
+        [
+          14,
+          10,
+          10
+        ],
+        [
+          20,
+          0,
+          0
+        ],
+        [
+          20,
+          0,
+          1
+        ],
+        [
+          20,
+          10,
+          0
+        ],
+        [
+          24,
+          0,
+          3
+        ],
+        [
+          24,
+          10,
+          2
+        ],
+        [
+          28,
+          1,
+          0
+        ],
+        [
+          46,
+          10,
+          5
+        ],
+        [
+          56,
+          10,
+          3
+        ],
+        [
+          70,
+          0,
+          5
+        ],
+        [
+          70,
+          10,
+          1
+        ],
+        [
+          75,
+          0,
+          4
+        ],
+        [
+          76,
+          10,
+          4
+        ],
+        [
+          76,
+          10,
+          9
+        ]
+      ],
+      "motion_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/motion.dat",
+        "index": 86,
+        "offset": 1717504,
+        "bytes": 34848,
+        "sha256": "7835a0c6a38c105889783bc7ea2b460e1142f0c7663be47aef6ce3296e429008"
+      },
+      "timing_record": {
+        "path": "catalogue/resource_assets/jin_hayabusa/timing.dat",
+        "index": 136,
+        "offset": 166080,
+        "bytes": 2272,
+        "sha256": "19814555f4db479af36a319f53c9f9a4417baec7940cf21b8786b046fe29c703"
+      }
+    }
+  ]
+}

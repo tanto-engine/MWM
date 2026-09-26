@@ -47,12 +47,12 @@ class PresetTests(unittest.TestCase):
                 config.validate_preset(dict(config.DEFAULT_PRESET, trigger_mask=value))
 
     def test_frost_slots_and_window_reject_unsupported_or_conflicting_bindings(self):
-        # Enable low Flying Swallow, mid Izuna and high overhead Frost Moon in the baseline.
+        # Enable Flying Swallow, somersault and the recorded downward sword slash.
         # Reject malformed windows, unsupported skills and one import assigned to different stances.
         # Shared hold and Frost bindings may reuse a skill only within the same native stance.
         preset=copy.deepcopy(config.DEFAULT_PRESET)
         self.assertEqual(config.validate_preset(preset)['frost_moon'],
-                         dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high=None))
+                         dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high='jin_hayabusa.action_0c75'))
         self.assertEqual(preset['frost_startup_speed'],8)
         for value in (0,9,True,8.0,'8'):
             with self.subTest(speed=value), self.assertRaises(ValueError):

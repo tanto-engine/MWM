@@ -19,7 +19,7 @@
   "frost_moon": {
     "low": "jin_hayabusa.action_0c71",
     "mid": "jin_hayabusa.action_0c81",
-    "high": null
+    "high": "jin_hayabusa.action_0c75"
   },
   "frost_window_seconds": 0.75,
   "frost_startup_speed": 8,

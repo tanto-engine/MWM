@@ -55,6 +55,17 @@ static MoveTiming boss_move_timing(unsigned slot) {
         for (auto frost : boss_frost_variants) if (frost==slot+1) return {-1,19,float(boss_frost_speed)};
         return {-1,0,1};
     }
+    if (move.flags==0x194C0000 && move.transition_count==74
+        && ((move.key==0xC75 && move.motion==5010 && boss_adapters[slot].kind==2)
+            || (move.key==0xC77 && move.motion==5012 && boss_adapters[slot].kind==4)
+            || (move.key==0xC78 && move.motion==5013 && boss_adapters[slot].kind==4))) {
+        float speed=1;
+        for (auto frost : boss_frost_variants) if (frost && boss_imports[frost-1].key==0xC75
+            && boss_adapters[frost-1].bank==boss_adapters[slot].bank
+            && boss_adapters[frost-1].player_key==boss_adapters[slot].player_key) speed=float(boss_frost_speed);
+        // Only the matching Frost graph accelerates preparation; C78's hit20..28 and tail remain native.
+        return {int16_t(move.key==0xC78 ? 29 : -1),move.key==0xC75 ? 24.0f : move.key==0xC77 ? 40.0f : 20.0f,speed};
+    }
     if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
         return {54,30,2};
     if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
@@ -101,6 +112,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
         || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
+        || (source.key==0xC75 && key==0xC77) || (source.key==0xC77 && key==0xC78)
         || ((source.key==0x3B2 || source.key==0x3B4) && (key==0x3B4 || key==0x3B6));
     if (!linked) return -1;
     for (unsigned next=0;next<boss_import_count;++next) {

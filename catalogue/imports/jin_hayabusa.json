@@ -585,6 +585,93 @@
         "transition_count": 42,
         "recovery_frame": 46
       }
+    },
+    {
+      "id": "jin_hayabusa.action_0c75",
+      "key": 3189,
+      "motion": 5010,
+      "flags": 424411136,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 74,
+      "adapter_kind": 2,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02000100000200000000ff01750cffff010900000000000000004c190000000092130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c77"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c77",
+      "key": 3191,
+      "motion": 5012,
+      "flags": 424411136,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 74,
+      "adapter_kind": 4,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "source_payload_prefix": "02000100000200000000ff01770cffff010900000000000000004c190000000094130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "native_followups": [
+        "jin_hayabusa.action_0c78"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c78",
+      "key": 3192,
+      "motion": 5013,
+      "flags": 424411136,
+      "ki_cost": 20,
+      "recovery_frame": -1,
+      "transition_count": 74,
+      "adapter_kind": 4,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 4,
+          "index": 8,
+          "hash": 465981000
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 4,
+          "index": 8,
+          "hash": 465981000
+        }
+      ],
+      "source_payload_prefix": "02000000000200000000ff01780cffff010900000000140000004c190000000095130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      }
     }
   ],
   "evidence": "work/jin-heavy-research.json",
@@ -611,6 +698,11 @@
       "jin_hayabusa.action_0c81",
       "jin_hayabusa.action_0c82",
       "jin_hayabusa.action_0c83"
+    ],
+    "jin_hayabusa.action_0c75": [
+      "jin_hayabusa.action_0c75",
+      "jin_hayabusa.action_0c77",
+      "jin_hayabusa.action_0c78"
     ]
   }
 }

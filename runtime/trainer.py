@@ -133,7 +133,7 @@ class Trainer:
         self.native_choices = {'Native':None, 'Jin string C':'jin_hayabusa.action_0bc0',
                               'Jin string D':'jin_hayabusa.action_0c6e'}
         self.skill_choices = {'Native':None, 'Jin launcher':'jin_hayabusa.action_0c79',
-                             'Jin somersault':'jin_hayabusa.action_0c81', 'Izuna Drop':'jin_hayabusa.izuna_drop', 'Flying Swallow':'jin_hayabusa.action_0c71'}
+                             'Jin downward slash':'jin_hayabusa.action_0c75', 'Jin somersault':'jin_hayabusa.action_0c81', 'Izuna Drop':'jin_hayabusa.izuna_drop', 'Flying Swallow':'jin_hayabusa.action_0c71'}
         self.native_fields = {}
         for row,(key,label,choices) in enumerate([('low_heavy','Low Triangle taps',self.native_choices),
                 *[(stance,stance.title()+' Triangle hold',self.skill_choices) for stance in ('low','mid','high')]],6):
@@ -141,7 +141,7 @@ class Trainer:
             self.control_row(play,row,label,ttk.Combobox(play,textvariable=self.native_fields[key],values=list(choices),state='readonly',width=42))
         frost=ttk.LabelFrame(play,text='Frost Moon: RB + same stance button twice',padding=10)
         frost.grid(row=0,column=2,rowspan=10,sticky='nw',padx=(24,0))
-        self.frost_choices={'Disabled':None,'Jin somersault':'jin_hayabusa.action_0c81',
+        self.frost_choices={'Disabled':None,'Jin downward slash':'jin_hayabusa.action_0c75', 'Jin somersault':'jin_hayabusa.action_0c81',
                             'Izuna Drop':'jin_hayabusa.izuna_drop','Flying Swallow':'jin_hayabusa.action_0c71'}
         self.frost_fields={stance:tk.StringVar() for stance in ('low','mid','high')}
         for row,(stance,field) in enumerate(self.frost_fields.items()):
@@ -150,7 +150,7 @@ class Trainer:
         self.frost_window=tk.StringVar(); self.frost_speed=tk.StringVar()
         self.control_row(frost,3,'Window (seconds)',ttk.Spinbox(frost,textvariable=self.frost_window,from_=.1,to=1.5,increment=.05,width=8))
         self.control_row(frost,4,'Startup speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
-        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: somersault. High: awaiting sword-slam recording.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
+        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: somersault. High: downward sword slash.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
         for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint override'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
             ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')

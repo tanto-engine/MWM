@@ -22,7 +22,7 @@ if os.name == 'nt':
 # TODO: gameplay acceptance remains separate from validation of a supported preset.
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
-HELD_MOVES = {'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
+HELD_MOVES = {'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
 NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000)}
 DEFAULT_PRESET = dict(schema_version=4, name='Sword baseline', weapon='sword',
                       tap_move='okatsu.charged_rush', hold_move='okatsu.leaping_slash',
@@ -32,7 +32,7 @@ DEFAULT_PRESET = dict(schema_version=4, name='Sword baseline', weapon='sword',
                       okatsu_grapple=True, mid_light_ender=True, string_enabled=False,
                       skill_bindings=[dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'),
                                       dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop')],
-                      frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high=None),
+                      frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high='jin_hayabusa.action_0c75'),
                       frost_window_seconds=.75, frost_startup_speed=8)
 
 
