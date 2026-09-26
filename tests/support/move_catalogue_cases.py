@@ -16,7 +16,7 @@ class CatalogueTests(unittest.TestCase):
         # Inspect nested constituent identities and the retained sword import topology.
         # Non-sword trials and constituent heavy attacks cannot remain standalone choices.
         records = list(iter_moves(self.catalogue))
-        self.assertEqual((len(self.catalogue['moves']), len(records)), (21, 50))
+        self.assertEqual((len(self.catalogue['moves']), len(records)), (22, 51))
         self.assertEqual({move['weapon'] for move in records}, {'sword'})
         groups = {move['id']: move for move in self.catalogue['moves']}
         for key, actions in ((0xBC0, [0xBC0,0xC6C,0xC6D]), (0xC6E, [0xC6E,0xC6F,0xC70]), (0xC75,[0xC75,0xC77,0xC78])):
@@ -25,7 +25,7 @@ class CatalogueTests(unittest.TestCase):
         for key in (0xC6C,0xC6D,0xCA9,0xCAC,0xCAD,0xC7B,0xC7C,0xC7F,0xC6B,0xCAE):
             self.assertNotIn(f'jin_hayabusa.action_{key:04x}', groups)
         manifest = json.loads((ROOT/'catalogue/imports/jin_hayabusa.json').read_text())
-        self.assertEqual(len(manifest['moves']), 22)
+        self.assertEqual(len(manifest['moves']), 23)
         self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0c79','jin_hayabusa.action_0c75',
                                                        'jin_hayabusa.izuna_drop','jin_hayabusa.action_0c71','jin_hayabusa.action_0c81'})
 
@@ -90,7 +90,9 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual((tap['source']['action_id'],tap['source']['motion_id']),(0xC64,1220))
         self.assertEqual((hold['source']['action_id'],hold['source']['motion_id']),(0xC66,1230))
         self.assertEqual(tap['default_binding'],{'chord':['Native Tiger Sprint'],'gesture':'native_skill','weapon':'sword','replaces_action_id':0xFAA})
-        self.assertEqual(hold['default_binding'],{'chord':['LB','Circle'],'gesture':'hold','hold_seconds':.25})
+        self.assertIsNone(hold['default_binding'])
+        jump=moves['jin_hayabusa.flying_swallow_jump']
+        self.assertEqual((jump['source']['action_id'],jump['default_binding']['gesture']),(0xC71,'hold'))
         self.assertTrue(tap['implementation']['selectable'])
         self.assertTrue(hold['implementation']['selectable'])
 

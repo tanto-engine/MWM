@@ -51,7 +51,7 @@ struct MoveAdapter {
     int32_t player_motion;
     uint16_t transition_count;
     int16_t recovery_frame;
-    uint32_t kind; // 0 baseline, 1 native replacement, 2 skill entry, 3 paired, 4 ordinary continuation.
+    uint32_t kind; // 0 baseline, 1 native replacement, 2 skill entry, 3 paired, 4 ordinary continuation, 5 isolated jump.
 };
 static_assert(sizeof(MoveAdapter) == 64, "Adapter ABI size");
 
@@ -63,6 +63,8 @@ struct SkillBinding {
 };
 static_assert(sizeof(SkillBinding)==32,"Skill binding ABI size");
 
+struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };
+
 struct RuntimeSessionConfig {
     uint32_t magic, version, size, pid;
     uint64_t creation_filetime, config_tag;
@@ -73,8 +75,10 @@ struct RuntimeSessionConfig {
     MoveImport imports[24];
     MoveAdapter adapters[24];
     SkillBinding skill_bindings[8];
+    LaunchProfile launch_profiles[2];
+    float air_juggle_boost, izuna_tracking_degrees;
 };
-static_assert(sizeof(RuntimeSessionConfig) == 4424 && offsetof(RuntimeSessionConfig, imports) == 328,
+static_assert(sizeof(RuntimeSessionConfig) == 4464 && offsetof(RuntimeSessionConfig, imports) == 328,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 8;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 9;

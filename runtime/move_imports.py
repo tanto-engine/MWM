@@ -23,7 +23,7 @@ def is_airborne_sword(move):
     # Bound zero-flag airborne imports by exact source identity and adapter role.
     # Grounded sword adaptation is used only after the landing action begins.
     return (move.get('key'),move.get('motion'),move.get('flags'),move.get('adapter_kind')) in (
-        (0xC71,1050,0,2),(0xC72,5000,0,4),(0xC73,5001,0,4),(0xC74,5002,0x1BCE0000,4),
+        (0xC71,1050,0,2),(0xC71,1050,0,5),(0xC72,5000,0,4),(0xC73,5001,0,4),(0xC74,5002,0x1BCE0000,4),
         (0xC81,1050,0,2),(0xC82,5050,0,4),(0xC83,5051,0x1BCE0000,4))
 
 
@@ -34,19 +34,22 @@ def is_izuna_bridge(move):
     return (move.get('key'),move.get('motion'),move.get('flags'),move.get('adapter_kind')) == (0xC7A,1050,0,4)
 
 
-def shared_launcher(first, second):
-    # Keep standalone C79 separate from the Izuna entry using the same source bytes.
-    # Require distinct verified stance templates and identical source signatures/resources.
-    # No other duplicate action key or third alias can enter one runtime table.
+def shared_source(first, second):
+    # Separate launcher/Izuna and jump/full-Swallow roles sharing recorded source bytes.
+    # Require exact role pairs and identical source signatures/resources.
+    # Other duplicate action keys cannot enter the runtime table.
     fields=('key','motion','flags','ki_cost','recovery_frame','transition_count','source_payload_prefix',
             'source_voices','voices','descriptor','payload','clip','timing_record')
-    return ({first['id'],second['id']} == {'jin_hayabusa.action_0c79','jin_hayabusa.izuna_drop'}
-            and (first['key'],first['motion'],first['flags']) == (0xC79,5014,PLAYER_REPLACEMENT_FLAGS)
-            and first.get('adapter_kind') == second.get('adapter_kind') == 2
-            and all(first.get(field)==second.get(field) for field in fields)
-            and first['replacement']['player_key'] in STANCE_OPENERS.values()
-            and second['replacement']['player_key'] in STANCE_OPENERS.values()
-            and first['replacement']['player_key'] != second['replacement']['player_key'])
+    same=all(first.get(field)==second.get(field) for field in fields)
+    jump=({first['id'],second['id']}=={'jin_hayabusa.action_0c71','jin_hayabusa.flying_swallow_jump'}
+          and {first.get('adapter_kind'),second.get('adapter_kind')}=={2,5}
+          and (first['key'],first['motion'],first['flags'])==(0xC71,1050,0))
+    launcher=({first['id'],second['id']}=={'jin_hayabusa.action_0c79','jin_hayabusa.izuna_drop'}
+          and first.get('adapter_kind')==second.get('adapter_kind')==2
+          and (first['key'],first['motion'],first['flags'])==(0xC79,5014,PLAYER_REPLACEMENT_FLAGS)
+          and first['replacement']['player_key']!=second['replacement']['player_key'])
+    return same and (jump or launcher)
+
 
 
 def check_import_topology(moves, string_variant):
@@ -65,14 +68,14 @@ def check_import_topology(moves, string_variant):
         for field in ('id', 'name'):
             if not isinstance(move[field], str) or not move[field].strip():
                 raise ValueError('Import IDs and names must be nonempty strings')
-        if move['id'] in ids or move['key'] in keys and not shared_launcher(keys[move['key']],move):
+        if move['id'] in ids or move['key'] in keys and not shared_source(keys[move['key']],move):
             raise ValueError('Duplicate move ID or action key')
         ids.add(move['id']); keys[move['key']]=move
         flags = move['flags']
         bridge=is_izuna_bridge(move)
         airborne=is_airborne_sword(move)
         replacement = flags == PLAYER_REPLACEMENT_FLAGS or bridge or airborne
-        if replacement and move['adapter_kind'] not in (1, 2, 4):
+        if replacement and move['adapter_kind'] not in (1, 2, 4, 5):
             raise ValueError('Source action family requires a supported native adapter')
         for field, lower, upper in (('key', 1, 0xfffe), ('motion', 0, 0x7fffffff),
                 ('recovery_frame', -1, 0x7fff), ('transition_count', 1, 128 if replacement else 28), ('ki_cost', 0, 0x7fff),
@@ -162,13 +165,17 @@ def read_import_manifest(path, catalogue_path=None):
         raise ValueError('Import slots 0 and 1 must preserve the Okatsu baseline')
     if manifest['boss_id'] == 'jin_hayabusa':
         for move in moves:
+            if move['adapter_kind']==5:
+                if not is_airborne_sword(move) or 'replacement' in move:
+                    raise ValueError('Jump-only adapter must retain the recorded C71 source')
+                continue
             if move['adapter_kind'] == 3:
                 if move['flags'] != PLAYER_PAIRED_FLAGS or 'replacement' in move:
                     raise ValueError('Paired source adapter cannot replace a player descriptor')
                 continue
             adapter = move['replacement']
             values = tuple(adapter[field] for field in ('player_motion', 'transition_count', 'recovery_frame'))
-            if (move['adapter_kind'] not in (1, 2, 4) or not (move['flags'] == PLAYER_REPLACEMENT_FLAGS or is_izuna_bridge(move) or is_airborne_sword(move)) or type(adapter['player_key']) is not int
+            if (move['adapter_kind'] not in (1, 2, 4, 5) or not (move['flags'] == PLAYER_REPLACEMENT_FLAGS or is_izuna_bridge(move) or is_airborne_sword(move)) or type(adapter['player_key']) is not int
                     or adapter['player_key'] not in PLAYER_TEMPLATES or values != PLAYER_TEMPLATES[adapter['player_key']]
                     or move['adapter_kind'] == 1 and adapter['player_key'] not in (0xCF5, 0xCF6, 0xCF7)
                     or move['adapter_kind'] in (2, 4) and adapter['player_key'] not in STANCE_OPENERS.values()

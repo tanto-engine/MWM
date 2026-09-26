@@ -13,6 +13,7 @@ static RuntimeSessionConfig config() {
     result.magic = RUNTIME_SESSION_MAGIC; result.version = RUNTIME_SESSION_VERSION;
     result.frost_milliseconds = 750;
     result.frost_speed = 8;
+    memcpy(result.launch_profiles,boss_launch_profiles,sizeof(result.launch_profiles)); result.air_juggle_boost=2;
     result.size = sizeof(result); result.pid = GetCurrentProcessId(); result.config_tag = 0x123456789abcdef0ULL;
     FILETIME born{}, ended{}, kernel{}, user{};
     assert(GetProcessTimes(GetCurrentProcess(), &born, &ended, &kernel, &user));
@@ -69,6 +70,18 @@ int main() {
     aerial.skill_bindings[0]={2,4,17,0,0,0,0};
     aerial.skill_bindings[1]={3,1,20,0,0,0,0};
     assert(runtime_imports_valid(aerial));
+    auto isolated=aerial;isolated.import_count=21;
+    isolated.imports[20]=isolated.imports[12];isolated.adapters[20]=isolated.adapters[12];
+    auto& jump=isolated.adapters[20];jump.kind=5;jump.player_descriptor=0;jump.player_key=0;
+    jump.player_motion=0;jump.transition_count=0;jump.recovery_frame=0;
+    assert(runtime_imports_valid(isolated));
+    isolated.adapters[20].player_key=0xCF5;assert(!runtime_imports_valid(isolated));
+    auto native_window=aerial;native_window.frost_milliseconds=0;assert(runtime_imports_valid(native_window));
+    for (unsigned band=0;band<2;++band) {
+        auto invalid=aerial;invalid.launch_profiles[band].weight_scale=0;assert(!runtime_imports_valid(invalid));
+        invalid=aerial;invalid.launch_profiles[band].vertical_impulse=21;assert(!runtime_imports_valid(invalid));
+    }
+
     for (unsigned slot : {7u,8u,9u,12u,13u,14u,15u,16u,17u,18u,19u}) {
         auto invalid=aerial;invalid.imports[slot].flags^=1;
         assert(!runtime_imports_valid(invalid));
@@ -77,7 +90,7 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==8 && sizeof(RuntimeSessionConfig)==4424
+    static_assert(RUNTIME_SESSION_VERSION==9 && sizeof(RuntimeSessionConfig)==4464
         && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632
         && offsetof(RuntimeSessionConfig,skill_bindings)==4168);
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;

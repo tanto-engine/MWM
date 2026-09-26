@@ -482,7 +482,8 @@ static DWORD start_observer() {
     if (!frame_prologue_matches(frame_target)) return 5;
     voice_target = reinterpret_cast<char*>(main) + 0x9670a0;
     if (!voice_prologue_matches(voice_target)) return 5;
-    if (!resolve_weight_setter(reinterpret_cast<uint64_t>(main))) return 5;
+    if (!resolve_weight_setter(reinterpret_cast<uint64_t>(main))
+        || !resolve_tracking_helpers(reinterpret_cast<uint64_t>(main))) return 5;
     if (replacements_configured()) {
         lookup_target = reinterpret_cast<char*>(main) + 0x73fa40;
         const uint8_t prefix[] = {0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x20};

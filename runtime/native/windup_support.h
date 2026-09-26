@@ -14,13 +14,81 @@ static bool windup_writable_float(uint64_t address) {
         && address + sizeof(float) <= reinterpret_cast<uint64_t>(region.BaseAddress) + region.RegionSize;
 }
 
+using TrackingYawFn = void (*)(void*,float);
+using TrackingTargetFn = uint64_t (*)(const uint64_t*);
+static TrackingYawFn native_set_yaw;
+static TrackingTargetFn native_locked_target;
+static uint64_t tracking_registry;
+struct IzunaTracking { uint64_t player,owner; uint32_t serial; };
+static IzunaTracking izuna_tracking{};
+
+static bool resolve_tracking_helpers(uint64_t module) {
+    // Pin the native yaw-only setter and exact-handle registry lookup for this executable.
+    // Both helpers run synchronously on an existing player callback, without hooks or retained targets.
+    // The resolver returns a borrowed entity; its identity is checked again before the yaw write.
+    const uint8_t yaw[]={0x0f,0x2f,0x0d,0x8d,0x6c,0xe7,0,0x76,0x0e,0xf3,0x0f,0x5c,0x0d,0xbb,0x6c,0xe7};
+    const uint8_t target[]={0x48,0x8b,0xd1,0x48,0x8b,0x0d,0xae,0xab,0x14,0x01,0xe9,0xc1,0xfd,0xff,0xff};
+    const uint8_t lookup[]={0x8b,0x02,0x4c,0x8b,0xd1,0x44,0x0f,0xb7,0x4a,0x06,0x45,0x33,0xc0,0x48,0x8b,0x12};
+    uint8_t bytes[16];native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;
+    if (!copy_bytes(module+0x711DD0,bytes,sizeof(yaw)) || memcmp(bytes,yaw,sizeof(yaw))
+        || !copy_bytes(module+0x755890,bytes,sizeof(target)) || memcmp(bytes,target,sizeof(target))
+        || !copy_bytes(module+0x755660,bytes,sizeof(lookup)) || memcmp(bytes,lookup,sizeof(lookup))) return false;
+    native_set_yaw=reinterpret_cast<TrackingYawFn>(module+0x711DD0);
+    native_locked_target=reinterpret_cast<TrackingTargetFn>(module+0x755890);
+    tracking_registry=module+0x18A0448;return true;
+}
+
+static void track_izuna(uint64_t player, unsigned slot, float frame) {
+    // Correct only an entry's initial facing toward its current locked human target, before contact.
+    // Native711DD0 writes movement yaw alone;755890 borrows an exact-handle entity for this callback.
+    // Recheck all identities after resolution, then consume this serial once without accumulating turns.
+    uint32_t serial=0,human=1;uint16_t type=1;uint64_t controller=0,handle=0,registry=0,preferred=0,movement=0;
+    uint64_t profile=0,component=0,target_actor=0,target_current=0,target_payload=0,flags=0;
+    if (!(boss_izuna_tracking_degrees>0 && boss_izuna_tracking_degrees<=90) || !(frame>=0 && frame<12)
+        || !native_set_yaw || !native_locked_target || !copy_field(player+0xDC,serial)
+        || (izuna_tracking.player==player && izuna_tracking.owner==boss_session.player_owner && izuna_tracking.serial==serial)
+        || !copy_field(boss_private_payload_address(slot)+0x18,flags) || (flags&0x20000000ULL)
+        || !copy_field(player+8,controller) || !copy_field(controller+0x40,handle) || !handle
+        || !copy_field(tracking_registry,registry) || !registry || !copy_field(player+0x38,preferred)) return;
+    movement=preferred;
+    if (!movement && !copy_field(player+0x18,movement)) return;
+    const uint64_t target=native_locked_target(&handle);
+    if (!target || target==boss_session.player_owner || !same_field(target,0,handle)
+        || !copy_field(target+4,type) || type || !copy_field(target+0xE90,profile)
+        || !copy_field(profile+0x0C,human) || human || !copy_field(target+0x230,component)
+        || !copy_field(component+8,target_actor) || target_actor==player || !same_field(target_actor,0,boss_session.vtable)
+        || !same_field(target_actor,0x50,target) || !copy_field(target_actor+0x58,target_current)
+        || !copy_field(target_current+0x20,target_payload) || !copy_field(target_payload+0x18,flags)
+        || (flags&0x20000000ULL)) return;
+    float origin[3],position[3],yaw=0;
+    if (!copy_bytes(boss_session.player_owner+0xF0,origin,sizeof(origin)) || !copy_bytes(target+0xF0,position,sizeof(position))
+        || !copy_field(movement+0x54,yaw) || !std::isfinite(yaw)) return;
+    const float dx=position[0]-origin[0],dy=position[1]-origin[1],dz=position[2]-origin[2];
+    if (!(dx*dx+dz*dz>0.000001f && dx*dx+dy*dy+dz*dz<=36)) return;
+    constexpr float pi=3.141592741f;
+    const float aim=std::atan2(dx,dz),difference=std::remainder(aim-yaw,2*pi);
+    if (!(std::abs(difference)<=boss_izuna_tracking_degrees*pi/180) || !windup_writable_float(movement+0x54)
+        || !boss_player_valid() || !same_field(player,8,controller) || !same_field(controller,0x40,handle)
+        || !same_field(player,0x58,boss_private_descriptor_address(slot)) || !same_field(player,0x38,preferred)
+        || (!preferred && !same_field(player,0x18,movement)) || !same_field(target,0,handle)
+        || !same_field(target,0x230,component) || !same_field(component,8,target_actor)
+        || !same_field(target_actor,0x50,target) || !same_field(target_actor,0x58,target_current)) return;
+    uint32_t after=0;if (!copy_field(player+0xDC,after) || after!=serial) return;
+    izuna_tracking={player,boss_session.player_owner,serial};
+    native_set_yaw(reinterpret_cast<void*>(movement),aim);
+}
+
 static float boss_advance_clock(void* actor, float native_delta) {
     // Shorten configured startup through the shared animation clock.
     // Scale speed and delta together; stop at each explicit phase boundary.
     // Seeking frames would desynchronize timing events; native per-frame recomputation supplies recovery.
     const uint64_t player = reinterpret_cast<uint64_t>(actor);
+    if (player!=boss_session.player) return native_delta;
     const unsigned slot=boss_active_slot;
-    if (slot>=boss_import_count) return native_delta;
+    if (slot>=boss_import_count) {izuna_tracking={};return native_delta;}
+    const bool izuna=boss_adapters[slot].kind==2 && boss_imports[slot].key==0xC79
+        && boss_imports[slot].motion==5014 && boss_native_successor(slot,0xC7A)>=0;
+    if (!boss_active || !izuna) izuna_tracking={};
     const auto& move=boss_imports[slot];
     const auto timing=boss_move_timing(slot);
     if (!timing.startup_end) return native_delta;
@@ -37,6 +105,7 @@ static float boss_advance_clock(void* actor, float native_delta) {
         || !copy_field(player + 0x24, delta)
         || !(frame >= 0.0f && speed > 0.0f && speed <= 8.0f
              && delta > 0.0f && delta <= 4.0f && delta == native_delta)) return native_delta;
+    if (izuna) {const DWORD error=GetLastError();track_izuna(player,slot,frame);SetLastError(error);}
     const float boundary=timing.startup_end;
     if (frame>=boundary) return native_delta;
     const float remaining = boundary - frame;

@@ -75,7 +75,7 @@ def validate_catalogue(data):
                 if (binding.get('stance') != 'low' or binding.get('weapon') != 'sword'
                         or type(binding.get('chain_position')) is not int or not 1 <= binding['chain_position'] <= 3):
                     raise ValueError(f'{key}: invalid native attack context')
-            elif binding['gesture']=='double_tap' and not 0<binding.get('window_seconds',0)<=1.5:
+            elif binding['gesture']=='double_tap' and not 0<=binding.get('window_seconds',-1)<=1.5:
                 raise ValueError(f'{key}: invalid double-tap window')
             elif binding['gesture'] not in ('held_chain','native_skill','double_tap') and not 0 < binding.get('hold_seconds',0) <= 5:
                 raise ValueError(f'{key}: invalid hold threshold')

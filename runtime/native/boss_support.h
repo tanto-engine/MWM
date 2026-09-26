@@ -52,6 +52,7 @@ static MoveTiming boss_move_timing(unsigned slot) {
     if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC83)
         return {30,0,1}; // Landing clip37; last non-audio event29.
     if (airborne_sword(move,boss_adapters[slot]) && (move.key==0xC71 || move.key==0xC81)) {
+        if (boss_adapters[slot].kind==5) return {-1,19,float(boss_frost_speed)};
         for (auto frost : boss_frost_variants) if (frost==slot+1) return {-1,19,float(boss_frost_speed)};
         return {-1,0,1};
     }
@@ -63,9 +64,10 @@ static MoveTiming boss_move_timing(unsigned slot) {
     if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
         return {78,0,1};
     if (boss_adapters[slot].kind==2 && move.key==0xC79 && move.motion==5014
-        && move.flags==0x194C0000 && move.recovery_frame==-1)
-        return {boss_native_successor(slot,0xC7A)<0 ? int16_t(21) : int16_t(54),8,
-                boss_native_successor(slot,0xC7A)<0 ? 2.0f : float(boss_frost_speed)};
+        && move.flags==0x194C0000 && move.recovery_frame==-1) {
+        const bool izuna=boss_native_successor(slot,0xC7A)>=0;
+        return {int16_t(izuna ? 54 : 21),izuna ? 12.0f : 8.0f,izuna ? float(boss_frost_speed) : 2.0f};
+    }
     return {move.recovery_frame,0,1};
 }
 static uint64_t boss_private_descriptor_address(unsigned slot = 0) {
@@ -100,6 +102,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     // Standalone C79 and Izuna share source bytes but must own different successor graphs.
     const auto& owner=boss_adapters[slot];
     const auto& source=boss_imports[slot];
+    if (owner.kind==5) return -1;
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
@@ -136,6 +139,10 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
         uint8_t check[0x30];
         if (!copy_bytes(source_pointers[i], bodies[i], 0x30) || !copy_bytes(source_pointers[i], check, 0x30)
             || memcmp(bodies[i], check, 0x30)) return false;
+        if (boss_adapters[slot].kind==5) {
+            int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
+            if (target==0xC72) bodies[i][0x0A]=0xff; // Keep jump/fall; omit Swallow dash.
+        }
         if (boss_adapters[slot].kind==3 || (bodies[i][0x0A]==1 && bodies[i][0x0B]==0xff)) {
             int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
             if ((target==0 || target>=0xBB8) && boss_native_successor(slot,uint32_t(target))<0) {
@@ -364,7 +371,7 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     memcpy(&recovery_start, payload + 0x24, sizeof(recovery_start));
     memcpy(&base_ki_cost, payload + 0x16, sizeof(base_ki_cost));
     if (recovery_start != spec.recovery_frame || base_ki_cost < 0
-        || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && base_ki_cost == 0)) return false;
+        || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && boss_adapters[slot].kind != 5 && base_ki_cost == 0)) return false;
     recovery_start=boss_move_timing(slot).recovery;
     if (airborne_sword(spec,boss_adapters[slot]) && (spec.key==0xC72 || spec.key==0xC82)) {
         // Native71000A accumulates recoverable Ki from the airborne attack's actual cost.
@@ -601,7 +608,7 @@ static DispatchReason validate_boss_source(const DispatchCommand& c) {
     if (c.reserved[1] >= boss_import_count) return InvalidConfig;
     const auto& spec = boss_imports[c.reserved[1]];
     if (!InterlockedCompareExchange(&boss_active,0,0) && spec.flags != 0x184C0000
-        && boss_adapters[c.reserved[1]].kind != 1 && boss_adapters[c.reserved[1]].kind != 2
+        && boss_adapters[c.reserved[1]].kind != 1 && boss_adapters[c.reserved[1]].kind != 2 && boss_adapters[c.reserved[1]].kind != 5
         && !(boss_native_grapple_entry && boss_native_grapple && spec.key==0x361
             && spec.motion==1311 && spec.flags==0x8078000000ULL && !boss_adapters[c.reserved[1]].kind)) return InvalidConfig;
 #else

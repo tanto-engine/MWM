@@ -9,6 +9,8 @@ static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank
 static uint64_t boss_native_grapple;
 static uint64_t boss_native_bindings;
 static SkillBinding boss_skill_bindings[8]{};
+static LaunchProfile boss_launch_profiles[2]={{75,.75f,14,0},{200,.45f,17,0}};
+static float boss_air_juggle_boost=2, boss_izuna_tracking_degrees=45;
 static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
 
@@ -23,7 +25,7 @@ static bool airborne_sword(const MoveImport& move, const MoveAdapter& adapter) {
     constexpr int motions[]={1050,5000,5001,5002,1050,5050,5051}, counts[]={18,17,18,75,18,18,75};
     return move.motion==motions[phase] && move.transition_count==counts[phase]
         && move.flags==((phase==3 || phase==6) ? 0x1BCE0000ULL : 0)
-        && adapter.kind==((phase==0 || phase==4) ? 2u : 4u)
+        && (adapter.kind==((phase==0 || phase==4) ? 2u : 4u) || (phase==0 && adapter.kind==5))
         && move.recovery_frame==(phase==3 ? 20 : -1) && move.next_variant==-1;
 }
 
@@ -32,9 +34,17 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
     if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
-        || config.hold_stances>7 || config.frost_milliseconds<100 || config.frost_milliseconds>1500
+        || config.hold_stances>7 || (config.frost_milliseconds && config.frost_milliseconds<100) || config.frost_milliseconds>1500
         || config.frost_speed<1 || config.frost_speed>8)
         return false;
+    if (!(config.izuna_tracking_degrees>=0 && config.izuna_tracking_degrees<=90) || !(config.air_juggle_boost>=0 && config.air_juggle_boost<=5)) return false;
+    uint32_t previous=0;
+    for (const auto& profile : config.launch_profiles) {
+        if (profile.reserved || profile.resistance_below<=previous || profile.resistance_below>10000
+            || !(profile.weight_scale>0 && profile.weight_scale<=1)
+            || !(profile.vertical_impulse>0 && profile.vertical_impulse<=20)) return false;
+        previous=profile.resistance_below;
+    }
     constexpr uint32_t openers[]={0xCF5,0xC7A,0xCB7};
     for (unsigned stance=0;stance<3;++stance) {
         const auto slot=config.frost_variants[stance];
@@ -53,12 +63,13 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         }
         if (!adapter.kind && config.imports[binding.variant-1].flags!=0x184C0000ULL) return false;
         if (adapter.kind) {
-            bool owner=false;
+            bool owner=adapter.kind==5 || (binding.kind==1 && binding.key==0xCFD && adapter.kind==1 && adapter.player_key==0xCF6 && binding.stances==1);
             for (unsigned stance=0;stance<3;++stance)
                 owner=owner || (adapter.kind==2 && binding.stances==(1u<<stance) && adapter.player_key==openers[stance]);
             if (!owner) return false;
         }
-        if (binding.kind==1 ? (binding.key!=0xFAA || binding.motion!=5090 || binding.transition_count!=21 || binding.flags!=0x40017C00000ULL)
+        if (binding.kind==1 ? !((binding.key==0xFAA && binding.motion==5090 && binding.transition_count==21 && binding.flags==0x40017C00000ULL)
+                || (binding.key==0xCFD && binding.motion==4820 && binding.transition_count==40 && binding.flags==0x8000000594C0000ULL))
             : (binding.key || binding.motion || binding.transition_count || binding.flags)) return false;
         for (unsigned prior=0;prior<index;++prior) {
             const auto& earlier=config.skill_bindings[prior];
@@ -86,16 +97,16 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         const auto& adapter = config.adapters[i];
         if (adapter.kind==3 && !config.hold_camera_bank) return false;
         if (move.key==0x361 && move.motion==1311 && move.flags==0x8078000000ULL && !adapter.kind) grapple_target=true;
-        const bool replacement = adapter.kind == 1 || adapter.kind == 2 || adapter.kind == 4;
+        const bool replacement = adapter.kind == 1 || adapter.kind == 2 || adapter.kind == 4 || adapter.kind == 5;
         const bool izuna_bridge = adapter.kind==4 && move.key==0xC7A && move.motion==1050 && !move.flags;
         const bool airborne=airborne_sword(move,adapter);
         if (adapter.kind) {
-            if (adapter.kind > 4) return false;
+            if (adapter.kind > 5) return false;
             const uint64_t dependencies[] = {adapter.action_resource,adapter.timing_resource,adapter.bank,
                 adapter.motion_bank,adapter.timing_wrapper};
             for (uint64_t pointer : dependencies)
                 if (pointer < 0x10000 || pointer > 0x00007fffffffffffULL) return false;
-            if (replacement) {
+            if (replacement && adapter.kind!=5) {
             // These three researched sword entries exclude dash/running attacks.
             if (adapter.player_descriptor < 0x10000 || adapter.player_descriptor > 0x7fffffffffffULL
                 || !((adapter.player_key >= 0xCF5 && adapter.player_key <= 0xCF7
@@ -110,7 +121,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
                 if (config.adapters[prior].kind == 1 && config.adapters[prior].player_key == adapter.player_key) return false;
             } else if (adapter.player_descriptor || adapter.player_key || adapter.player_motion
-                || adapter.transition_count || adapter.recovery_frame || move.flags != 0x8038000000ULL) return false;
+                || adapter.transition_count || adapter.recovery_frame
+                || (adapter.kind==3 ? move.flags!=0x8038000000ULL : adapter.kind!=5 || !airborne)) return false;
         } else if (memcmp(&adapter, &no_adapter, sizeof(adapter))) return false;
         const bool simple = move.flags == 0x184C0000 || replacement;
         const bool attempt = move.flags == 0x594C0000 || ((adapter.kind == 2 || izuna_bridge) && move.next_variant>=0);
@@ -131,8 +143,9 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         }
         for (unsigned prior = 0; prior != i; ++prior) if (move.key == config.imports[prior].key) {
             const auto& earlier=config.imports[prior]; const auto& owner=config.adapters[prior];
-            if (move.key!=0xC79 || move.motion!=5014 || move.flags!=0x194C0000 || adapter.kind!=2 || owner.kind!=2
-                || adapter.player_key==owner.player_key || earlier.motion!=move.motion || earlier.flags!=move.flags
+            const bool alias=(move.key==0xC79 && move.motion==5014 && move.flags==0x194C0000 && adapter.kind==2 && owner.kind==2 && adapter.player_key!=owner.player_key)
+                || (move.key==0xC71 && move.motion==1050 && !move.flags && ((adapter.kind==5 && owner.kind==2) || (adapter.kind==2 && owner.kind==5)));
+            if (!alias || earlier.motion!=move.motion || earlier.flags!=move.flags
                 || earlier.descriptor!=move.descriptor || earlier.payload!=move.payload || earlier.clip!=move.clip
                 || earlier.timing_record!=move.timing_record || earlier.transition_count!=move.transition_count
                 || earlier.recovery_frame!=move.recovery_frame) return false;
@@ -208,6 +221,9 @@ static DWORD load_runtime_session(const void* parameter) {
             && incoming.native_bindings == boss_native_bindings
             && incoming.hold_stances==boss_hold_stances && incoming.frost_milliseconds==boss_frost_milliseconds
             && incoming.frost_speed==boss_frost_speed
+            && incoming.air_juggle_boost==boss_air_juggle_boost
+            && incoming.izuna_tracking_degrees==boss_izuna_tracking_degrees
+            && !memcmp(incoming.launch_profiles,boss_launch_profiles,sizeof(boss_launch_profiles))
             && !memcmp(incoming.frost_variants,boss_frost_variants,sizeof(boss_frost_variants))
             && !memcmp(incoming.skill_bindings,boss_skill_bindings,sizeof(boss_skill_bindings))
             && !memcmp(incoming.adapters, boss_adapters, sizeof(boss_adapters))
@@ -215,6 +231,9 @@ static DWORD load_runtime_session(const void* parameter) {
     }
     boss_session = incoming.session;
     memcpy(boss_skill_bindings,incoming.skill_bindings,sizeof(boss_skill_bindings));
+    memcpy(boss_launch_profiles,incoming.launch_profiles,sizeof(boss_launch_profiles));
+    boss_air_juggle_boost=incoming.air_juggle_boost;
+    boss_izuna_tracking_degrees=incoming.izuna_tracking_degrees;
     memcpy(boss_imports, incoming.imports, sizeof(boss_imports));
     memcpy(boss_adapters, incoming.adapters, sizeof(boss_adapters));
     boss_import_count = incoming.import_count;

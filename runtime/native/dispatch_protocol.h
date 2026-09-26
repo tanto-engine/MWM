@@ -62,7 +62,7 @@ static inline DispatchReason command_status(const DispatchCommand& c, int64_t no
     // A reconnect or delayed publisher must not replay an old input into valid gameplay.
     if (c.armed != 1) return NotArmed;
     if (c.generation != generation) return WrongGeneration;
-    if (c.reserved[0] > 1 || c.reserved[1] >= 16 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
+    if (c.reserved[0] > 1 || c.reserved[1] >= 24 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
     if (c.held != 1 && c.reserved[0] != 1) return Released;
     if (!c.chord_sequence || c.chord_sequence > INT64_MAX) return InvalidConfig;
     if (c.chord_sequence <= consumed) return SequenceConsumed;

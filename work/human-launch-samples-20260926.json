@@ -1,0 +1,42 @@
+[
+  {
+    "label": "footsoldier",
+    "session": {
+      "pid": 11564,
+      "creation_filetime": "134349074321430317",
+      "module_base": "0x7ff7669c0000",
+      "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "vtable": "0x7ff767b63530",
+      "vtable_rva": "0x11a3530"
+    },
+    "player": "0x2655972ac70",
+    "entity": "0x2654833f320",
+    "profile": "0x265a82a03e8",
+    "profile_type": 0,
+    "base_weight": 100,
+    "effective_weight": 100.0,
+    "resistance": 68,
+    "target_handle": "ecfa09000000d039"
+  },
+  {
+    "label": "armored rogue",
+    "session": {
+      "pid": 11564,
+      "creation_filetime": "134349074321430317",
+      "module_base": "0x7ff7669c0000",
+      "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "vtable": "0x7ff767b63530",
+      "vtable_rva": "0x11a3530"
+    },
+    "player": "0x2655972ac70",
+    "entity": "0x2654836dac0",
+    "profile": "0x265a829e69c",
+    "profile_type": 0,
+    "base_weight": 100,
+    "effective_weight": 100.0,
+    "resistance": 83,
+    "target_handle": "2ff6050000009447",
+    "cursed": true,
+    "interpretation": "Current effective resistance; cursed status may affect it. Not an immutable enemy-type identifier."
+  }
+]

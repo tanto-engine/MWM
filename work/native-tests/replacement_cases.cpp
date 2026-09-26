@@ -24,6 +24,8 @@ static bool publish_during_input;
 static unsigned weight_calls;
 static uint64_t weight_reaction;
 static bool weight_accept=true;
+static float weight_native_impulse=16;
+static uint64_t weight_component_after;
 
 static void owned_weight(void* actor, float weight) {
     // Model Character::SetWeight with owned fields and the native negative sentinel.
@@ -47,6 +49,8 @@ static bool weight_action(void* actor, uint32_t, void* context) {
         put(actor,0x58,weight_reaction);put(actor,0xDC,serial+1);
         assert(copy_field(address(actor)+0x50,owner) && copy_field(owner+0x230,component));
         put(reinterpret_cast<void*>(component),0x90,uint64_t(0));
+        put(reinterpret_cast<void*>(component),0x5C,weight_native_impulse);
+        if (weight_component_after) put(reinterpret_cast<void*>(owner),0x230,weight_component_after);
     }
     SetLastError(ACTION_ERROR);return weight_accept;
 }
@@ -55,7 +59,7 @@ static void weight_cases() {
     // Exercise provisional weight during the actual native selected-hit setter path.
     // Rejected, paired and nonreaction results roll back; only committed reactions retain ownership.
     // Existing component, external-owner and cooperative Stop cases remain entirely owned-memory tests.
-    static uint8_t victim[0x800]{},victim_owner[0x260]{},component[0x98]{},collision[0xC0]{},changed_collision[0xC0]{};
+    static uint8_t victim[0x800]{},victim_owner[0xF00]{},component[0x98]{},collision[0xC0]{},changed_collision[0xC0]{};
     static uint8_t event[0x120]{},reaction[0xD0]{},payload[0xB0]{},initial[0xD0]{},initial_payload[0xB0]{};
     native_set_weight=owned_weight;weight_calls=0;weight_reaction=address(reaction);
     const auto saved_action=original_action;original_action=weight_action;
@@ -106,6 +110,36 @@ static void weight_cases() {
         boss_adapters[5].player_key=0xCF5;boss_import_count=bridge_slot;
         boss_imports[bridge_slot]=saved_bridge;boss_adapters[bridge_slot]=saved_adapter;
     }
+    // Current-resistance bands are configurable trials, not universal enemy classes.
+    // Inline fallback and active override blocks must choose the same labeled human tier.
+    // Only the exact committed damage result can receive a per-victim vertical change.
+    static uint8_t profile[0xE0]{},stats[0xBC0]{},override_stats[0x130]{},other_component[0x98]{};
+    for (unsigned scenario=0;scenario<10;++scenario) {
+        put(victim,0x58,address(initial));put(victim,0x7BC,-1.0f);put(collision,0xB0,100.0f);
+        put(victim_owner,0x230,address(component));put(component,8,address(victim));
+        put(victim_owner,0x240,address(stats));put(victim_owner,0xE90,scenario==4 ? uint64_t(0) : address(profile));
+        put(profile,0x0C,uint32_t(scenario==3 ? 1 : 0));put(profile,0xD8,uint32_t(100));
+        const uint32_t resistance=scenario==0 ? 68 : scenario==2 ? 200 : 83;
+        put(stats,0xAF8,resistance);put(stats,0xB98,scenario==5 ? address(override_stats) : uint64_t(0));
+        put(override_stats,0x120,uint32_t(68));
+        put(component,0x90,address(event));put(component,0x5C,0.0f);
+        put(event,0xE8,boss_session.player_owner);put(event,0x100,address(victim_owner));
+        put(event,0xE0,address(boss_private_actions[5].combat_body));put(event,0x11C,int32_t(0));
+        put(payload,0,uint32_t(scenario==9 ? 0 : 0x40000));put(payload,0x18,uint64_t(scenario==8 ? 0x20000000 : 0));
+        weight_native_impulse=scenario==6 ? 11.0f : 16.0f;
+        weight_component_after=scenario==7 ? address(other_component) : 0;
+        const bool low=scenario==0 || scenario==5, fallback=scenario==2 || scenario==3 || scenario==4;
+        float expected=low ? 75.0f : fallback ? 50.0f : 45.0f;
+        SetLastError(INCOMING);assert(observed_action(victim,0x96,&expected) && GetLastError()==ACTION_ERROR);
+        float impulse=0;assert(copy_field(address(component)+0x5C,impulse));
+        const float expected_impulse=scenario>=6 ? weight_native_impulse : low ? 14.0f : fallback ? 16.0f : 17.0f;
+        if (impulse!=expected_impulse) std::fprintf(stderr,"launch scenario%u impulse%g expected%g\n",scenario,impulse,expected_impulse);
+        assert(impulse==expected_impulse);
+        assert(launch_weight_count==(scenario>=7 ? 0 : 1));
+        restore_launch_weights(address(victim),true);assert(!launch_weight_count);
+    }
+    put(victim_owner,0x230,address(component));put(victim_owner,0xE90,uint64_t(0));
+    weight_native_impulse=16;weight_component_after=0;
     // Direct selected-hit acquisition isolates unchanged serial and existing ownership endings.
     put(initial_payload,0x18,uint64_t(0));weight_accept=true;
     for (unsigned ending=0;ending<10;++ending) {
@@ -136,6 +170,49 @@ static void weight_cases() {
         float actual=0;assert(copy_field(address(victim)+0x7BC,actual));
         assert(actual==(ending==1 ? 50.0f : ending==2 ? 75.0f : -1.0f));
     }
+    // Native sword rows and curated imports can add one small boost to an already airborne victim.
+    // Compare the new native result with the source row, so repeated finishing cannot accumulate.
+    // Grounded, paired, foreign, stale, other-weapon and disabled hits retain their native result.
+    static uint8_t sword[0xD0]{},sword_payload[0xB0]{},sword_combat[0x80]{};
+    static uint64_t sword_row=address(sword_combat);
+    uint64_t player_current=0;uint32_t player_bank=0;
+    assert(copy_field(address(player.data())+0x58,player_current) && copy_field(address(player.data())+0x68,player_bank));
+    const auto active=boss_active;const auto kind=boss_adapters[5].kind;
+    constexpr uint32_t sword_keys[]={0xC76,0xC78,0xCB3,0xCF4,0xC7A,0xCB9,0xCF7};
+    constexpr int32_t sword_motions[]={2100,2120,3100,4140,2300,3320,4320};
+    for (unsigned scenario=0;scenario<21;++scenario) {
+        put(victim,0,boss_session.vtable);put(victim,0x50,address(victim_owner));put(victim,0x58,address(initial));
+        put(victim,0x7BC,-1.0f);put(victim_owner,0x230,address(component));put(victim_owner,0x250,address(collision));
+        put(collision,0xB0,100.0f);put(component,8,address(victim));put(component,0x90,address(event));
+        put(initial_payload,0,uint64_t(scenario==8 ? 0 : scenario==19 ? 0x200000000ULL : 0x400));
+        put(initial_payload,0x18,uint64_t(scenario==9 ? 0x20000000 : 0));
+        put(payload,0,uint64_t(scenario==20 ? 0x40000 : 0x40400));put(payload,0x18,uint64_t(scenario==10 ? 0x20000000 : 0));
+        const unsigned native=scenario<7 ? scenario : 0;
+        put(sword,0,sword_keys[native]);put(sword,0x20,address(sword_payload));sword[0x40]=1;
+        put(sword,0x48,address(&sword_row));put(sword,0x50,uint16_t(0));put(sword,0x52,uint16_t(1));
+        put(sword_payload,0x18,uint64_t(scenario==11 ? 0x20000000 : 0x194C0000));
+        put(sword_payload,0x20,scenario==12 ? int32_t(9999) : sword_motions[native]);
+        sword_combat[0x17]=6;sword_combat[0x1B]=scenario==17 ? 19 : 8;
+        boss_active=0;put(player.data(),0x58,address(sword));put(player.data(),0x68,uint32_t(scenario==13 ? 1 : 0));
+        boss_air_juggle_boost=scenario==14 ? 0 : 2;
+        put(event,0xE0,scenario==15 ? uint64_t(0) : address(sword_combat));
+        put(event,0xE8,scenario==16 ? uint64_t(0) : boss_session.player_owner);put(event,0x11C,int32_t(0));
+        if (scenario==7) {
+            boss_active=active;boss_adapters[5].kind=1;put(player.data(),0x58,player_current);
+            put(event,0xE0,address(boss_private_actions[5].combat_body));
+        }
+        weight_native_impulse=scenario==7 ? 16 : scenario==17 ? 19 : scenario==18 ? 11 : scenario==20 ? 6 : 8;
+        const bool boosts=scenario<=7 || (scenario>=17 && scenario!=18);
+        float expected=100;const auto calls=weight_calls;
+        const auto hit=launcher_hit(victim);
+        assert(weight_action(victim,0x96,&expected));finish_launch_weight(victim,hit,true);
+        const float wanted=boosts ? (weight_native_impulse+2>20 ? 20 : weight_native_impulse+2) : weight_native_impulse;
+        float actual=0;assert(copy_field(address(component)+0x5C,actual) && actual==wanted);
+        finish_launch_weight(victim,hit,true);assert(grapple_field(address(component),0x5C,wanted));
+        assert(!launch_weight_count && weight_calls==calls);boss_adapters[5].kind=kind;
+    }
+    boss_active=active;boss_air_juggle_boost=2;put(player.data(),0x58,player_current);put(player.data(),0x68,player_bank);
+    weight_native_impulse=16;
     native_set_weight=nullptr;original_action=saved_action;weight_accept=true;
 }
 
@@ -381,6 +458,7 @@ static void airborne_cases() {
     assert(boss_native_successor(7,0x3B4)==8 && boss_native_successor(8,0x3B6)==9);
     for (unsigned slot=5;slot<17;++slot) assert(boss_prepare_private_action(slot));
     assert(boss_move_timing(5).startup_speed==8 && boss_move_timing(17).startup_speed==2);
+    assert(boss_move_timing(5).startup_end==12 && boss_move_timing(17).startup_end==8);
     for (unsigned slot=7;slot<=9;++slot) assert(boss_move_timing(slot).startup_speed==1);
     for (unsigned phase : {1u,2u,3u,5u,6u,7u,9u,10u}) {
         const auto& clone=boss_private_actions[phase+5];
@@ -402,6 +480,17 @@ static void airborne_cases() {
     for (unsigned offset : {0x24u,0x26u,0x38u}) {memcpy(&onset,boss_private_actions[16].payload+offset,2);assert(onset==30);}
     rows[1][1][0]=0;assert(!boss_prepare_private_action(6));rows[1][1][0]=22;
     assert(boss_prepare_private_action(6));
+    // The isolated C71 shares source bytes but cannot resolve the full Swallow's dash.
+    // Retain native fall routing and the current stance without borrowing another graph.
+    // Its immutable clone must not alter the Low Frost Moon transition table.
+    boss_import_count=19;boss_imports[18]=boss_imports[10];boss_adapters[18]=boss_adapters[10];
+    auto& jump=boss_adapters[18];jump.kind=5;jump.player_descriptor=0;jump.player_key=0;
+    jump.player_motion=0;jump.transition_count=0;jump.recovery_frame=0;boss_private_actions[18]={};
+    assert(boss_prepare_private_action(18) && boss_private_actions[18].payload[0x0B]==4);
+    assert(boss_native_successor(18,0xC72)==-1 && boss_native_successor(10,0xC72)==11);
+    assert(boss_private_actions[18].transition_bodies[1][0x0A]==0xff);
+    assert(boss_private_actions[10].transition_bodies[1][0x0A]!=0xff);
+    assert(grapple_field(address(boss_private_actions[18].transition_bodies[0]),0x14,int16_t(0x11)));
     // Commit the actual guard lookup and all three native phases with owned retained resources.
     // Selector-only tests cannot catch a source-validation or resource-borrowing failure here.
     // Ordinary completion must restore the four player slots after the imported landing.
@@ -432,6 +521,71 @@ static void airborne_cases() {
     put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());assert(!boss_active);bindings(false);
     boss_skill_bindings[0]={};boss_native_bindings=0;original_lookup=native_lookup;
     boss_frost_variants[0]=boss_frost_variants[1]=0;
+}
+
+static void tracking_cases() {
+    // Replay one native yaw correction through the active private Izuna frame path.
+    // Range, cone, paired/source ownership and locked-handle changes must fail without movement writes.
+    // Serial ownership allows one correction per entry and never changes positions or camera data.
+    static uint8_t controller[0x80]{},movement[0x100]{},target[0xF00]{},target_actor[0x800]{},component[0x10]{},profile[0x10]{},target_current[0xD0]{},target_payload[0xB0]{};
+    static uint64_t registry=0x123456,handle=0x1234000000012345ULL,result=0,camera=0x987654;
+    static unsigned calls=0,scenario=0;
+    native_set_yaw=[](void* node,float angle) {assert(node==movement);put(node,0x54,angle);++calls;SetLastError(990);};
+    native_locked_target=[](const uint64_t* value) {
+        assert(*value==handle);
+        if (scenario==13) put(player.data(),8,uint64_t(0));
+        if (scenario==14) put(controller,0x40,handle+1);
+        if (scenario==15) put(player.data(),0x38,uint64_t(0));
+        if (scenario==16) put(player.data(),0x50,uint64_t(0));
+        if (scenario==17) put(player.data(),0x58,address(neutral.data()));
+        SetLastError(991);return result;
+    };
+    tracking_registry=address(&registry);
+    for (scenario=0;scenario<24;++scenario) {
+        boss_hold_stances=7;hold_reset(0,false);pending_heavy={};izuna_tracking={};
+        boss_import_count=7;boss_imports[5].key=0xC79;boss_imports[5].motion=5014;boss_imports[5].recovery_frame=-1;boss_imports[5].clip=0x123450;
+        boss_imports[6]=boss_imports[5];boss_imports[6].key=scenario==8 ? 0 : 0xC7A;
+        boss_adapters[6]=boss_adapters[5];boss_adapters[6].kind=4;
+        boss_active=1;boss_active_slot=5;boss_active_player=boss_session.player;boss_private_actions[5].ready=true;
+        put(boss_private_actions[5].descriptor,0x20,boss_private_payload_address(5));
+        put(boss_private_actions[5].payload,0x18,uint64_t(scenario==7 ? 0x20000000 : 0x194C0000));
+        put(player.data(),0x58,boss_private_descriptor_address(5));put(player.data(),8,address(controller));
+        put(controller,0x40,handle);put(player.data(),0xDC,uint32_t(50));put(movement,0x54,0.0f);
+        put(player.data(),0x38,scenario==19 ? uint64_t(0) : address(movement));put(player.data(),0x18,address(movement));
+        put(player.data(),0x28,scenario==9 ? 12.0f : scenario==18 ? std::numeric_limits<float>::quiet_NaN() : 0.0f);
+        put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);put(motion.data(),0x58,boss_imports[5].clip);
+        put(owner.data(),0xF0,0.0f);put(owner.data(),0xF4,0.0f);put(owner.data(),0xF8,0.0f);
+        put(target,0,handle);put(target,0xF0,scenario==5 || scenario==21 ? 3.0f : scenario==20 ? -1.0f : 1.0f);
+        put(target,0xF4,scenario==22 ? 7.0f : 0.0f);put(target,0xF8,scenario==5 || scenario==21 ? 1.0f : scenario==6 ? 7.0f : 3.0f);
+        if (scenario==11) put(target,0xF0,std::numeric_limits<float>::infinity());
+        if (scenario==12) put(target,4,uint16_t(1));
+        put(target,0xE90,address(profile));put(profile,0xC,uint32_t(scenario==3 ? 1 : 0));
+        put(target,0x230,address(component));put(component,8,address(target_actor));put(target_actor,0,boss_session.vtable);
+        put(target_actor,0x50,scenario==4 ? uint64_t(0) : address(target));
+        put(target_actor,0x58,address(target_current));put(target_current,0x20,address(target_payload));
+        put(target_payload,0x18,uint64_t(scenario==23 ? 0x20000000 : 0));
+        result=scenario==1 ? 0 : scenario==2 ? boss_session.player_owner : address(target);
+        boss_izuna_tracking_degrees=scenario==10 ? 0 : scenario==21 ? 90 : 45;
+        boss_session.player_camera_slot=address(&camera);const auto before_camera=camera;
+        uint8_t before_player[12],before_target[12];memcpy(before_player,owner.data()+0xF0,12);memcpy(before_target,target+0xF0,12);
+        const unsigned before=calls;SetLastError(ACTION_ERROR);boss_advance_clock(player.data(),1);
+        const bool accepted=scenario==0 || scenario==19 || scenario==20 || scenario==21;
+        if (calls!=before+unsigned(accepted)) std::fprintf(stderr,"tracking scenario%u calls%u expected%u\n",scenario,calls-before,unsigned(accepted));
+        assert(calls==before+unsigned(accepted));
+        assert(!memcmp(before_player,owner.data()+0xF0,12) && !memcmp(before_target,target+0xF0,12) && camera==before_camera);
+        if (accepted) {
+            float angle=0;assert(copy_field(address(movement)+0x54,angle));
+            assert(std::abs(angle-std::atan2(scenario==21 ? 3.0f : scenario==20 ? -1.0f : 1.0f,scenario==21 ? 1.0f : 3.0f))<.00001f);
+            assert(GetLastError()==ACTION_ERROR);put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
+            boss_advance_clock(player.data(),1);assert(calls==before+1);
+            put(player.data(),0xDC,uint32_t(51));put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
+            boss_advance_clock(player.data(),1);assert(calls==before+2);
+            boss_advance_clock(target_actor,1);assert(calls==before+2);
+            boss_imports[5].motion=999;boss_advance_clock(player.data(),1);boss_imports[5].motion=5014;
+            put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);boss_advance_clock(player.data(),1);assert(calls==before+3);
+        }
+    }
+    native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;boss_izuna_tracking_degrees=45;izuna_tracking={};
 }
 
 static void slam_cases() {
@@ -540,6 +694,23 @@ static void frost_cases() {
     assert(continued.opened==10001);
     continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
     assert(continued.opened==10001); // Refills cannot slide the window away from first availability.
+    // Native timers can outlive750ms and freeze; the first RB must not erase their remaining time.
+    // Refill after consumption cannot extend the saved opportunity.
+    // Verify expiry independently of native target stance changes.
+    boss_frost_milliseconds=0;FrostMoonInput native_window{};GameInput native_sample{};native_sample.qpc=1;
+    frost_edge(native_window,native_sample,0,0,0,false,0x10000,1000000,0);
+    for (unsigned step=1;step<=45;++step) {
+        native_sample.qpc=1+step*20000;native_sample.buttons[0]=step==45 ? WORD(XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_X) : 0;
+        frost_edge(native_window,native_sample,0,0,0,true,0x10000,1000000,84-float(step)*1.2f);
+    }
+    assert(native_window.choice==1 && !native_window.spent && native_window.closes>native_sample.qpc);
+    const auto native_end=native_window.closes;
+    native_sample.qpc+=20000;native_sample.buttons[0]=0;
+    frost_edge(native_window,native_sample,0,1,0,false,0x10000,1000000,0);
+    native_sample.qpc+=20000;native_sample.buttons[0]=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_X;
+    assert(frost_edge(native_window,native_sample,0,1,0,true,0x10000,1000000,90)==2);
+    assert(native_window.closes==native_end);
+    boss_frost_milliseconds=750;
     // Native RB+A/X/Y commits low2/mid1/high0 before the second chord edge.
     // Replay all six recorded Flux routes, including both previously broken mid/high directions.
     // Assert the mapping at pulse capture, binding selection and private payload commit.
@@ -611,6 +782,7 @@ int main() {
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     held_slot_cases();
     airborne_cases();
+    tracking_cases();
     slam_cases();
     frost_cases();
     // Empty-Ki selection resolves D4A before the ordinary heavy opener.

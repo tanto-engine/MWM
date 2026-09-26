@@ -54,7 +54,7 @@ static void guard_binding_cases() {
     static std::array<uint8_t,0xD0> guard{};
     constexpr uint32_t stances[]={2,1,0};
     for (unsigned stance=0;stance<3;++stance) for (uint32_t loadout : {0xFA2u,0xCF8u})
-    for (unsigned failure=0;failure<16;++failure) {
+    for (unsigned failure=0;failure<17;++failure) {
         uint32_t key=loadout;
         sword_reset(0);boss_native_bindings=0;
         boss_skill_bindings[0]={2,1u<<stance,loadout==0xFA2 ? 1u : 2u,0,0,0,0};
@@ -78,12 +78,13 @@ static void guard_binding_cases() {
         if (failure==12) light[0x40]=0;
         if (failure==13) boss_skill_bindings[0].stances=0;
         if (failure==14) dispatch->control.enabled=0;
-        if (failure==15) boss_active=1;
+        if (failure>=15) boss_active=1;
+        if (failure==16) boss_imports[boss_active_slot].flags=0x8078000000ULL;
         DispatchCommand request{};
         if (failure==9) {
             DispatchReason reason=Disabled;ReplacementScope scope(player.data(),request,reason);uint32_t bank=0;
             assert(observed_lookup(player.data()+0x70,key,&bank)==address(light.data()) && bank==1);
-        } else assert(native_bound_slot(key,address(light.data()),request)==(failure ? -1 : int(boss_skill_bindings[0].variant-1)));
+        } else assert(native_bound_slot(key,address(light.data()),request)==(failure && failure!=15 ? -1 : int(boss_skill_bindings[0].variant-1)));
     }
 }
 
@@ -128,6 +129,16 @@ int main() {
         assert(dispatch->control.dispatch_count==(enabled&&signature ? 1 : 0));
         assert(observed_lookup(player.data()+0x70,0xCD5,&bank)==address(light.data()));
     }
+    // Low dodge attacks use their native4820 selection; running4720 is a separate action.
+    // The second Jin D constituent is selected through the same configured native-skill path.
+    // Stance and exact signature must still agree when the selection is fast or buffered.
+    sword_reset(0);put(player.data(),0x470,uint32_t(2));
+    put(light.data(),0,uint32_t(0xCFD));put(light.data(),0x82,uint16_t(40));
+    put(light_payload.data(),0x20,int32_t(4820));
+    boss_skill_bindings[0]={1,1,2,0xCFD,4820,40,0x8000000594C0000ULL};
+    DispatchCommand dodge{};assert(native_bound_slot(0xCFD,address(light.data()),dodge)==1);
+    put(light.data(),0,uint32_t(0xCFC));put(light_payload.data(),0x20,int32_t(4720));
+    assert(native_bound_slot(0xCFC,address(light.data()),dodge)==-1);
     // Native Tiger selection can choose another destination without interpreting controller buttons.
     // Clear the target variant after a disabled run to expose any hardcoded C64 route.
     // Selection itself is independent of private source resource preparation.

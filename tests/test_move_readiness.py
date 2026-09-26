@@ -115,7 +115,8 @@ class MoveWorkflow(unittest.TestCase):
                 for key in ('default_binding','adaptation','implementation'):
                     self.assertEqual(move[key],baseline[move['id']][key])
         calibration = json.loads((ROOT/'runtime/controller-calibration.json').read_text())
-        binding = binding_for_preset(calibration,DEFAULT_PRESET)
+        preset=dict(DEFAULT_PRESET,hold_move='okatsu.leaping_slash')
+        binding = binding_for_preset(calibration,preset)
         session = copy.deepcopy(BOSS)
         session['config_tag'] = '123456789abcdef0'
         encoded = encode_session(session,session['session']['pid'],int(session['session']['creation_filetime']))
@@ -124,7 +125,7 @@ class MoveWorkflow(unittest.TestCase):
                       banks=[int(address,0) for address in PROFILE['player']['action_banks']],
                       descriptor=session['source_descriptor'],payload=session['source_payload'],key=0xC64,motion=1220,
                       charged=dict(descriptor=session['charge_descriptor'],payload=session['charge_payload'],key=0xC66,motion=1230))
-        for hold, move_id in ((False,DEFAULT_PRESET['tap_move']),(True,DEFAULT_PRESET['hold_move'])):
+        for hold, move_id in ((False,preset['tap_move']),(True,preset['hold_move'])):
             gate = ControllerGesture(calibration,binding,1000)
             device = calibration['device']
             gate.process(dict(kind='input_device',**device),100)

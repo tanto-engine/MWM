@@ -197,7 +197,8 @@ class PreparationTests(unittest.TestCase):
         # Encode owned resource fields without requiring a source boss actor.
         # Prepare a session using only the player and engine-owned resource fields.
         # The encoded ABI must not require any borrowed source boss object.
-        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=750,frost_speed=8,mid_light_ender=False,skill_bindings=[])
+        from engine_config import LAUNCH_PROFILES
+        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=750,frost_speed=8,mid_light_ender=False,skill_bindings=[],launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2,izuna_tracking_degrees=45)
         fields, originals = prepare.boss_fields(dict(PROFILE,**bindings))
         expected=dict(BOSS,**bindings)
         self.assertEqual(fields, {key:expected[key] for key in fields})

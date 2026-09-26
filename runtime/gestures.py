@@ -33,7 +33,7 @@ class ControllerGesture:
         if not isinstance(frequency, (int, float)) or not math.isfinite(frequency) or frequency <= 0:
             raise ValueError('Invalid input clock')
         self.variants = binding.get('variants', [0, 1])
-        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or v not in (0, 1)) for v in self.variants):
+        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or not 0<=v<24) for v in self.variants):
             raise ValueError('Unknown move variant')
         self.frequency = frequency
         self.threshold = int(binding['hold_seconds'] * frequency)
@@ -120,7 +120,7 @@ class ControllerGesture:
                 self.pending = self.string_held = False
             if self.string_held:
                 return dict(kind='logical_input', connected=True, lt=True, rt=True,
-                            action='Okatsu string', chord_sequence=self.chord_sequence)
+                            chord_sequence=self.chord_sequence)
         lb, circle = bool(buttons & self.lb_mask), bool(buttons & self.circle_mask)
         if not circle:
             if self.started and not self.fired:
@@ -139,7 +139,7 @@ class ControllerGesture:
         self.lb, self.circle = lb, circle
         return dict(kind='logical_input', lb=lb, circle=circle, connected=self.connected,
                     context_valid=context_valid, gesture_started=self.started,
-                    action=('Okatsu string' if self.variant == self.string_variant else 'Leaping Slash' if self.variant else 'Charged Rush'), chord_sequence=self.chord_sequence)
+                    chord_sequence=self.chord_sequence)
 
     def fields(self, now):
         # Expose the current intent to the native command publisher.

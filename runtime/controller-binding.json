@@ -1,9 +1,9 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "name": "Sword baseline",
   "weapon": "sword",
   "tap_move": "okatsu.charged_rush",
-  "hold_move": "okatsu.leaping_slash",
+  "hold_move": "jin_hayabusa.flying_swallow_jump",
   "modifier_mask": 16,
   "trigger_mask": 4,
   "hold_seconds": 0.25,
@@ -16,13 +16,6 @@
   "okatsu_grapple": true,
   "mid_light_ender": true,
   "string_enabled": false,
-  "frost_moon": {
-    "low": "jin_hayabusa.action_0c71",
-    "mid": "jin_hayabusa.action_0c81",
-    "high": "jin_hayabusa.action_0c75"
-  },
-  "frost_window_seconds": 0.75,
-  "frost_startup_speed": 8,
   "skill_bindings": [
     {
       "source": "tiger_sprint",
@@ -33,6 +26,32 @@
       "source": "guard_light",
       "stance": "high",
       "move": "jin_hayabusa.izuna_drop"
+    },
+    {
+      "source": "dodge_attack",
+      "stance": "low",
+      "move": "jin_hayabusa.action_0c6f"
     }
-  ]
+  ],
+  "frost_moon": {
+    "low": "jin_hayabusa.action_0c71",
+    "mid": "jin_hayabusa.action_0c81",
+    "high": "jin_hayabusa.action_0c75"
+  },
+  "frost_window_seconds": 0,
+  "frost_startup_speed": 8,
+  "launch_profiles": [
+    {
+      "resistance_below": 75,
+      "weight_scale": 0.75,
+      "vertical_impulse": 14
+    },
+    {
+      "resistance_below": 200,
+      "weight_scale": 0.45,
+      "vertical_impulse": 17
+    }
+  ],
+  "air_juggle_boost": 2,
+  "izuna_tracking_degrees": 45
 }

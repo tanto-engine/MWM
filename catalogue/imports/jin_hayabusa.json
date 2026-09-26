@@ -672,6 +672,35 @@
         "transition_count": 40,
         "recovery_frame": 58
       }
+    },
+    {
+      "id": "jin_hayabusa.flying_swallow_jump",
+      "key": 3185,
+      "motion": 1050,
+      "flags": 0,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 18,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_voices": [
+        {
+          "frame": 2,
+          "index": 10,
+          "hash": 818085863
+        }
+      ],
+      "source_payload_prefix": "02040000010200000000ff01710cffff01ff00000000000000000000000000001a040000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 5,
+      "name": "Flying Swallow jump"
     }
   ],
   "evidence": "work/jin-heavy-research.json",

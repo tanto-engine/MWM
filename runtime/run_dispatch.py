@@ -283,7 +283,7 @@ def main():
     preset = validate_preset(read_json(args.binding))
     if profile.get('preset', preset) != preset:
         raise ValueError('Preset changed during preparation; reacquisition required')
-    calibration, runtime_binding = game_binding(calibration, binding_for_preset(calibration, preset))
+    calibration, runtime_binding = game_binding(calibration, binding_for_preset(calibration, preset, boss['imports']))
     args.outdir.mkdir(parents=True, exist_ok=False)
     session = profile['session']
     base = [CODE / 'native_loader.py', '--pid', session['pid'], '--creation-filetime', session['creation_filetime'],
@@ -360,6 +360,7 @@ def main():
                         emit(dict(**event, poll_qpc_begin=begin, poll_qpc_end=command.qpc()))
                         logical = intent.process(event, event.get('sample_qpc', command.qpc()), context_valid=context_valid)
                         if logical:
+                            if logical['kind']=='logical_input': logical['action']=boss['imports'][intent.variant]['name']
                             live_input = logical
                             logical_qpc = command.qpc()
                             emit(dict(**logical, logical_qpc=logical_qpc))
@@ -410,7 +411,7 @@ def main():
                             record['substitution_intended'] = bool(record['valid_fields'] & (1 << 16))
                             record['final_exact_match'] = bool(record['valid_fields'] & (1 << 17))
                             if record['substitution_intended']:
-                                record['action_name'] = next((move['name'] for move in boss['imports'] if move['key'] == record['forwarded_key']), None)
+                                record['action_name'] = ' / '.join(move['name'] for move in boss['imports'] if move['key']==record['forwarded_key']) or None
                             if record['final_exact_match'] and record['valid_fields'] & (1 << 18):
                                 record['decision_qpc'] = int(record['context'], 0)
                                 record['context'] = '0x0'

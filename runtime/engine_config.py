@@ -20,20 +20,24 @@ if os.name == 'nt':
 
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
 # TODO: gameplay acceptance remains separate from validation of a supported preset.
-MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1}
+MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
 HELD_MOVES = {'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
-NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000)}
-DEFAULT_PRESET = dict(schema_version=4, name='Sword baseline', weapon='sword',
-                      tap_move='okatsu.charged_rush', hold_move='okatsu.leaping_slash',
+NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000),
+                 'dodge_attack': (0xCFD,4820,40,0x8000000594C0000)}
+LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14),
+                   dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
+DEFAULT_PRESET = dict(schema_version=5, name='Sword baseline', weapon='sword',
+                      tap_move='okatsu.charged_rush', hold_move='jin_hayabusa.flying_swallow_jump',
                       modifier_mask=16, trigger_mask=4, hold_seconds=.25,
                       low_heavy='jin_hayabusa.action_0c6e',
                       stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
                       okatsu_grapple=True, mid_light_ender=True, string_enabled=False,
                       skill_bindings=[dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'),
-                                      dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop')],
+                                      dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop'),
+                                      dict(source='dodge_attack',stance='low',move='jin_hayabusa.action_0c6f')],
                       frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high='jin_hayabusa.action_0c75'),
-                      frost_window_seconds=.75, frost_startup_speed=8)
+                      frost_window_seconds=0, frost_startup_speed=8, launch_profiles=LAUNCH_PROFILES, air_juggle_boost=2, izuna_tracking_degrees=45)
 
 
 def atomic_json(path, value):
@@ -109,7 +113,9 @@ def validate_preset(value):
     # Reject movesets the current runtime cannot execute.
     # Check schema, implemented move IDs, distinct button bits and hold time.
     # Corrupt settings cannot silently become a different binding.
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 4:
+    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==4:
+        value=dict(value,schema_version=5,launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2, izuna_tracking_degrees=45)
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 5:
         raise ValueError('Unsupported moveset version')
     missing = [key for key in DEFAULT_PRESET if key not in value]
     if missing:
@@ -155,8 +161,10 @@ def validate_preset(value):
         if not isinstance(binding,dict) or set(binding)!={'source','stance','move'}:
             raise ValueError('Skill binding requires source, stance and move')
         source,stance,move=(binding[field] for field in ('source','stance','move'))
-        if source not in (*NATIVE_SKILLS,'guard_light') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS):
+        if source not in (*NATIVE_SKILLS,'guard_light') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
             raise ValueError('Unsupported skill binding source, stance or move')
+        if move=='jin_hayabusa.action_0c6f' and (source!='dodge_attack' or stance!='low' or result['low_heavy']!='jin_hayabusa.action_0c6e'):
+            raise ValueError('Dodge follow-up requires the low Jin D string')
         if move in HELD_MOVES and stance=='any':
             raise ValueError('Choose a concrete stance for a Jin graph')
         scopes=list(holds) if stance=='any' else [stance]
@@ -168,23 +176,45 @@ def validate_preset(value):
         if any(other!=stance and identifier==move for other,identifier in entries):
             raise ValueError('One imported graph must use the same stance across bindings')
     seconds=result['frost_window_seconds']
-    if type(seconds) not in (int,float) or not math.isfinite(seconds) or not .1<=seconds<=1.5:
-        raise ValueError('Frost Moon window must be between 0.1 and 1.5 seconds')
+    if type(seconds) not in (int,float) or not math.isfinite(seconds) or seconds!=0 and not .1<=seconds<=1.5:
+        raise ValueError('Frost Moon window: 0 follows Ki Pulse, otherwise 0.1 to 1.5 seconds')
     if type(result['frost_startup_speed']) is not int or not 1<=result['frost_startup_speed']<=8:
         raise ValueError('Frost Moon startup speed must be an integer from 1 to 8')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
+    validate_launch_profiles(result['launch_profiles'],result['air_juggle_boost'])
+    if type(result['izuna_tracking_degrees']) not in (int,float) or not 0<=result['izuna_tracking_degrees']<=90:
+        raise ValueError('Izuna entry aim cone must be between 0 and 90 degrees')
     return result
 
 
-def binding_for_preset(calibration, preset):
+def validate_launch_profiles(profiles, boost):
+    # Ordered resistance bands distinguish the two observed humans without inventing enemy IDs.
+    # Their weight and upward impulse are separate native quantities.
+    # Unmatched humans and nonhumans retain the existing launcher baseline.
+    if not isinstance(profiles,list) or len(profiles)!=2:
+        raise ValueError('Launcher requires two ascending human resistance bands')
+    previous=0
+    for profile in profiles:
+        if not isinstance(profile,dict) or set(profile)!={'resistance_below','weight_scale','vertical_impulse'}:
+            raise ValueError('Invalid launch profile fields')
+        limit,weight,impulse=(profile[k] for k in ('resistance_below','weight_scale','vertical_impulse'))
+        if type(limit) is not int or not previous<limit<=10000 or type(weight) not in (int,float) or not 0<weight<=1 or type(impulse) not in (int,float) or not 0<impulse<=20:
+            raise ValueError('Invalid launch profile bounds')
+        previous=limit
+    if type(boost) not in (int,float) or not 0<=boost<=5:
+        raise ValueError('Airborne hit lift must be between 0 and 5')
+
+
+def binding_for_preset(calibration, preset, imports=None):
     # Combine a portable moveset with the saved device mapping.
     # Validate the preset and translate stable move IDs into runtime variants.
     # Session addresses never become part of a saved moveset.
     preset = validate_preset(preset)
+    variants={move['id']:i for i,move in enumerate(imports)} if imports is not None else MOVE_VARIANTS
     return dict(schema=1, device=copy.deepcopy(calibration['device']),
                   lb_mask=calibration['lb_mask'], circle_mask=preset['trigger_mask'],
                   modifier_mask=preset['modifier_mask'], trigger_mask=preset['trigger_mask'],
                   hold_seconds=preset['hold_seconds'], moveset=preset,
                   string_enabled=preset['string_enabled'],
-                  variants=[MOVE_VARIANTS.get(preset['tap_move']), MOVE_VARIANTS.get(preset['hold_move'])])
+                  variants=[variants.get(preset['tap_move']), variants.get(preset['hold_move'])])

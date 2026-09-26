@@ -39,10 +39,11 @@ static bool selected_guard_light(uint32_t key) {
 
 static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand& command) {
     // Resolve exact native skills after the game applies stance/loadout/input conditions.
-    // Chord overrides additionally require the selected native guard/Square transition row.
+    // Native cancel selection may replace an active ordinary import; paired ownership remains protected.
     // Bindings choose a destination import independently of its permanent source identity.
     uint32_t stance=0;uint64_t payload=0;
-    if (boss_active || !copy_field(boss_session.player+0x470,stance) || stance>2
+    if ((boss_active && boss_paired(boss_imports[boss_active_slot].flags))
+        || !copy_field(boss_session.player+0x470,stance) || stance>2
         || !grapple_field(descriptor,0,key) || !grapple_field(descriptor,0x40,uint8_t(1))
         || !copy_field(descriptor+0x20,payload)) return -1;
     const unsigned mask=1u<<(2-stance);

@@ -223,7 +223,9 @@ def configured_replacements(configuration=None, baseline=None):
     entries=list(dict.fromkeys(entries+[(binding['stance'],binding['move'])
         for binding in configuration['skill_bindings'] if binding['move'] in HELD_MOVES]))
     hold = bool(entries)
-    if candidate is None and not hold:
+    jump='jin_hayabusa.flying_swallow_jump' in (configuration['tap_move'],configuration['hold_move'],
+        *(binding['move'] for binding in configuration['skill_bindings']))
+    if candidate is None and not hold and not jump:
         return None
     manifest = read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
     selected = list(manifest['candidates'][candidate]) if candidate else []
@@ -256,6 +258,9 @@ def configured_replacements(configuration=None, baseline=None):
         baseline=baseline if baseline is not None else configured_imports(configuration)
         if len(set(selected)) != len(selected) or len(selected) + len(baseline['moves']) > IMPORT_LIMIT:
             raise ValueError('Selected holds duplicate imports or exceed the runtime table')
+    if jump: selected.append('jin_hayabusa.flying_swallow_jump')
+    if len(selected)+len((baseline or configured_imports(configuration))['moves'])>IMPORT_LIMIT:
+        raise ValueError('Selected moves exceed the runtime import limit')
     positions = {identifier:index for index,identifier in enumerate(selected)}
     all_moves = manifest['moves']
     manifest['moves'] = [by_id[key] for key in selected]
@@ -370,8 +375,8 @@ def fresh_profile(game):
                 raise ValueError('Replacement resource has an unexpected native type')
         _, additional = resolve_imports(game, stable, group['bank'], motion, group['timing_wrapper'], replacement_manifest)
         for move in additional:
-            if move['adapter_kind'] == 3:
-                adapters.append(dict(group,kind=3,player_descriptor=0,player_key=0,player_motion=0,transition_count=0,recovery_frame=0))
+            if move['adapter_kind'] in (3,5):
+                adapters.append(dict(group,kind=move['adapter_kind'],player_descriptor=0,player_key=0,player_motion=0,transition_count=0,recovery_frame=0))
             else:
                 adapters.append(player_replacement(game, stable, player, move, group))
             if move['next_variant'] != -1:
@@ -393,7 +398,7 @@ def fresh_profile(game):
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
                 hold_variant=hold_variant, hold_milliseconds=hold_milliseconds, hold_camera_bank=hold_camera_bank,
                 hold_stances=hold_stances, frost_variants=frost_variants, frost_milliseconds=frost_milliseconds,
-                frost_speed=configuration['frost_startup_speed'],
+                frost_speed=configuration['frost_startup_speed'],launch_profiles=configuration['launch_profiles'],air_juggle_boost=configuration['air_juggle_boost'],izuna_tracking_degrees=configuration['izuna_tracking_degrees'],
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
@@ -433,7 +438,7 @@ def boss_fields(profile):
     fields['native_grapple'] = profile.get('native_grapple', False)
     fields['mid_light_ender']=profile.get('mid_light_ender',False)
     fields['skill_bindings']=profile.get('skill_bindings',[])
-    fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed'))
+    fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed','launch_profiles','air_juggle_boost','izuna_tracking_degrees'))
     return fields, originals
 
 
