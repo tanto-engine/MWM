@@ -1,6 +1,5 @@
 # Private engine policy. Never accepted from a public moveset.
-NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000),
-                 'dodge_attack': (0xBC8,-1,18,0), 'heavy_attack': (0xC7A,2300,42,0x8000000594C0000)}
+from nioh_sword import NATIVE_SKILLS
 LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14),
                    dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
 TRACKING_RATES = dict(izuna=720,somersault=720,flying_swallow=540)

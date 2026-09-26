@@ -1161,5 +1161,8 @@ int main() {
     launcher.motion=5010; assert(boss_move_timing(5).recovery==-1);
     put(player.data(),0x28,0.0f); SetLastError(INCOMING);
     assert(observed_frame(player.data(),1.0f)==1.0f);
+    launcher.motion=5014;
+    ++launcher.transition_count;
+    assert(boss_move_timing(5).recovery==-1 && boss_move_timing(5).startup_speed==1);
     std::puts("native replacement checks passed: three stance holds, native mid/high taps, three-link heavy, camera-independent input, cancellations and LastError");
 }

@@ -71,30 +71,17 @@ static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
     return true;
 }
 static int boss_native_successor(unsigned slot, uint32_t key);
-struct MoveTiming { int16_t recovery; float startup_end, startup_speed; };
 static MoveTiming boss_move_timing(unsigned slot) {
-    // Own private recovery and shared-clock startup tuning together, by source identity.
-    // Recovery enables cancellation after the final hit; un-cancelled tails run at native speed.
-    // Paired actions retain their source lifecycle; gameplay acceptance of these values is pending.
     const auto& move=boss_imports[slot];
-    if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC83)
-        return {30,0,1}; // Landing clip37; last non-audio event29.
-    if (airborne_sword(move,boss_adapters[slot]) && (move.key==0xC71 || move.key==0xC81)) {
-        if (boss_adapters[slot].kind==5) return {-1,19,float(boss_frost_speed)};
-        for (auto frost : boss_frost_variants) if (frost==slot+1) return {-1,19,float(boss_frost_speed)};
-        return {-1,0,1};
-    }
-    if (move.key==0xC78 && move.motion==5013 && move.flags==0x194C0000
-        && move.transition_count==74 && boss_adapters[slot].kind==4)
-        return {29,0,1}; // Full downward sword sequence stays at native speed; cancel after hit28.
-    if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
-        return {54,30,2};
-    if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
-        return {78,0,1};
-    if (boss_adapters[slot].kind==2 && move.key==0xC79 && move.motion==5014
-        && move.flags==0x194C0000 && move.recovery_frame==-1) {
-        const bool izuna=boss_native_successor(slot,0xC7A)>=0;
-        return {int16_t(izuna ? 54 : 21),izuna ? 12.0f : 8.0f,izuna ? float(boss_frost_speed) : 2.0f};
+    bool frost_bound=false;
+    for (auto frost : boss_frost_variants) frost_bound=frost_bound || frost==slot+1;
+    for (const auto& definition : sword_timing_definitions) {
+        if (!sword_move_matches(definition.source,move,boss_adapters[slot])
+            || (definition.frost_only && !frost_bound)
+            || (definition.required_successor && boss_native_successor(slot,definition.required_successor)<0)) continue;
+        auto timing=definition.timing;
+        if (definition.configured_speed) timing.startup_speed=float(boss_frost_speed);
+        return timing;
     }
     return {move.recovery_frame,0,1};
 }

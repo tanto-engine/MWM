@@ -180,8 +180,8 @@ static uint64_t replace_native_grapple(void* context, uint64_t descriptor) {
     // Replace sword301 only after native D4A condition22 has accepted its paired target.
     // Preserve native entry and vulnerability checks before the setter establishes its victim link.
     // The victim updater reads the new attacker key361 and selects its own reaction362.
-    // TODO: replace the opening D4A stab with Okatsu's hop while retaining native
-    // empty-Ki target selection and successful-contact ownership; the finisher is confirmed.
+    // The opening D4A stab remains native. A hop replacement still needs recorded
+    // empty-Ki selection/contact evidence and current-build finisher acceptance.
     if (!boss_native_grapple || boss_active) return 0;
     const uint64_t player=boss_session.player;
     uint32_t index=0; const uint64_t entry=original_lookup(context,0xD4A,&index);

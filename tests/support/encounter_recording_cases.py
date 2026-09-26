@@ -54,16 +54,49 @@ class ReconstructionTests(unittest.TestCase):
             self.assertEqual(len((folder/'labels.jsonl').read_text().splitlines()),2)
 
     def test_entries_distinguish_repeats_from_state_samples_and_gaps(self):
-        # A committed counter change can repeat the same action without a new descriptor.
-        # State-only changes must not inflate occurrence counts or conceal that repeat.
-        # An observation after a gap is censored rather than an observed move start.
+        # A counter change alone cannot prove that an unchanged action restarted.
         result = self.run_capture([state(.1,counter=1), metadata(), state(.2,counter=1),
             state(.3,counter=2), {'kind':'sampling_gap'}, state(.4,counter=9), metadata()])
         row = result['actions'][0]
         self.assertEqual(row['observations'],4)
-        self.assertEqual(row['observed_entries'],1)
+        self.assertEqual(row['observed_entries'],0)
+        self.assertEqual(row['unverified_reentries'],1)
         self.assertEqual(row['censored_observations'],2)
-        self.assertEqual(result['observed_successors'][0]['count'],1)
+        self.assertEqual(result['observed_successors'],[])
+
+    def test_identity_changes_prove_entries_but_gaps_do_not_prove_edges(self):
+        result=self.run_capture([state(.1),metadata(),state(.2,0xC66),metadata(0xC66,1230,t=.21),
+            state(.3),metadata(t=.31),{'kind':'sampling_gap'},state(.4,0xC66),metadata(0xC66,1230,t=.41)])
+        rows={row['source']['action_id']:row for row in result['actions']}
+        self.assertEqual(rows[0xC64]['observed_entries'],1)
+        self.assertEqual(rows[0xC66]['observed_entries'],1)
+        self.assertEqual(sum(edge['count'] for edge in result['observed_successors']),2)
+
+    def test_interval_annotation_revisions_keep_raw_capture_and_prior_labels(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);take=folder/'take-0001';take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps({'boss_id':'jin_hayabusa'}))
+            raw=(json.dumps(state(5))+'\n{"kind":').encode()
+            (take/'events.jsonl').write_bytes(raw)
+            first=encounter.save_annotation(folder,'Downward slash',take.name,1,3,markers=['unsure'])
+            revised=encounter.save_annotation(folder,'Slash then jump',take.name,1,4,
+                markers=['repeat','interrupted'],label_id=first['label_id'])
+            current=encounter.load_annotations(folder)
+            self.assertEqual(len(current),1)
+            self.assertEqual(current[0],revised)
+            self.assertEqual(revised['revision'],first['revision']+1)
+            self.assertEqual((revised['start_t'],revised['end_t']),(1,4))
+            self.assertEqual(len((folder/'labels.jsonl').read_text().splitlines()),2)
+            self.assertEqual((take/'events.jsonl').read_bytes(),raw)
+            for start,end in [(-1,2),(3,2),(0,6),(0,float('nan')),(0,float('inf'))]:
+                with self.assertRaises(ValueError):
+                    encounter.save_annotation(folder,'Invalid',take.name,start,end)
+            with self.assertRaises(ValueError):
+                encounter.save_annotation(folder,'Invalid',take.name,0,2,markers=['confirmed'])
+            with self.assertRaises(ValueError):
+                encounter.save_annotation(folder,'Invalid','../take-0001',0,2)
+            with self.assertRaises(ValueError):
+                encounter.save_annotation(folder,'Invalid',take.name,0,2,label_id='missing')
 
     def run_capture(self, events, raw_tail=''):
         # Reconstruct a temporary JSONL capture with an optional damaged tail.

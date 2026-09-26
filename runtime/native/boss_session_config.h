@@ -1,5 +1,6 @@
 #pragma once
 #include "boss_session_schema.h"
+#include "nioh_sword_definitions.h"
 static uint64_t BOSS_CONFIG_TAG;
 static BossSession boss_session{};
 static MoveImport boss_imports[32]{};
@@ -13,21 +14,6 @@ static LaunchProfile boss_launch_profiles[2]={{75,.75f,14,0},{200,.45f,17,0}};
 static float boss_air_juggle_boost=2, boss_tracking_rates[3]={540,420,180};
 static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
-
-static bool airborne_sword(const MoveImport& move, const MoveAdapter& adapter) {
-    // Recognize recorded airborne phases with their exact stance owners.
-    // Only the two jumps are entries; the remaining phases require native continuation.
-    // Other zero-flag actions cannot acquire the airborne policy.
-    const bool swallow=move.key>=0xC71 && move.key<=0xC74;
-    const bool somersault=move.key>=0xC81 && move.key<=0xC83;
-    if (!swallow && !somersault) return false;
-    const unsigned phase=swallow ? move.key-0xC71 : move.key-0xC81+4;
-    constexpr int motions[]={1050,5000,5001,5002,1050,5050,5051}, counts[]={18,17,18,75,18,18,75};
-    return move.motion==motions[phase] && move.transition_count==counts[phase]
-        && move.flags==((phase==3 || phase==6) ? 0x1BCE0000ULL : 0)
-        && (adapter.kind==((phase==0 || phase==4) ? 2u : 4u) || (phase==0 && adapter.kind==5))
-        && move.recovery_frame==(phase==3 ? 20 : -1) && move.next_variant==-1;
-}
 
 static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
@@ -109,16 +95,10 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             for (uint64_t pointer : dependencies)
                 if (pointer < 0x10000 || pointer > 0x00007fffffffffffULL) return false;
             if (replacement && adapter.kind!=5) {
-            // These three researched sword entries exclude dash/running attacks.
+            // Recorded stance templates exclude dash/running attacks.
             if (adapter.player_descriptor < 0x10000 || adapter.player_descriptor > 0x7fffffffffffULL
-                || !((adapter.player_key >= 0xCF5 && adapter.player_key <= 0xCF7
-                    && adapter.player_motion == 4300 + int(adapter.player_key - 0xCF5)*10)
-                    || (adapter.kind != 1 && ((adapter.player_key==0xCB7 && adapter.player_motion==3300
-                        && adapter.transition_count==40 && adapter.recovery_frame==58)
-                        || (adapter.player_key==0xC7A && adapter.player_motion==2300
-                        && adapter.transition_count==42 && adapter.recovery_frame==46))))
-                || !adapter.transition_count || adapter.transition_count > 63
-                || adapter.recovery_frame <= 0 || (!izuna_bridge && !airborne && move.flags != 0x194C0000)
+                || !sword_player_template(adapter)
+                || (!izuna_bridge && !airborne && move.flags != 0x194C0000)
                 || (adapter.kind == 1 && move.next_variant != -1)) return false;
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
                 if (config.adapters[prior].kind == 1 && config.adapters[prior].player_key == adapter.player_key) return false;

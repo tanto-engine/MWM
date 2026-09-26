@@ -26,6 +26,8 @@ The two maintained test entrypoints remain tests/test_move_readiness.py and test
 
 `runtime/` holds the backend and reusable development interfaces. `tests/` holds fixtures and checks. `third_party/minhook/` is required by current native detours and is built into Sword runtime libraries. Recorder does not receive it. Removing MinHook without replacing those detours breaks the backend. Resource profiles belong to the mod because they specify the actual assets that product loads.
 
+Recorded Python signatures live in `runtime/nioh_sword.py`; native airborne signatures, player templates and timing recipes live in `runtime/native/nioh_sword_definitions.h`. `move_timing.h` evaluates bounded startup phases without source identities or process writes. The ownership layer selects a recipe only when its full recorded signature and binding/continuation requirements match. Native template validation now checks transition count and recovery as strictly as Python preparation. Other Nioh-specific transition, effect and hook definitions still live beside their backend helpers; this is a bounded extraction, not a completed general mod framework.
+
 There is no outputs/, research/ or capture catalogue in this engine checkout. Old investigations and the workbook remain recoverable from history; local archival copies also exist outside the repositories. The Downloads workbook is historical, not an engine dependency. Retained source captures and labels live in Tanto Recorder.
 
 Compilation and selective packaging reduce what is distributed; they cannot make local code unextractable. No engine development GUI, general plugin loader, DRM framework or automatic data upload is introduced. The products are privately published prereleases; gameplay verification remains deferred.
@@ -83,6 +85,8 @@ The following are policy values, not inferred universal Nioh rules. The archived
 | Tracking phase end | C79 frame 26, C83 frame 29, C74 frame 20; other supported phases bounded by action lifetime | `windup_support.h` |
 | Voice substitution | William cue hash `0x97933946`; only validated imported voice events | `voice_support.h`, import voices |
 
+Startup/recovery recipes are checked at compile time for finite bounded rates, phase ends and compatible recovery. `boss_move_timing` resolves binding-dependent recipes, and `move_timing_delta` caps acceleration at their startup boundary while preserving a native tick that already crosses it. Recovery enables cancellation; it does not truncate the native tail. General speed sliders, arbitrary start/end frames and frame skipping remain unimplemented because the required event boundaries are not established.
+
 These modifications change collision weight and upward impulse, **not a general enemy gravity constant**. Weight is applied around the single validated standalone-launcher damage reaction through native `Character::SetWeight`; the engine tracks up to eight owned overrides and restores only its exact applied value when ownership ends. Restoration checks actor, owner, collider and descriptor identity so a later writer is not overwritten. Rejected or paired reactions release provisional ownership.
 
 The observed footsoldier and armored rogue both had native weight 100. Resistance separated these two observations; the rogue was cursed. Therefore the thresholds are provisional resistance bands, not stable enemy species IDs or proof that all light/medium humans share those values. A better future enemy policy should key verified archetype plus relevant status modifiers, with a fallback band. Record unmodified archetype/status data before changing that classification.
@@ -98,3 +102,18 @@ Every change needs the boss/source-bank identity, full action key, motion and ti
 The less visible hardcoded adaptations also need that ledger: source flags and exact signature checks; private descriptor/payload offsets; transition pruning and replacement; completion stance/sheath behavior; weapon effect filtering; native input debounce/suppression; recovery, Living Water and running-priority rows; source resource lifetime; camera borrowing; voice cue substitution; launch classification, weight ownership, impulse changes and air-hit exclusions; tracking target resolution, rate and phase/range limits. These are not exposed as arbitrary user-editable bytes.
 
 Build-specific ABI constants are contracts rather than sliders. `boss_probe.py` and `action_banks.py` describe read layouts; `boss_session_schema.h`, `dispatch_protocol.h` and `trace_protocol.h` define process interfaces; `boss_session_config.h` validates them. Exact expected byte signatures and RVAs live beside the native helper that uses them. Preserving those source locations avoids a second unsynchronized offset dictionary. Shared action/motion/timing packages cannot safely be pruned record-by-record without proving internal reference closure; the playable catalogue is sword-only while shared packages may contain unused source records.
+
+## Outstanding checks
+
+Offline validation covers signature rejection, timing boundaries, retained private resources, actor identity changes and Recorder evidence handling. It does not complete these checks:
+
+| Area | Required evidence or implementation |
+|---|---|
+| Enemy classification | Record the same uncursed archetypes with and without relevant status effects; preserve native weight, resistance and reaction identity before replacing provisional bands. |
+| Lifecycle | Record shrine/menu/cutscene entry and exit, equipment changes, death/retry and mission changes; check retained action/motion/timing/effect/camera ownership and restored weapon state. |
+| Resource coverage | Inventory dependencies and exercise effects beyond the four retained packages before admitting additional imports. |
+| Controllers | Implement explicit XInput slot selection consistently for Python and native gestures; verify DS4, DualSense, Xbox and SCUF reconnects. DirectInput-only support and unmapped paddles remain unresolved. |
+| Latency | Correlate input sample, recognized gesture, dispatch and first changed animation frame on one clock; record sampling uncertainty before altering polling or startup. |
+| Native semantics | Capture damage, Ki damage, hitbox/contact and unknown record fields against controlled baselines; matching bytes alone do not establish their meaning. |
+
+Further executable builds/releases and live gameplay verification are deferred. No readiness receipt is implied by the offline checks.

@@ -70,6 +70,12 @@ int main() {
     aerial.skill_bindings[0]={2,4,17,0,0,0,0};
     aerial.skill_bindings[1]={3,1,20,0,0,0,0};
     assert(runtime_imports_valid(aerial));
+    for (unsigned field=0;field<2;++field) {
+        auto changed=aerial;
+        if (field==0) ++changed.adapters[12].transition_count;
+        else ++changed.adapters[12].recovery_frame;
+        assert(!runtime_imports_valid(changed));
+    }
     auto isolated=aerial;isolated.import_count=21;
     isolated.imports[20]=isolated.imports[12];isolated.adapters[20]=isolated.adapters[12];
     auto& jump=isolated.adapters[20];jump.kind=5;jump.player_descriptor=0;jump.player_key=0;

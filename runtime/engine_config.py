@@ -19,7 +19,7 @@ if os.name == 'nt':
     kernel.ReplaceFileW.restype = W.BOOL
 
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
-# TODO: gameplay acceptance remains separate from validation of a supported preset.
+# Preset validation does not certify gameplay acceptance.
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
 HELD_MOVES = {'jin_hayabusa.action_0bbf', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}

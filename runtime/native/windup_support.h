@@ -115,11 +115,7 @@ static float boss_advance_clock(void* actor, float native_delta) {
     if (group<3 && boss_tracking_rates[group]>0 && frame<tracking_end) {
         const DWORD error=GetLastError();track_locked_target(player,slot,native_delta,group);SetLastError(error);
     }
-    const float boundary=timing.startup_end;
-    if (frame>=boundary) return native_delta;
-    const float remaining = boundary - frame;
-    float accelerated = delta * timing.startup_speed;
-    if (accelerated > remaining) accelerated = remaining;
+    const float accelerated=move_timing_delta(timing,frame,delta);
     // Never slow an ordinary update when it already crosses the boundary.
     if (!(accelerated > delta) || !windup_writable_float(player + 0x24)
         || !windup_writable_float(player + 0x6A8)) return native_delta;
