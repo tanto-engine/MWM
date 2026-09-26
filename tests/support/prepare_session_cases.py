@@ -197,7 +197,7 @@ class PreparationTests(unittest.TestCase):
         # Encode owned resource fields without requiring a source boss actor.
         # Prepare a session using only the player and engine-owned resource fields.
         # The encoded ABI must not require any borrowed source boss object.
-        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=750,frost_speed=8,tiger_sprint=False,mid_light_ender=False,high_guard_light=False)
+        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=750,frost_speed=8,mid_light_ender=False,skill_bindings=[])
         fields, originals = prepare.boss_fields(dict(PROFILE,**bindings))
         expected=dict(BOSS,**bindings)
         self.assertEqual(fields, {key:expected[key] for key in fields})
@@ -311,7 +311,8 @@ class PreparationTests(unittest.TestCase):
                      patch.object(prepare,'inspect_candidate',return_value=copy.deepcopy(PROFILE['player'])), \
                      patch.object(prepare,'resolve_imports',return_value=([first,PROFILE['charged_candidate']],BOSS['imports'])), \
                      patch.object(prepare,'inspect_motion',return_value={'presence':'present','clip':'0x56000000'}), \
-                     patch.object(prepare,'resources',side_effect=inspect_resources):
+                     patch.object(prepare,'resources',side_effect=inspect_resources), \
+                     patch.object(prepare,'compiled_skill_bindings',return_value=[]):
                     if index not in (0,1,2) or changed:
                         with self.assertRaises(ValueError):prepare.fresh_profile(game)
                     else:

@@ -8,6 +8,7 @@ static uint32_t boss_import_count, boss_string_variant;
 static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank;
 static uint64_t boss_native_grapple;
 static uint64_t boss_native_bindings;
+static SkillBinding boss_skill_bindings[8]{};
 static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
 
@@ -15,8 +16,8 @@ static bool airborne_sword(const MoveImport& move, const MoveAdapter& adapter) {
     // Recognize recorded airborne phases with their exact stance owners.
     // Only the two jumps are entries; the remaining phases require native continuation.
     // Other zero-flag actions cannot acquire the airborne policy.
-    const bool swallow=move.key>=0xC71 && move.key<=0xC74 && adapter.player_key==0xCF5;
-    const bool somersault=move.key>=0xC81 && move.key<=0xC83 && adapter.player_key==0xC7A;
+    const bool swallow=move.key>=0xC71 && move.key<=0xC74;
+    const bool somersault=move.key>=0xC81 && move.key<=0xC83;
     if (!swallow && !somersault) return false;
     const unsigned phase=swallow ? move.key-0xC71 : move.key-0xC81+4;
     constexpr int motions[]={1050,5000,5001,5002,1050,5050,5051}, counts[]={18,17,18,75,18,18,75};
@@ -30,7 +31,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
-    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || config.native_bindings>15
+    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
         || config.hold_stances>7 || config.frost_milliseconds<100 || config.frost_milliseconds>1500
         || config.frost_speed<1 || config.frost_speed>8)
         return false;
@@ -40,6 +41,31 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         if (slot && (slot>config.import_count || config.adapters[slot-1].kind!=2
             || config.adapters[slot-1].player_key!=openers[stance])) return false;
     }
+    uint32_t held_stances=0;
+    for (unsigned index=0;index<8;++index) {
+        const auto& binding=config.skill_bindings[index];const SkillBinding empty{};
+        if (!binding.kind) { if (memcmp(&binding,&empty,sizeof(empty))) return false; continue; }
+        if (binding.kind>3 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
+        const auto& adapter=config.adapters[binding.variant-1];
+        if (binding.kind==3) {
+            if (adapter.kind!=2) return false;
+            held_stances|=binding.stances;
+        }
+        if (!adapter.kind && config.imports[binding.variant-1].flags!=0x184C0000ULL) return false;
+        if (adapter.kind) {
+            bool owner=false;
+            for (unsigned stance=0;stance<3;++stance)
+                owner=owner || (adapter.kind==2 && binding.stances==(1u<<stance) && adapter.player_key==openers[stance]);
+            if (!owner) return false;
+        }
+        if (binding.kind==1 ? (binding.key!=0xFAA || binding.motion!=5090 || binding.transition_count!=21 || binding.flags!=0x40017C00000ULL)
+            : (binding.key || binding.motion || binding.transition_count || binding.flags)) return false;
+        for (unsigned prior=0;prior<index;++prior) {
+            const auto& earlier=config.skill_bindings[prior];
+            if (earlier.kind==binding.kind && earlier.key==binding.key && (earlier.stances&binding.stances)) return false;
+        }
+    }
+    if (held_stances!=config.hold_stances || (held_stances && !config.hold_variant)) return false;
     if (config.imports[config.string_variant].flags == 0x8078000000ULL) return false;
     if (config.hold_variant) {
         if (config.hold_variant > config.import_count || config.adapters[config.hold_variant-1].kind != 2
@@ -48,7 +74,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     } else if (config.hold_milliseconds || config.hold_camera_bank) return false;
     const MoveImport empty{};
     const MoveAdapter no_adapter{};
-    bool grapple_target=false, somersault=false;
+    bool grapple_target=false;
     for (unsigned i = config.import_count; i != 24; ++i)
         if (memcmp(&config.imports[i], &empty, sizeof(empty))
             || memcmp(&config.adapters[i], &no_adapter, sizeof(no_adapter))) return false;
@@ -63,7 +89,6 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         const bool replacement = adapter.kind == 1 || adapter.kind == 2 || adapter.kind == 4;
         const bool izuna_bridge = adapter.kind==4 && move.key==0xC7A && move.motion==1050 && !move.flags;
         const bool airborne=airborne_sword(move,adapter);
-        if (airborne && move.key==0xC81) somersault=true;
         if (adapter.kind) {
             if (adapter.kind > 4) return false;
             const uint64_t dependencies[] = {adapter.action_resource,adapter.timing_resource,adapter.bank,
@@ -80,8 +105,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                         || (adapter.player_key==0xC7A && adapter.player_motion==2300
                         && adapter.transition_count==42 && adapter.recovery_frame==46))))
                 || !adapter.transition_count || adapter.transition_count > 63
-                || adapter.recovery_frame <= 0 || (!izuna_bridge && !airborne && move.flags != 0x194C0000 && (adapter.kind == 1 || move.flags != 0x200194C0000ULL))
-                || (izuna_bridge && adapter.player_key!=0xCB7)
+                || adapter.recovery_frame <= 0 || (!izuna_bridge && !airborne && move.flags != 0x194C0000)
                 || (adapter.kind == 1 && move.next_variant != -1)) return false;
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
                 if (config.adapters[prior].kind == 1 && config.adapters[prior].player_key == adapter.player_key) return false;
@@ -136,7 +160,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     const auto& first = config.imports[0];
     const auto& second = config.imports[1];
     const auto& legacy = config.session;
-    return (!(config.native_bindings&8) || somersault) && (!(config.native_bindings&1) || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
+    return (!(config.native_bindings&1) || grapple_target) && first.flags == 0x184C0000 && second.flags == 0x184C0000
         && first.key == 0xC64 && first.motion == 1220 && second.key == 0xC66 && second.motion == 1230
         && first.descriptor == legacy.source_descriptor && first.payload == legacy.source_payload
         && first.clip == legacy.source_clip && first.timing_record == legacy.source_timing_record
@@ -157,7 +181,7 @@ static DWORD load_runtime_session(const void* parameter) {
     if (incoming.magic != RUNTIME_SESSION_MAGIC || incoming.version != RUNTIME_SESSION_VERSION
         || incoming.size != sizeof(incoming) || incoming.pid != GetCurrentProcessId()
         || !incoming.config_tag) return ERROR_INVALID_DATA;
-    if (incoming.native_bindings > 15) return ERROR_INVALID_DATA;
+    if (incoming.native_bindings&~5ULL) return ERROR_INVALID_DATA;
     FILETIME born{}, exited{}, kernel_time{}, user_time{};
     if (!GetProcessTimes(GetCurrentProcess(), &born, &exited, &kernel_time, &user_time)) return GetLastError();
     const uint64_t creation = (uint64_t(born.dwHighDateTime) << 32) | born.dwLowDateTime;
@@ -185,10 +209,12 @@ static DWORD load_runtime_session(const void* parameter) {
             && incoming.hold_stances==boss_hold_stances && incoming.frost_milliseconds==boss_frost_milliseconds
             && incoming.frost_speed==boss_frost_speed
             && !memcmp(incoming.frost_variants,boss_frost_variants,sizeof(boss_frost_variants))
+            && !memcmp(incoming.skill_bindings,boss_skill_bindings,sizeof(boss_skill_bindings))
             && !memcmp(incoming.adapters, boss_adapters, sizeof(boss_adapters))
             && !memcmp(incoming.imports, boss_imports, sizeof(boss_imports)) ? 0 : ERROR_INVALID_DATA;
     }
     boss_session = incoming.session;
+    memcpy(boss_skill_bindings,incoming.skill_bindings,sizeof(boss_skill_bindings));
     memcpy(boss_imports, incoming.imports, sizeof(boss_imports));
     memcpy(boss_adapters, incoming.adapters, sizeof(boss_adapters));
     boss_import_count = incoming.import_count;

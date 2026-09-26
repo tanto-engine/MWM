@@ -636,6 +636,7 @@ int main() {
             for (unsigned c=0;c<10;++c) if (expected[c]!=0xff) unconditional=false;
             int16_t target=0; memcpy(&target,expected.data()+0x14,2);
             if (unconditional && target && expected[0x0b]!=0xff) put(expected.data(),0x14,int16_t(-1));
+            if (expected[0x0A]==1 && expected[0x0B]==0xff && (target==0 || target>=0xBB8)) put(expected.data(),0x14,int16_t(0xBB8));
             const unsigned at=row+(slot<5 && row>=unsigned(boss_imports[slot].transition_count-5) ? 1 : 0);
             assert(!memcmp(expected.data(),clone.transition_bodies[at],0x30)); ++checks;
         }

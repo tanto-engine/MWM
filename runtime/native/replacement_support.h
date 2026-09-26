@@ -253,14 +253,15 @@ static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigne
 #include "sword_bindings.h"
 
 static unsigned stance_hold(uint32_t key) {
-    // Compiled holds precede optional Frost Moon and guard imports sharing their template.
-    // Never let Flying Swallow or the guard somersault consume ordinary held Triangle.
-    // Native stance masks and compiler order decide the first eligible held entry.
+    // Held Triangle uses its explicit binding instead of import ordering or source identity.
+    // Frost and guard entries sharing the same player template cannot steal this slot.
+    // Match both the selected native stance and the configured skill-entry template.
     const unsigned stance=key==0xCF5 ? 1 : key==0xCB7 ? 2 : key==0xC7A ? 4 : 0;
     if (boss_hold_variant && (boss_hold_stances&stance))
-        for (unsigned slot=0;slot<boss_import_count;++slot)
-            if (boss_adapters[slot].kind==2 && boss_adapters[slot].player_key==key
-                && boss_imports[slot].key!=0xC71 && boss_imports[slot].key!=0xC81) return slot;
+        for (const auto& binding : boss_skill_bindings)
+            if (binding.kind==3 && binding.stances==stance && binding.variant && binding.variant<=boss_import_count
+                && boss_adapters[binding.variant-1].kind==2 && boss_adapters[binding.variant-1].player_key==key)
+                return binding.variant-1;
     return boss_import_count;
 }
 
@@ -277,9 +278,9 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         SetLastError(native_error);
         return descriptor;
     }
-    if (*bank_index==0 && boss_native_bindings) {
+    if (*bank_index==0) {
         DispatchCommand command{};
-        const int guard_slot=high_guard_light_slot(key,descriptor,*bank_index,command);
+        const int guard_slot=native_bound_slot(key,descriptor,command);
         if (guard_slot>=0) {
             if (const uint64_t adapted=native_skill_import(unsigned(guard_slot),key,command)) {
                 *bank_index=1; SetLastError(native_error); return adapted;
@@ -289,16 +290,7 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
             const uint64_t adapted=mid_light_ender(context,key,descriptor);
             SetLastError(native_error); return adapted ? adapted : descriptor;
         }
-        if ((boss_native_bindings&2) && key==0xFAA && native_binding_context(command)) {
-            uint64_t payload=0;
-            if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
-                && grapple_field(descriptor,0x82,uint16_t(21)) && copy_field(descriptor+0x20,payload)
-                && grapple_field(payload,0x18,uint64_t(0x40017C00000ULL)) && grapple_field(payload,0x20,int32_t(5090))) {
-                if (const uint64_t adapted=native_skill_import(0,key,command)) {
-                    *bank_index=1; SetLastError(native_error); return adapted;
-                }
-            }
-        }
+
     }
     if (key==0x301 && *bank_index==0) {
         const uint64_t paired=replace_native_grapple(context,descriptor);
@@ -353,9 +345,10 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
 
 static bool replacements_configured() {
     // Decide whether this session needs the native action-lookup hook.
-    // Search its small immutable adapter table for an enabled replacement.
+    // Native skill/chord bindings need lookup even when their destination uses baseline resources.
     // Baseline Okatsu sessions keep their established three-hook path.
     if (boss_native_bindings || boss_native_grapple) return true;
+    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2) return true;
     for (unsigned i=0; i<boss_import_count; ++i) if (boss_adapters[i].kind==1 || boss_adapters[i].kind==2) return true;
     return false;
 }

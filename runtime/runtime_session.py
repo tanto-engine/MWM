@@ -1,7 +1,8 @@
 # Stable runtime startup ABI. A move identity never contains these pointers.
 import re
 import struct
-from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_SKILL_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
+from engine_config import NATIVE_SKILLS
+from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
     'player', 'player_owner', 'source_action_resource', 'source_timing_resource', 'vtable',
@@ -13,9 +14,9 @@ POINTER_FIELDS = (
 MOVE_IMPORT = struct.Struct('<5QIi hHhHHH 9I')
 MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
-SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT)
-MAGIC, VERSION = 0x3153454e, 7
-assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 4168
+SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8)
+MAGIC, VERSION = 0x3153454e, 8
+assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 4424
 
 
 def encode_session(config, pid, creation_filetime):
@@ -61,7 +62,7 @@ def encode_session(config, pid, creation_filetime):
                         *voices, *([0] * (9-len(voices)))])
         adapter = adapters[index]
         if adapter is None:
-            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move):
+            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move):
                 raise ValueError('Player replacement is missing its native adapter')
             encoded_adapters.extend([0] * 11)
             continue
@@ -82,8 +83,7 @@ def encode_session(config, pid, creation_filetime):
             encoded_adapters.extend([*replacement_pointers, *fields, kind])
             continue
         expected = PLAYER_TEMPLATES
-        if (move['flags'] not in (PLAYER_REPLACEMENT_FLAGS, STANCE_SKILL_FLAGS) and not (is_izuna_bridge(move) or is_airborne_sword(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
-                or is_airborne_sword(move) and fields[0]!=(0xCF5 if move['key']<0xC81 else 0xC7A)
+        if (move['flags'] != PLAYER_REPLACEMENT_FLAGS and not (is_izuna_bridge(move) or is_airborne_sword(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
                 or tuple(fields[1:]) != expected[fields[0]] or kind == 1 and fields[0] in player_keys
                 or kind == 1 and fields[0] not in (0xCF5, 0xCF6, 0xCF7)
                 or kind in (2, 4) and fields[0] not in STANCE_OPENERS.values()):
@@ -106,7 +106,7 @@ def encode_session(config, pid, creation_filetime):
         frost_slots=config.get('frost_variants',[])
         if not isinstance(frost_slots,list):
             raise ValueError('Frost Moon requires three variant slots')
-        hold_keys = [adapters[index-1]['player_key'] for index in hold_slots if index not in frost_slots and moves[index-1]['key']!=0xC81]
+        hold_keys = [adapters[index-1]['player_key'] for index in hold_slots if index not in frost_slots and index not in [binding['variant'] for binding in config.get('skill_bindings',[])]]
         if len(set(hold_keys)) != len(hold_keys):
             raise ValueError('Only one held entry may own a player stance opener')
         for index, adapter in enumerate(adapters):
@@ -130,13 +130,31 @@ def encode_session(config, pid, creation_filetime):
                                   for move, adapter in zip(moves, adapters)):
         raise ValueError('Native grapple requires the retained Okatsu paired follow-through')
     native_bindings=int(native_grapple)
-    for bit,field in ((2,'tiger_sprint'),(4,'mid_light_ender'),(8,'high_guard_light')):
-        enabled=config.get(field,False)
-        if type(enabled) is not bool:
-            raise ValueError('Native binding must be a boolean: '+field)
-        if enabled: native_bindings|=bit
-    if native_bindings&8 and not any(move['key']==0xC81 and is_airborne_sword(move) for move in moves):
-        raise ValueError('High guard light requires the somersault entry')
+    if type(config.get('mid_light_ender',False)) is not bool:
+        raise ValueError('Mid light ender must be a boolean')
+    if config.get('mid_light_ender',False): native_bindings|=4
+    bindings=config.get('skill_bindings',[]);encoded_bindings=[]
+    if not isinstance(bindings,list) or len(bindings)>8: raise ValueError('Too many skill bindings')
+    occupied=set()
+    for binding in bindings:
+        fields=[binding[field] for field in ('kind','stances','variant','key','motion','transition_count','flags')]
+        kind,stances,variant,key,motion,rows,flags=fields
+        if any(type(value) is not int for value in fields) or kind not in (1,2,3) or not 0<stances<8 or not 0<variant<=len(moves):
+            raise ValueError('Invalid compiled skill binding')
+        adapter=adapters[variant-1]
+        if adapter is None and (kind==3 or moves[variant-1]['flags']!=0x184C0000):
+            raise ValueError('Skill binding requires an ordinary executable entry')
+        if adapter is not None and (adapter['kind']!=2 or stances!=1<<list(STANCE_OPENERS.values()).index(adapter['player_key'])):
+            raise ValueError('Skill binding and graph stance differ')
+        if kind==1 and (key,motion,rows,flags) not in NATIVE_SKILLS.values() or kind>=2 and any((key,motion,rows,flags)):
+            raise ValueError('Unverified native skill signature')
+        for stance in range(3):
+            if not stances&(1<<stance): continue
+            identity=(kind,key,stance)
+            if identity in occupied: raise ValueError('Overlapping native skill bindings')
+            occupied.add(identity)
+        encoded_bindings.extend(fields)
+    encoded_bindings.extend([0]*(7*(8-len(bindings))))
     hold_stances=config.get('hold_stances',7 if hold_variant else 0)
     frost=config.get('frost_variants',[0,0,0]); window=config.get('frost_milliseconds',750)
     speed=config.get('frost_speed',8)
@@ -144,6 +162,8 @@ def encode_session(config, pid, creation_filetime):
         raise ValueError('Frost Moon startup speed must be from 1 to 8')
     if type(hold_stances) is not int or not 0<=hold_stances<=7 or type(window) is not int or not 100<=window<=1500:
         raise ValueError('Invalid skill binding mask or Frost Moon window')
+    if sum(b['stances'] for b in bindings if b['kind']==3)!=hold_stances:
+        raise ValueError('Held stance mask differs from explicit bindings')
     if not isinstance(frost,list) or len(frost)!=3:
         raise ValueError('Frost Moon requires three variant slots')
     for slot,key in zip(frost,STANCE_OPENERS.values()):
@@ -152,4 +172,4 @@ def encode_session(config, pid, creation_filetime):
     return SESSION_CONFIG.pack(MAGIC, VERSION, SESSION_CONFIG.size, pid,
                                int(creation_filetime), int(tag, 16), hold_variant, hold_milliseconds, hold_camera, native_bindings,
                                hold_stances,*frost,window,speed,*pointers,
-                               len(moves), string_variant, *imports, *encoded_adapters)
+                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings)

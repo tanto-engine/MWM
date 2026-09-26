@@ -18,7 +18,7 @@ from load_resources import load_resources
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
-from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS
+from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES
 
 IMPORT_MANIFEST = CODE.parent / 'catalogue/imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -220,8 +220,8 @@ def configured_replacements(configuration=None, baseline=None):
     candidate = HEAVY_STRINGS.get(configuration['low_heavy'])
     entries=list(dict.fromkeys((stance,identifier) for bindings in ('stance_holds','frost_moon')
                                for stance,identifier in configuration[bindings].items() if identifier))
-    if configuration['high_guard_light']:
-        entries.append(('high',configuration['high_guard_light']))
+    entries=list(dict.fromkeys(entries+[(binding['stance'],binding['move'])
+        for binding in configuration['skill_bindings'] if binding['move'] in HELD_MOVES]))
     hold = bool(entries)
     if candidate is None and not hold:
         return None
@@ -270,6 +270,23 @@ def configured_replacements(configuration=None, baseline=None):
     manifest['frost_milliseconds'] = round(configuration['frost_window_seconds']*1000)
     manifest['candidate'] = candidate
     return manifest
+
+
+def compiled_skill_bindings(configuration, imports):
+    # Resolve portable source/stance/move rules only after import slots are known.
+    # Native skill identities follow the game's assignment and timing; chords follow selected input rows.
+    # The native table carries exact signatures, never device button masks or guessed action IDs.
+    slots={move['id']:index+1 for index,move in enumerate(imports)}
+    result=[]
+    for binding in configuration['skill_bindings']:
+        source,stance,move=(binding[field] for field in ('source','stance','move'))
+        key,motion,rows,flags=NATIVE_SKILLS.get(source,(0,0,0,0))
+        result.append(dict(kind=2 if source=='guard_light' else 1,
+            stances=7 if stance=='any' else 1<<list(STANCE_OPENERS).index(stance),
+            variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
+    for stance,move in configuration['stance_holds'].items():
+        if move: result.append(dict(kind=3,stances=1<<list(STANCE_OPENERS).index(stance),variant=slots[move],key=0,motion=0,transition_count=0,flags=0))
+    return result
 
 
 def player_replacement(game, stable, player, move, group):
@@ -380,8 +397,8 @@ def fresh_profile(game):
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
-                tiger_sprint=configuration['tiger_sprint'],mid_light_ender=configuration['mid_light_ender'],
-                high_guard_light=bool(configuration['high_guard_light']))
+                mid_light_ender=configuration['mid_light_ender'],
+                skill_bindings=compiled_skill_bindings(configuration,imports))
 
 
 def boss_fields(profile):
@@ -414,7 +431,8 @@ def boss_fields(profile):
     fields.update(imports=profile['imports'], adapters=profile['adapters'], string_variant=profile['string_variant'])
     fields.update((field,profile[field]) for field in ('hold_variant','hold_milliseconds','hold_camera_bank'))
     fields['native_grapple'] = profile.get('native_grapple', False)
-    fields.update((field,profile.get(field,False)) for field in ('tiger_sprint','mid_light_ender','high_guard_light'))
+    fields['mid_light_ender']=profile.get('mid_light_ender',False)
+    fields['skill_bindings']=profile.get('skill_bindings',[])
     fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed'))
     return fields, originals
 

@@ -66,7 +66,8 @@ int main() {
         if (phase>=9) {adapter.player_descriptor=0xA20000;adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;}
     }
     aerial.imports[19]=aerial.imports[7];aerial.adapters[19]=aerial.adapters[12];
-    aerial.native_bindings=8;
+    aerial.skill_bindings[0]={2,4,17,0,0,0,0};
+    aerial.skill_bindings[1]={3,1,20,0,0,0,0};
     assert(runtime_imports_valid(aerial));
     for (unsigned slot : {7u,8u,9u,12u,13u,14u,15u,16u,17u,18u,19u}) {
         auto invalid=aerial;invalid.imports[slot].flags^=1;
@@ -76,20 +77,37 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==7 && sizeof(RuntimeSessionConfig)==4168
-        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632);
-    auto frost=incoming; frost.import_count=9; frost.hold_variant=8; frost.hold_milliseconds=250;
+    static_assert(RUNTIME_SESSION_VERSION==8 && sizeof(RuntimeSessionConfig)==4424
+        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632
+        && offsetof(RuntimeSessionConfig,skill_bindings)==4168);
+    auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
+    moved.skill_bindings[0]={2,2,17,0,0,0,0};
+    for (unsigned slot : {7u,8u}) {
+        auto& adapter=moved.adapters[slot];adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;
+    }
+    for (unsigned slot : {16u,17u,18u}) {
+        auto& adapter=moved.adapters[slot];adapter.player_key=0xCB7;adapter.player_motion=3300;adapter.transition_count=40;adapter.recovery_frame=58;
+    }
+    assert(runtime_imports_valid(moved));
+    auto wrong_binding=moved;wrong_binding.skill_bindings[0].stances=4;
+    assert(!runtime_imports_valid(wrong_binding));
+    wrong_binding=moved;wrong_binding.skill_bindings[0].variant=18;
+    assert(!runtime_imports_valid(wrong_binding));
+    wrong_binding=moved;wrong_binding.skill_bindings[1].variant=17;
+    assert(!runtime_imports_valid(wrong_binding));
+    wrong_binding=moved;wrong_binding.skill_bindings[1].kind=0;
+    assert(!runtime_imports_valid(wrong_binding));
+    wrong_binding=moved;wrong_binding.hold_stances=0;
+    assert(!runtime_imports_valid(wrong_binding));
+    wrong_binding=moved;wrong_binding.skill_bindings[1].variant=1;
+    assert(!runtime_imports_valid(wrong_binding));
+    auto frost=incoming;frost.import_count=10;frost.hold_variant=8;frost.hold_milliseconds=250;
     frost.frost_variants[2]=8;
-    for (unsigned i=7;i!=9;++i) {
-        auto& move=frost.imports[i]; move=incoming.imports[0];
-        move.descriptor=0x30000+i*0x1000;move.payload=move.descriptor+0x100;
-        move.clip=move.descriptor+0x200;move.timing_record=move.descriptor+0x300;
-        move.key=i==7?0xCAC:0xCAD;move.motion=i==7?5110:5111;move.flags=0x200194C0000ULL;
-        move.recovery_frame=i==7?115:65;move.transition_count=i==7?76:75;
-        frost.adapters[i]={0x90000,0x91000,0x92000,0x93000,0x94000,0x95000,0xC7A,2300,42,46,i==7?2u:4u};
+    for (unsigned phase=0;phase<3;++phase) {
+        frost.imports[phase+7]=aerial.imports[phase+16];frost.adapters[phase+7]=aerial.adapters[phase+16];
     }
     assert(runtime_imports_valid(frost));
-    for (uint64_t slot : {9ULL,10ULL}) {
+    for (uint64_t slot : {9ULL,11ULL}) {
         auto wrong=frost;wrong.frost_variants[2]=slot;
         assert(!runtime_imports_valid(wrong));
     }
@@ -107,6 +125,25 @@ int main() {
     }
     wrong=frost;wrong.frost_speed=1;
     assert(runtime_imports_valid(wrong));
+    auto binding=incoming;binding.skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};
+    assert(runtime_imports_valid(binding));
+    for (unsigned failure=0;failure<11;++failure) {
+        auto invalid_binding=binding;auto& row=invalid_binding.skill_bindings[0];
+        if (failure==0) row.kind=4;
+        if (failure==1) row.stances=0;
+        if (failure==2) row.stances=8;
+        if (failure==3) row.variant=0;
+        if (failure==4) row.variant=8;
+        if (failure==5) row.key=0xFAB;
+        if (failure==6) row.motion=5091;
+        if (failure==7) row.transition_count=22;
+        if (failure==8) row.flags^=1;
+        if (failure==9) invalid_binding.skill_bindings[1]=row;
+        if (failure==10) row.kind=0;
+        assert(!runtime_imports_valid(invalid_binding));
+    }
+    binding.skill_bindings[0]={2,7,2,0,0,0,0};assert(runtime_imports_valid(binding));
+    binding.skill_bindings[0].key=0xFAA;assert(!runtime_imports_valid(binding));
     auto grapple_config=incoming; grapple_config.native_bindings=1;
     assert(runtime_imports_valid(grapple_config));
     grapple_config.imports[6].motion=1312;
@@ -179,6 +216,8 @@ int main() {
     assert(BOSS_CONFIG_TAG == incoming.config_tag && !memcmp(&boss_session, &incoming.session, sizeof(boss_session)));
     assert(boss_import_count==7 && boss_string_variant==2 && !memcmp(boss_imports,incoming.imports,sizeof(boss_imports)));
     assert(load_runtime_session(&incoming) == 0);
+    invalid=incoming;invalid.skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};
+    assert(load_runtime_session(&invalid)==ERROR_INVALID_DATA);
     invalid=incoming;invalid.frost_milliseconds=751;
     assert(load_runtime_session(&invalid)==ERROR_INVALID_DATA);
     invalid=incoming;invalid.hold_stances=1;

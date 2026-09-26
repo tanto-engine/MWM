@@ -35,10 +35,13 @@ static void owned_weight(void* actor, float weight) {
     ++weight_calls;SetLastError(999);
 }
 
-static bool weight_action(void* actor, uint32_t, void*) {
+static bool weight_action(void* actor, uint32_t, void* context) {
     // Commit a controlled damage reaction through the existing global setter wrapper.
     // The commit serial changes only on native success; the selected hit is consumed there.
-    // Failed and paired commits must never acquire the launcher override.
+    // Selected unpaired hits must already be lighter while native reaction processing runs.
+    uint64_t owner=0,collision=0;float effective=0;
+    assert(copy_field(address(actor)+0x50,owner) && copy_field(owner+0x250,collision));
+    assert(copy_field(collision+0xB0,effective) && context && effective==*static_cast<float*>(context));
     if (weight_accept) {
         uint32_t serial=0;uint64_t owner=0,component=0;assert(copy_field(address(actor)+0xDC,serial));
         put(actor,0x58,weight_reaction);put(actor,0xDC,serial+1);
@@ -49,19 +52,22 @@ static bool weight_action(void* actor, uint32_t, void*) {
 }
 
 static void weight_cases() {
-    // Exercise the actual selected-hit/committed-reaction path with owned victim buffers.
-    // Cover rejection, nested acquisition, resource replacement and cooperative Stop restoration.
-    // No game process or native physics routine is called by these lifecycle regressions.
+    // Exercise provisional weight during the actual native selected-hit setter path.
+    // Rejected, paired and nonreaction results roll back; only committed reactions retain ownership.
+    // Existing component, external-owner and cooperative Stop cases remain entirely owned-memory tests.
     static uint8_t victim[0x800]{},victim_owner[0x260]{},component[0x98]{},collision[0xC0]{},changed_collision[0xC0]{};
-    static uint8_t event[0x120]{},reaction[0xD0]{},payload[0xB0]{};
+    static uint8_t event[0x120]{},reaction[0xD0]{},payload[0xB0]{},initial[0xD0]{},initial_payload[0xB0]{};
     native_set_weight=owned_weight;weight_calls=0;weight_reaction=address(reaction);
     const auto saved_action=original_action;original_action=weight_action;
     put(victim,0,boss_session.vtable);put(victim,0x50,address(victim_owner));
     put(victim_owner,0x230,address(component));put(component,8,address(victim));
     put(victim_owner,0x250,address(collision));put(reaction,0x20,address(payload));
-    for (unsigned failure=0;failure<8;++failure) {
-        put(victim,0x58,address(neutral.data()));put(victim,0x7BC,-1.0f);put(collision,0xB0,100.0f);
-        put(payload,0,uint32_t(0x40000));put(payload,0x18,uint64_t(0));
+    put(initial,0x20,address(initial_payload));
+    const unsigned bridge_slot=boss_import_count;assert(bridge_slot<24);
+    const auto saved_bridge=boss_imports[bridge_slot];const auto saved_adapter=boss_adapters[bridge_slot];
+    for (unsigned failure=0;failure<11;++failure) {
+        put(victim,0x58,address(initial));put(victim,0x7BC,-1.0f);put(collision,0xB0,100.0f);
+        put(payload,0,uint32_t(0x40000));put(payload,0x18,uint64_t(0));put(initial_payload,0x18,uint64_t(0));
         put(component,0x90,address(event));put(event,0xE8,boss_session.player_owner);put(event,0x100,address(victim_owner));
         put(event,0xE0,address(boss_private_actions[5].combat_body));put(event,0x11C,int32_t(0));weight_accept=true;
         if (failure==1) put(event,0xE0,uint64_t(0));
@@ -70,30 +76,56 @@ static void weight_cases() {
         if (failure==4) put(payload,0,uint32_t(0));
         if (failure==5) put(payload,0x18,uint64_t(0x20000000));
         if (failure==6) weight_accept=false;
-        if (failure==7) boss_adapters[5].player_key=0xCB7;
-        const auto hit=launcher_hit(victim);SetLastError(INCOMING);
-        assert(observed_action(victim,0x96,nullptr)==weight_accept && GetLastError()==ACTION_ERROR);
-        assert(launch_weight_count==(failure ? 0 : 1));
-        if (!failure) {
-            float actual=0;assert(copy_field(address(collision)+0xB0,actual) && actual==50);
-            const auto calls=weight_calls;apply_launch_weight(victim,hit);
-            assert(weight_calls==calls && launch_weight_count==1);
+        if (failure==7) {
+            boss_imports[bridge_slot]=boss_imports[5];boss_imports[bridge_slot].key=0xC7A;
+            boss_adapters[bridge_slot]=boss_adapters[5];boss_adapters[bridge_slot].kind=4;
+            boss_import_count=bridge_slot+1;
+        }
+        if (failure==10) boss_adapters[5].player_key=0xCB7;
+        if (failure==8) put(initial_payload,0x18,uint64_t(0x20000000));
+        if (failure==9) put(collision,0xB0,10000.0f);
+        const bool retained=!failure || failure==10;
+        const bool acquired=retained || failure==4 || failure==5 || failure==6;
+        float expected=acquired ? 50.0f : failure==9 ? 10000.0f : 100.0f;
+        const auto before=weight_calls;SetLastError(INCOMING);
+        assert(observed_action(victim,0x96,&expected)==weight_accept && GetLastError()==ACTION_ERROR);
+        assert(launch_weight_count==(retained ? 1 : 0));
+        assert(weight_calls==before+(acquired ? (retained ? 1 : 2) : 0));
+        float actual=0;assert(copy_field(address(victim)+0x7BC,actual) && actual==(retained ? 50.0f : -1.0f));
+        if (retained) {
+            assert(copy_field(address(collision)+0xB0,actual) && actual==50);
+            const auto calls=weight_calls;put(component,0x90,address(event));
+            assert(!launcher_hit(victim).owner && weight_calls==calls && launch_weight_count==1);
             restore_launch_weights(boss_session.player,true);assert(launch_weight_count==1);
             assert(NiohResearchStop(nullptr)==ERROR_BUSY && launch_weight_count==1 && weight_calls==calls);
             SetLastError(INCOMING);observed_frame(player.data(),.25f);
             assert(!launch_weight_count && GetLastError()==FRAME_ERROR);
             assert(copy_field(address(victim)+0x7BC,actual) && actual==-1);
             dispatch->control.enabled=1;
-        }
-        boss_adapters[5].player_key=0xCF5;
+        } else if (acquired) assert(copy_field(address(collision)+0xB0,actual) && actual==100);
+        boss_adapters[5].player_key=0xCF5;boss_import_count=bridge_slot;
+        boss_imports[bridge_slot]=saved_bridge;boss_adapters[bridge_slot]=saved_adapter;
     }
-    // Direct acquisition isolates descriptor, actor, component and third-party ownership endings.
-    for (unsigned ending=0;ending<6;++ending) {
-        put(victim,0,boss_session.vtable);put(victim,0x58,address(reaction));put(victim,0xDC,uint32_t(2));
+    // Direct selected-hit acquisition isolates unchanged serial and existing ownership endings.
+    put(initial_payload,0x18,uint64_t(0));weight_accept=true;
+    for (unsigned ending=0;ending<10;++ending) {
+        put(victim,0,boss_session.vtable);put(victim,0x58,address(initial));put(victim,0xDC,uint32_t(1));
         put(victim,0x7BC,-1.0f);put(payload,0,uint32_t(0x40000));put(payload,0x18,uint64_t(0));
-        put(victim_owner,0x250,address(collision));put(collision,0xB0,100.0f);
-        apply_launch_weight(victim,{address(victim_owner),1});assert(launch_weight_count==1);
-        const auto calls=weight_calls;
+        put(victim_owner,0x250,address(collision));put(collision,0xB0,100.0f);put(component,0x90,address(event));
+        const auto hit=launcher_hit(victim);assert(hit.owner && launch_weight_count==1);
+        put(victim,0x58,address(reaction));put(victim,0xDC,uint32_t(ending==6 ? 1 : 2));
+        const auto acquired_calls=weight_calls;
+        if (ending==7) put(victim,0,boss_session.vtable+8);
+        if (ending==8) put(victim_owner,0x250,address(changed_collision));
+        if (ending==9) put(victim,0x50,address(victim_owner)+8);
+        finish_launch_weight(victim,hit,true);
+        if (ending>=6) {
+            const bool replaced=ending==7 || ending==9;float actual=0;
+            assert(!launch_weight_count && weight_calls==acquired_calls+(replaced ? 0 : 1));
+            assert(copy_field(address(victim)+0x7BC,actual) && actual==(replaced ? 50.0f : -1.0f));
+            put(victim,0x50,address(victim_owner));continue;
+        }
+        assert(launch_weight_count==1);const auto calls=weight_calls;
         if (ending==0) put(victim,0x58,address(neutral.data()));
         if (ending==1) put(victim,0,boss_session.vtable+8);
         if (ending==2) put(victim,0x7BC,75.0f);
@@ -177,7 +209,7 @@ static void replacement_reset() {
     // Use recorded William transition bytes and the source recovery/count signatures.
     // Distinct banks reveal accidental reuse of Okatsu resources during replacement or exit.
     for (auto& adapter : boss_adapters) adapter={};
-    reset(); boss_active_slot=0; pending_heavy={}; boss_hold_variant=0; boss_hold_milliseconds=0;
+    reset();for (auto& binding : boss_skill_bindings) binding={};boss_active_slot=0; pending_heavy={}; boss_hold_variant=0; boss_hold_milliseconds=0;
     game_input_state=replacement_input; pad_mask=1; pad_buttons=0; native_idle_fallbacks=0; publish_during_input=false;
     boss_import_count=5;
     const int16_t recovery[]={35,45,45}, player_recovery[]={38,29,33};
@@ -257,6 +289,7 @@ static void hold_reset(unsigned stance=2) {
         put(heavy_payloads[0].data(),0x0B,uint8_t(stance));
         put(player.data(),0x470,stance);
     }
+    boss_skill_bindings[0]={3,stance==2 ? 1u : stance==0 ? 2u : 4u,6,0,0,0,0};
     state(0,0,3); publish_player_context(.25f); publish(); pad_buttons=XINPUT_GAMEPAD_Y;
     observe_game_input(trace->header);
     SetLastError(INCOMING); assert(!observed_action(player.data(),0xBC0,nullptr));
@@ -285,7 +318,9 @@ static void held_slot_cases() {
         boss_imports[4]=boss_imports[6]; boss_adapters[4]=boss_adapters[6];
         assert(stance_hold(key)==5); // Exclude optional entries even before the held import.
         boss_imports[6].key=boss_imports[5].key;
-        assert(stance_hold(key)==5); // A later matching template cannot override compiler order.
+        assert(stance_hold(key)==5); // A later matching template cannot override the binding.
+        boss_skill_bindings[0].variant=7;assert(stance_hold(key)==6);
+        boss_skill_bindings[0].variant=6;
         boss_adapters[5].kind=0; boss_adapters[6].kind=0;
         assert(stance_hold(key)==boss_import_count);
         boss_hold_stances=0;
@@ -351,7 +386,7 @@ static void airborne_cases() {
         assert(!memcmp(clone.transition_bodies,rows[phase],clone.transition_count*0x30));
     }
     const auto& finish=boss_private_actions[9];
-    for (unsigned row=0;row<3;++row) {int16_t target=-1;memcpy(&target,finish.transition_bodies[row]+20,2);assert(target==0);}
+    for (unsigned row=0;row<3;++row) {int16_t target=-1;memcpy(&target,finish.transition_bodies[row]+20,2);assert(target==0xBB8);}
     int16_t weight=0;assert(copy_field(boss_private_payload_address(7)+0x28,weight) && weight==10000);
     const auto& dash=boss_private_actions[11];int16_t onset=0,cost=0;
     memcpy(&onset,dash.payload+0x38,2);memcpy(&cost,dash.payload+0x16,2);
@@ -375,10 +410,11 @@ static void airborne_cases() {
     put(guard,0x78,address(&guard_pointer));put(guard,0x82,uint16_t(1));
     guard_row[0x0B]=5;guard_row[0x0C]=0;guard_row[0x0D]=0;guard_row[0x0E]=1;
     put(guard_row,0x14,int16_t(0xFA2));put(skill,0,uint32_t(0xFA2));skill[0x40]=1;
+    put(skill,0x20,address(high_payload));
     high_payload[0x0B]=1;put(player.data(),0x470,uint32_t(1));
     put(player.data(),0x58,address(guard));put(player.data(),0x90,address(guard_row));
     original_lookup=[](void*,uint32_t,uint32_t* bank) { *bank=0;return address(skill); };
-    boss_native_bindings=8;publish();
+    boss_native_bindings=0;boss_skill_bindings[0]={2,4,15,0,0,0,0};publish();
     {
         DispatchReason reason=Disabled;DispatchCommand request{};ReplacementScope scope(player.data(),request,reason);
         uint32_t bank=0;
@@ -392,7 +428,7 @@ static void airborne_cases() {
         assert(boss_active_slot==slot && grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot)));
     }
     put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());assert(!boss_active);bindings(false);
-    boss_native_bindings=0;original_lookup=native_lookup;
+    boss_skill_bindings[0]={};boss_native_bindings=0;original_lookup=native_lookup;
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
 
@@ -400,6 +436,13 @@ static void frost_cases() {
     // Exercise same-stance rejection, genuine double edges and the exact750ms expiry.
     // Keep sampling continuous while testing controller/lifecycle resets and conflicting inputs.
     // Then pass the native Ki Pulse fields through the actual frame dispatcher and import adapter.
+    static uint8_t walk[0xD0]{},walk_payload[0xB0]{};
+    put(walk,0x20,address(walk_payload));walk[0x40]=1;walk_payload[0x0B]=4;
+    for (const auto& movement : {std::array<uint32_t,2>{0xC61,2030},{0xC9E,3030},{0xCDB,4030},
+            {0xC65,2040},{0xCA2,3040},{0xCDF,4040}}) {
+        put(walk,0,movement[0]);put(walk_payload,0x20,movement[1]);
+        assert(frost_continuation(address(walk),movement[0]));
+    }
     for (unsigned failure=0;failure<10;++failure) {
         FrostMoonInput input{}; GameInput sample{}; unsigned fired=0;
         for (unsigned tick=0;tick<90;++tick) {
@@ -722,7 +765,8 @@ int main() {
     assert(copy_field(boss_private_descriptor_address(5)+0x48,contact_table));
     assert(copy_field(contact_table,contact_row) && copy_field(contact_row+0x17,impulse));
     assert(impulse==16 && launcher_combat[0x17]==12);
-    for (unsigned byte=0;byte<sizeof(launcher_combat);++byte) if (byte!=0x17) {
+    assert(copy_field(contact_row+0x1B,impulse) && impulse==16 && launcher_combat[0x1B]==12);
+    for (unsigned byte=0;byte<sizeof(launcher_combat);++byte) if (byte!=0x17 && byte!=0x1B) {
         uint8_t actual=0; assert(copy_field(contact_row+byte,actual) && actual==launcher_combat[byte]);
     }
     assert(boss_prepare_private_action(5));
@@ -767,7 +811,7 @@ int main() {
     }
     assert(pulses==3);
     original_frame=native_clock_frame; put(motion.data(),0x58,launcher.clip);
-    for (const auto& sample : {std::array<float,2>{0,2},{6.5f,1.5f},{7,1},{8,1},{12,1},{20,1},{21,8},{53,8},{60,5},{64,1},{65,1}}) {
+    for (const auto& sample : {std::array<float,2>{0,2},{6.5f,1.5f},{7,1},{8,1},{12,1},{20,1},{21,1},{53,1},{60,1},{64,1},{65,1}}) {
         put(player.data(),0x28,sample[0]); SetLastError(INCOMING);
         assert(observed_frame(player.data(),1.0f)==sample[1]);
         float speed=0,delta=0,frame=0;

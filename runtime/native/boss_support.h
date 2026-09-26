@@ -42,27 +42,27 @@ struct BossPrivateAction {
     bool ready;
 };
 static BossPrivateAction boss_private_actions[24]{};
-struct MoveTiming { int16_t recovery; float startup_end, startup_speed; float tail_end=0; };
+static int boss_native_successor(unsigned slot, uint32_t key);
+struct MoveTiming { int16_t recovery; float startup_end, startup_speed; };
 static MoveTiming boss_move_timing(unsigned slot) {
     // Own private recovery and shared-clock startup tuning together, by source identity.
-    // Recovery follows the final active hit; optional fast tails retain every native event.
+    // Recovery enables cancellation after the final hit; un-cancelled tails run at native speed.
     // Paired actions retain their source lifecycle; gameplay acceptance of these values is pending.
     const auto& move=boss_imports[slot];
     if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC83)
         return {30,0,1}; // Landing clip37; last non-audio event29.
-    if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC71)
-        return {-1,19,boss_frost_variants[0]==slot+1 ? float(boss_frost_speed) : 1};
-    if (boss_adapters[slot].kind==2 && move.key==0xCAC && move.motion==5110 && move.flags==0x200194C0000ULL)
-        for (auto frost : boss_frost_variants) if (frost==slot+1) return {move.recovery_frame,28,float(boss_frost_speed)};
+    if (airborne_sword(move,boss_adapters[slot]) && (move.key==0xC71 || move.key==0xC81)) {
+        for (auto frost : boss_frost_variants) if (frost==slot+1) return {-1,19,float(boss_frost_speed)};
+        return {-1,0,1};
+    }
     if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
         return {54,30,2};
     if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
         return {78,0,1};
     if (boss_adapters[slot].kind==2 && move.key==0xC79 && move.motion==5014
         && move.flags==0x194C0000 && move.recovery_frame==-1)
-        return {boss_adapters[slot].player_key==0xCF5 ? int16_t(21) : int16_t(54),8,
-                boss_frost_variants[1]==slot+1 ? float(boss_frost_speed) : 2,
-                boss_adapters[slot].player_key==0xCF5 ? 65.0f : 0.0f};
+        return {boss_native_successor(slot,0xC7A)<0 ? int16_t(21) : int16_t(54),8,
+                boss_native_successor(slot,0xC7A)<0 ? 2.0f : float(boss_frost_speed)};
     return {move.recovery_frame,0,1};
 }
 static uint64_t boss_private_descriptor_address(unsigned slot = 0) {
@@ -94,11 +94,11 @@ static constexpr uint8_t boss_dodge_template[0x30] = {
 static int boss_native_successor(unsigned slot, uint32_t key) {
     // Keep ordinary automatic branches inside the entry's stance and source bank.
     // Only an explicit contact link or an existing paired action can enter another paired phase.
-    // Low C79 and Mid Izuna share source bytes but must own different successor graphs.
+    // Standalone C79 and Izuna share source bytes but must own different successor graphs.
     const auto& owner=boss_adapters[slot];
     const auto& source=boss_imports[slot];
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
-        || (source.key==0xC79 && key==0xC7A) || (source.key==0xCAC && key==0xCAD)
+        || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
         || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
         || ((source.key==0x3B2 || source.key==0x3B4) && (key==0x3B4 || key==0x3B6));
@@ -132,10 +132,10 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
         uint8_t check[0x30];
         if (!copy_bytes(source_pointers[i], bodies[i], 0x30) || !copy_bytes(source_pointers[i], check, 0x30)
             || memcmp(bodies[i], check, 0x30)) return false;
-        if (boss_adapters[slot].kind==3) {
+        if (boss_adapters[slot].kind==3 || (bodies[i][0x0A]==1 && bodies[i][0x0B]==0xff)) {
             int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
-            if (target>=0xBB8 && boss_native_successor(slot,uint32_t(target))<0) {
-                target=0; memcpy(bodies[i]+0x14,&target,2);
+            if ((target==0 || target>=0xBB8) && boss_native_successor(slot,uint32_t(target))<0) {
+                target=0xBB8; memcpy(bodies[i]+0x14,&target,2);
             }
         }
     }
@@ -282,7 +282,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             uint32_t flags=0; int16_t end=0;
             memcpy(&flags,body+0x1C,4); memcpy(&end,body+0x22,2);
             if (!(flags&0x2000040) && body[0x0A]==1 && end==INT16_MAX && (flags&4)) source_end=true;
-            if (!owned) { target=0; memcpy(body+0x14,&target,2); } // Native completion exits to William idle.
+            if (!owned) { target=0xBB8; memcpy(body+0x14,&target,2); } // Native completion exits to William idle.
             memcpy(automatic[added++],body,sizeof(body));
         }
         if (!contact_found || !copy_bytes(slice,check_rows,source_count*8)
@@ -303,12 +303,12 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
 }
 
 static bool boss_copy_launcher_contact(unsigned slot, uint8_t* descriptor, uint8_t (&body)[0x80]) {
-    // Native71A5EE converts combat+17 into the grounded victim's vertical contact impulse.
-    // Clone only C79's single combat row:12 becomes16; damage, airborne response and Jin stay intact.
+    // Native71A460 queries the newly selected reaction: +17 or +1B supplies vertical impulse.
+    // Clone only low C79's single combat row: both branches12 become16; source and Izuna stay intact.
     // Descriptor ownership keeps this adjustment contact-driven without touching enemy weight or physics.
-    // TODO: verify grounded height and recovery against humans/yokai; keep airborne impulse unchanged.
+    // TODO: verify grounded height and recovery against humans/yokai; both native reaction branches must receive the same boost.
     const auto& move=boss_imports[slot];
-    if (boss_adapters[slot].kind!=2 || boss_adapters[slot].player_key!=0xCF5
+    if (boss_adapters[slot].kind!=2 || boss_native_successor(slot,0xC7A)>=0
         || move.key!=0xC79 || move.motion!=5014 || move.flags!=0x194C0000)
         return true;
     uint64_t table=0, row=0, after=0; uint16_t start=0, count=0;
@@ -319,7 +319,7 @@ static bool boss_copy_launcher_contact(unsigned slot, uint8_t* descriptor, uint8
     if (!copy_field(entry,row) || !copy_bytes(row,body,sizeof(body))
         || !copy_bytes(row,check,sizeof(check)) || memcmp(body,check,sizeof(body))
         || !copy_field(entry,after) || after!=row || body[0x17]!=12 || body[0x1B]!=12) return false;
-    body[0x17]=16;
+    body[0x17]=body[0x1B]=16;
     const uint64_t private_table=reinterpret_cast<uint64_t>(&boss_private_actions[slot].combat_entry);
     const uint16_t private_start=0;
     memcpy(descriptor+0x48,&private_table,8); memcpy(descriptor+0x50,&private_start,2);
@@ -702,7 +702,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
                 reason = BossBindingMismatch;
             }
             if (key == 0xC65 || key == 0xC66 || key == 0xC67 || key == 0xC68) {
-                forwarded = 0; context = nullptr; reason = BossFollowupExit;
+                forwarded = 0xBB8; context = nullptr; reason = BossFollowupExit;
             }
             return true;
         }
@@ -712,7 +712,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
 #ifdef RESEARCH_REPEAT
     const unsigned private_slot = unsigned(command.reserved[1]);
     if (reason == Accepted) {
-        const bool izuna=boss_imports[private_slot].key==0xC79 && boss_adapters[private_slot].player_key==0xCB7;
+        const bool izuna=boss_imports[private_slot].key==0xC79 && boss_native_successor(private_slot,0xC7A)>=0;
         if ((boss_imports[private_slot].flags == 0x594C0000 || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0))
             && !boss_camera_available()) reason = BossBindingMismatch;
         int slot = int(private_slot);

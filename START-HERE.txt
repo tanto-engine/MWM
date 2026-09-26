@@ -1,7 +1,7 @@
 Nioh 1 Sword Mod
 
 Current build: sword bindings and Frost Moon; gameplay acceptance pending.
-User confirmed Frost Moon spam, early Pulse and launcher recovery on2026-09-26.
+Earlier build passed a player spot-check; the revised bindings, exits and launcher require new verification.
 Flying Swallow speed remains unchanged at user request. Full gameplay coverage is pending.
 
 Run from this repository in PowerShell:
@@ -16,7 +16,7 @@ Build native changes with:
 No mission-specific compilation or EXE packaging.
 
 Configuration:
-  runtime/controller-binding.json is the single schema3 preset.
+  runtime/controller-binding.json is the single schema4 preset.
   Saved device mapping remains in controller-calibration.json; reuse it.
   Low Triangle taps: Jin string D, C6E/2400 -> C6F/2410 -> C70/2420.
   Low Triangle hold: C79/5014 upward launcher. Mid/high held trials are disabled.
@@ -25,29 +25,36 @@ Configuration:
   LT + RT custom string is disabled. Native sword running attacks remain native.
   Native Tiger Sprint FAA/5090 now selects Okatsu Charged Rush.
   After any mid light, LB + Triangle selects native Living Weapon heavy D3A/9210.
-  High LB + Square: Jin somersault C81 -> C82 -> C83 overrides the equipped skill.
-  Native guard + light timing/skill gates remain; its full airborne sequence runs at1x.
-  Landing recovery/Pulse opens at30 of37 frames. Set high_guard_light=null for native.
+  High LB + Square: launcher -> contact -> paired Izuna Drop replaces the equipped skill.
+  First8 launcher frames use8x; paired playback/camera remain at native speed.
   Low held Triangle overrides native empty-Ki grapple; a tap retains grapple.
-  High Frost Moon: RB + Triangle twice, starting in low or mid stance.
+  High Frost Moon is unassigned: CAC/CAD was Kusa Pull, removed from sword data.
+  Recording the actual downward sword slam is deferred until binding fixes are verified.
   RB may be released between presses; Flux and input spam retain the initial deadline.
   Window:0.75 seconds from earliest native Ki Pulse availability, before perfect Pulse.
   No same-stance reuse. Frost selects its target stance and overrides chord attack/dodge spillover.
-  Frost startup speed:1..8x, default8x through CAC frame28; timing events remain intact.
+  Frost startup speed:1..8x, default8x through the initial jump; timing events remain intact.
   Its previous-action cancellation uses native Pulse availability, not animation end.
-  Mid Frost Moon: RB + Square twice, C79 -> C7A contact -> 3B2/3B4 -> 3B6 Izuna.
-  Its first8 launcher frames accelerate; the paired sequence retains native speed/camera.
+  Mid Frost Moon: RB + Square twice, C81 -> C82 -> C83 aerial somersault.
+  Jump startup accelerates through19; landing recovery/Pulse begins at30.
   Low Frost Moon: R1 + X (PlayStation) / RB + A (Xbox), twice. Flying Swallow runs
   C71 jump -> C72 dash -> C73 descent -> C74 landing, preserving native transitions.
   Jump startup accelerates through19; dash Ki20 carries to the landing Pulse at20.
   Dash Pulse/recovery starts at54; leap at78; low launcher at21.
-  Low launcher tail21..65 uses8x shared-clock playback; its complete clip/events remain.
-  Low launcher: grounded impulse12 ->16 plus50% native collision weight for its victim
-  reaction. Original weight returns on exit, interruption, replacement or cooperative Stop.
+  Low launcher keeps its full65-frame clip and native-speed tail; cancel/Pulse starts at21.
+  Standalone launcher: both native impulse branches12 ->16 plus50% collision weight
+  applied before the victim reaction. Original weight returns on exit, interruption, replacement or cooperative Stop.
   Weight changes push resistance; it is not a proportional airtime/gravity multiplier.
-  Paired/immovable reactions and Mid Izuna retain native weight and contact data.
+  Paired/immovable reactions and Izuna retain native weight and contact data.
   Saving a changed preset recovers and reattaches the active engine.
   A null choice disables that replacement. Source signatures/indices are engine-owned.
+  skill_bindings contains source/stance/move rules; sources: tiger_sprint or guard_light.
+  Example: {"source":"tiger_sprint","stance":"any","move":"okatsu.charged_rush"}.
+  Native-skill rules follow the game's assignment and native timing. Unassigned stances
+  cannot select that native skill. guard_light follows its selected LB+Square row.
+  Stance accepts low/mid/high/any; Jin graphs require a concrete stance. A graph can
+  share bindings within one stance. Unsupported native skill identities are rejected;
+  add researched signatures to NATIVE_SKILLS before exposing further GUI options.
   Native animation timing is centralized in runtime/native/boss_support.h::boss_move_timing.
   Spreadsheet Tuning documents these values; editing it does not modify the DLL.
 
@@ -70,7 +77,7 @@ Verification still required in actual gameplay:
   DS4, DualSense, Xbox and SCUF latency/reconnect behavior.
   The grapple still starts with William's stab; the requested opening hop is absent.
   Izuna contact, victim/camera synchronization and Flying Swallow landing recovery.
-  High guard + Square somersault, native guard skills in other stances and landing Pulse.
+  High guard + Square Izuna, Mid somersault Frost while moving, unsheathed completion.
 
 Use no game monitor control/capture, synthetic input or repeated calibration.
 Check play-status.json instead of trusting saved process IDs.

@@ -75,6 +75,19 @@ static bool frost_continuation(uint64_t descriptor, uint32_t key) {
     uint64_t payload=0;int32_t motion=0;
     if (repeat_current_allowed(descriptor,key)) return true;
     if (!copy_field(descriptor+0x20,payload) || !copy_field(payload+0x20,motion)) return false;
+    // Recorded free/lock-on locomotion retains the same first-availability deadline.
+    // Mid has one extra3022 row; normalize its subsequent offsets to the common sword layout.
+    // Exact native key/motion/stance pairs exclude imported collisions and running attacks.
+    constexpr uint32_t starts[]={0xC5B,0xC97,0xCD5};
+    constexpr int offsets[]={20,21,23,30,40,41,30,31,32,33,40,41,42,43,44,45,46,47};
+    uint8_t stance=0,enabled=0;
+    if (copy_field(payload+0x0B,stance) && stance==4 && copy_field(descriptor+0x40,enabled) && enabled)
+        for (unsigned group=0;group<3;++group) if (key>=starts[group] && key<starts[group]+18+(group==1)) {
+            unsigned index=key-starts[group];
+            if (group==1 && index==2) return motion==3022;
+            if (group==1 && index>2) --index;
+            return motion==int((group+2)*1000)+offsets[index];
+        }
     if (key>=0xD60 && key<=0xD62) return motion==2009+int(key-0xD60)*1000;
     if (key>=0xD73 && key<=0xD78) return motion==2006+int((key-0xD73)/2)*1000+int((key-0xD73)%2);
     if (frost_input.choice>=3) return false;

@@ -133,7 +133,7 @@ class Trainer:
         self.native_choices = {'Native':None, 'Jin string C':'jin_hayabusa.action_0bc0',
                               'Jin string D':'jin_hayabusa.action_0c6e'}
         self.skill_choices = {'Native':None, 'Jin launcher':'jin_hayabusa.action_0c79',
-                             'Jin overhead knockdown':'jin_hayabusa.action_0cac'}
+                             'Jin somersault':'jin_hayabusa.action_0c81', 'Izuna Drop':'jin_hayabusa.izuna_drop', 'Flying Swallow':'jin_hayabusa.action_0c71'}
         self.native_fields = {}
         for row,(key,label,choices) in enumerate([('low_heavy','Low Triangle taps',self.native_choices),
                 *[(stance,stance.title()+' Triangle hold',self.skill_choices) for stance in ('low','mid','high')]],6):
@@ -141,8 +141,8 @@ class Trainer:
             self.control_row(play,row,label,ttk.Combobox(play,textvariable=self.native_fields[key],values=list(choices),state='readonly',width=42))
         frost=ttk.LabelFrame(play,text='Frost Moon: RB + same stance button twice',padding=10)
         frost.grid(row=0,column=2,rowspan=10,sticky='nw',padx=(24,0))
-        self.frost_choices={'Disabled':None,'Jin overhead slice':'jin_hayabusa.action_0cac',
-                            'Izuna Drop (Mid)':'jin_hayabusa.izuna_drop','Flying Swallow (Low)':'jin_hayabusa.action_0c71'}
+        self.frost_choices={'Disabled':None,'Jin somersault':'jin_hayabusa.action_0c81',
+                            'Izuna Drop':'jin_hayabusa.izuna_drop','Flying Swallow':'jin_hayabusa.action_0c71'}
         self.frost_fields={stance:tk.StringVar() for stance in ('low','mid','high')}
         for row,(stance,field) in enumerate(self.frost_fields.items()):
             self.control_row(frost,row,stance.title(),ttk.Combobox(frost,textvariable=field,
@@ -150,11 +150,11 @@ class Trainer:
         self.frost_window=tk.StringVar(); self.frost_speed=tk.StringVar()
         self.control_row(frost,3,'Window (seconds)',ttk.Spinbox(frost,textvariable=self.frost_window,from_=.1,to=1.5,increment=.05,width=8))
         self.control_row(frost,4,'Startup speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
-        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: Izuna Drop. High: overhead slice.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
+        ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: somersault. High: awaiting sword-slam recording.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
-        for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint uses Okatsu dash'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
+        for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint override'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):
             ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')
-        self.guard_choices={'Native':None,'Jin somersault':'jin_hayabusa.action_0c81'}
+        self.guard_choices=dict(self.frost_choices, **{'Okatsu dash':'okatsu.charged_rush','Okatsu leap':'okatsu.leaping_slash'})
         self.guard_light=tk.StringVar()
         self.control_row(frost,8,'High LB + Square',ttk.Combobox(frost,textvariable=self.guard_light,
             values=list(self.guard_choices),state='readonly',width=24))
@@ -259,8 +259,9 @@ class Trainer:
         for stance,field in self.frost_fields.items():
             field.set(next(label for label,identifier in self.frost_choices.items() if identifier==preset['frost_moon'][stance]))
         self.frost_window.set(str(preset['frost_window_seconds'])); self.frost_speed.set(str(preset['frost_startup_speed']))
-        for field,variable in self.native_toggles.items(): variable.set(preset[field])
-        self.guard_light.set(next(label for label,identifier in self.guard_choices.items() if identifier==preset['high_guard_light']))
+        for field,variable in self.native_toggles.items():
+            variable.set(any(b['source']=='tiger_sprint' for b in preset['skill_bindings']) if field=='tiger_sprint' else preset[field])
+        self.guard_light.set(next(label for label,identifier in self.guard_choices.items() if identifier==next((b['move'] for b in preset['skill_bindings'] if b['source']=='guard_light' and b['stance']=='high'),None)))
         for key,field in self.native_fields.items():
             choices=self.native_choices if key=='low_heavy' else self.skill_choices
             value=preset[key] if key=='low_heavy' else preset['stance_holds'][key]
@@ -274,10 +275,12 @@ class Trainer:
             hold_move=self.move_names[self.hold.get()], modifier_mask=self.button_choices[self.modifier.get()],
             trigger_mask=self.button_choices[self.trigger.get()], hold_seconds=float(self.threshold.get()),
             low_heavy=self.native_choices[self.native_fields['low_heavy'].get()],
-            high_guard_light=self.guard_choices[self.guard_light.get()],
+            skill_bindings=[b for b in self.preset['skill_bindings'] if b['source']!='tiger_sprint' and (b['source'],b['stance'])!=('guard_light','high')]
+                +([next((b for b in self.preset['skill_bindings'] if b['source']=='tiger_sprint'),dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'))] if self.native_toggles['tiger_sprint'].get() else [])
+                +([dict(source='guard_light',stance='high',move=self.guard_choices[self.guard_light.get()])] if self.guard_choices[self.guard_light.get()] else []),
             frost_moon={stance:self.frost_choices[field.get()] for stance,field in self.frost_fields.items()},
             frost_window_seconds=float(self.frost_window.get()),frost_startup_speed=int(self.frost_speed.get()),
-            **{field:variable.get() for field,variable in self.native_toggles.items()},
+            mid_light_ender=self.native_toggles['mid_light_ender'].get(),
             stance_holds={stance:self.skill_choices[self.native_fields[stance].get()] for stance in ('low','mid','high')}))
 
     def apply(self):

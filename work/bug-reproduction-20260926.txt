@@ -1,0 +1,7 @@
+Native reproduction,2026-09-26:
+1. Previous weight_action fixture sees effective100 inside original_action, expected50; failed assertion44.
+2. Captured William movement C61/2030,C9E/3030,CDB/4030 and C65/2040,CA2/3040,CDF/4040 were absent from Frost continuation eligibility.
+3. Prior private paired and ordinary completion tables target0; trace records C79 ->0/motion0. Native BB8 instead resolves C52/2000,C8E/3000,CCC/4000.
+4. Previous timing table makes standalone C79 frames21..65 use8x; regression now expects native1x with cancel/Pulse21 unchanged.
+5. Review reproduction: Tiger-only configured binding returned replacements_configured=false; explicit binding ownership now requests the lookup hook.
+Gameplay acceptance of the revised build remains separate.

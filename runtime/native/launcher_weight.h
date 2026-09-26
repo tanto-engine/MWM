@@ -32,14 +32,16 @@ static void restore_launch_weights(uint64_t actor, bool force, bool all=false) {
 }
 
 static LaunchHit launcher_hit(void* actor) {
-    // Match the victim's selected native hit before the setter consumes its event queue.
-    // Component+90 identifies the event; exact attacker and private combat-row identity scope C79.
-    // Mid Izuna, other attacks, victimless attempts and disabled sessions cannot acquire weight.
+    // Acquire the exact selected standalone C79 hit before native reaction processing consumes it.
+    // Exclude existing pairs and halve the current effective weight without compounding overrides.
+    // Register ownership first so rejected or interrupted setters can restore the original sentinel.
     const auto victim=reinterpret_cast<uint64_t>(actor);const unsigned slot=boss_active_slot;
+    for (const auto& entry : launch_weights) if (entry.actor==victim) return {};
     LaunchHit hit{};uint64_t component=0,event=0,attacker=0,target=0,row=0;int32_t mode=-1;
+    uint64_t current=0,payload=0,flags=0,collision=0;float original=0,weight=0;
     if (!native_set_weight || !dispatch || !InterlockedCompareExchange(&dispatch->control.enabled,0,0)
         || victim==boss_session.player || !InterlockedCompareExchange(&boss_active,0,0) || slot>=boss_import_count
-        || !boss_player_valid() || boss_adapters[slot].kind!=2 || boss_adapters[slot].player_key!=0xCF5
+        || !boss_player_valid() || boss_adapters[slot].kind!=2 || boss_native_successor(slot,0xC7A)>=0
         || boss_imports[slot].key!=0xC79 || boss_imports[slot].motion!=5014 || !boss_private_actions[slot].ready
         || !same_field(boss_session.player,0x58,boss_private_descriptor_address(slot))
         || !same_field(victim,0,boss_session.vtable) || !copy_field(victim+0x50,hit.owner)
@@ -47,29 +49,37 @@ static LaunchHit launcher_hit(void* actor) {
         || !copy_field(component+0x90,event) || !copy_field(event+0xE8,attacker) || attacker!=boss_session.player_owner
         || !copy_field(event+0x100,target) || target!=hit.owner || !copy_field(event+0xE0,row)
         || row!=reinterpret_cast<uint64_t>(boss_private_actions[slot].combat_body)
-        || !copy_field(event+0x11C,mode) || mode!=0 || !copy_field(victim+0xDC,hit.counter)) return {};
-    return hit;
-}
-
-static void apply_launch_weight(void* actor, const LaunchHit& hit) {
-    // Require the setter to commit a reaction that consumes a selected impact event.
-    // Halve effective native collision weight while preserving the original override sentinel.
-    // Paired/immovable states are excluded; the separate private impulse supplies launch height.
-    if (!hit.owner || !dispatch || !InterlockedCompareExchange(&dispatch->control.enabled,0,0)) return;
-    const auto victim=reinterpret_cast<uint64_t>(actor);
-    for (const auto& entry : launch_weights) if (entry.actor==victim) return;
-    uint64_t current=0,payload=0,flags=0,collision=0;uint32_t reaction=0,counter=0;float original=0,weight=0;
-    if (!same_field(victim,0,boss_session.vtable) || !same_field(victim,0x50,hit.owner)
-        || !copy_field(victim+0xDC,counter) || counter==hit.counter || !copy_field(victim+0x58,current)
-        || !copy_field(current+0x20,payload) || !copy_field(payload,reaction) || !(reaction&0x40000)
+        || !copy_field(event+0x11C,mode) || mode!=0 || !copy_field(victim+0xDC,hit.counter)
+        || !copy_field(victim+0x58,current) || !copy_field(current+0x20,payload)
         || !copy_field(payload+0x18,flags) || (flags&0x20000000ULL)
         || !copy_field(hit.owner+0x250,collision) || !copy_field(collision+0xB0,weight)
-        || !copy_field(victim+0x7BC,original) || !std::isfinite(original) || !(weight>0 && weight<10000)) return;
+        || !copy_field(victim+0x7BC,original) || !std::isfinite(original) || !(weight>0 && weight<10000)) return {};
     for (auto& entry : launch_weights) if (!entry.actor) {
         entry={victim,hit.owner,collision,current,original,weight*.5f};
         InterlockedIncrement(&launch_weight_count);
         native_set_weight(actor,entry.applied);
-        break;
+        return hit;
+    }
+    return {};
+}
+
+static void finish_launch_weight(void* actor, const LaunchHit& hit, bool accepted) {
+    // Bind the provisional override only to a newly committed unpaired damage reaction.
+    // Never revisit the consumed event; validate the saved actor and current native descriptor.
+    // Rejection, another weight owner or changed identity restores or retires our exact ownership.
+    if (!hit.owner) return;
+    const auto victim=reinterpret_cast<uint64_t>(actor);
+    for (auto& entry : launch_weights) if (entry.actor==victim && entry.owner==hit.owner) {
+        uint64_t current=0,payload=0,flags=0;uint32_t reaction=0,counter=0;
+        const bool committed=accepted && dispatch && InterlockedCompareExchange(&dispatch->control.enabled,0,0)
+            && same_field(victim,0,boss_session.vtable) && same_field(victim,0x50,hit.owner)
+            && same_field(hit.owner,0x250,entry.collision) && copy_field(victim+0xDC,counter) && counter!=hit.counter
+            && copy_field(victim+0x58,current) && copy_field(current+0x20,payload)
+            && copy_field(payload,reaction) && (reaction&0x40000)
+            && copy_field(payload+0x18,flags) && !(flags&0x20000000ULL);
+        if (committed) entry.descriptor=current;
+        restore_launch_weights(victim,!committed);
+        return;
     }
 }
 

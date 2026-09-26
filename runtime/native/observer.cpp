@@ -133,7 +133,7 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
 #ifdef RESEARCH_REPEAT
     ReplacementScope replacement_scope(actor, command, reason);
     restore_launch_weights(reinterpret_cast<uint64_t>(actor),true);
-    const auto launch_hit=launcher_hit(actor);
+    const auto launch_hit=suppress_guard ? LaunchHit{} : launcher_hit(actor);
     SetLastError(incoming_error);
     const bool result = suppress_guard ? false : original_action(actor, forwarded_key, forwarded_context);
 #else
@@ -141,8 +141,8 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
 #endif
     const DWORD native_error = GetLastError();
 #ifdef RESEARCH_REPEAT
+    finish_launch_weight(actor,launch_hit,result);
     restore_launch_weights(reinterpret_cast<uint64_t>(actor),false);
-    if (result) apply_launch_weight(actor,launch_hit);
     if (reason == Accepted && !frame_mode) {
         record.reserved = command.desired_key;
         record.valid_fields = (record.valid_fields & ~(255u << 8)) | (uint32_t(Accepted) << 8) | TRACE_SUBSTITUTED;

@@ -15,7 +15,7 @@ static bool windup_writable_float(uint64_t address) {
 }
 
 static float boss_advance_clock(void* actor, float native_delta) {
-    // Shorten configured startup and recovery tails through the shared animation clock.
+    // Shorten configured startup through the shared animation clock.
     // Scale speed and delta together; stop at each explicit phase boundary.
     // Seeking frames would desynchronize timing events; native per-frame recomputation supplies recovery.
     const uint64_t player = reinterpret_cast<uint64_t>(actor);
@@ -23,7 +23,7 @@ static float boss_advance_clock(void* actor, float native_delta) {
     if (slot>=boss_import_count) return native_delta;
     const auto& move=boss_imports[slot];
     const auto timing=boss_move_timing(slot);
-    if (!timing.startup_end && !timing.tail_end) return native_delta;
+    if (!timing.startup_end) return native_delta;
     if (!trace || !dispatch || !InterlockedCompareExchange(&trace->header.enabled, 0, 0)
         || !InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)
         || !InterlockedCompareExchange(&boss_active, 0, 0)
@@ -37,11 +37,10 @@ static float boss_advance_clock(void* actor, float native_delta) {
         || !copy_field(player + 0x24, delta)
         || !(frame >= 0.0f && speed > 0.0f && speed <= 8.0f
              && delta > 0.0f && delta <= 4.0f && delta == native_delta)) return native_delta;
-    const bool tail=timing.tail_end>0 && frame>=timing.recovery;
-    const float boundary=tail ? timing.tail_end : timing.startup_end;
+    const float boundary=timing.startup_end;
     if (frame>=boundary) return native_delta;
     const float remaining = boundary - frame;
-    float accelerated = delta * (tail ? 8 : timing.startup_speed);
+    float accelerated = delta * timing.startup_speed;
     if (accelerated > remaining) accelerated = remaining;
     // Never slow an ordinary update when it already crosses the boundary.
     if (!(accelerated > delta) || !windup_writable_float(player + 0x24)

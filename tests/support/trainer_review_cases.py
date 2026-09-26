@@ -52,7 +52,7 @@ class PresetTests(unittest.TestCase):
         # Shared hold and Frost bindings may reuse a skill only within the same native stance.
         preset=copy.deepcopy(config.DEFAULT_PRESET)
         self.assertEqual(config.validate_preset(preset)['frost_moon'],
-                         dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.izuna_drop',high='jin_hayabusa.action_0cac'))
+                         dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high=None))
         self.assertEqual(preset['frost_startup_speed'],8)
         for value in (0,9,True,8.0,'8'):
             with self.subTest(speed=value), self.assertRaises(ValueError):
@@ -64,14 +64,14 @@ class PresetTests(unittest.TestCase):
         for value in (None,{},dict(low=None,mid=None),dict(low=None,mid=None,high='jin_hayabusa.action_0c79'),
                       dict(low='jin_hayabusa.action_0cac',mid=None,high='jin_hayabusa.action_0cac'),
                       dict(low='jin_hayabusa.izuna_drop',mid=None,high='jin_hayabusa.action_0cac'),
-                      dict(low=None,mid=None,high='jin_hayabusa.izuna_drop')):
+                      dict(low='jin_hayabusa.action_0c81',mid=None,high='jin_hayabusa.action_0c81')):
             with self.subTest(slots=value), self.assertRaises(ValueError):
                 config.validate_preset(dict(preset,frost_moon=value))
-        preset['stance_holds']['mid']='jin_hayabusa.action_0cac'
+        preset['stance_holds']['mid']='jin_hayabusa.action_0c71'
         with self.assertRaisesRegex(ValueError,'same stance'):
             config.validate_preset(preset)
         preset['stance_holds']['mid']=None
-        preset['stance_holds']['high']='jin_hayabusa.action_0cac'
+        preset['stance_holds']['high']='jin_hayabusa.izuna_drop'
         self.assertEqual(config.validate_preset(preset),preset)
 
     def test_saved_mapping_reconnect_never_fires_a_held_gesture(self):

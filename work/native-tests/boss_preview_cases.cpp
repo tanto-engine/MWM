@@ -190,9 +190,9 @@ int main() {
     assert(NiohResearchStop(nullptr) == ERROR_BUSY && dispatch->control.enabled == 0
         && trace->header.enabled == 1 && disable_calls == before_disable); ++checks;
     uint64_t foreign_context[3]{};
-    call(0xC65, 0, true, address(current.data()), false, false, foreign_context);
+    call(0xC65, 0xBB8, true, address(current.data()), false, false, foreign_context);
     assert(!boss_active && dispatch->control.status == 3); assert_bindings(false);
-    assert(trace->records[2].reserved == 0 && (trace->records[2].valid_fields >> 8 & 255) == BossFollowupExit); ++checks;
+    assert(trace->records[2].reserved == 0xBB8 && (trace->records[2].valid_fields >> 8 & 255) == BossFollowupExit); ++checks;
     assert(NiohResearchStop(nullptr) == 0 && disable_calls == before_disable + 1 && dispatch); ++checks;
 
     reset(); call(24, 0xC64, false, 0, true, true); // Setter refusal restores immediately.

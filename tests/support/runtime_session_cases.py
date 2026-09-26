@@ -31,7 +31,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Encode a complete session and unpack its fixed header and pointer sequence.
         # Version seven places the stance mask, Frost slots, window and startup speed before resource pointers.
         values = SESSION_CONFIG.unpack(encode_session(self.config, self.pid, self.born))
-        self.assertEqual(values[:16], (MAGIC, 7, 4168, self.pid, self.born,
+        self.assertEqual(values[:16], (MAGIC, 8, 4424, self.pid, self.born,
                                       0x123456789abcdef0, 0, 0, 0, 0, 0, 0, 0, 0, 750, 8))
         self.assertEqual(values[16:42], tuple(self.config[key] for key in POINTER_FIELDS)
                          + tuple(self.config['originals']))
@@ -41,7 +41,7 @@ class RuntimeSessionTests(unittest.TestCase):
         self.assertEqual(move[4:13], (0x184C0000,0xC61,1210,52,14,3,30,45,1))
         self.assertEqual(move[13:16], (22,12,0x297D2215))
         self.assertEqual(encoded[328+7*96:2632], bytes(17*96))
-        self.assertEqual(encoded[2632:], bytes(24*64))
+        self.assertEqual(encoded[2632:], bytes(24*64+8*32))
         grapple = dict(self.config, native_grapple=True)
         enabled = encode_session(grapple, self.pid, self.born)
         self.assertEqual(SESSION_CONFIG.unpack(enabled)[9], 1)
@@ -51,7 +51,7 @@ class RuntimeSessionTests(unittest.TestCase):
                 encode_session(dict(self.config, native_grapple=value), self.pid, self.born)
         header = (ROOT / 'runtime/native/boss_session_schema.h').read_text()
         import re
-        self.assertEqual(re.findall(r'^    uint64_t (\w+);$', header, re.MULTILINE), list(POINTER_FIELDS))
+        self.assertEqual(re.findall(r'^    uint64_t (\w+);$', header.split('struct MoveVoice')[0], re.MULTILINE), list(POINTER_FIELDS))
 
     def test_rejects_mismatched_process_and_invalid_pointer_types(self):
         # Reject process-identity mismatches and invalid pointer types.
@@ -83,7 +83,7 @@ class RuntimeSessionTests(unittest.TestCase):
         self.assertEqual(encoded[2632:2632+7*64], bytes(7*64))
         self.assertEqual(MOVE_ADAPTER.unpack_from(encoded,2632+7*64),
             (0x910000,0x920000,0x930000,0x940000,0x950000,0xA10000,0xCF5,4300,46,38,1))
-        self.assertEqual(encoded[2632+10*64:], bytes(14*64))
+        self.assertEqual(encoded[2632+10*64:], bytes(14*64+8*32))
         for field,value in (('player_descriptor',0),('player_key',0xCF4),('transition_count',65),('recovery_frame',0)):
             config=copy.deepcopy(self.config);config['adapters'][7][field]=value
             with self.subTest(field=field), self.assertRaises(ValueError):
@@ -160,162 +160,84 @@ class RuntimeSessionTests(unittest.TestCase):
             with self.subTest(import_pointer=field), self.assertRaises(ValueError):
                 encode_session(config,self.pid,self.born)
 
-    def test_sword_preset_expands_only_selected_stance_dependencies(self):
-        # Resolve grouped sword strings and standalone holds through the same preset validator.
-        # Rotate native stance ownership, disable taps independently, and reject duplicate holds.
-        # Unselected and non-sword research must never enter a prepared runtime table.
+    def configured_fixture(self, settings):
+        # Compile real preset dependencies against owned deterministic resource addresses.
+        # Preserve baseline signatures and source alias identity while relocating adapter pointers.
+        # Exercise the same table encoder used by live preparation without touching Nioh.
         import prepare_session as prepare
-        from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET)
-        manifest=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xCAC,0xCAD,0xC81,0xC82,0xC83])
-        self.assertEqual((manifest['hold_stances'],manifest['frost_variants'],manifest['frost_milliseconds']), (1,[5,9,14],750))
-        settings['high_guard_light']=None
-        settings['frost_moon']=dict(low=None,mid=None,high=None)
-        manifest=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79])
-        self.assertEqual((manifest['hold_variant'],manifest['hold_milliseconds']), (4,250))
-        settings['stance_holds']['high']='jin_hayabusa.action_0cac'
-        manifest=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in manifest['moves']], [0xC6E,0xC6F,0xC70,0xC79,0xCAC,0xCAD])
-        for index,source in enumerate(manifest['moves'],7):
-            move=copy.deepcopy(source)
-            move.update(descriptor=0x510000+index*0x1000,payload=0x610000+index*0x1000,
-                        clip=0x710000+index*0x1000,timing_record=0x810000+index*0x1000)
-            adapter=dict(action_resource=0x910000,timing_resource=0x920000,bank=0x930000,
-                         motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
-                         player_descriptor=0xA00000+move['replacement']['player_key']*0x100,**move['replacement'])
-            self.config['imports'].append(move); self.config['adapters'].append(adapter)
-        self.config.update(hold_variant=11,hold_milliseconds=250,hold_camera_bank=0)
-        self.assertEqual(len(encode_session(self.config,self.pid,self.born)),SESSION_CONFIG.size)
-        frost=dict(self.config,hold_stances=1,frost_variants=[0,0,12],frost_milliseconds=750,frost_speed=8)
-        self.assertEqual(SESSION_CONFIG.unpack(encode_session(frost,self.pid,self.born))[10:16], (1,0,0,12,750,8))
-        for field,values in (('hold_stances',(-1,8,True)),('frost_milliseconds',(99,1501,True,750.0)),
-                             ('frost_speed',(0,9,True,8.0)),
-                             ('frost_variants',([12,0,0],[0,0,11],[0,0,13],[0,0,14],[0,0,True],[0,0],None))):
-            for value in values:
-                with self.subTest(field=field,value=value), self.assertRaises(ValueError):
-                    encode_session(dict(frost,**{field:value}),self.pid,self.born)
-        for field in ('bank','player_descriptor'):
-            bad=copy.deepcopy(self.config); bad['adapters'][12][field]+=0x1000
-            with self.assertRaisesRegex(ValueError,'matching held-entry owner'):
-                encode_session(bad,self.pid,self.born)
-        settings['stance_holds']['mid']=settings['stance_holds']['high']
-        with self.assertRaisesRegex(ValueError,'duplicate imports'):
-            prepare.configured_replacements(settings)
-        settings['stance_holds']=dict(low=None,mid='jin_hayabusa.action_0c79',high=None)
-        settings['low_heavy']=None
-        held=prepare.configured_replacements(settings)
-        self.assertEqual([move['key'] for move in held['moves']],[0xC79])
-        self.assertEqual(held['moves'][0]['replacement']['player_key'],0xCB7)
-        settings['stance_holds']['mid']=None
-        self.assertIsNone(prepare.configured_replacements(settings))
-        for key in ('jin_hayabusa.action_0ca9','jin_hayabusa.action_0c6c','jin_hayabusa.action_0cae'):
-            settings['stance_holds']['low']=key
-            with self.assertRaisesRegex(ValueError,'standalone sword move'):
-                prepare.configured_replacements(settings)
-
-    def test_izuna_alias_preserves_low_launcher_and_rejects_other_duplicate_sources(self):
-        # Separate the mid native-contact chain from the low standalone launcher.
-        # Corrupt duplicate identity, stance, source bytes and the exact zero-flag bridge independently.
-        # A shared animation cannot authorize another source family or a forced paired entry.
-        import prepare_session as prepare
-        from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET);settings['frost_moon']['low']=None;settings['high_guard_light']=None
-        manifest=prepare.configured_replacements(settings)
-        moves=manifest['moves']; low,izuna,bridge=moves[3:6]
-        check_import_topology(moves,None)
-        self.assertNotIn('native_followups',low)
-        self.assertEqual((low['next_variant'],low['replacement']['player_key']),(-1,0xCF5))
-        self.assertEqual((izuna['next_variant'],izuna['replacement']['player_key']),(-1,0xCB7))
-        self.assertEqual(izuna['native_followups'],[bridge['id']])
-        self.assertEqual((bridge['next_variant'],bridge['next_start'],bridge['next_end']),(6,0,0))
-        for source in moves:
-            move=copy.deepcopy(source); address=0x500000+move['key']*0x1000
-            move.update(descriptor=address,payload=address+0x100,clip=address+0x200,timing_record=address+0x300)
-            if move['next_variant']>=0:move['next_variant']+=7
-            adapter=dict(action_resource=0x910000,timing_resource=0x920000,bank=0x930000,
-                         motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'])
-            if adapter['kind']==3:
-                adapter.update(player_descriptor=0,player_key=0,player_motion=0,transition_count=0,recovery_frame=0)
-            else:
-                adapter.update(player_descriptor=0xA00000+move['replacement']['player_key']*0x100,**move['replacement'])
-            self.config['imports'].append(move);self.config['adapters'].append(adapter)
-        self.config.update(hold_variant=11,hold_milliseconds=250,hold_camera_bank=0x960000,
-                           hold_stances=1,frost_variants=[0,12,17],frost_milliseconds=750,frost_speed=8)
-        self.assertEqual(len(encode_session(self.config,self.pid,self.born)),4168)
-        bad=copy.deepcopy(self.config);bad['hold_camera_bank']=0
-        with self.assertRaisesRegex(ValueError,'camera'):
-            encode_session(bad,self.pid,self.born)
-        for index,field,value in ((4,'id','jin_hayabusa.third_launcher'),(4,'motion',5013),
-                (4,'source_payload_prefix','00'),(4,'replacement',low['replacement']),
-                (5,'key',0xC7B),(5,'adapter_kind',2),(5,'recovery_frame',0),
-                (5,'ki_cost',1),(5,'transition_count',20),(5,'next_variant',8),(5,'next_end',1)):
-            bad=copy.deepcopy(moves);bad[index][field]=value
-            with self.subTest(index=index,field=field), self.assertRaises(ValueError):
-                check_import_topology(bad,None)
-        settings['frost_moon']['mid']=None
-        self.assertEqual([move['key'] for move in prepare.configured_replacements(settings)['moves']],
-                         [0xC6E,0xC6F,0xC70,0xC79,0xCAC,0xCAD])
-        settings=copy.deepcopy(DEFAULT_PRESET)
-        complete=prepare.configured_replacements(settings)
-        self.assertEqual((len(complete['moves']),complete['hold_stances']), (18,1))
-        flying=[move for move in complete['moves'] if 0xC71<=move['key']<=0xC74]
-        self.assertEqual([(move['key'],move['ki_cost']) for move in flying],[(0xC71,0),(0xC72,20),(0xC73,0),(0xC74,0)])
-        for source in flying:
-            move=copy.deepcopy(source);address=0x500000+move['key']*0x1000
-            move.update(descriptor=address,payload=address+0x100,clip=address+0x200,timing_record=address+0x300)
-            adapter=dict(action_resource=0x910000,timing_resource=0x920000,bank=0x930000,
-                         motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
-                         player_descriptor=0xA00000+0xCF5*0x100,**move['replacement'])
-            self.config['imports'].append(move);self.config['adapters'].append(adapter)
-        self.config['frost_variants'][0]=19
-        self.assertEqual(len(encode_session(self.config,self.pid,self.born)),4168)
-        for index,field,value in ((18,'flags',1),(18,'transition_count',17),(19,'ki_cost',0),(20,'adapter_kind',2),(21,'recovery_frame',-1)):
-            bad=copy.deepcopy(self.config);bad['imports'][index][field]=value
-            with self.subTest(phase=index,field=field),self.assertRaises(ValueError):
-                encode_session(bad,self.pid,self.born)
-
-    def test_default_guard_binding_prunes_disabled_strings_and_encodes_all_phases(self):
-        # Compile the complete selected preset with its actual baseline dependency filter.
-        # Encode the guard graph alongside both launcher aliases and all Frost bindings.
-        # Disabled strings must not consume slots or remap grapple to a stale index.
-        import prepare_session as prepare
-        from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET)
         baseline=prepare.configured_imports(settings)
-        self.assertEqual([move['key'] for move in baseline['moves']],[0xC64,0xC66,0x361])
-        self.config['imports']=[self.config['imports'][index] for index in (0,1,6)]
-        self.config['adapters']=[None]*3;self.config['string_variant']=0
         compiled=prepare.configured_replacements(settings,baseline)
+        originals={move['id']:move for move in self.config['imports']}
+        self.config['imports']=[copy.deepcopy(originals[move['id']]) for move in baseline['moves']]
+        offset=len(self.config['imports']);self.config['adapters']=[None]*offset
+        self.config['string_variant']=baseline['string_variant']
         for source in compiled['moves']:
             move=copy.deepcopy(source);address=0x500000+move['key']*0x1000
             move.update(descriptor=address,payload=address+0x100,clip=address+0x200,timing_record=address+0x300)
-            if move['next_variant']>=0: move['next_variant']+=3
+            if move['next_variant']>=0: move['next_variant']+=offset
             template=move.get('replacement',dict(player_key=0,player_motion=0,transition_count=0,recovery_frame=0))
             adapter=dict(action_resource=0x910000,timing_resource=0x920000,bank=0x930000,
-                         motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
-                         player_descriptor=0xA00000+template['player_key']*0x100 if template['player_key'] else 0,**template)
+                motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
+                player_descriptor=0xA00000+template['player_key']*0x100 if template['player_key'] else 0,**template)
             self.config['imports'].append(move);self.config['adapters'].append(adapter)
-        self.config.update(hold_variant=compiled['hold_variant']+3,hold_milliseconds=250,hold_camera_bank=0x960000,
-            hold_stances=1,frost_variants=[slot+3 for slot in compiled['frost_variants']],
-            high_guard_light=True,native_grapple=True,tiger_sprint=True,mid_light_ender=True)
-        values=SESSION_CONFIG.unpack(encode_session(self.config,self.pid,self.born))
-        self.assertEqual((values[9],values[42]),(15,21))
-        self.assertEqual([move['key'] for move in self.config['imports'][-3:]],[0xC81,0xC82,0xC83])
-        for index,field,value in ((18,'motion',1051),(19,'ki_cost',0),(20,'transition_count',74)):
-            bad=copy.deepcopy(self.config);bad['imports'][index][field]=value
-            with self.subTest(index=index,field=field),self.assertRaises(ValueError):
-                encode_session(bad,self.pid,self.born)
-        settings['high_guard_light']=None
-        self.assertNotIn(0xC81,[move['key'] for move in prepare.configured_replacements(settings)['moves']])
-        settings['okatsu_grapple']=False
-        self.assertEqual(len(prepare.configured_imports(settings)['moves']),2)
-        settings['string_enabled']=True
-        self.assertEqual(len(prepare.configured_imports(settings)['moves']),7)
-        settings['high_guard_light']='jin_hayabusa.action_0c81'
-        with self.assertRaisesRegex(ValueError,'exceed the runtime table'):
-            prepare.configured_replacements(settings)
+        self.config.update(hold_variant=compiled['hold_variant']+offset,hold_milliseconds=250,hold_camera_bank=0x960000,
+            hold_stances=compiled['hold_stances'],frost_variants=[slot+offset if slot else 0 for slot in compiled['frost_variants']],
+            native_grapple=settings['okatsu_grapple'],mid_light_ender=settings['mid_light_ender'],
+            skill_bindings=prepare.compiled_skill_bindings(settings,self.config['imports']))
+        return compiled
+
+    def test_sword_preset_expands_only_selected_stance_dependencies(self):
+        # Rotate a sword move across stance templates independently of its source identity.
+        # Verify the revised Mid somersault and High guard Izuna graphs and native-source bindings.
+        # Reject incompatible graph ownership rather than letting one binding steal another's stance.
+        import prepare_session as prepare
+        from engine_config import DEFAULT_PRESET
+        settings=copy.deepcopy(DEFAULT_PRESET);compiled=self.configured_fixture(settings)
+        self.assertEqual([move['key'] for move in compiled['moves']],
+            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC79,0xC7A,0x3B2,0x3B4,0x3B6])
+        self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,0]))
+        encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
+        self.assertEqual((values[9],values[42],len(encoded)),(5,19,4424))
+        self.assertEqual(self.config['skill_bindings'],[
+            dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
+            dict(kind=2,stances=4,variant=15,key=0,motion=0,transition_count=0,flags=0),
+            dict(kind=3,stances=1,variant=7,key=0,motion=0,transition_count=0,flags=0)])
+        for field,value in (('kind',4),('stances',True),('variant',0),('key',0xFAB),('flags',0),('transition_count',20)):
+            bad=copy.deepcopy(self.config);bad['skill_bindings'][0][field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):encode_session(bad,self.pid,self.born)
+        bad=copy.deepcopy(self.config);bad['skill_bindings'].append(bad['skill_bindings'][0])
+        with self.assertRaisesRegex(ValueError,'Overlapping'): encode_session(bad,self.pid,self.born)
+        settings['skill_bindings']=[dict(source='tiger_sprint',stance='mid',move='okatsu.leaping_slash')]
+        bindings=prepare.compiled_skill_bindings(settings,self.config['imports'])
+        self.assertEqual((bindings[0]['variant'],bindings[0]['stances']),(2,2))
+        settings['skill_bindings']=[];settings['frost_moon']=dict(low=None,mid=None,high=None);settings['low_heavy']=None
+        settings['stance_holds']=dict(low=None,mid='jin_hayabusa.action_0c79',high=None)
+        held=prepare.configured_replacements(settings)
+        self.assertEqual([(m['key'],m['replacement']['player_key']) for m in held['moves']],[(0xC79,0xCB7)])
+        settings['stance_holds']['mid']=None
+        self.assertIsNone(prepare.configured_replacements(settings))
+
+    def test_izuna_alias_preserves_launcher_and_rejects_corrupt_graphs(self):
+        # Low standalone C79 and high Izuna share source bytes but own distinct graphs.
+        # Corrupt alias identity, native paired links, airborne phase metadata and stance ownership.
+        # Neither source duplication nor configuration can force a paired action without contact.
+        from engine_config import DEFAULT_PRESET
+        compiled=self.configured_fixture(copy.deepcopy(DEFAULT_PRESET))
+        moves=compiled['moves'];low,izuna=moves[3],moves[11]
+        check_import_topology(moves,None)
+        self.assertEqual((low['replacement']['player_key'],izuna['replacement']['player_key']),(0xCF5,0xC7A))
+        for index,field,value in ((11,'id','jin_hayabusa.third_launcher'),(11,'motion',5013),
+                (11,'source_payload_prefix','00'),(11,'replacement',low['replacement']),
+                (12,'key',0xC7B),(12,'adapter_kind',2),(12,'recovery_frame',0),(12,'ki_cost',1),
+                (12,'transition_count',20),(12,'next_variant',15),(12,'next_end',1),
+                (4,'flags',1),(5,'ki_cost',0),(6,'adapter_kind',2),(7,'recovery_frame',-1),
+                (8,'motion',1051),(9,'ki_cost',0),(10,'transition_count',74)):
+            bad=copy.deepcopy(moves);bad[index][field]=value
+            with self.subTest(index=index,field=field),self.assertRaises(ValueError):check_import_topology(bad,None)
+        for field,value in (('hold_camera_bank',0),('frost_variants',[8,15,0]),('frost_variants',[8,12]),
+                ('frost_milliseconds',99),('frost_speed',9),('hold_stances',8)):
+            bad=copy.deepcopy(self.config);bad[field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):encode_session(bad,self.pid,self.born)
 
     def test_native_pair_cannot_become_a_timed_or_direct_combo_link(self):
         # Keep paired success separate from timed links and direct gesture entry.

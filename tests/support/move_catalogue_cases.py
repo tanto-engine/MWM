@@ -16,7 +16,7 @@ class CatalogueTests(unittest.TestCase):
         # Inspect nested constituent identities and the retained sword import topology.
         # Non-sword trials and constituent heavy attacks cannot remain standalone choices.
         records = list(iter_moves(self.catalogue))
-        self.assertEqual((len(self.catalogue['moves']), len(records)), (21, 49))
+        self.assertEqual((len(self.catalogue['moves']), len(records)), (20, 47))
         self.assertEqual({move['weapon'] for move in records}, {'sword'})
         groups = {move['id']: move for move in self.catalogue['moves']}
         for key, actions in ((0xBC0, [0xBC0,0xC6C,0xC6D]), (0xC6E, [0xC6E,0xC6F,0xC70])):
@@ -25,8 +25,8 @@ class CatalogueTests(unittest.TestCase):
         for key in (0xC6C,0xC6D,0xCA9,0xC75,0xC7B,0xC7C,0xC7F,0xC6B,0xCAE):
             self.assertNotIn(f'jin_hayabusa.action_{key:04x}', groups)
         manifest = json.loads((ROOT/'catalogue/imports/jin_hayabusa.json').read_text())
-        self.assertEqual(len(manifest['moves']), 21)
-        self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0c79','jin_hayabusa.action_0cac',
+        self.assertEqual(len(manifest['moves']), 19)
+        self.assertEqual(set(manifest['hold_chains']), {'jin_hayabusa.action_0c79',
                                                        'jin_hayabusa.izuna_drop','jin_hayabusa.action_0c71','jin_hayabusa.action_0c81'})
 
     def test_filtered_encounters_keep_hashes_lines_and_sequence_boundaries(self):

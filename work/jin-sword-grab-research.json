@@ -1083,38 +1083,5 @@
       "008C/30142"
     ],
     "verification": "Private-row regression failed with original shared row12, passes with private16 and all other127 bytes/source unchanged. Actual launch height still requires player verification."
-  },
-  "overhead_knockdown": {
-    "key": "CAC",
-    "motion": 5110,
-    "player_feedback": "Latest player identification: overhead human knockdown, not the C79 upward launcher.",
-    "native_continuation": {
-      "target": "CAD",
-      "condition": 20,
-      "kind": 0,
-      "selector": 255,
-      "window": [
-        -32768,
-        32767
-      ]
-    },
-    "natural_exit": "C88 at native end, or explicit frame154+",
-    "clip_frames": 164,
-    "recovery_frame": 115,
-    "timing": {
-      "activation_frame": 37,
-      "active_record_indices": [
-        1,
-        6,
-        7
-      ],
-      "record6_end_frame": 52,
-      "record6_id": "0x514",
-      "record6_category": 100,
-      "record7_id": "0x44C",
-      "record7_category": 1,
-      "semantics": "Raw timing evidence; victim-launch semantics not identified."
-    },
-    "captured_to_CAD_seconds": 0.590523
   }
 }

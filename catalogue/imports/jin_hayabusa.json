@@ -191,73 +191,6 @@
       "adapter_kind": 1
     },
     {
-      "key": 3244,
-      "motion": 5110,
-      "flags": 2199447666688,
-      "ki_cost": 10,
-      "recovery_frame": 115,
-      "transition_count": 76,
-      "source_voices": [
-        {
-          "frame": 29,
-          "index": 16,
-          "hash": 2543008070
-        }
-      ],
-      "id": "jin_hayabusa.action_0cac",
-      "adapter_kind": 2,
-      "next": null,
-      "next_start": 0,
-      "next_end": 0,
-      "voices": [],
-      "evidence": "work/jin-stance-holds-research.json",
-      "source_payload_prefix": "02000000000200000000ff02ac0cffff0109000000000a0000004c1900020000f613000073009600ffff000001000200ffffff00ffffffff",
-      "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
-      },
-      "native_followups": [
-        "jin_hayabusa.action_0cad"
-      ]
-    },
-    {
-      "key": 3245,
-      "motion": 5111,
-      "flags": 2199447666688,
-      "ki_cost": 10,
-      "recovery_frame": 65,
-      "transition_count": 75,
-      "source_voices": [
-        {
-          "frame": 16,
-          "index": 10,
-          "hash": 1943050345
-        }
-      ],
-      "id": "jin_hayabusa.action_0cad",
-      "adapter_kind": 4,
-      "next": null,
-      "next_start": 0,
-      "next_end": 0,
-      "voices": [
-        {
-          "frame": 16,
-          "index": 10,
-          "hash": 1943050345
-        }
-      ],
-      "evidence": "work/jin-stance-holds-research.json",
-      "source_payload_prefix": "02000000000200000000ff02ad0cffff0109000000000a0000004c1900020000f713000041006900ffff000001000200ffffff00ffffffff",
-      "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
-      }
-    },
-    {
       "id": "jin_hayabusa.action_0c79",
       "key": 3193,
       "motion": 5014,
@@ -658,10 +591,6 @@
   "classification": "D visually confirmed by player: vertical slash then two cyclone spins. Hitbox/effect correction awaits gameplay confirmation. C retained as an alternate.",
   "hold_entry": "jin_hayabusa.action_0c79",
   "hold_chains": {
-    "jin_hayabusa.action_0cac": [
-      "jin_hayabusa.action_0cac",
-      "jin_hayabusa.action_0cad"
-    ],
     "jin_hayabusa.action_0c79": [
       "jin_hayabusa.action_0c79"
     ],
