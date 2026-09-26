@@ -27,10 +27,11 @@ static void sword_reset(unsigned index) {
     for (auto& adapter : boss_adapters) adapter={};
     for (auto& item : mid_light_actions) item={};
     light.fill(0); living.fill(0); tiger.fill(0); light_payload.fill(0); living_payload.fill(0); tiger_payload.fill(0);
-    put(light.data(),0,uint32_t(0xCB3+index)); light[0x40]=1;
-    put(light.data(),0x20,address(light_payload.data())); put(light.data(),0x82,uint16_t(index==2 ? 44 : 46));
+    put(light.data(),0,uint32_t(0xC76+index)); light[0x40]=1;
+    put(light.data(),0x20,address(light_payload.data())); put(light.data(),0x82,uint16_t(46));
     put(light.data(),0x78,address(light_pointers.data()));
-    put(light_payload.data(),0x18,uint64_t(0x8000000594C0000ULL)); put(light_payload.data(),0x20,int32_t(3100+index*10));
+    light_payload[0x0B]=index ? 4 : 1;put(player.data(),0x470,uint32_t(1));
+    put(light_payload.data(),0x18,uint64_t(0x8000000594C0000ULL)); put(light_payload.data(),0x20,int32_t(2100+index*10));
     put(living.data(),0,uint32_t(0xD3A)); living[0x40]=1; put(living.data(),0x20,address(living_payload.data()));
     put(living_payload.data(),0x18,uint64_t(0x194C0000)); put(living_payload.data(),0x20,int32_t(9210));
     put(tiger.data(),0,uint32_t(0xFAA)); tiger[0x40]=1; put(tiger.data(),0x20,address(tiger_payload.data()));
@@ -39,8 +40,9 @@ static void sword_reset(unsigned index) {
     for (unsigned row=0;row<46;++row) { light_rows[row].fill(uint8_t(row)); light_pointers[row]=address(light_rows[row].data()); }
     for (unsigned row=0;row<2;++row) {
         auto& body=light_rows[7+row]; body.fill(0xff); body[0x0A]=row ? 0 : 2; body[0x0B]=1; body[0x0C]=1;
-        put(body.data(),0x14,int16_t(0xD67)); put(body.data(),0x20,int16_t(row ? (index==0 ? 40 : index==1 ? 44 : 52) : 10));
-        put(body.data(),0x22,int16_t(row ? (index==0 ? 70 : index==1 ? 74 : 82) : (index==0 ? 39 : index==1 ? 43 : 51)));
+        put(body.data(),2,uint16_t(0x51));put(body.data(),0x14,int16_t(0xFA5));
+        put(body.data(),0x20,int16_t(row ? (index==0 ? 24 : index==1 ? 26 : 31) : index==0 ? 5 : 10));
+        put(body.data(),0x22,int16_t(row ? (index==0 ? 54 : index==1 ? 56 : 61) : (index==0 ? 23 : index==1 ? 25 : 30)));
     }
     command.armed=0; publish_player_context(.25f); publish();
 }
@@ -50,7 +52,7 @@ static void guard_binding_cases() {
     // Move the same binding across all stances and both baseline target variants.
     // Reject ordinary/running/dodge Square, Triangle, stale rows, disabled contexts and nonplayer banks.
     static std::array<uint8_t,0xD0> guard{};
-    constexpr uint32_t stances[]={2,0,1};
+    constexpr uint32_t stances[]={2,1,0};
     for (unsigned stance=0;stance<3;++stance) for (uint32_t loadout : {0xFA2u,0xCF8u})
     for (unsigned failure=0;failure<16;++failure) {
         uint32_t key=loadout;
@@ -95,16 +97,16 @@ int main() {
         sword_reset(index); const auto before=light; const auto rows=light_rows;
         DispatchReason reason=Disabled; DispatchCommand request{}; ReplacementScope scope(player.data(),request,reason);
         uint32_t bank=0;
-        const auto adapted=observed_lookup(player.data()+0x70,0xCB3+index,&bank);
+        const auto adapted=observed_lookup(player.data()+0x70,0xC76+index,&bank);
         assert(adapted && adapted!=address(light.data()) && bank==0 && light==before && light_rows==rows);
         const auto& clone=mid_light_actions[index];
-        for (unsigned row=0;row<(index==2 ? 44u : 46u);++row) assert(!memcmp(clone.rows[row+2],rows[row].data(),0x30));
+        for (unsigned row=0;row<46u;++row) assert(!memcmp(clone.rows[row+2],rows[row].data(),0x30));
         for (unsigned row=0;row<2;++row) {
             assert(grapple_field(address(clone.rows[row]),0x14,int16_t(0xD3A)));
             assert(clone.rows[row][0x0B]==1 && clone.rows[row][0x0C]==1 && clone.rows[row][0x0D]==5 && clone.rows[row][0x0E]==0);
             assert(grapple_field(address(clone.rows[row]),0x2C,int32_t(-1)));
         }
-        assert(observed_lookup(player.data()+0x70,0xCB3+index,&bank)==adapted);
+        assert(observed_lookup(player.data()+0x70,0xC76+index,&bank)==adapted);
         put(player.data(),0x58,adapted); dispatch->control.enabled=0;
         const unsigned calls=action_calls;
         assert(!observed_action(player.data(),0xD3A,nullptr) && action_calls==calls && mid_light_active());
@@ -113,7 +115,7 @@ int main() {
         put(player.data(),0x58,address(neutral.data())); assert(!mid_light_active());
         dispatch->control.enabled=1;
         put(living_payload.data(),0x20,int32_t(999));
-        assert(observed_lookup(player.data()+0x70,0xCB3+index,&bank)==address(light.data()));
+        assert(observed_lookup(player.data()+0x70,0xC76+index,&bank)==address(light.data()));
     }
     for (bool enabled : {false,true}) for (bool signature : {false,true}) for (unsigned stance=0;stance<3;++stance) {
         sword_reset(0);boss_native_bindings=0;
@@ -129,7 +131,7 @@ int main() {
     // Native Tiger selection can choose another destination without interpreting controller buttons.
     // Clear the target variant after a disabled run to expose any hardcoded C64 route.
     // Selection itself is independent of private source resource preparation.
-    sword_reset(0);put(player.data(),0x470,uint32_t(0));
+    sword_reset(0);put(player.data(),0x470,uint32_t(1));
     boss_skill_bindings[0]={1,2,2,0xFAA,5090,21,0x40017C00000ULL};
     DispatchCommand selected{};assert(native_bound_slot(0xFAA,address(tiger.data()),selected)==1);
     boss_skill_bindings[0].stances=4;

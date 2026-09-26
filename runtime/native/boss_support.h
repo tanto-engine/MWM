@@ -55,17 +55,9 @@ static MoveTiming boss_move_timing(unsigned slot) {
         for (auto frost : boss_frost_variants) if (frost==slot+1) return {-1,19,float(boss_frost_speed)};
         return {-1,0,1};
     }
-    if (move.flags==0x194C0000 && move.transition_count==74
-        && ((move.key==0xC75 && move.motion==5010 && boss_adapters[slot].kind==2)
-            || (move.key==0xC77 && move.motion==5012 && boss_adapters[slot].kind==4)
-            || (move.key==0xC78 && move.motion==5013 && boss_adapters[slot].kind==4))) {
-        float speed=1;
-        for (auto frost : boss_frost_variants) if (frost && boss_imports[frost-1].key==0xC75
-            && boss_adapters[frost-1].bank==boss_adapters[slot].bank
-            && boss_adapters[frost-1].player_key==boss_adapters[slot].player_key) speed=float(boss_frost_speed);
-        // Only the matching Frost graph accelerates preparation; C78's hit20..28 and tail remain native.
-        return {int16_t(move.key==0xC78 ? 29 : -1),move.key==0xC75 ? 24.0f : move.key==0xC77 ? 40.0f : 20.0f,speed};
-    }
+    if (move.key==0xC78 && move.motion==5013 && move.flags==0x194C0000
+        && move.transition_count==74 && boss_adapters[slot].kind==4)
+        return {29,0,1}; // Full downward sword sequence stays at native speed; cancel after hit28.
     if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
         return {54,30,2};
     if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
@@ -366,9 +358,8 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (key != expected_key || !descriptor[0x40] || source_payload != expected_payload
         || motion != expected_motion || flags != spec.flags) return false;
     payload[0x0B] = 4; // Native0x70F3A3: keep current+0x470, retain+0x47C=1 behavior.
-    constexpr uint8_t stances[]={2,0,1};
     for (unsigned stance=0;stance<3;++stance)
-        if (boss_frost_variants[stance]==slot+1) payload[0x0B]=stances[stance];
+        if (boss_frost_variants[stance]==slot+1) payload[0x0B]=uint8_t(2-stance);
     int16_t recovery_start = 0, base_ki_cost = 0;
     memcpy(&recovery_start, payload + 0x24, sizeof(recovery_start));
     memcpy(&base_ki_cost, payload + 0x16, sizeof(base_ki_cost));

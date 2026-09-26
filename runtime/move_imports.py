@@ -15,7 +15,7 @@ PLAYER_PAIRED_FLAGS = 0x8038000000
 IMPORT_LIMIT = 24
 PLAYER_TEMPLATES = {0xCF5: (4300, 46, 38), 0xCF6: (4310, 46, 29), 0xCF7: (4320, 44, 33),
                     0xCB7: (3300, 40, 58), 0xC7A: (2300, 42, 46)}
-STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xCB7, 'high': 0xC7A}
+STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xC7A, 'high': 0xCB7}
 
 
 def is_airborne_sword(move):

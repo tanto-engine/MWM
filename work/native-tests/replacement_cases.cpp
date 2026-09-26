@@ -266,7 +266,7 @@ static void replacement_reset() {
     put(grapple_payload.data(),0x20,int32_t(5050));
 }
 
-static void hold_reset(unsigned stance=2) {
+static void hold_reset(unsigned stance=2, bool select_heavy=true) {
     // Isolate pending-input selection from the separately tested paired-action adapter.
     // Reuse the valid CF5 import at a distinct hold slot and keep the exact250ms deadline.
     // This fixture proves tap-versus-hold scheduling without claiming live Izuna contact acceptance.
@@ -279,7 +279,7 @@ static void hold_reset(unsigned stance=2) {
     put(jin_descriptors[0].data(),0x78,address(unused_rows));
     if (stance!=2) {
         auto& adapter=boss_adapters[5];
-        // Captured player payloads encode high=1, mid=0, low=2; motion thousands are not stance IDs.
+        // Native RB+Y/X/A selects high=0, mid=1, low=2 (2000-family is mid).
         adapter.player_key=stance==0 ? 0xCB7 : 0xC7A; adapter.player_motion=stance==0 ? 3300 : 2300;
         adapter.transition_count=stance==0 ? 40 : 42; adapter.recovery_frame=stance==0 ? 58 : 46;
         put(heavy_descriptors[0].data(),0,adapter.player_key);
@@ -289,13 +289,15 @@ static void hold_reset(unsigned stance=2) {
         put(heavy_payloads[0].data(),0x0B,uint8_t(stance));
         put(player.data(),0x470,stance);
     }
-    boss_skill_bindings[0]={3,stance==2 ? 1u : stance==0 ? 2u : 4u,6,0,0,0,0};
+    boss_skill_bindings[0]={3,stance==2 ? 1u : stance==1 ? 2u : 4u,6,0,0,0,0};
     state(0,0,3); publish_player_context(.25f); publish(); pad_buttons=XINPUT_GAMEPAD_Y;
     observe_game_input(trace->header);
-    SetLastError(INCOMING); assert(!observed_action(player.data(),0xBC0,nullptr));
-    assert(GetLastError()==ACTION_ERROR && pending_heavy.active && !boss_active);
-    assert(dispatch->control.dispatch_count==0 && same_field(address(player.data()),0x58,address(neutral.data())));
-    assert(native_idle_fallbacks==0);
+    if (select_heavy) {
+        SetLastError(INCOMING); assert(!observed_action(player.data(),0xBC0,nullptr));
+        assert(GetLastError()==ACTION_ERROR && pending_heavy.active && !boss_active);
+        assert(dispatch->control.dispatch_count==0 && same_field(address(player.data()),0x58,address(neutral.data())));
+        assert(native_idle_fallbacks==0);
+    }
     bindings(false);
 }
 
@@ -303,7 +305,7 @@ static void held_slot_cases() {
     // Frost/guard entries share native heavy templates but do not own held Triangle.
     // Place optional entries before and after a real hold to reproduce both selection orders.
     // Ordinary heavy and empty-Ki grapple must resolve the same configured hold slot.
-    for (unsigned stance : {2u,1u}) {
+    for (unsigned stance : {2u,0u}) {
         boss_hold_stances=7; hold_reset(stance); pending_heavy={};
         boss_imports[6]=boss_imports[5]; boss_adapters[6]=boss_adapters[5]; boss_import_count=7;
         boss_imports[6].key=stance==2 ? 0xC71 : 0xC81;
@@ -333,7 +335,7 @@ static void airborne_cases() {
     // Replay exact recorded source graphs against owned immutable action storage.
     // Assert stance isolation, native contact/landing branches and unchanged paired clocks.
     // Source bytes and counters prove adapter behavior, never successful gameplay contact.
-    hold_reset(0); pending_heavy={}; boss_import_count=18;
+    hold_reset(1); pending_heavy={}; boss_import_count=18;
     static uint8_t descriptors[12][0xD0],payloads[12][0xB0],rows[12][128][0x30];
     static uint64_t pointers[12][128];
     static uint8_t low_descriptor[0xD0],low_payload[0xB0],high_descriptor[0xD0],high_payload[0xB0];
@@ -342,8 +344,8 @@ static void airborne_cases() {
     put(low_descriptor,0,uint32_t(0xCF5)); put(low_descriptor,0x20,address(low_payload));
     put(low_descriptor,0x82,uint16_t(46)); put(low_payload,0x20,int32_t(4300)); put(low_payload,0x24,int16_t(38));
     memcpy(high_descriptor,low_descriptor,sizeof(high_descriptor));memcpy(high_payload,low_payload,sizeof(high_payload));
-    put(high_descriptor,0,uint32_t(0xC7A));put(high_descriptor,0x20,address(high_payload));put(high_descriptor,0x82,uint16_t(42));
-    put(high_payload,0x20,int32_t(2300));put(high_payload,0x24,int16_t(46));
+    put(high_descriptor,0,uint32_t(0xCB7));put(high_descriptor,0x20,address(high_payload));put(high_descriptor,0x82,uint16_t(40));
+    put(high_payload,0x20,int32_t(3300));put(high_payload,0x24,int16_t(58));
     for (unsigned phase=0;phase<12;++phase) {
         const auto& source=airborne_sources[phase]; const unsigned slot=phase+5;
         auto& move=boss_imports[slot]; move={}; boss_private_actions[slot]={};
@@ -369,7 +371,7 @@ static void airborne_cases() {
         adapter.kind=phase==0 || phase==5 || phase==9 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
         if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
         if (phase>=5) {adapter.player_descriptor=address(low_descriptor);adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
-        if (phase>=9) {adapter.player_descriptor=address(high_descriptor);adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;}
+        if (phase>=9) {adapter.player_descriptor=address(high_descriptor);adapter.player_key=0xCB7;adapter.player_motion=3300;adapter.transition_count=40;adapter.recovery_frame=58;}
     }
     boss_imports[17]=boss_imports[5];boss_adapters[17]=boss_adapters[5];boss_adapters[17].player_key=0xCF5;
     boss_frost_variants[0]=11;boss_frost_variants[1]=6;
@@ -411,7 +413,7 @@ static void airborne_cases() {
     guard_row[0x0B]=5;guard_row[0x0C]=0;guard_row[0x0D]=0;guard_row[0x0E]=1;
     put(guard_row,0x14,int16_t(0xFA2));put(skill,0,uint32_t(0xFA2));skill[0x40]=1;
     put(skill,0x20,address(high_payload));
-    high_payload[0x0B]=1;put(player.data(),0x470,uint32_t(1));
+    high_payload[0x0B]=0;put(player.data(),0x470,uint32_t(0));
     put(player.data(),0x58,address(guard));put(player.data(),0x90,address(guard_row));
     original_lookup=[](void*,uint32_t,uint32_t* bank) { *bank=0;return address(skill); };
     boss_native_bindings=0;boss_skill_bindings[0]={2,4,15,0,0,0,0};publish();
@@ -435,8 +437,8 @@ static void airborne_cases() {
 static void slam_cases() {
     // Use captured C75/C77/C78 payloads and automatic rows with the existing high-stance adapter.
     // Verify actual Frost dispatch, ordinary source continuations, idle exit and Ki Pulse recovery.
-    // Clock checks preserve the full20..28 hit window and the un-cancelled87-frame terminal clip.
-    boss_hold_stances=7;hold_reset(1);pending_heavy={};frost_input={};pad_buttons=0;
+    // All three phases retain native speed, including the full20..28 hit window and87-frame tail.
+    boss_hold_stances=7;hold_reset(0);pending_heavy={};frost_input={};pad_buttons=0;
     boss_hold_stances=0;for (auto& binding : boss_skill_bindings) binding={};
     for (auto& frost : boss_frost_variants) frost=0;
     boss_frost_variants[2]=6;boss_frost_speed=8;boss_import_count=8;
@@ -478,13 +480,11 @@ static void slam_cases() {
             assert(grapple_field(address(boss_private_actions[7].transition_bodies[row]),0x20,int16_t(29)));++pulses;
         }
     assert(pulses);
-    boss_frost_variants[2]=0;assert(boss_move_timing(5).startup_speed==1 && boss_move_timing(6).startup_speed==1);
-    boss_frost_variants[2]=6;boss_adapters[6].player_key=0xCB7;assert(boss_move_timing(6).startup_speed==1);
-    boss_adapters[6]=adapter;boss_adapters[6].kind=4;
+    for (unsigned slot=5;slot<8;++slot) assert(boss_move_timing(slot).startup_speed==1);
     memset(vitals,0,sizeof(vitals));put(owner.data(),0x240,address(vitals));
     put(player.data(),0x470,uint32_t(2));publish();tick();
     put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);publish();tick();assert(frost_input.opened);
-    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y;put(player.data(),0x470,uint32_t(1));publish();tick();
+    pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y;put(player.data(),0x470,uint32_t(0));publish();tick();
     pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER;memset(vitals,0,sizeof(vitals));publish();tick();
     pad_buttons|=XINPUT_GAMEPAD_Y;publish();tick();assert(boss_active_slot==5 && boss_active && dispatch->control.dispatch_count==1);
     constexpr float ends[]={24,40,20};
@@ -493,8 +493,7 @@ static void slam_cases() {
         put(motion.data(),0x58,boss_imports[slot].clip);
         for (float frame : {0.0f,ends[phase]-2,ends[phase]}) {
             put(player.data(),0x28,frame);put(player.data(),0x6A8,1.0f);put(player.data(),0x24,1.0f);
-            const float expected=frame==0 ? 8.0f : frame<ends[phase] ? 2.0f : 1.0f;
-            assert(boss_advance_clock(player.data(),1)==expected && grapple_field(address(player.data()),0x28,frame));
+            assert(boss_advance_clock(player.data(),1)==1 && grapple_field(address(player.data()),0x28,frame));
         }
         if (phase<2) {SetLastError(FRAME_ERROR);assert(observed_action(player.data(),keys[phase+1],nullptr));}
     }
@@ -541,20 +540,28 @@ static void frost_cases() {
     assert(continued.opened==10001);
     continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
     assert(continued.opened==10001); // Refills cannot slide the window away from first availability.
-    for (unsigned target=0;target<3;++target) {
-        const unsigned native[]={2,0,1};const WORD faces[]={XINPUT_GAMEPAD_A,XINPUT_GAMEPAD_X,XINPUT_GAMEPAD_Y};
-        boss_hold_stances=7;hold_reset(native[target]);pending_heavy={};frost_input={};pad_buttons=0;
+    // Native RB+A/X/Y commits low2/mid1/high0 before the second chord edge.
+    // Replay all six recorded Flux routes, including both previously broken mid/high directions.
+    // Assert the mapping at pulse capture, binding selection and private payload commit.
+    constexpr unsigned native[]={2,1,0};
+    constexpr WORD faces[]={XINPUT_GAMEPAD_A,XINPUT_GAMEPAD_X,XINPUT_GAMEPAD_Y};
+    constexpr uint32_t flux_keys[3][3]={{0,0xD77,0xD78},{0xD74,0,0xD73},{0xD76,0xD75,0}};
+    constexpr int32_t flux_motions[3][3]={{0,4006,4007},{2007,0,2006},{3007,3006,0}};
+    for (unsigned origin=0;origin<3;++origin) for (unsigned target=0;target<3;++target) {
+        if (origin==target) continue;
+        boss_hold_stances=7;hold_reset(native[target],false);pending_heavy={};frost_input={};pad_buttons=0;
         boss_hold_stances=0;boss_frost_variants[target]=6;
         static uint8_t vitals[0xA0]{},flux[0xD0]{},flux_payload[0xB0]{};
         memset(vitals,0,sizeof(vitals));put(owner.data(),0x240,address(vitals));
-        put(player.data(),0x470,uint32_t(target==0 ? 1 : 2));publish();tick();
-        put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);publish();tick();
-        const auto opened=frost_input.opened;assert(opened);
-        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];publish();tick();
+        put(player.data(),0x470,uint32_t(native[origin]));publish();tick();
+        put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);latch_native_frost();
+        const auto opened=frost_input.opened;assert(opened && frost_input.origin==origin);
+        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];
+        put(player.data(),0x470,uint32_t(native[target]));publish();tick();
         assert(frost_input.choice==target && !boss_active);
         pad_buttons=0;memset(vitals,0,sizeof(vitals));publish();tick();
-        put(flux,0,uint32_t(target==0 ? 0xD74 : target==1 ? 0xD78 : 0xD77));
-        put(flux,0x20,address(flux_payload));put(flux_payload,0x20,int32_t(target==0 ? 2007 : target==1 ? 4007 : 4006));
+        put(flux,0,flux_keys[origin][target]);put(flux,0x20,address(flux_payload));
+        put(flux_payload,0x20,flux_motions[origin][target]);flux_payload[0x0B]=uint8_t(native[target]);
         put(player.data(),0x58,address(flux));
         pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];publish();tick();
         assert(boss_active && dispatch->control.dispatch_count==1 && frost_input.opened==opened);
@@ -571,7 +578,7 @@ static void frost_cases() {
     publish();tick();assert(frost_input.opened==earliest);boss_frost_variants[0]=0;
     for (bool damage : {false,true}) {
     boss_hold_stances=7;
-    hold_reset(1); pending_heavy={}; frost_input={}; pad_buttons=0;
+    hold_reset(0); pending_heavy={}; frost_input={}; pad_buttons=0;
     boss_hold_stances=1; boss_frost_variants[2]=6;
     static std::array<uint8_t,0xA0> vitals{};
     vitals.fill(0); put(owner.data(),0x240,address(vitals.data()));
@@ -583,7 +590,7 @@ static void frost_cases() {
     publish(); tick();
     assert(frost_input.opened && frost_input.origin==0);
     pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y;
-    put(player.data(),0x470,uint32_t(1)); publish(); tick();
+    put(player.data(),0x470,uint32_t(0)); publish(); tick();
     assert(!boss_active && frost_input.choice==2);
     if (damage) {
         auto hurt=neutral; put(hurt.data(),0,uint32_t(0x3E8)); put(player.data(),0x58,address(hurt.data()));

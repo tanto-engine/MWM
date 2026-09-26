@@ -45,7 +45,7 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
     if (boss_active || !copy_field(boss_session.player+0x470,stance) || stance>2
         || !grapple_field(descriptor,0,key) || !grapple_field(descriptor,0x40,uint8_t(1))
         || !copy_field(descriptor+0x20,payload)) return -1;
-    const unsigned mask=stance==2 ? 1 : stance==0 ? 2 : 4;
+    const unsigned mask=1u<<(2-stance);
     for (const auto& binding : boss_skill_bindings) {
         if (!binding.kind || binding.kind==3 || !(binding.stances&mask)) continue;
         if (binding.kind==1 ? (key!=binding.key || !grapple_field(payload,0x20,binding.motion)
@@ -85,14 +85,14 @@ static uint64_t mid_light_ender(void* context, uint32_t key, uint64_t descriptor
     // Prepend LB-held + Triangle-press enders to the three native mid-light tables.
     // Reuse each native buffered/direct combo window and keep all other rows byte-identical.
     // D3A stays a native sword action; its damage, resources, Ki cost and exits remain owned by the game.
-    const unsigned index=key-0xCB3; auto& target=mid_light_actions[index];
+    const unsigned index=key-0xC76; auto& target=mid_light_actions[index];
     uint8_t source[0xD0]{}; uint64_t payload=0,table=0; uint16_t start=0,count=0;
     if (!copy_bytes(descriptor,source,sizeof(source))) return 0;
     memcpy(&payload,source+0x20,8); memcpy(&table,source+0x78,8);
     memcpy(&start,source+0x80,2); memcpy(&count,source+0x82,2);
-    if (!grapple_field(descriptor,0,key) || !source[0x40] || count!=(index==2 ? 44 : 46)
+    if (!grapple_field(descriptor,0,key) || !source[0x40] || count!=46
         || !grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
-        || !grapple_field(payload,0x20,int32_t(3100+index*10))) return 0;
+        || !grapple_field(payload,0x20,int32_t(2100+index*10))) return 0;
     uint32_t bank=0; const uint64_t ender=original_lookup(context,0xD3A,&bank); uint64_t ender_payload=0;
     if (bank!=0 || !grapple_field(ender,0,uint32_t(0xD3A)) || !grapple_field(ender,0x40,uint8_t(1))
         || !copy_field(ender+0x20,ender_payload) || !grapple_field(ender_payload,0x20,int32_t(9210))
@@ -103,10 +103,10 @@ static uint64_t mid_light_ender(void* context, uint32_t key, uint64_t descriptor
     for (unsigned row=0;row<count;++row) if (!copy_bytes(pointers[row],target.rows[row+2],0x30)) return 0;
     for (unsigned row=0;row<2;++row) {
         const auto* original=target.rows[9+row]; // Captured native rows7/8: buffered then direct Triangle ender.
-        const int16_t low=int16_t(row ? (index==0 ? 40 : index==1 ? 44 : 52) : 10);
-        const int16_t high=int16_t(row ? (index==0 ? 70 : index==1 ? 74 : 82) : low+(index==0 ? 29 : index==1 ? 33 : 41));
+        const int16_t low=int16_t(row ? (index==0 ? 24 : index==1 ? 26 : 31) : index==0 ? 5 : 10);
+        const int16_t high=int16_t((index==0 ? 24 : index==1 ? 26 : 31)+(row ? 30 : -1));
         if (original[0x0A]!=(row ? 0 : 2) || original[0x0B]!=1 || original[0x0C]!=1
-            || !grapple_field(pointers[7+row],0x14,int16_t(0xD67))
+            || !grapple_field(pointers[7+row],0x14,int16_t(0xFA5))
             || !grapple_field(pointers[7+row],0x20,low) || !grapple_field(pointers[7+row],0x22,high)) return 0;
         memcpy(target.rows[row],original,0x30);
         target.rows[row][0x0D]=5; target.rows[row][0x0E]=0; // Native selector5/state0: guard held.

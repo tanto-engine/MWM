@@ -35,7 +35,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         || config.hold_stances>7 || config.frost_milliseconds<100 || config.frost_milliseconds>1500
         || config.frost_speed<1 || config.frost_speed>8)
         return false;
-    constexpr uint32_t openers[]={0xCF5,0xCB7,0xC7A};
+    constexpr uint32_t openers[]={0xCF5,0xC7A,0xCB7};
     for (unsigned stance=0;stance<3;++stance) {
         const auto slot=config.frost_variants[stance];
         if (slot && (slot>config.import_count || config.adapters[slot-1].kind!=2

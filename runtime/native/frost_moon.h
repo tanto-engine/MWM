@@ -32,7 +32,7 @@ static void latch_native_frost() {
         || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
         || !copy_field(boss_session.player+0x58,current)) return;
     LARGE_INTEGER now;QueryPerformanceCounter(&now);
-    frost_window(frost_input,now.QuadPart,stance==2 ? 0 : stance==0 ? 1 : 2,current,
+    frost_window(frost_input,now.QuadPart,2-stance,current,
         pulse[0]+pulse[2]>0 && (pulse[1]>0 || pulse[3]>0),dispatch->control.qpc_frequency);
 }
 
@@ -76,7 +76,7 @@ static bool frost_continuation(uint64_t descriptor, uint32_t key) {
     if (repeat_current_allowed(descriptor,key)) return true;
     if (!copy_field(descriptor+0x20,payload) || !copy_field(payload+0x20,motion)) return false;
     // Recorded free/lock-on locomotion retains the same first-availability deadline.
-    // Mid has one extra3022 row; normalize its subsequent offsets to the common sword layout.
+    // High has one extra3022 row; normalize its subsequent offsets to the common sword layout.
     // Exact native key/motion/stance pairs exclude imported collisions and running attacks.
     constexpr uint32_t starts[]={0xC5B,0xC97,0xCD5};
     constexpr int offsets[]={20,21,23,30,40,41,30,31,32,33,40,41,42,43,44,45,46,47};
@@ -109,7 +109,7 @@ static DispatchReason choose_frost_moon(DispatchCommand& command) {
     if (connected!=1 || !copy_field(boss_session.player+0x470,stance) || stance>2
         || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
         || !copy_field(boss_session.player+0x58,current)) { frost_input={}; return IneligibleRequest; }
-    const unsigned mapped=stance==2 ? 0 : stance==0 ? 1 : 2;
+    const unsigned mapped=2-stance; // Native high0/mid1/low2 -> preset low0/mid1/high2.
     const bool available=pulse[0]+pulse[2]>0 && (pulse[1]>0 || pulse[3]>0);
     const unsigned choice=frost_edge(frost_input,sample,slot,mapped,dispatch->control.reserved0>>16,
         available,current,dispatch->control.qpc_frequency);

@@ -1,0 +1,6 @@
+test_owned_memory_harnesses (tests.test_move_readiness.NativeGameplayInvariants.test_owned_memory_harnesses) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 35.704s
+
+OK

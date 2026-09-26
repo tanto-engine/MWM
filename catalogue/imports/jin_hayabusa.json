@@ -254,10 +254,10 @@
       "source_payload_prefix": "02000000000200000000ff01790cffff010900000000140000004c190000000096130000ffffffffffff000001000200ffffff00ffffffff",
       "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
       "replacement": {
-        "player_key": 3255,
-        "player_motion": 3300,
-        "transition_count": 40,
-        "recovery_frame": 58
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
       },
       "native_followups": [
         "jin_hayabusa.action_0c7a"
@@ -292,10 +292,10 @@
       "source_payload_prefix": "00040100000200000000ff017a0cffff01ff00000000000000000000000000001a040000ffffffffffff030004000500ffffff00ffffffff",
       "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
       "replacement": {
-        "player_key": 3255,
-        "player_motion": 3300,
-        "transition_count": 40,
-        "recovery_frame": 58
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
       }
     },
     {
@@ -518,10 +518,10 @@
       "source_payload_prefix": "02040000010100000000ff01810cffff01ff00000000000000000000000000001a040000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
       "adapter_kind": 2,
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       },
       "native_followups": [
         "jin_hayabusa.action_0c82"
@@ -555,10 +555,10 @@
       "source_payload_prefix": "02040000010100000000ff01820cffff01ff000000000a000000000000000000ba130000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
       "adapter_kind": 4,
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       },
       "native_followups": [
         "jin_hayabusa.action_0c83"
@@ -580,10 +580,10 @@
       "source_payload_prefix": "02000000000010000000ff01830cffffff080000000000000000ce1b00000000bb130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
       "adapter_kind": 4,
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       }
     },
     {
@@ -603,10 +603,10 @@
       "source_payload_prefix": "02000100000200000000ff01750cffff010900000000000000004c190000000092130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
       "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       },
       "native_followups": [
         "jin_hayabusa.action_0c77"
@@ -629,10 +629,10 @@
       "source_payload_prefix": "02000100000200000000ff01770cffff010900000000000000004c190000000094130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
       "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       },
       "native_followups": [
         "jin_hayabusa.action_0c78"
@@ -667,10 +667,10 @@
       "source_payload_prefix": "02000000000200000000ff01780cffff010900000000140000004c190000000095130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
       "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
       "replacement": {
-        "player_key": 3194,
-        "player_motion": 2300,
-        "transition_count": 42,
-        "recovery_frame": 46
+        "player_key": 3255,
+        "player_motion": 3300,
+        "transition_count": 40,
+        "recovery_frame": 58
       }
     }
   ],

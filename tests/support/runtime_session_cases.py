@@ -213,7 +213,7 @@ class RuntimeSessionTests(unittest.TestCase):
         settings['skill_bindings']=[];settings['frost_moon']=dict(low=None,mid=None,high=None);settings['low_heavy']=None
         settings['stance_holds']=dict(low=None,mid='jin_hayabusa.action_0c79',high=None)
         held=prepare.configured_replacements(settings)
-        self.assertEqual([(m['key'],m['replacement']['player_key']) for m in held['moves']],[(0xC79,0xCB7)])
+        self.assertEqual([(m['key'],m['replacement']['player_key']) for m in held['moves']],[(0xC79,0xC7A)])
         settings['stance_holds']['mid']=None
         self.assertIsNone(prepare.configured_replacements(settings))
 
@@ -225,7 +225,7 @@ class RuntimeSessionTests(unittest.TestCase):
         compiled=self.configured_fixture(copy.deepcopy(DEFAULT_PRESET))
         moves=compiled['moves'];low,izuna=moves[3],moves[14]
         check_import_topology(moves,None)
-        self.assertEqual((low['replacement']['player_key'],izuna['replacement']['player_key']),(0xCF5,0xC7A))
+        self.assertEqual((low['replacement']['player_key'],izuna['replacement']['player_key']),(0xCF5,0xCB7))
         for index,field,value in ((14,'id','jin_hayabusa.third_launcher'),(14,'motion',5013),
                 (14,'source_payload_prefix','00'),(14,'replacement',low['replacement']),
                 (15,'key',0xC7B),(15,'adapter_kind',2),(15,'recovery_frame',0),(15,'ki_cost',1),

@@ -54,7 +54,7 @@ static bool native_binding_context(DispatchCommand& command) {
 
 static bool replacement_context(DispatchCommand& command, const MoveAdapter& adapter) {
     // Apply the shared lifecycle check before matching a stance-specific binding.
-    // Native high=1, mid=0, low=2; CF6/CF7 payload4 retains the opener's stance.
+    // Native high=0, mid=1, low=2; CF6/CF7 payload4 retains the opener's stance.
     // Movement and lock-on never participate in this stance comparison.
     uint32_t stance=0; uint64_t payload=0; uint8_t expected=0xff;
     if (!native_binding_context(command) || !copy_field(adapter.player_descriptor+0x20,payload)
@@ -256,7 +256,7 @@ static unsigned stance_hold(uint32_t key) {
     // Held Triangle uses its explicit binding instead of import ordering or source identity.
     // Frost and guard entries sharing the same player template cannot steal this slot.
     // Match both the selected native stance and the configured skill-entry template.
-    const unsigned stance=key==0xCF5 ? 1 : key==0xCB7 ? 2 : key==0xC7A ? 4 : 0;
+    const unsigned stance=key==0xCF5 ? 1 : key==0xC7A ? 2 : key==0xCB7 ? 4 : 0;
     if (boss_hold_variant && (boss_hold_stances&stance))
         for (const auto& binding : boss_skill_bindings)
             if (binding.kind==3 && binding.stances==stance && binding.variant && binding.variant<=boss_import_count
@@ -286,7 +286,7 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
                 *bank_index=1; SetLastError(native_error); return adapted;
             }
         }
-        if ((boss_native_bindings&4) && key>=0xCB3 && key<=0xCB5 && native_binding_context(command)) {
+        if ((boss_native_bindings&4) && key>=0xC76 && key<=0xC78 && native_binding_context(command)) {
             const uint64_t adapted=mid_light_ender(context,key,descriptor);
             SetLastError(native_error); return adapted ? adapted : descriptor;
         }

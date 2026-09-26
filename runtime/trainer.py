@@ -89,7 +89,7 @@ class Trainer:
         self.last_buttons = 0
         self.status = tk.StringVar(value='Ready')
         self.inputs = tk.StringVar(value='Waiting for saved controller')
-        self.notice = tk.StringVar(value='Low Triangle: Jin string D taps, launcher hold. High LB + Square: Jin somersault.')
+        self.notice = tk.StringVar(value='Low Triangle: Jin string D taps, launcher hold. High LB + Square: Izuna Drop.')
         self.record_status = tk.StringVar(value='Record action data during a fight. Imports update known sword moves.')
         self.exe_path = tk.StringVar(value=read_json(RUNTIME/'trainer-settings.json', {}).get('nioh_exe', os.environ.get('NIOH_EXE', '')))
         if self.exe_path.get():
@@ -149,7 +149,7 @@ class Trainer:
                 values=list(self.frost_choices),state='readonly',width=24))
         self.frost_window=tk.StringVar(); self.frost_speed=tk.StringVar()
         self.control_row(frost,3,'Window (seconds)',ttk.Spinbox(frost,textvariable=self.frost_window,from_=.1,to=1.5,increment=.05,width=8))
-        self.control_row(frost,4,'Startup speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
+        self.control_row(frost,4,'Jump / Izuna speed (1–8×)',ttk.Spinbox(frost,textvariable=self.frost_speed,from_=1,to=8,increment=1,width=8))
         ttk.Label(frost,text='Choose a different stance. Window begins when Ki Pulse becomes available.\nLow: Flying Swallow. Mid: somersault. High: downward sword slash.',wraplength=310).grid(row=5,column=0,columnspan=2,sticky='w',pady=8)
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
         for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint override'),('mid_light_ender','Mid light → LB + Triangle: Living Weapon heavy')),6):

@@ -59,11 +59,11 @@ int main() {
         move.descriptor=0x500000+source.key*0x100;move.payload=move.descriptor+0x20;move.clip=move.descriptor+0x40;move.timing_record=move.descriptor+0x60;
         move.key=source.key;move.motion=source.motion;move.flags=source.flags;
         move.recovery_frame=source.recovery;move.transition_count=uint16_t(source.count);move.next_variant=phase==1 ? 9 : -1;
-        auto& adapter=aerial.adapters[slot];adapter={0x910000,0x920000,0x930000,0x940000,0x950000,0xA00000,0xCB7,3300,40,58,2};
+        auto& adapter=aerial.adapters[slot];adapter={0x910000,0x920000,0x930000,0x940000,0x950000,0xA00000,0xC7A,2300,42,46,2};
         adapter.kind=phase==0 || phase==5 || phase==9 ? 2 : phase>=2 && phase<=4 ? 3 : 4;
         if (adapter.kind==3) {adapter.player_descriptor=0;adapter.player_key=0;adapter.player_motion=0;adapter.transition_count=0;adapter.recovery_frame=0;}
         if (phase>=5) {adapter.player_descriptor=0xA10000;adapter.player_key=0xCF5;adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;}
-        if (phase>=9) {adapter.player_descriptor=0xA20000;adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;}
+        if (phase>=9) {adapter.player_descriptor=0xA20000;adapter.player_key=0xCB7;adapter.player_motion=3300;adapter.transition_count=40;adapter.recovery_frame=58;}
     }
     aerial.imports[19]=aerial.imports[7];aerial.adapters[19]=aerial.adapters[12];
     aerial.skill_bindings[0]={2,4,17,0,0,0,0};
@@ -83,10 +83,10 @@ int main() {
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
     moved.skill_bindings[0]={2,2,17,0,0,0,0};
     for (unsigned slot : {7u,8u}) {
-        auto& adapter=moved.adapters[slot];adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;
+        auto& adapter=moved.adapters[slot];adapter.player_key=0xCB7;adapter.player_motion=3300;adapter.transition_count=40;adapter.recovery_frame=58;
     }
     for (unsigned slot : {16u,17u,18u}) {
-        auto& adapter=moved.adapters[slot];adapter.player_key=0xCB7;adapter.player_motion=3300;adapter.transition_count=40;adapter.recovery_frame=58;
+        auto& adapter=moved.adapters[slot];adapter.player_key=0xC7A;adapter.player_motion=2300;adapter.transition_count=42;adapter.recovery_frame=46;
     }
     assert(runtime_imports_valid(moved));
     auto wrong_binding=moved;wrong_binding.skill_bindings[0].stances=4;
