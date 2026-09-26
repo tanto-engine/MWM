@@ -282,15 +282,15 @@ class Trainer:
             return False
 
     def save(self):
-        # Apply the current form before saving a reusable preset.
+        # Choose a destination before applying a reusable preset.
         # Write only after the user chooses a destination.
         # Keep exported presets consistent with the active moveset.
         from tkinter import filedialog
-        if not self.apply(): return
         folder = RUNTIME/'presets'
         folder.mkdir(exist_ok=True)
         path = filedialog.asksaveasfilename(parent=self.root, initialdir=folder, defaultextension='.json', filetypes=[('Movesets','*.json')])
         if path:
+            if not self.apply(): return
             try: atomic_json(path, self.preset)
             except OSError as error: self.error(error)
 
