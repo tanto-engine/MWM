@@ -101,7 +101,7 @@
       "motion_record_offset": 913472
     }
   },
-  "evidence": "work/jin-heavy-research.json",
+  "evidence": "research/jin-heavy-research.json",
   "limitations": [
     "Action package exactly matches saved payloads; timing and motion package associations are structurally inferred pending loaded-source checks.",
     "String D visually identified as a vertical strike and two cyclone spins. String C remains a distinct heavy string; whole-string gameplay acceptance is pending.",

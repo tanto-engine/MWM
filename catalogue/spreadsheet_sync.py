@@ -594,8 +594,8 @@ def write_workbook_catalogue(workbook_path, catalogue, downloads_copy=False, tem
     links = workbook_links(parts, 'xl/workbook.xml')
     paths = {sheet.attrib['name']: links[sheet.attrib[f'{{{REL}}}id']] for sheet in sheets}
     required = {'Moves', 'Observations', 'Controls', DATA_SHEET}
-    if set(paths) not in (required, required | {'Tuning'}):
-        raise ValueError('Workbook requires Moves, Observations, Controls, Move data and optional Tuning')
+    if not required <= set(paths) or set(paths) - required - {'Tuning','Capture occurrences'}:
+        raise ValueError('Workbook requires Moves, Observations, Controls, Move data; optional Tuning and Capture occurrences')
     replace_move_sections(parts, paths['Moves'], workbook_sections(catalogue))
     replace_table(parts, paths['Observations'], OBSERVATION_HEADERS, workbook_rows(catalogue)[1])
     if 'Tuning' in paths:

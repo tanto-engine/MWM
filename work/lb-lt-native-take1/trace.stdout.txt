@@ -1,2 +1,0 @@
-Input and native-action capture active.
-{"kind": "summary", "actions": 28, "player_actions": 21, "chord_candidates": 3, "overwritten": 0, "slot_races": 0, "error": null, "elapsed_seconds": 20.0079676, "dropped": 0}

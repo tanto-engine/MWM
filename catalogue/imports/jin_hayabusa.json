@@ -217,7 +217,7 @@
         }
       ],
       "source_payload_prefix": "02000000000200000000ff01790cffff010900000000140000004c190000000096130000ffffffffffff000001000200ffffff00ffffffff",
-      "evidence": "work/jin-sword-grab-bridge-live.json",
+      "evidence": "research/jin-sword-grab-bridge-live.json",
       "replacement": {
         "player_key": 3317,
         "player_motion": 4300,
@@ -252,7 +252,7 @@
         }
       ],
       "source_payload_prefix": "02000000000200000000ff01790cffff010900000000140000004c190000000096130000ffffffffffff000001000200ffffff00ffffffff",
-      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "evidence": "catalogue/recordings/jin-izuna/events.jsonl",
       "replacement": {
         "player_key": 3194,
         "player_motion": 2300,
@@ -290,7 +290,7 @@
         }
       ],
       "source_payload_prefix": "00040100000200000000ff017a0cffff01ff00000000000000000000000000001a040000ffffffffffff030004000500ffffff00ffffffff",
-      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "evidence": "catalogue/recordings/jin-izuna/events.jsonl",
       "replacement": {
         "player_key": 3194,
         "player_motion": 2300,
@@ -325,7 +325,7 @@
         }
       ],
       "source_payload_prefix": "02040200010000000000ff03b203ffffffff00000000000000000038800000009c130000ffffffff1027030004000500ffffff00ffffffff",
-      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl",
+      "evidence": "catalogue/recordings/jin-izuna/events.jsonl",
       "native_followups": [
         "jin_hayabusa.action_03b4",
         "jin_hayabusa.action_03b6"
@@ -367,7 +367,7 @@
       "voices": [],
       "source_voices": [],
       "source_payload_prefix": "02000200000000000000ff03b603ffffffff00000000000000000038800000009e130000ffffffff1027000001000200ffffff00ffffffff",
-      "evidence": "work/jin-izuna-retry2-20260925/events.jsonl"
+      "evidence": "catalogue/recordings/jin-izuna/events.jsonl"
     },
     {
       "id": "jin_hayabusa.action_0c71",
@@ -601,7 +601,7 @@
       "voices": [],
       "source_voices": [],
       "source_payload_prefix": "02000100000200000000ff01750cffff010900000000000000004c190000000092130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
-      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "evidence": "catalogue/recordings/jin-slam/take-0001/events.jsonl",
       "replacement": {
         "player_key": 3255,
         "player_motion": 3300,
@@ -627,7 +627,7 @@
       "voices": [],
       "source_voices": [],
       "source_payload_prefix": "02000100000200000000ff01770cffff010900000000000000004c190000000094130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
-      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "evidence": "catalogue/recordings/jin-slam/take-0001/events.jsonl",
       "replacement": {
         "player_key": 3255,
         "player_motion": 3300,
@@ -665,7 +665,7 @@
         }
       ],
       "source_payload_prefix": "02000000000200000000ff01780cffff010900000000140000004c190000000095130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
-      "evidence": "work/jin-slam-20260926-090206/take-0001/events.jsonl",
+      "evidence": "catalogue/recordings/jin-slam/take-0001/events.jsonl",
       "replacement": {
         "player_key": 3255,
         "player_motion": 3300,
@@ -850,7 +850,7 @@
       "next": null
     }
   ],
-  "evidence": "work/jin-heavy-research.json",
+  "evidence": "research/jin-heavy-research.json",
   "classification": "D visually confirmed by player: vertical slash then two cyclone spins. Hitbox/effect correction awaits gameplay confirmation. C retained as an alternate.",
   "hold_entry": "jin_hayabusa.action_0c79",
   "hold_chains": {

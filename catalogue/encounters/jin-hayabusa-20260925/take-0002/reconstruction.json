@@ -4,7 +4,7 @@
   "boss_id": "jin_hayabusa",
   "boss_name": "Jin Hayabusa",
   "source": {
-    "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+    "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
     "sha256": "4549b1fc937fbde284437bdf0542b9947591b30a5a350a28bc6cdbb7fd797328"
   },
   "complete": false,
@@ -2465,17 +2465,17 @@
       "observations": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 2,
           "t": 7.809034
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 16,
           "t": 80.082265
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 85,
           "t": 320.726646
         }
@@ -4936,17 +4936,17 @@
       "observations": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 4,
           "t": 8.069189
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 17,
           "t": 80.352164
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 86,
           "t": 320.993768
         }
@@ -7407,17 +7407,17 @@
       "observations": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 6,
           "t": 8.411731
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 18,
           "t": 80.70066
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 87,
           "t": 321.325957
         }
@@ -9878,47 +9878,47 @@
       "observations": 9,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 10,
           "t": 60.22421
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 19,
           "t": 113.815994
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 36,
           "t": 132.158424
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 54,
           "t": 155.947575
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 58,
           "t": 163.83652
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 63,
           "t": 172.19405
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 64,
           "t": 189.70132
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 70,
           "t": 292.231542
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 82,
           "t": 318.976783
         }
@@ -12379,37 +12379,37 @@
       "observations": 7,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 12,
           "t": 60.500917
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 20,
           "t": 114.106415
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 37,
           "t": 132.433937
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 55,
           "t": 156.22863
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 65,
           "t": 189.983601
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 71,
           "t": 292.515832
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 83,
           "t": 319.262108
         }
@@ -14870,22 +14870,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 14,
           "t": 60.894537
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 21,
           "t": 114.488826
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 66,
           "t": 190.366099
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 84,
           "t": 319.642692
         }
@@ -17346,32 +17346,32 @@
       "observations": 6,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 22,
           "t": 117.249557
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 42,
           "t": 145.202964
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 47,
           "t": 148.074881
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 62,
           "t": 167.175665
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 72,
           "t": 308.647645
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 79,
           "t": 316.453541
         }
@@ -19832,42 +19832,42 @@
       "observations": 8,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 24,
           "t": 122.544136
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 32,
           "t": 130.134161
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 38,
           "t": 140.146975
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 50,
           "t": 150.612359
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 51,
           "t": 154.425942
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 56,
           "t": 162.542515
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 59,
           "t": 165.101646
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 75,
           "t": 313.393288
         }
@@ -22328,37 +22328,37 @@
       "observations": 7,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 26,
           "t": 122.777192
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 33,
           "t": 130.382041
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 39,
           "t": 140.39632
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 52,
           "t": 154.679407
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 57,
           "t": 162.781865
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 60,
           "t": 165.359359
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 76,
           "t": 313.635742
         }
@@ -24819,32 +24819,32 @@
       "observations": 6,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 28,
           "t": 123.193698
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 34,
           "t": 130.816986
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 40,
           "t": 140.810473
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 53,
           "t": 155.09325
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 61,
           "t": 165.777696
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 77,
           "t": 314.053283
         }
@@ -27305,22 +27305,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 30,
           "t": 123.531588
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 35,
           "t": 131.137106
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 41,
           "t": 141.149902
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 78,
           "t": 314.389544
         }
@@ -29781,22 +29781,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 43,
           "t": 145.671854
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 48,
           "t": 148.537482
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 73,
           "t": 309.1132
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 80,
           "t": 316.924719
         }
@@ -32257,22 +32257,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 45,
           "t": 146.326369
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 49,
           "t": 149.191747
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 74,
           "t": 309.765731
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 81,
           "t": 317.580642
         }
@@ -34733,7 +34733,7 @@
       "observations": 1,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 88,
           "t": 321.813929
         }
@@ -37194,7 +37194,7 @@
       "observations": 1,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 90,
           "t": 322.164809
         }
@@ -37209,17 +37209,17 @@
       "count": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 4,
           "t": 8.069189
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 17,
           "t": 80.352164
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 86,
           "t": 320.993768
         }
@@ -37233,17 +37233,17 @@
       "count": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 6,
           "t": 8.411731
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 18,
           "t": 80.70066
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 87,
           "t": 321.325957
         }
@@ -37257,37 +37257,37 @@
       "count": 7,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 12,
           "t": 60.500917
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 20,
           "t": 114.106415
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 37,
           "t": 132.433937
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 55,
           "t": 156.22863
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 65,
           "t": 189.983601
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 71,
           "t": 292.515832
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 83,
           "t": 319.262108
         }
@@ -37301,22 +37301,22 @@
       "count": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 14,
           "t": 60.894537
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 21,
           "t": 114.488826
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 66,
           "t": 190.366099
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 84,
           "t": 319.642692
         }
@@ -37330,22 +37330,22 @@
       "count": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 30,
           "t": 123.531588
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 35,
           "t": 131.137106
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 41,
           "t": 141.149902
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 78,
           "t": 314.389544
         }
@@ -37359,32 +37359,32 @@
       "count": 6,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 33,
           "t": 130.382041
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 39,
           "t": 140.39632
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 52,
           "t": 154.679407
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 57,
           "t": 162.781865
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 60,
           "t": 165.359359
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 76,
           "t": 313.635742
         }
@@ -37398,27 +37398,27 @@
       "count": 5,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 34,
           "t": 130.816986
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 40,
           "t": 140.810473
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 53,
           "t": 155.09325
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 61,
           "t": 165.777696
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 77,
           "t": 314.053283
         }
@@ -37432,22 +37432,22 @@
       "count": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 43,
           "t": 145.671854
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 48,
           "t": 148.537482
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 73,
           "t": 309.1132
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 80,
           "t": 316.924719
         }
@@ -37461,17 +37461,17 @@
       "count": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 45,
           "t": 146.326369
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 49,
           "t": 149.191747
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 74,
           "t": 309.765731
         }
@@ -37485,7 +37485,7 @@
       "count": 1,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 88,
           "t": 321.813929
         }
@@ -37499,7 +37499,7 @@
       "count": 1,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/jin-hayabusa-20260925-062619/take-0002/events.jsonl",
+          "path": "catalogue/recordings/jin-original/take-0002/events.jsonl",
           "line": 90,
           "t": 322.164809
         }

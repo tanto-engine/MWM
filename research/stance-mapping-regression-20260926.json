@@ -1,0 +1,391 @@
+{
+  "native_stances": {
+    "Low": 2,
+    "Mid": 1,
+    "High": 0
+  },
+  "proof": {
+    "trace": "runtime/sessions/20260926-091500-10812/trace-1/events.jsonl",
+    "native_XInput": [
+      {
+        "buttons": "RB+Y (0x8200)",
+        "input_line": 3269,
+        "action_call_line": 3271,
+        "action": "D78/4007 bank0 unsubstituted",
+        "resource_line": 3273,
+        "stance": 0,
+        "events": {
+          "input_line": {
+            "kind": "input",
+            "backend": "xinput",
+            "slot": 0,
+            "observed_monotonic": 6801.4569457,
+            "buttons": 33280,
+            "axes": {
+              "lt": 0,
+              "rt": 0
+            },
+            "pov": null,
+            "packet": 584585,
+            "transport": "game_xinput",
+            "source_slot": 0,
+            "sample_qpc": 68014552432,
+            "button_labels": [
+              "R1 / RB",
+              "Triangle / Y"
+            ],
+            "buttons_down": [
+              10,
+              16
+            ],
+            "pressed_mask": 32768,
+            "released_mask": 0,
+            "edge_basis": "previous_observation",
+            "poll_qpc_begin": 68014569275,
+            "poll_qpc_end": 68014569607
+          },
+          "action_call_line": {
+            "kind": "action_call",
+            "sequence": 3147,
+            "qpc": 68014553113,
+            "actor": "0x2655972aea0",
+            "owner": "0x265484c1630",
+            "context": "0x0",
+            "before": "0x26558c009f0",
+            "after": "0x26558c0afb0",
+            "payload": "0x2655842c5f0",
+            "thread_id": 6888,
+            "input_key": 3448,
+            "before_key": 3284,
+            "after_key": 3448,
+            "bank": 0,
+            "motion_key": 4007,
+            "timing_key": -1,
+            "native_result": 1,
+            "valid_fields": 287,
+            "sequence_end": 3147,
+            "forwarded_key": 3448,
+            "dispatch_reason": 1,
+            "substitution_intended": false,
+            "final_exact_match": false
+          },
+          "resource_line": {
+            "kind": "resource_state",
+            "slots": [
+              "0x265a84cbae0",
+              "0x265a84b2f90",
+              "0x265b01bf210",
+              "0x265b00f63b0"
+            ],
+            "ki": {
+              "current": 192.0,
+              "recoverable_now": 0.0,
+              "recoverable_target": 0.0,
+              "fill_duration": -1.0,
+              "fill_remaining": -1.0,
+              "hold_duration": -1.0,
+              "hold_remaining": -1.0,
+              "action_cost": 0.0
+            },
+            "stance": 0,
+            "all_slots_original": true,
+            "current_clip": "0x265ab38e6e0",
+            "previous_clips": [
+              "0x265ab391720",
+              "0x265ab3c4560"
+            ],
+            "motion_key": 4007,
+            "timing_record": "0x265aafeb570",
+            "timing_key": 4007,
+            "source_clip_current": false,
+            "source_clip_retained": false,
+            "leaping_clip_current": false,
+            "leaping_timing_current": false,
+            "source_timing_current": false,
+            "observed_qpc": 68014779477
+          }
+        }
+      },
+      {
+        "buttons": "RB+X (0x4200)",
+        "input_line": 3696,
+        "action_call_line": 3698,
+        "action": "D75/3006 bank0 unsubstituted",
+        "resource_line": 3699,
+        "stance": 1,
+        "events": {
+          "input_line": {
+            "kind": "input",
+            "backend": "xinput",
+            "slot": 0,
+            "observed_monotonic": 6809.6503242,
+            "buttons": 17152,
+            "axes": {
+              "lt": 0,
+              "rt": 0
+            },
+            "pov": null,
+            "packet": 586886,
+            "transport": "game_xinput",
+            "source_slot": 0,
+            "sample_qpc": 68096483497,
+            "button_labels": [
+              "L1 / LB",
+              "R1 / RB",
+              "Square / X"
+            ],
+            "buttons_down": [
+              9,
+              10,
+              15
+            ],
+            "pressed_mask": 16384,
+            "released_mask": 0,
+            "edge_basis": "previous_observation",
+            "poll_qpc_begin": 68096503057,
+            "poll_qpc_end": 68096503394
+          },
+          "action_call_line": {
+            "kind": "action_call",
+            "sequence": 3258,
+            "qpc": 68096483948,
+            "actor": "0x2655972aea0",
+            "owner": "0x265484c1630",
+            "context": "0x0",
+            "before": "0x26558c09270",
+            "after": "0x26558c0ad40",
+            "payload": "0x2655842c3e0",
+            "thread_id": 6888,
+            "input_key": 3445,
+            "before_key": 3425,
+            "after_key": 3445,
+            "bank": 0,
+            "motion_key": 3006,
+            "timing_key": -1,
+            "native_result": 1,
+            "valid_fields": 287,
+            "sequence_end": 3258,
+            "forwarded_key": 3445,
+            "dispatch_reason": 1,
+            "substitution_intended": false,
+            "final_exact_match": false
+          },
+          "resource_line": {
+            "kind": "resource_state",
+            "slots": [
+              "0x265a84cbae0",
+              "0x265a84b2f90",
+              "0x265b01bf210",
+              "0x265b00f63b0"
+            ],
+            "ki": {
+              "current": 192.0,
+              "recoverable_now": 0.0,
+              "recoverable_target": 0.0,
+              "fill_duration": -1.0,
+              "fill_remaining": -1.0,
+              "hold_duration": -1.0,
+              "hold_remaining": -1.0,
+              "action_cost": 0.0
+            },
+            "stance": 1,
+            "all_slots_original": true,
+            "current_clip": "0x265ab2c8ee0",
+            "previous_clips": [
+              "0x265ab2ce000",
+              "0x265ab2e5420"
+            ],
+            "motion_key": 3006,
+            "timing_record": "0x265aafdebf0",
+            "timing_key": 3006,
+            "source_clip_current": false,
+            "source_clip_retained": false,
+            "leaping_clip_current": false,
+            "leaping_timing_current": false,
+            "source_timing_current": false,
+            "observed_qpc": 68096630611
+          }
+        }
+      },
+      {
+        "buttons": "RB+X (0x4200)",
+        "input_line": 4912,
+        "action_call_line": 4914,
+        "action": "D77/4006 bank0 unsubstituted",
+        "resource_line": 4915,
+        "stance": 1,
+        "events": {
+          "input_line": {
+            "kind": "input",
+            "backend": "xinput",
+            "slot": 0,
+            "observed_monotonic": 6922.0673693,
+            "buttons": 16896,
+            "axes": {
+              "lt": 0,
+              "rt": 0
+            },
+            "pov": null,
+            "packet": 598325,
+            "transport": "game_xinput",
+            "source_slot": 0,
+            "sample_qpc": 69220671122,
+            "button_labels": [
+              "R1 / RB",
+              "Square / X"
+            ],
+            "buttons_down": [
+              10,
+              15
+            ],
+            "pressed_mask": 16384,
+            "released_mask": 0,
+            "edge_basis": "previous_observation",
+            "poll_qpc_begin": 69220673456,
+            "poll_qpc_end": 69220673890
+          },
+          "action_call_line": {
+            "kind": "action_call",
+            "sequence": 3690,
+            "qpc": 69220671458,
+            "actor": "0x2655972aea0",
+            "owner": "0x265484c1630",
+            "context": "0x0",
+            "before": "0x26558c009f0",
+            "after": "0x26558c0aee0",
+            "payload": "0x2655842c540",
+            "thread_id": 6888,
+            "input_key": 3447,
+            "before_key": 3284,
+            "after_key": 3447,
+            "bank": 0,
+            "motion_key": 4006,
+            "timing_key": -1,
+            "native_result": 1,
+            "valid_fields": 287,
+            "sequence_end": 3690,
+            "forwarded_key": 3447,
+            "dispatch_reason": 1,
+            "substitution_intended": false,
+            "final_exact_match": false
+          },
+          "resource_line": {
+            "kind": "resource_state",
+            "slots": [
+              "0x265a84cbae0",
+              "0x265a84b2f90",
+              "0x265b01bf210",
+              "0x265b00f63b0"
+            ],
+            "ki": {
+              "current": 191.7950439453125,
+              "recoverable_now": 0.0,
+              "recoverable_target": 0.0,
+              "fill_duration": -1.0,
+              "fill_remaining": -1.0,
+              "hold_duration": -1.0,
+              "hold_remaining": -1.0,
+              "action_cost": 0.0
+            },
+            "stance": 1,
+            "all_slots_original": true,
+            "current_clip": "0x265ab38c920",
+            "previous_clips": [
+              "0x265ab391720",
+              "0x0"
+            ],
+            "motion_key": 4006,
+            "timing_record": "0x265aafeb1d0",
+            "timing_key": 4006,
+            "source_clip_current": false,
+            "source_clip_retained": false,
+            "leaping_clip_current": false,
+            "leaping_timing_current": false,
+            "source_timing_current": false,
+            "observed_qpc": 69220879614
+          }
+        }
+      }
+    ],
+    "source_rows": "research/player-low-heavy-evidence.json: D62 selector17->D78, selector18->D77; D60 selector17->D73; D61 selector18->D75",
+    "setter": "RVA70F386 reads actor+58 descriptor;70F38A reads descriptor+20 payload;70F38E reads payload+B;70F3A8 writes actor+470 directly for values0/1/2",
+    "templates": "research/player-stance-heavy-evidence.json: CF5/4300 low2; C7A/2300 Mid1 rows42 recovery46; CB7/3300 High0 rows40 recovery58",
+    "trace_sha256": "1cdd1cf5a262080ea647c03c02c37d13bc64636899c5e36558e884f4d8576b88"
+  },
+  "before_revision": "a14429b844893bee744686ce824de377c4bc3acf",
+  "before_method": "Current maintained fixture copied to disposable temp; git HEAD native headers; env selects one existing physical route per process. Heavy deferral isolated from Frost fixture setup. No repo production edits or game access.",
+  "before_routes": [
+    {
+      "route": "Low->Mid",
+      "exit": 3,
+      "assertion": "Assertion failed: boss_private_actions[5].payload[0x0B]==native[target], file TEMP\\tests/native/replacement_cases.cpp, line 571"
+    },
+    {
+      "route": "Low->High",
+      "exit": 3,
+      "assertion": "Assertion failed: boss_private_actions[5].payload[0x0B]==native[target], file TEMP\\tests/native/replacement_cases.cpp, line 571"
+    },
+    {
+      "route": "Mid->Low",
+      "exit": 3,
+      "assertion": "Assertion failed: opened && frost_input.origin==origin, file TEMP\\tests/native/replacement_cases.cpp, line 561"
+    },
+    {
+      "route": "Mid->High",
+      "exit": 3,
+      "assertion": "Assertion failed: opened && frost_input.origin==origin, file TEMP\\tests/native/replacement_cases.cpp, line 561"
+    },
+    {
+      "route": "High->Low",
+      "exit": 3,
+      "assertion": "Assertion failed: opened && frost_input.origin==origin, file TEMP\\tests/native/replacement_cases.cpp, line 561"
+    },
+    {
+      "route": "High->Mid",
+      "exit": 3,
+      "assertion": "Assertion failed: opened && frost_input.origin==origin, file TEMP\\tests/native/replacement_cases.cpp, line 561"
+    }
+  ],
+  "other_before_failures": {
+    "sword_bindings_cases": "exit3 native_bound_slot expected configured Mid/High slot",
+    "runtime_session_cases": "exit3 runtime_imports_valid(aerial) corrected Mid C7A/High CB7",
+    "replacement_cases": "exit3 held-High selection mismatch"
+  },
+  "after_verification": {
+    "command": "python -B -m unittest tests.test_move_readiness.NativeGameplayInvariants -v",
+    "result": "PASS",
+    "harness_count": 15,
+    "seconds": 35.704,
+    "frost_routes_passed": 6,
+    "scope": "Owned memory only; native stances, all physical Frost routes, source graph ownership, Mid-light signature/windows and slam1x clocks/C78 recovery29. Gameplay remains unverified.",
+    "log": "work/stance-native-final-20260926.txt"
+  },
+  "full_offline_verification": {
+    "command": "Test-Offline.ps1",
+    "readiness_tests": 171,
+    "crash_tests": 8,
+    "result": "PASS",
+    "log": "work/stance-offline-20260926.txt",
+    "gameplay": "Player confirmed all six Frost routes and original High slash speed; other gameplay acceptance remains separate."
+  },
+  "gameplay": {
+    "date": "2026-09-26",
+    "player_reply": "All routes and High speed work",
+    "confirmed": [
+      "Low to Mid",
+      "Low to High",
+      "Mid to Low",
+      "Mid to High",
+      "High to Low",
+      "High to Mid",
+      "High downward sword slash at original speed"
+    ],
+    "runtime_sha256": "3e1e3752ced69dec14003f65105a66e9ee694077c4eb6374af402e41225c240e",
+    "trace": "runtime/sessions/20260926-092620-14176/trace-1",
+    "not_confirmed": [
+      "High LB + Square Izuna",
+      "Mid-light Living Weapon ender",
+      "Full combat and lifecycle acceptance matrix"
+    ]
+  }
+}

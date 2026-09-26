@@ -225,7 +225,7 @@ class BossTests(unittest.TestCase):
             []
         )})()
         resource = dispatch.boss_snapshot(OwnedGame(0), BOSS)
-        with tempfile.TemporaryDirectory(dir=ROOT / 'work/native-tests') as temp:
+        with tempfile.TemporaryDirectory(dir=ROOT / 'tests/native') as temp:
             folder = Path(temp)
             (folder / 'session-profile.json').write_text(json.dumps(PROFILE))
             (folder / 'boss-session.json').write_text(json.dumps(BOSS))

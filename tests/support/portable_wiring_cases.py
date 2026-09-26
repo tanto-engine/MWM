@@ -44,7 +44,7 @@ class Portability(unittest.TestCase):
         # Preserve the exact-build guard when the Steam library path differs.
         # Resolve the game from an alternate installation while validating its supported image.
         # Directory flexibility must never disable executable compatibility checking.
-        alternate = ROOT/'work/Alternate Steam Library/nioh.exe'
+        alternate = ROOT/'tests/Alternate Steam Library/nioh.exe'
         with patch.dict(os.environ, {'NIOH_EXE': str(alternate)}):
             spec = importlib.util.spec_from_file_location('alternate_loader', ROOT/'runtime/native_loader.py')
             module = importlib.util.module_from_spec(spec)

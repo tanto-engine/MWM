@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'runtime'))
 from gestures import ControllerGesture
-FIXTURES=ROOT/'work/native-tests/fixtures'
+FIXTURES=ROOT/'tests/native/fixtures'
 C=json.loads((FIXTURES/'controller-calibration.json').read_text())
 B=json.loads((FIXTURES/'controller-binding.json').read_text())
 B = dict(B, hold_seconds=.45)  # Fixed boundary fixture; runtime preference is configurable.

@@ -23,24 +23,10 @@ if os.name == 'nt':
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
 HELD_MOVES = {'jin_hayabusa.action_0bbf', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
-NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000),
-                 'dodge_attack': (0xBC8,-1,18,0), 'heavy_attack': (0xC7A,2300,42,0x8000000594C0000)}
-LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14),
-                   dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
-TRACKING_RATES = dict(izuna=720,somersault=720,flying_swallow=540)
-DEFAULT_PRESET = dict(schema_version=6, name='Sword baseline', weapon='sword',
-                      tap_move='okatsu.charged_rush', hold_move=None,
-                      modifier_mask=16, trigger_mask=4, hold_seconds=.25,
-                      low_heavy='jin_hayabusa.action_0c6e',
-                      stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
-                      okatsu_grapple=True, mid_light_ender=True, string_enabled=False,
-                      skill_bindings=[dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'),
-                                      dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop'),
-                                      dict(source='dodge_attack',stance='low',move='jin_hayabusa.action_0c6f'),
-                                      dict(source='heavy_attack',stance='mid',move='jin_hayabusa.action_0bbf'),
-                                      dict(source='dodge_attack',stance='mid',move='jin_hayabusa.action_0bbf')],
-                      frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high='jin_hayabusa.action_0c75'),
-                      frost_window_seconds=0, frost_startup_speed=8, launch_profiles=LAUNCH_PROFILES, air_juggle_boost=2, tracking_rates=TRACKING_RATES)
+from engine_policy import NATIVE_SKILLS
+
+PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon frost_window_seconds frost_startup_speed'.split())
+DEFAULT_PRESET = json.loads((Path(__file__).resolve().parents[1]/'app/sword-expanded.json').read_text(encoding='utf8'))
 
 
 def atomic_json(path, value):
@@ -116,18 +102,16 @@ def validate_preset(value):
     # Reject movesets the current runtime cannot execute.
     # Check schema, implemented move IDs, distinct button bits and hold time.
     # Corrupt settings cannot silently become a different binding.
-    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==4:
-        value=dict(value,schema_version=5,launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2, izuna_tracking_degrees=45)
-    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==5:
-        value=dict(value,schema_version=6,tracking_rates=copy.deepcopy(TRACKING_RATES))
-        if value.pop('izuna_tracking_degrees',45)==0:value['tracking_rates']['izuna']=0
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 6:
+    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version'] in (4,5,6):
+        value={key:item for key,item in value.items() if key not in ('launch_profiles','air_juggle_boost','tracking_rates','izuna_tracking_degrees')}
+        value=dict(value,schema_version=7)
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 7:
         raise ValueError('Unsupported moveset version')
-    missing = [key for key in DEFAULT_PRESET if key not in value]
+    missing = [key for key in PRESET_FIELDS if key not in value]
     if missing:
         raise ValueError('Incomplete moveset: missing ' + ', '.join(missing))
-    if set(value) != set(DEFAULT_PRESET):
-        raise ValueError('Unknown preset fields: ' + ', '.join(sorted(set(value)-set(DEFAULT_PRESET))))
+    if set(value) != PRESET_FIELDS:
+        raise ValueError('Unknown preset fields: ' + ', '.join(sorted(set(value)-PRESET_FIELDS)))
     result = copy.deepcopy(value)
     if not isinstance(result['name'], str) or not result['name'].strip() or len(result['name']) > 100:
         raise ValueError('Give the moveset a name of 1 to 100 characters')
@@ -188,35 +172,7 @@ def validate_preset(value):
         raise ValueError('Frost Moon startup speed must be an integer from 1 to 8')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
-    validate_launch_profiles(result['launch_profiles'],result['air_juggle_boost'])
-    validate_tracking_rates(result['tracking_rates'])
     return result
-
-
-def validate_tracking_rates(rates):
-    # Turn speed is expressed in degrees per real gameplay second for each move graph.
-    # Zero disables a graph's assistance; native pauses never accumulate a catch-up turn.
-    # Fixed keys keep the saved preset and native array in the same explicit order.
-    if not isinstance(rates,dict) or set(rates)!=set(TRACKING_RATES) or any(type(v) not in (int,float) or not 0<=v<=720 for v in rates.values()):
-        raise ValueError('Tracking rates require Izuna, somersault and Flying Swallow values from 0 to 720 degrees/second')
-
-
-def validate_launch_profiles(profiles, boost):
-    # Ordered resistance bands distinguish the two observed humans without inventing enemy IDs.
-    # Their weight and upward impulse are separate native quantities.
-    # Unmatched humans and nonhumans retain the existing launcher baseline.
-    if not isinstance(profiles,list) or len(profiles)!=2:
-        raise ValueError('Launcher requires two ascending human resistance bands')
-    previous=0
-    for profile in profiles:
-        if not isinstance(profile,dict) or set(profile)!={'resistance_below','weight_scale','vertical_impulse'}:
-            raise ValueError('Invalid launch profile fields')
-        limit,weight,impulse=(profile[k] for k in ('resistance_below','weight_scale','vertical_impulse'))
-        if type(limit) is not int or not previous<limit<=10000 or type(weight) not in (int,float) or not 0<weight<=1 or type(impulse) not in (int,float) or not 0<impulse<=20:
-            raise ValueError('Invalid launch profile bounds')
-        previous=limit
-    if type(boost) not in (int,float) or not 0<=boost<=5:
-        raise ValueError('Airborne hit lift must be between 0 and 5')
 
 
 def binding_for_preset(calibration, preset, imports=None):

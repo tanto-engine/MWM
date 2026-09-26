@@ -210,6 +210,7 @@ def reconstruct_capture(source, boss_id, destination=None):
         # Keep action records themselves even when no relationship was observed.
         string = current.pop(label, None)
         if string and len(string['actions']) > 1:
+            string.pop('serial', None)
             strings.append(dict(string, break_reason=reason, relationship='sampled_temporal_order'))
     def close_all(reason):
         # Close every active actor sequence at a shared observation gap.
@@ -274,7 +275,8 @@ def reconstruct_capture(source, boss_id, destination=None):
         key += f":motion:{identity['motion_id']}:timing:{identity['timing_id']}"
         qualified = label + '/' + key
         row = actions.setdefault(qualified, {'id': qualified, 'actor_label': label,
-            'role': event.get('role', 'unassigned'), 'source': identity, 'observations': 0, 'evidence': []})
+            'role': event.get('role', 'unassigned'), 'source': identity, 'observations': 0,
+            'observed_entries': 0, 'censored_observations': 0, 'evidence': []})
         row['observations'] += 1
         if len(row['evidence']) < 32:
             row['evidence'].append(evidence(number, event))
@@ -282,7 +284,12 @@ def reconstruct_capture(source, boss_id, destination=None):
         if previous and event.get('t', 0) < previous['end_t']:
             close(label, 'timestamp_regression')
             previous = None
-        if previous and previous['actions'][-1] == qualified:
+        serial = (event.get('current'), event.get('counter'))
+        if previous is None:
+            row['censored_observations'] += 1
+        elif previous['serial'] != serial:
+            row['observed_entries'] += 1
+        if previous and previous['actions'][-1] == qualified and previous['serial'] == serial:
             previous['end_t'] = event.get('t', 0)
             continue
         if previous:
@@ -299,6 +306,7 @@ def reconstruct_capture(source, boss_id, destination=None):
             current[label] = {'actor_label': label, 'actions': [], 'start_t': event.get('t', 0), 'end_t': event.get('t', 0)}
         current[label]['actions'].append(qualified)
         current[label]['end_t'] = event.get('t', 0)
+        current[label]['serial'] = serial
     close_all('end_of_file')
     result = {'schema_version': 1, 'kind': 'encounter_reconstruction', 'boss_id': boss_id,
               'boss_name': BOSSES[boss_id]['name'] if boss_id in BOSSES else boss_id.replace('_',' ').title(),
@@ -572,6 +580,34 @@ def record_encounter(boss_id, outdir, stop_file=None, signature=None, stop_event
             msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
             lock.close()
     return status
+
+
+def annotate_recent(folder, description):
+    # Anchor a user description to the latest persisted take, without controlling the game.
+    # Read a bounded tail and ignore an unfinished final JSONL record.
+    # Retain notice time separately: a label is not an exact animation boundary.
+    folder = Path(folder)
+    manifest = json.loads((folder/'encounter.json').read_text(encoding='utf8'))
+    takes = sorted(folder.glob('take-*/events.jsonl'))
+    if not takes or not description.strip():
+        raise ValueError('A recorded take and a description are required')
+    path = takes[-1]
+    with path.open('rb') as stream:
+        stream.seek(0,2)
+        start = max(0,stream.tell()-65536)
+        stream.seek(start)
+        if start: stream.readline()
+        lines = stream.read().split(b'\n')[:-1]
+    events = [json.loads(line) for line in lines if line.strip()]
+    times = [e['t'] for e in events if 't' in e]
+    if not times:
+        raise ValueError('No complete sampled timestamp is available yet')
+    label = dict(kind='user_label', boss_id=manifest['boss_id'], take=path.parent.name,
+                 label=description.strip(), last_recorded_t=times[-1], noted_wall_time=time.time(),
+                 basis='User description of recent sequence; timing and string boundaries unverified')
+    with (folder/'labels.jsonl').open('a',encoding='utf8') as stream:
+        stream.write(json.dumps(label,ensure_ascii=True)+'\n')
+    return label
 
 
 def main(argv=None):

@@ -4,7 +4,7 @@
   "boss_id": "okatsu",
   "boss_name": "Okatsu",
   "source": {
-    "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+    "path": "catalogue/recordings/okatsu-original/events.jsonl",
     "sha256": "479d67d68790aced061a2aa65da4ce00575a25a59de9d4ec2881998bd041b804"
   },
   "complete": false,
@@ -1097,22 +1097,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 192,
           "t": 5.997399
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 297,
           "t": 8.428712
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 519,
           "t": 14.742835
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 1080,
           "t": 26.182292
         }
@@ -1673,12 +1673,12 @@
       "observations": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 733,
           "t": 18.92374
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 925,
           "t": 22.861794
         }
@@ -2239,12 +2239,12 @@
       "observations": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 761,
           "t": 19.468231
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 950,
           "t": 23.394797
         }
@@ -2881,12 +2881,12 @@
       "observations": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 776,
           "t": 19.782684
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 967,
           "t": 23.711994
         }
@@ -3409,12 +3409,12 @@
       "observations": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 834,
           "t": 20.93122
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 1040,
           "t": 24.867719
         }
@@ -3429,12 +3429,12 @@
       "count": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 761,
           "t": 19.468231
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 950,
           "t": 23.394797
         }
@@ -3448,12 +3448,12 @@
       "count": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 776,
           "t": 19.782684
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 967,
           "t": 23.711994
         }
@@ -3467,12 +3467,12 @@
       "count": 2,
       "evidence": [
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 834,
           "t": 20.93122
         },
         {
-          "path": "outputs/Okatsu-Capture-30s/events.jsonl",
+          "path": "catalogue/recordings/okatsu-original/events.jsonl",
           "line": 1040,
           "t": 24.867719
         }

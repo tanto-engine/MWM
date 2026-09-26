@@ -1,0 +1,180 @@
+{
+  "session": {
+    "pid": 11564,
+    "creation_filetime": "134349074321430317",
+    "module_base": "0x7ff7669c0000",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "vtable": "0x7ff767b63530",
+    "vtable_rva": "0x11a3530"
+  },
+  "scope": "Exact-build source capture and player-confirmed smooth Mid Tiger Sprint startup",
+  "source": [
+    {
+      "key": "0xe2",
+      "payload": "01000000000010000000ff01e200ffffff080000000000000000c21100000000d4070000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "rows": 45,
+      "tiger_rows": [
+        {
+          "index": 3,
+          "raw": "ffffffffffffffffffff001400ffff0000000000460d1410008064640000000012001200fffffffffffffffffb4a0000"
+        },
+        {
+          "index": 8,
+          "raw": "ffffffffffffffffffff001401ffff0000000000460d1410008064640000000012001200fffffffffffffffffb4a0000"
+        }
+      ]
+    },
+    {
+      "key": "0xd46",
+      "payload": "02000000000200000000ff04460dffff01081400ceff0f0000004c190000000088130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "rows": 49,
+      "tiger_rows": [
+        {
+          "index": 8,
+          "raw": "ffffffffffffffffffff01ffffffff0000000000aa0f000300806464000000000080ff7ffffffffffffffffffb4a0000"
+        },
+        {
+          "index": 14,
+          "raw": "ffffffffffffffffffff001403ffff0000000000aa0f000600806464000000001300ff7ffffffffffffffffffb4a0000"
+        },
+        {
+          "index": 20,
+          "raw": "4600ffffffffffffffff00ffffffff0000000000aa0f000a00806464000000001300ff7ffffffffffffffffffb4a0000"
+        }
+      ]
+    },
+    {
+      "key": "0xfaa",
+      "payload": "03000000000008000000ffffaa0f1affff090100ceff0a000000c01700040000e2130000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "rows": 21,
+      "tiger_rows": []
+    }
+  ],
+  "native_gate": {
+    "vtable_offset": "180",
+    "rva": "73D2C0",
+    "caller": "720E64..720E79 reads transition+2C and calls vtable+180",
+    "stance_loadout": "73D3D3..73D40D and73D543..73D576 select current weapon/stance and call7B44A0",
+    "skill": "4AFB"
+  },
+  "reproduction": {
+    "trace": "runtime/sessions/20260926-100103-14672/trace-1",
+    "sequence_pairs": [
+      [
+        810,
+        811
+      ],
+      [
+        1022,
+        1023
+      ],
+      [
+        1030,
+        1031
+      ],
+      [
+        1060,
+        1061
+      ],
+      [
+        1491,
+        1492
+      ],
+      [
+        1495,
+        1497
+      ],
+      [
+        1502,
+        1503
+      ],
+      [
+        1612,
+        1614
+      ],
+      [
+        1623,
+        1624
+      ]
+    ],
+    "usual_D46_to_FAA_ms": 334,
+    "before_test": "Assertion failed: native_bound_slot(key,address(light.data()),request)==(failure ? -1 : 0), file tests/native/sword_bindings_cases.cpp, line 129"
+  },
+  "entry": {
+    "key": "BBA",
+    "motion": -1,
+    "flags": 0,
+    "rows": 13,
+    "selected_input": "native selector14 state0/1",
+    "selected_skill": -1,
+    "mid_stance_only": true
+  },
+  "gameplay_acceptance": {
+    "date": "2026-09-26",
+    "scope": "Mid Tiger Sprint immediate Okatsu dash startup from idle/after attack",
+    "user_response": "yes. its smooth",
+    "trace": "C:\\Users\\vikna\\Downloads\\GitHub\\nioh1-skill-expanded\\runtime\\sessions\\20260926-101415-5096\\trace-1",
+    "native_calls": [
+      {
+        "sequence": 848,
+        "input_key": 3002,
+        "before_key": 0,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 936,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 941,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 948,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1019,
+        "input_key": 3398,
+        "before_key": 3450,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1071,
+        "input_key": 3398,
+        "before_key": 3450,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1184,
+        "input_key": 3398,
+        "before_key": 3453,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      }
+    ],
+    "dll_sha256": {
+      "nioh_resources.dll": "42cdae83adf8d4de65126718a8f7ef3cead85d2edeb8fb37705fafb7e50b9a71",
+      "nioh_skill_runtime.dll": "c3a7a6ed94354756d45d343916a2ba4db48afadebc73df510d0e5d86a9b62188"
+    }
+  }
+}

@@ -38,6 +38,33 @@ def metadata(action=0xC64, motion=1220, override=-1, **changes):
 
 
 class ReconstructionTests(unittest.TestCase):
+    def test_pause_annotation_anchors_complete_record_without_claiming_boundary(self):
+        # Label the last persisted timestamp even while the recorder has a partial next line.
+        # Preserve the user's description and keep exact frame boundaries unverified.
+        # Repeated descriptions append evidence instead of replacing an earlier label.
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td); take=folder/'take-0001'; take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps({'boss_id':'jin_hayabusa'}))
+            (take/'events.jsonl').write_text(json.dumps(state(4.5))+'\n{"kind":')
+            for text in ['Downward slash, then Flying Swallow','Unsure where string ends']:
+                label=encounter.annotate_recent(folder,text)
+                self.assertEqual(label['label'],text)
+                self.assertEqual(label['last_recorded_t'],4.5)
+                self.assertIn('unverified',label['basis'])
+            self.assertEqual(len((folder/'labels.jsonl').read_text().splitlines()),2)
+
+    def test_entries_distinguish_repeats_from_state_samples_and_gaps(self):
+        # A committed counter change can repeat the same action without a new descriptor.
+        # State-only changes must not inflate occurrence counts or conceal that repeat.
+        # An observation after a gap is censored rather than an observed move start.
+        result = self.run_capture([state(.1,counter=1), metadata(), state(.2,counter=1),
+            state(.3,counter=2), {'kind':'sampling_gap'}, state(.4,counter=9), metadata()])
+        row = result['actions'][0]
+        self.assertEqual(row['observations'],4)
+        self.assertEqual(row['observed_entries'],1)
+        self.assertEqual(row['censored_observations'],2)
+        self.assertEqual(result['observed_successors'][0]['count'],1)
+
     def run_capture(self, events, raw_tail=''):
         # Reconstruct a temporary JSONL capture with an optional damaged tail.
         # Write the supplied events exactly as the real recorder would retain them.

@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT/'runtime'), str(ROOT/'catalogue')]
+sys.path[:0] = [str(ROOT/'app'), str(ROOT/'runtime'), str(ROOT/'catalogue')]
 import engine_config as config
 import process_support as process
 import trainer
@@ -17,6 +17,19 @@ from gestures import ControllerGesture
 
 
 class PresetTests(unittest.TestCase):
+    def test_public_preset_excludes_engine_physics(self):
+        # Public bindings and timing controls must not carry enemy-physics policy.
+        # Reject new private fields and discard historical tuning during explicit migration.
+        # Preserve every supported binding while leaving the caller's document untouched.
+        private={'launch_profiles','air_juggle_boost','tracking_rates'}
+        self.assertFalse(private & config.DEFAULT_PRESET.keys())
+        for field in private:
+            with self.assertRaisesRegex(ValueError,'Unknown preset'):
+                config.validate_preset(dict(config.DEFAULT_PRESET,**{field:123}))
+        legacy=dict(config.DEFAULT_PRESET,schema_version=6,launch_profiles=[],air_juggle_boost=5,tracking_rates={})
+        self.assertEqual(config.validate_preset(legacy),config.DEFAULT_PRESET)
+        self.assertEqual(legacy['air_juggle_boost'],5)
+
     def test_malformed_move_types_are_validation_errors_not_callback_crashes(self):
         # Reject malformed move field types as validation errors before GUI callbacks fail.
         # Pass invalid move data shapes into preset validation.

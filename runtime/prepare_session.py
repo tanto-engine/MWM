@@ -18,6 +18,7 @@ from load_resources import load_resources
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
+from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST
 from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES
 
 IMPORT_MANIFEST = CODE.parent / 'catalogue/imports/okatsu.json'
@@ -398,7 +399,7 @@ def fresh_profile(game):
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
                 hold_variant=hold_variant, hold_milliseconds=hold_milliseconds, hold_camera_bank=hold_camera_bank,
                 hold_stances=hold_stances, frost_variants=frost_variants, frost_milliseconds=frost_milliseconds,
-                frost_speed=configuration['frost_startup_speed'],launch_profiles=configuration['launch_profiles'],air_juggle_boost=configuration['air_juggle_boost'],tracking_rates=configuration['tracking_rates'],
+                frost_speed=configuration['frost_startup_speed'],launch_profiles=LAUNCH_PROFILES,air_juggle_boost=AIR_JUGGLE_BOOST,tracking_rates=TRACKING_RATES,
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,

@@ -4,7 +4,7 @@
   "boss_id": "okatsu",
   "boss_name": "Okatsu",
   "source": {
-    "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+    "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
     "sha256": "a84f4965d80ae8309ce1ae64fd7daa2bde2d381a0719072f37a9c25f8d5929b8"
   },
   "complete": false,
@@ -565,27 +565,27 @@
       "observations": 5,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 67,
           "t": 3.827903
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 329,
           "t": 11.616837
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 720,
           "t": 25.827163
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1074,
           "t": 45.727433
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1186,
           "t": 56.548373
         }
@@ -1146,27 +1146,27 @@
       "observations": 5,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 90,
           "t": 4.352947
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 356,
           "t": 12.138637
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 746,
           "t": 26.360924
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1088,
           "t": 46.272445
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1190,
           "t": 56.984618
         }
@@ -1803,22 +1803,22 @@
       "observations": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 107,
           "t": 4.715461
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 370,
           "t": 12.45228
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 753,
           "t": 26.667973
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1101,
           "t": 46.580889
         }
@@ -2911,42 +2911,42 @@
       "observations": 8,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 167,
           "t": 6.430512
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 475,
           "t": 15.548197
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 569,
           "t": 19.471738
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 601,
           "t": 21.880257
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 827,
           "t": 35.250797
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 932,
           "t": 39.252277
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 975,
           "t": 41.668033
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1207,
           "t": 60.706272
         }
@@ -3469,17 +3469,17 @@
       "observations": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 411,
           "t": 13.614582
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 792,
           "t": 27.82669
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1124,
           "t": 47.725473
         }
@@ -3774,12 +3774,12 @@
       "observations": 2,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 810,
           "t": 28.509009
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1141,
           "t": 48.411607
         }
@@ -3794,22 +3794,22 @@
       "count": 4,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 107,
           "t": 4.715461
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 370,
           "t": 12.45228
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 753,
           "t": 26.667973
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1101,
           "t": 46.580889
         }
@@ -3823,17 +3823,17 @@
       "count": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 356,
           "t": 12.138637
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 746,
           "t": 26.360924
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1088,
           "t": 46.272445
         }
@@ -3847,17 +3847,17 @@
       "count": 3,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 411,
           "t": 13.614582
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 792,
           "t": 27.82669
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1124,
           "t": 47.725473
         }
@@ -3871,12 +3871,12 @@
       "count": 2,
       "evidence": [
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 810,
           "t": 28.509009
         },
         {
-          "path": "outputs/okatsu-prototype/recordings/okatsu-grab-20260925-054334/take-0001/events.jsonl",
+          "path": "catalogue/recordings/okatsu-grab/take-0001/events.jsonl",
           "line": 1141,
           "t": 48.411607
         }

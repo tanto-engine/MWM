@@ -69,8 +69,8 @@
       "timing_event_count": 32
     }
   },
-  "verification_command": "python work/audit_okatsu_assets.py",
-  "native_research": "outputs/okatsu-prototype/native/resource_loader.cpp",
+  "verification_command": "python research/audit_okatsu_assets.py",
+  "native_research": "runtime/native/resource_loader.cpp",
   "cold_launch_verification": "Both moves accepted with matching animation/timing in one source-never-spawned mission; full mission/lifecycle matrix pending.",
-  "evidence": "outputs/okatsu-prototype/evidence/cold-mission-20260925.json"
+  "evidence": "research/cold-mission-20260925.json"
 }

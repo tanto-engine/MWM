@@ -173,7 +173,7 @@ class NativeGameplayInvariants(unittest.TestCase):
             command.publish(CONFIG,heartbeat=1000,edge=900,expires=2100,chord_sequence=1,armed=True,held=True)
             payload = folder/'command.bin'
             payload.write_bytes(owned.raw[64:])
-            for source in sorted((ROOT/'work/native-tests').glob('*_cases.cpp')):
+            for source in sorted((ROOT/'tests/native').glob('*_cases.cpp')):
                 with self.subTest(harness=source.stem):
                     binary = folder/(source.stem+'.exe')
                     build = subprocess.run([os.environ.get('CXX','g++'),'-std=c++17','-O2','-Wall','-Wextra','-Werror',

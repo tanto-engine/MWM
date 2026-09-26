@@ -6,7 +6,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Enable -and $Disable) { throw 'Choose either -Enable or -Disable.' }
 if (-not $PythonRuntime) { $PythonRuntime = 'python.exe' }
-$scriptPath = Join-Path $PSScriptRoot 'runtime\trainer.py'
+$scriptPath = Join-Path $PSScriptRoot 'app\trainer.py'
 if ($Enable -or $Disable) {
     $mode = if ($Enable) { '--enable' } else { '--disable' }
     & $PythonRuntime -B $scriptPath $mode

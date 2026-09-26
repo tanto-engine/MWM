@@ -144,7 +144,7 @@ class DispatchTests(unittest.TestCase):
             if name == 'start' and start_failure is not None:
                 raise start_failure
             return json.dumps(dict(status='export_returned', mutation_started=True, result=0))
-        with tempfile.TemporaryDirectory(dir=ROOT/'work/native-tests') as temp:
+        with tempfile.TemporaryDirectory(dir=ROOT/'tests/native') as temp:
             folder = Path(temp)
             profile, calibration = folder/'profile.json', folder/'calibration.json'
             profile.write_text(json.dumps(PROFILE))

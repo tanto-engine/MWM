@@ -1,0 +1,32 @@
+{
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "scope": "Saved native code and metadata; owned-buffer tests passed. Ki Pulse gameplay behavior awaits live verification.",
+  "moves": {
+    "0xC64": {"name": "Charged Rush", "motion": 1220, "base_ki_cost": 15, "recovery_frame": 65, "source_rows": 28, "private_rows": 31},
+    "0xC66": {"name": "Leaping Slash", "motion": 1230, "base_ki_cost": 15, "recovery_frame": 90, "source_rows": 22, "private_rows": 25}
+  },
+  "transition_extent": {
+    "complete_bytes": 48,
+    "pool": {"storage_rva": "0x1871828", "selector_rva": "0x18717B8", "allocation_bytes": 4896000, "slots": 102000, "stride": 48},
+    "proof": [
+      "734A44 allocates 0x4AB500 bytes; 734A62 sets 0x18E70 slots; 734A6E sets 0x30 stride; 734A89-734A8C steps the free list.",
+      "734C41-734C48 assigns pool selector18717B8. Builder704710 pops this pool; 704739-70474C zeroes all0x30 bytes.",
+      "704750-704765 copies three16-byte blocks; 704771 inserts the pointer in bank+60; 704779 advances the source0x30 bytes.",
+      "704A70-704A84 selects the same bank+60 entry pointer and stores it in bank+50. 704A39-704A54 assigns bank+50 plus start/count to descriptor+78/+80/+82."
+    ]
+  },
+  "native_ki_path": [
+    "70F5D4-70F5E7 reads signed payload+16 into float actor+7A0; 70FE2D-70FE35 applies native cost modifiers. Imported cost is preserved.",
+    "71000A-710078 computes recoverable Ki from signed payload+33 percent of adjusted actor+7A0 cost and native bonuses; accumulates vitals+78.",
+    "7150FF-715170 requires recoverable Ki and positive payload+33, detects crossing payload+38 using native action time/delta, and calls7B59F0 with payload+3A/+3C fill/hold durations.",
+    "70FE69-70FE80 reads the selected transition at actor+90 and checks flags+1C bit1 for native Ki Pulse handling."
+  ],
+  "private_payload_changes": {"0x33_i8": 40, "0x38_i16": "source recovery frame65/90", "0x3A_i16": 25, "0x3C_i16": 24},
+  "private_transition_changes": {
+    "source": "Verified player swordCF0 rows21-23, complete0x30 bodies copied into DLL-owned storage.",
+    "preserved": {"condition0": [81, 80, 82], "condition1": 213, "input_byte_0x0B": 23, "target_i16_0x14": 3423, "flags_u32_0x1C": "0x00200002"},
+    "changed": "Only appended rows' signed lower frame bound+20 becomes65/90; all original boss rows/order retained. Descriptor+78 points to an owned qword pointer array, start0, count31/25.",
+    "isolation": "No source boss edits, direct Ki writes or synthesized inputs. Copies remain allocated for DLL lifetime."
+  },
+  "owned_test": {"source": "tests/native/test_private_stance.cpp", "result": "PASS", "covers": ["both full action copies", "source isolation", "private pointer tables and preserved source rows", "three exact appended pulse rows and frame bounds", "native Ki cost preservation", "bad source cost/timing/template/count rejection", "immutable-copy mutation rejection"]}
+}

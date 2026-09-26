@@ -1,0 +1,66 @@
+{
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "scope": "Offline native disassembly and owned-memory regression. No gameplay or game writes.",
+  "native_order": [
+    "70ED1B calls7119C0; committed descriptor assigned actor+58 at711C16/final alias711D1D, serial+DC increment711D21.",
+    "70EF93 reads committed payload; bit18 gates selected-hit processing70F046->71F3C0.",
+    "71F531 selects damageblock+38;71F54A calls71A460 before original_action returns."
+  ],
+  "state_query": {
+    "vtable_rva": "11A3530",
+    "slot": "150",
+    "function": "73B390",
+    "query": 3,
+    "jump_table": "73C2A8+12 ->73B42E",
+    "predicate": "bool(uint64(current_descriptor.payload+0)&0x200000400); bit10 OR bit33, not an independent ground-contact measurement."
+  },
+  "impulse": {
+    "query_call": "71A55C",
+    "if_true": "signed combat+1B at71A580; positive values cap20",
+    "if_false": "signed combat+17 at71A5EE",
+    "consequence": "New airborne reaction may choose unchanged+1B=12 despite standing before contact. Both private impulse fields require deliberate policy. This audit did not capture the reported victim branch."
+  },
+  "weight_timing": {
+    "before": "Old apply_launch_weight ran after original_action; its override could not affect native contact processing inside that call.",
+    "after": "launcher_hit matches exact selected event before original, excludes an already paired payload, stores prior override/current effective weight, applies half via native745FA0. finish_launch_weight retains only a serial-advanced bit18 nonpaired reaction; otherwise native restoration/positive-identity retirement runs.",
+    "attribution": "Exact player attacker, victim owner, private standaloneC79 combat row, mode0, current private player descriptor. A C7A successor identifies Izuna independently of stance and excludes it.",
+    "lifecycle": "Eight fixed slots; Stop and existing descriptor/actor/component/third-party override ownership rules retained. No extra hook; wrapper preserves native LastError."
+  },
+  "regression": {
+    "fixture": "tests/native/replacement_cases.cpp:weight_action/weight_cases",
+    "reproduced": "Before production edit, native callback expected50 but assertion at44 failed; fixture began with effective100.",
+    "cases": "Inside-native effective50; result rejection/nonreaction/paired rollback; existing paired and immovable victims untouched; exact source/attacker/mode guards; standalone Mid accepted, Izuna graph excluded; serial unchanged and actor/owner/collider replacements; duplicate acquisition; Stop."
+  },
+  "native_spans": [
+    {
+      "rva": "0x70ece0",
+      "size": 92,
+      "sha256": "0720cab010bff304664a7a41b235a7dce77417c4035bdd01363d9a8e5bda37d4"
+    },
+    {
+      "rva": "0x70ef93",
+      "size": 184,
+      "sha256": "03beb4cadfc1811da96acaac06ab8d5635074f9f0bff50a1865be34e83528912"
+    },
+    {
+      "rva": "0x711c01",
+      "size": 25,
+      "sha256": "371ed50be990086889df1a703f60237d72aa8866ed3004fdbd254f12f65c4f27"
+    },
+    {
+      "rva": "0x71f531",
+      "size": 34,
+      "sha256": "953730e627902e5205aa4cb905aa5f1bbbb8a2d8eb0d80f330799690bab21371"
+    },
+    {
+      "rva": "0x71a532",
+      "size": 223,
+      "sha256": "3432afb8c200b6c249c55877c3223a594b4afa41668279820832e6c1ee0b72c5"
+    },
+    {
+      "rva": "0x73b390",
+      "size": 185,
+      "sha256": "ab3142911099d5a3435bc01177f88d8cab5552382eb221badd56602ca7375409"
+    }
+  ]
+}

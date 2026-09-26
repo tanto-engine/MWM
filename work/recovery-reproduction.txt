@@ -1,1 +1,0 @@
-Assertion failed: cancel_frame==65, file work/native-tests/private_stance_cases.cpp, line 113

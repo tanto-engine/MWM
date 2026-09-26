@@ -6,7 +6,7 @@ from pathlib import Path
 from move_imports import read_import_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURES = ROOT / 'work/native-tests/fixtures'
+FIXTURES = ROOT / 'tests/native/fixtures'
 PROFILE = json.loads((FIXTURES / 'session-profile.json').read_text())
 BOSS = json.loads((FIXTURES / 'boss-session.json').read_text())
 PROFILE['source']['action_resource'] = '0x51000000'

@@ -1,7 +1,7 @@
 # Stable runtime startup ABI. A move identity never contains these pointers.
 import re
 import struct
-from engine_config import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, validate_launch_profiles, validate_tracking_rates
+from engine_policy import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, validate_launch_profiles, validate_tracking_rates
 from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
@@ -169,7 +169,7 @@ def encode_session(config, pid, creation_filetime):
     for slot,key in zip(frost,STANCE_OPENERS.values()):
         if type(slot) is not int or not 0<=slot<=len(moves) or slot and (slot not in hold_slots or adapters[slot-1]['player_key']!=key):
             raise ValueError('Frost Moon variant must match its stance skill')
-    profiles=config.get('launch_profiles',LAUNCH_PROFILES); boost=config.get('air_juggle_boost',2)
+    profiles=config.get('launch_profiles',LAUNCH_PROFILES); boost=config.get('air_juggle_boost',AIR_JUGGLE_BOOST)
     validate_launch_profiles(profiles,boost)
     tracking=config.get('tracking_rates',TRACKING_RATES)
     validate_tracking_rates(tracking)
