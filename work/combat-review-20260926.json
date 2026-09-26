@@ -112,7 +112,14 @@
       "izuna": 540,
       "somersault": 420,
       "flying_swallow": 180
-    }
+    },
+    "live_range_failure": "Normal approaches measured240..413 native coordinate units; previous6-unit gate rejected them. C7A successful contact observed at21.8 units.",
+    "native_range_limits": {
+      "izuna": 600,
+      "aerial": 1200,
+      "vertical": 1200
+    },
+    "evidence": "work/combat-tracking-live.jsonl"
   },
   "airborne_izuna": {
     "observed": "C79 -> C7A -> native fall18; successful native paired routes also recorded",
@@ -124,8 +131,8 @@
     "crash": 8,
     "native_fixtures": "Triangle dodge, extra chord cancellation, four-strike chain, moving-target rates after startup, pause/NPC/pair exclusions",
     "dll_sha256": {
-      "nioh_resources.dll": "158bed6f2086d28e030e530cfda0e36b5195432431ec8f0115fbe8558dc35f6d",
-      "nioh_skill_runtime.dll": "535e4a3288726a652a0dc9d7e231847b6ce7f26949f72f1fad1535ba1c7bd46f"
+      "nioh_resources.dll": "6788b1e74ffc7d750fc1d167086ddee8b5a0ac9d535f02f21d7ea3bd7b066fc5",
+      "nioh_skill_runtime.dll": "b4e81cdcff7ef4b8b230a6cc3df14e60e00a79c1909dfbdb17e1b6548b989dc1"
     }
   }
 }

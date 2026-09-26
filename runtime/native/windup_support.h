@@ -60,7 +60,7 @@ static void track_locked_target(uint64_t player, unsigned slot, float delta, uns
     if (!copy_bytes(boss_session.player_owner+0xF0,origin,sizeof(origin)) || !copy_bytes(target+0xF0,position,sizeof(position))
         || !copy_field(movement+0x54,yaw) || !std::isfinite(yaw)) return;
     const float dx=position[0]-origin[0],dy=position[1]-origin[1],dz=position[2]-origin[2];
-    if (!(dx*dx+dz*dz>0.000001f && dx*dx+dz*dz<=(group ? 144 : 36) && std::abs(dy)<=12)) return;
+    if (!(dx*dx+dz*dz>0.000001f && dx*dx+dz*dz<=(group ? 1440000 : 360000) && std::abs(dy)<=1200)) return;
     constexpr float pi=3.141592741f;
     const float aim=std::atan2(dx,dz),difference=std::remainder(aim-yaw,2*pi);
     const float step=boss_tracking_rates[group]*delta*pi/(60*180);

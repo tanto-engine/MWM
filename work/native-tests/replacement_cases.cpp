@@ -601,8 +601,8 @@ static void tracking_cases() {
         put(player.data(),0x28,scenario==9 ? 26.0f : scenario==18 ? std::numeric_limits<float>::quiet_NaN() : 0.0f);
         put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);put(motion.data(),0x58,boss_imports[5].clip);
         put(owner.data(),0xF0,0.0f);put(owner.data(),0xF4,0.0f);put(owner.data(),0xF8,0.0f);
-        put(target,0,handle);put(target,0xF0,scenario==5 || scenario==21 ? 3.0f : scenario==20 ? -1.0f : 1.0f);
-        put(target,0xF4,scenario==22 ? 7.0f : 0.0f);put(target,0xF8,scenario==5 || scenario==21 ? 1.0f : scenario==6 ? 7.0f : 3.0f);
+        put(target,0,handle);put(target,0xF0,scenario==5 || scenario==21 ? 300.0f : scenario==20 ? -100.0f : 100.0f);
+        put(target,0xF4,scenario==22 ? 700.0f : 0.0f);put(target,0xF8,scenario==5 || scenario==21 ? 100.0f : scenario==6 ? 700.0f : 300.0f);
         if (scenario==11) put(target,0xF0,std::numeric_limits<float>::infinity());
         if (scenario==12) put(target,4,uint16_t(1));
         put(target,0xE90,address(profile));put(profile,0xC,uint32_t(scenario==3 ? 1 : 0));
@@ -624,7 +624,7 @@ static void tracking_cases() {
             constexpr float step=540.0f/60*3.141592741f/180;
             assert(std::abs(angle-(scenario==20 ? -step : step))<.00001f);
             assert(GetLastError()==ACTION_ERROR);
-            put(target,0xF0,-3.0f);put(target,0xF8,1.0f);put(player.data(),0x28,18.0f);
+            put(target,0xF0,-300.0f);put(target,0xF8,100.0f);put(player.data(),0x28,18.0f);
             put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
             boss_advance_clock(player.data(),1);assert(calls==before+2);
             float turned=0;assert(copy_field(address(movement)+0x54,turned) && std::abs(turned-(angle-step))<.00001f);
