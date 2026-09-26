@@ -67,8 +67,14 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
     for (const auto& binding : boss_skill_bindings) {
         if (!binding.kind || binding.kind==3 || !(binding.stances&mask)) continue;
         if (binding.kind==1) {
-            const bool exact=key==binding.key && grapple_field(payload,0x20,binding.motion)
-                && grapple_field(payload,0x18,binding.flags) && grapple_field(descriptor,0x82,uint16_t(binding.transition_count));
+            const bool dodge=binding.key==0xBC8 && (key==0xBC8 || key==0xBC9);
+            const bool exact=(key==binding.key || dodge) && grapple_field(payload,0x20,binding.motion)
+                && grapple_field(payload,0x18,binding.flags)
+                && grapple_field(descriptor,0x82,uint16_t(binding.transition_count+(dodge && key==0xBC9)));
+            if (dodge) {
+                uint8_t row[0x30];
+                if (!selected_sword_row(key,row) || row[0x0B]!=1 || row[0x0C]!=1 || row[0x0D]!=0xff) continue;
+            }
             if (!exact && !(binding.key==0xFAA && stance==1 && (key==0xBBA || key==0xD46) && native_binding_context(command)
                 && tiger_sprint_entry(key,descriptor,payload))) continue;
         } else {

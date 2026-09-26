@@ -80,7 +80,9 @@ static LaunchHit launcher_hit(void* actor) {
         && boss_native_successor(slot,0xC7A)<0 && boss_imports[slot].key==0xC79 && boss_imports[slot].motion==5014
         && boss_private_actions[slot].ready && same_field(boss_session.player,0x58,boss_private_descriptor_address(slot))
         && row==reinterpret_cast<uint64_t>(boss_private_actions[slot].combat_body);
-    hit.boost=(state&0x200000400ULL) ? boss_air_juggle_boost : 0;
+    const bool izuna=boss_active && slot<boss_import_count && boss_imports[slot].key==0xC79
+        && boss_native_successor(slot,0xC7A)>=0 && same_field(boss_session.player,0x58,boss_private_descriptor_address(slot));
+    hit.boost=(state&0x200000400ULL) && !izuna ? boss_air_juggle_boost : 0; // Preserve the native catch trajectory.
     if (!hit.launcher && (!hit.boost || !sword_combat_row(row))) return {};
     int8_t grounded=0,airborne=0;
     if (!copy_field(row+0x17,grounded) || !copy_field(row+0x1B,airborne)) return {};

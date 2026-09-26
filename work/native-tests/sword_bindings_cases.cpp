@@ -102,7 +102,7 @@ static void tiger_entry_cases() {
     // Test native input ownership, stance assignment and disabled/stale contexts.
     // Mid Tiger must substitute immediately while unrelated sheathing remains native.
     static std::array<uint64_t,49> methods{};
-    for (uint32_t key : {0xBBAu,0xD46u}) for (unsigned failure=0;failure<12;++failure) {
+    for (uint32_t key : {0xBBAu,0xD46u}) for (unsigned failure=0;failure<13;++failure) {
         sword_reset(0);boss_native_bindings=0;tiger_assigned=failure!=1;
         methods[0x180/8]=reinterpret_cast<uint64_t>(sword_skill);
         boss_session.vtable=address(methods.data());put(player.data(),0,boss_session.vtable);
@@ -125,6 +125,11 @@ static void tiger_entry_cases() {
         if (failure==9) put(light_payload.data(),0x20,int32_t(2004));
         if (failure==10) boss_skill_bindings[0].stances=1;
         if (failure==11) put(row.data(),0x2C,int32_t(2020));
+        if (failure==12) {
+            GameInput input{};input.sequence=2;LARGE_INTEGER now;QueryPerformanceCounter(&now);input.qpc=now.QuadPart;
+            input.buttons[0]=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_B;
+            memcpy(trace->header.reserved,&input,sizeof(input));
+        }
         DispatchCommand request{};
         assert(native_bound_slot(key,address(light.data()),request)==(failure ? -1 : 0));
         DispatchReason reason=Disabled;ReplacementScope scope(player.data(),request,reason);uint32_t bank=0;
@@ -176,16 +181,24 @@ int main() {
         assert(dispatch->control.dispatch_count==(enabled&&signature ? 1 : 0));
         assert(observed_lookup(player.data()+0x70,0xCD5,&bank)==address(light.data()));
     }
-    // Low dodge attacks use their native4820 selection; running4720 is a separate action.
-    // The second Jin D constituent is selected through the same configured native-skill path.
-    // Stance and exact signature must still agree when the selection is fast or buffered.
-    sword_reset(0);put(player.data(),0x470,uint32_t(2));
-    put(light.data(),0,uint32_t(0xCFD));put(light.data(),0x82,uint16_t(40));
-    put(light_payload.data(),0x20,int32_t(4820));
-    boss_skill_bindings[0]={1,1,2,0xCFD,4820,40,0x8000000594C0000ULL};
-    DispatchCommand dodge{};assert(native_bound_slot(0xCFD,address(light.data()),dodge)==1);
-    put(light.data(),0,uint32_t(0xCFC));put(light_payload.data(),0x20,int32_t(4720));
-    assert(native_bound_slot(0xCFC,address(light.data()),dodge)==-1);
+    // Triangle dodge selects BC8/BC9 before the shared D52/D53 attack, not CFD.
+    // Keep Square dodge, running, wrong stances and stale rows out of this binding.
+    // Both buffered and immediate native Triangle selections enter Jin's second strike.
+    for (uint32_t key : {0xBC8u,0xBC9u}) for (unsigned failure=0;failure<5;++failure) {
+        sword_reset(0);put(player.data(),0x470,uint32_t(2));
+        put(light.data(),0,key);put(light.data(),0x82,uint16_t(key==0xBC8 ? 18 : 19));
+        put(light_payload.data(),0x20,int32_t(-1));put(light_payload.data(),0x18,uint64_t(0));
+        put(player.data(),0x58,address(neutral.data()));put(neutral.data(),0x78,address(light_pointers.data()));
+        put(neutral.data(),0x80,uint16_t(0));put(neutral.data(),0x82,uint16_t(46));
+        auto& row=light_rows[0];row.fill(0xff);row[0x0A]=key==0xBC8 ? 2 : 0;row[0x0B]=1;row[0x0C]=1;
+        put(row.data(),0x14,int16_t(key));put(player.data(),0x90,address(row.data()));
+        boss_skill_bindings[0]={1,1,2,0xBC8,-1,18,0};
+        if (failure==1) row[0x0B]=0;
+        if (failure==2) put(player.data(),0x470,uint32_t(1));
+        if (failure==3) put(player.data(),0x90,address(dodge_row.data()));
+        if (failure==4) {put(light.data(),0,uint32_t(0xCFC));put(light_payload.data(),0x20,int32_t(4720));}
+        DispatchCommand dodge{};assert(native_bound_slot(key,address(light.data()),dodge)==(failure ? -1 : 1));
+    }
     // Native Tiger selection can choose another destination without interpreting controller buttons.
     // Clear the target variant after a disabled run to expose any hardcoded C64 route.
     // Selection itself is independent of private source resource preparation.

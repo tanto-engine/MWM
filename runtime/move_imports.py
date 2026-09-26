@@ -12,7 +12,7 @@ GRAB_ATTEMPT_FLAGS = 0x594C0000
 PAIRED_ATTACKER_FLAGS = 0x8078000000
 PLAYER_REPLACEMENT_FLAGS = 0x194C0000
 PLAYER_PAIRED_FLAGS = 0x8038000000
-IMPORT_LIMIT = 24
+IMPORT_LIMIT = 32
 PLAYER_TEMPLATES = {0xCF5: (4300, 46, 38), 0xCF6: (4310, 46, 29), 0xCF7: (4320, 44, 33),
                     0xCB7: (3300, 40, 58), 0xC7A: (2300, 42, 46)}
 STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xC7A, 'high': 0xCB7}
@@ -57,7 +57,7 @@ def check_import_topology(moves, string_variant):
     # Check source families, bounds, voice slots and successor cycles.
     # Only a grab-success edge may enter a paired attacker action.
     if not isinstance(moves, list) or not 2 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 2 to 24 moves')
+        raise ValueError('Import table requires 2 to 32 moves')
     if any(not isinstance(move, dict) for move in moves):
         raise ValueError('Import rows must be objects')
     replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) for move in moves)
@@ -149,7 +149,7 @@ def read_import_manifest(path, catalogue_path=None):
         raise ValueError('Import manifest does not match the owned resource profile')
     moves = manifest['moves']
     if not isinstance(moves, list) or not 2 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 2 to 24 moves')
+        raise ValueError('Import table requires 2 to 32 moves')
     positions = {move['id']: index for index, move in enumerate(moves)}
     if manifest['string_entry'] is not None and manifest['string_entry'] not in positions:
         raise ValueError('Unknown string entry move')

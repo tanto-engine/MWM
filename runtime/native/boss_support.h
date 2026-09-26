@@ -41,7 +41,7 @@ struct BossPrivateAction {
     uint16_t transition_count;
     bool ready;
 };
-static BossPrivateAction boss_private_actions[24]{};
+static BossPrivateAction boss_private_actions[32]{};
 static int boss_native_successor(unsigned slot, uint32_t key);
 struct MoveTiming { int16_t recovery; float startup_end, startup_speed; };
 static MoveTiming boss_move_timing(unsigned slot) {
@@ -104,6 +104,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
+        || (source.key>=0xC67 && source.key<=0xC69 && key==source.key+1)
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
         || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
@@ -258,6 +259,14 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             }
         }
         int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
+        if (boss_imports[slot].key>=0xC67 && boss_imports[slot].key<=0xC6A && target==int16_t(adapter.player_key+1)) {
+            // One physical Triangle per strike, using William's buffered/direct heavy rows.
+            // All four source phases retain the selected stance and native exits.
+            // The fourth strike disables this continuation instead of restarting the string.
+            target=boss_native_successor(slot,boss_imports[slot].key+1)>=0 ? int16_t(boss_imports[slot].key+1) : int16_t(-1);
+            memcpy(bodies[i]+0x14,&target,2);
+            continue;
+        }
         if (target == 0xD5F) memcpy(bodies[i]+0x20,&adapted_recovery,2);
         if ((adapter.kind == 2 || adapter.kind == 4) && ((target >= 0xCF5 && target <= 0xCF7)
             || (target >= 0xCB7 && target <= 0xCB9) || (target >= 0xC7A && target <= 0xC7C)

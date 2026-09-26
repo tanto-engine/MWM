@@ -701,6 +701,111 @@
       "source_payload_prefix": "02040000010200000000ff01710cffff01ff00000000000000000000000000001a040000ffffffffffff060004000500ffffff00ffffffff000000000000ffff",
       "adapter_kind": 5,
       "name": "Flying Swallow jump"
+    },
+    {
+      "id": "jin_hayabusa.action_0c67",
+      "key": 3175,
+      "motion": 2200,
+      "flags": 424411136,
+      "ki_cost": 10,
+      "recovery_frame": 20,
+      "transition_count": 75,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "adapter_kind": 2,
+      "native_followups": [
+        "jin_hayabusa.action_0c68"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c68",
+      "key": 3176,
+      "motion": 2210,
+      "flags": 424411136,
+      "ki_cost": 10,
+      "recovery_frame": 30,
+      "transition_count": 75,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [
+        {
+          "frame": 4,
+          "index": 9,
+          "hash": 2543008070
+        }
+      ],
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "adapter_kind": 4,
+      "native_followups": [
+        "jin_hayabusa.action_0c69"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c69",
+      "key": 3177,
+      "motion": 2220,
+      "flags": 424411136,
+      "ki_cost": 10,
+      "recovery_frame": 25,
+      "transition_count": 75,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [
+        {
+          "frame": 8,
+          "index": 9,
+          "hash": 2543008070
+        }
+      ],
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "adapter_kind": 4,
+      "native_followups": [
+        "jin_hayabusa.action_0c6a"
+      ]
+    },
+    {
+      "id": "jin_hayabusa.action_0c6a",
+      "key": 3178,
+      "motion": 2230,
+      "flags": 424411136,
+      "ki_cost": 10,
+      "recovery_frame": 30,
+      "transition_count": 75,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [],
+      "source_voices": [],
+      "replacement": {
+        "player_key": 3194,
+        "player_motion": 2300,
+        "transition_count": 42,
+        "recovery_frame": 46
+      },
+      "adapter_kind": 4
     }
   ],
   "evidence": "work/jin-heavy-research.json",
@@ -732,6 +837,12 @@
       "jin_hayabusa.action_0c75",
       "jin_hayabusa.action_0c77",
       "jin_hayabusa.action_0c78"
+    ],
+    "jin_hayabusa.action_0c67": [
+      "jin_hayabusa.action_0c67",
+      "jin_hayabusa.action_0c68",
+      "jin_hayabusa.action_0c69",
+      "jin_hayabusa.action_0c6a"
     ]
   }
 }

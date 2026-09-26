@@ -31,7 +31,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Encode a complete session and unpack its fixed header and pointer sequence.
         # Version seven places the stance mask, Frost slots, window and startup speed before resource pointers.
         values = SESSION_CONFIG.unpack(encode_session(self.config, self.pid, self.born))
-        self.assertEqual(values[:16], (MAGIC, 9, 4464, self.pid, self.born,
+        self.assertEqual(values[:16], (MAGIC, 10, 5752, self.pid, self.born,
                                       0x123456789abcdef0, 0, 0, 0, 0, 0, 0, 0, 0, 750, 8))
         self.assertEqual(values[16:42], tuple(self.config[key] for key in POINTER_FIELDS)
                          + tuple(self.config['originals']))
@@ -40,8 +40,8 @@ class RuntimeSessionTests(unittest.TestCase):
         move = MOVE_IMPORT.unpack_from(encoded,328+2*96)
         self.assertEqual(move[4:13], (0x184C0000,0xC61,1210,52,14,3,30,45,1))
         self.assertEqual(move[13:16], (22,12,0x297D2215))
-        self.assertEqual(encoded[328+7*96:2632], bytes(17*96))
-        self.assertEqual(encoded[2632:4424], bytes(24*64+8*32))
+        self.assertEqual(encoded[328+7*96:3400], bytes(25*96))
+        self.assertEqual(encoded[3400:5704], bytes(32*64+8*32))
         grapple = dict(self.config, native_grapple=True)
         enabled = encode_session(grapple, self.pid, self.born)
         self.assertEqual(SESSION_CONFIG.unpack(enabled)[9], 1)
@@ -80,10 +80,10 @@ class RuntimeSessionTests(unittest.TestCase):
                 bank=0x930000, motion_bank=0x940000, timing_wrapper=0x950000,
                 player_descriptor=0xA10000+index*0x1000,kind=1, **move['replacement']))
         encoded = encode_session(self.config, self.pid, self.born)
-        self.assertEqual(encoded[2632:2632+7*64], bytes(7*64))
-        self.assertEqual(MOVE_ADAPTER.unpack_from(encoded,2632+7*64),
+        self.assertEqual(encoded[3400:3400+7*64], bytes(7*64))
+        self.assertEqual(MOVE_ADAPTER.unpack_from(encoded,3400+7*64),
             (0x910000,0x920000,0x930000,0x940000,0x950000,0xA10000,0xCF5,4300,46,38,1))
-        self.assertEqual(encoded[2632+10*64:4424], bytes(14*64+8*32))
+        self.assertEqual(encoded[3400+10*64:5704], bytes(22*64+8*32))
         for field,value in (('player_descriptor',0),('player_key',0xCF4),('transition_count',65),('recovery_frame',0)):
             config=copy.deepcopy(self.config);config['adapters'][7][field]=value
             with self.subTest(field=field), self.assertRaises(ValueError):
@@ -194,18 +194,19 @@ class RuntimeSessionTests(unittest.TestCase):
         from engine_config import DEFAULT_PRESET
         settings=copy.deepcopy(DEFAULT_PRESET);compiled=self.configured_fixture(settings)
         self.assertEqual([move['key'] for move in compiled['moves']],
-            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xC71])
+            [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xC67,0xC68,0xC69,0xC6A])
         self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,12]))
         from engine_config import binding_for_preset
         binding=binding_for_preset(dict(device={},lb_mask=1),settings,self.config['imports'])
-        self.assertEqual(binding['variants'],[0,22])
-        self.assertEqual(self.config['adapters'][22]['kind'],5)
+        self.assertEqual(binding['variants'],[0,None])
+        self.assertEqual(self.config['adapters'][22]['kind'],2)
         encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
-        self.assertEqual((values[9],values[42],len(encoded)),(5,23,4464))
+        self.assertEqual((values[9],values[42],len(encoded)),(5,26,5752))
         self.assertEqual(self.config['skill_bindings'],[
             dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
             dict(kind=2,stances=4,variant=18,key=0,motion=0,transition_count=0,flags=0),
-            dict(kind=1,stances=1,variant=5,key=0xCFD,motion=4820,transition_count=40,flags=0x8000000594C0000),
+            dict(kind=1,stances=1,variant=5,key=0xBC8,motion=-1,transition_count=18,flags=0),
+            dict(kind=1,stances=2,variant=23,key=0xC7A,motion=2300,transition_count=42,flags=0x8000000594C0000),
             dict(kind=3,stances=1,variant=7,key=0,motion=0,transition_count=0,flags=0)])
         for field,value in (('kind',4),('stances',True),('variant',0),('key',0xFAB),('flags',0),('transition_count',20)):
             bad=copy.deepcopy(self.config);bad['skill_bindings'][0][field]=value

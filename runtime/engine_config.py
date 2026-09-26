@@ -22,22 +22,24 @@ if os.name == 'nt':
 # TODO: gameplay acceptance remains separate from validation of a supported preset.
 MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
 HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
-HELD_MOVES = {'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
+HELD_MOVES = {'jin_hayabusa.action_0c67', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
 NATIVE_SKILLS = {'tiger_sprint': (0xFAA,5090,21,0x40017C00000),
-                 'dodge_attack': (0xCFD,4820,40,0x8000000594C0000)}
+                 'dodge_attack': (0xBC8,-1,18,0), 'heavy_attack': (0xC7A,2300,42,0x8000000594C0000)}
 LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14),
                    dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
-DEFAULT_PRESET = dict(schema_version=5, name='Sword baseline', weapon='sword',
-                      tap_move='okatsu.charged_rush', hold_move='jin_hayabusa.flying_swallow_jump',
+TRACKING_RATES = dict(izuna=540,somersault=420,flying_swallow=180)
+DEFAULT_PRESET = dict(schema_version=6, name='Sword baseline', weapon='sword',
+                      tap_move='okatsu.charged_rush', hold_move=None,
                       modifier_mask=16, trigger_mask=4, hold_seconds=.25,
                       low_heavy='jin_hayabusa.action_0c6e',
                       stance_holds=dict(low='jin_hayabusa.action_0c79', mid=None, high=None),
                       okatsu_grapple=True, mid_light_ender=True, string_enabled=False,
                       skill_bindings=[dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'),
                                       dict(source='guard_light',stance='high',move='jin_hayabusa.izuna_drop'),
-                                      dict(source='dodge_attack',stance='low',move='jin_hayabusa.action_0c6f')],
+                                      dict(source='dodge_attack',stance='low',move='jin_hayabusa.action_0c6f'),
+                                      dict(source='heavy_attack',stance='mid',move='jin_hayabusa.action_0c67')],
                       frost_moon=dict(low='jin_hayabusa.action_0c71', mid='jin_hayabusa.action_0c81', high='jin_hayabusa.action_0c75'),
-                      frost_window_seconds=0, frost_startup_speed=8, launch_profiles=LAUNCH_PROFILES, air_juggle_boost=2, izuna_tracking_degrees=45)
+                      frost_window_seconds=0, frost_startup_speed=8, launch_profiles=LAUNCH_PROFILES, air_juggle_boost=2, tracking_rates=TRACKING_RATES)
 
 
 def atomic_json(path, value):
@@ -115,7 +117,10 @@ def validate_preset(value):
     # Corrupt settings cannot silently become a different binding.
     if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==4:
         value=dict(value,schema_version=5,launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2, izuna_tracking_degrees=45)
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 5:
+    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version']==5:
+        value=dict(value,schema_version=6,tracking_rates=copy.deepcopy(TRACKING_RATES))
+        if value.pop('izuna_tracking_degrees',45)==0:value['tracking_rates']['izuna']=0
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 6:
         raise ValueError('Unsupported moveset version')
     missing = [key for key in DEFAULT_PRESET if key not in value]
     if missing:
@@ -183,9 +188,16 @@ def validate_preset(value):
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
     validate_launch_profiles(result['launch_profiles'],result['air_juggle_boost'])
-    if type(result['izuna_tracking_degrees']) not in (int,float) or not 0<=result['izuna_tracking_degrees']<=90:
-        raise ValueError('Izuna entry aim cone must be between 0 and 90 degrees')
+    validate_tracking_rates(result['tracking_rates'])
     return result
+
+
+def validate_tracking_rates(rates):
+    # Turn speed is expressed in degrees per real gameplay second for each move graph.
+    # Zero disables a graph's assistance; native pauses never accumulate a catch-up turn.
+    # Fixed keys keep the saved preset and native array in the same explicit order.
+    if not isinstance(rates,dict) or set(rates)!=set(TRACKING_RATES) or any(type(v) not in (int,float) or not 0<=v<=720 for v in rates.values()):
+        raise ValueError('Tracking rates require Izuna, somersault and Flying Swallow values from 0 to 720 degrees/second')
 
 
 def validate_launch_profiles(profiles, boost):

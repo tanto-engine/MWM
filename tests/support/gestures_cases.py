@@ -30,6 +30,18 @@ class Gestures(unittest.TestCase):
         g=self.make();self.input(g,20,200);self.input(g,16,250)
         self.assertEqual((g.fields(260)['armed'],g.variant,g.fields(260)['held']),(True,0,False))
         self.assertFalse(g.fields(651)['armed'])
+    def test_extra_button_cancels_without_release_tap(self):
+        # An extra shoulder must not turn the configured chord into another attack.
+        # Cover adding RB before and during a pending hold, then releasing it first.
+        # Only a fresh neutral-to-chord press may arm a later gesture.
+        for during in (False,True):
+            g=self.make()
+            if during:self.input(g,20,150)
+            self.input(g,52,200);self.input(g,20,220);self.input(g,0,230)
+            self.assertFalse(g.fields(700)['armed'])
+            self.input(g,20,800);self.input(g,0,820)
+            self.assertTrue(g.fields(821)['armed'])
+
     def test_hold_fires_once_no_extra_tap(self):
         # Emit one hold action without a second tap on release.
         # Hold the chord through 250 ms, continue holding, then release.

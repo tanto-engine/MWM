@@ -147,9 +147,9 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             by_id = {item['id']: item for item in manifest['moves']}
             for target in move['native_followups']:
                 if target not in by_id or not any(struct.unpack_from('<h', row, 0x14)[0] == by_id[target]['key']
-                        and row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
+                        and ((0xC67<=move['key']<=0xC69 and row[10:13]==b'\x02\x0c\x01') or row[11] == 0xff and (row[10] == 1 or struct.unpack_from('<H', row)[0] == 20
                               or (move['flags'] == PLAYER_PAIRED_FLAGS or move['key'] in (0xC73,0xC82)) and struct.unpack_from('<H', row)[0] == 0
-                            or row[10] == 0 and row[:10] == b'\xff'*10) for row in rows):
+                            or row[10] == 0 and row[:10] == b'\xff'*10)) for row in rows):
                     raise ValueError('Configured native continuation is absent from the source rows')
             if move['id']=='jin_hayabusa.izuna_drop' and not any(
                     struct.unpack_from('<HH',row)==(20,207) and row[10:12]==b'\x02\xff'
@@ -398,7 +398,7 @@ def fresh_profile(game):
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
                 hold_variant=hold_variant, hold_milliseconds=hold_milliseconds, hold_camera_bank=hold_camera_bank,
                 hold_stances=hold_stances, frost_variants=frost_variants, frost_milliseconds=frost_milliseconds,
-                frost_speed=configuration['frost_startup_speed'],launch_profiles=configuration['launch_profiles'],air_juggle_boost=configuration['air_juggle_boost'],izuna_tracking_degrees=configuration['izuna_tracking_degrees'],
+                frost_speed=configuration['frost_startup_speed'],launch_profiles=configuration['launch_profiles'],air_juggle_boost=configuration['air_juggle_boost'],tracking_rates=configuration['tracking_rates'],
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
@@ -438,7 +438,7 @@ def boss_fields(profile):
     fields['native_grapple'] = profile.get('native_grapple', False)
     fields['mid_light_ender']=profile.get('mid_light_ender',False)
     fields['skill_bindings']=profile.get('skill_bindings',[])
-    fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed','launch_profiles','air_juggle_boost','izuna_tracking_degrees'))
+    fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed','launch_profiles','air_juggle_boost','tracking_rates'))
     return fields, originals
 
 

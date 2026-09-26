@@ -90,9 +90,9 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==9 && sizeof(RuntimeSessionConfig)==4464
-        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==2632
-        && offsetof(RuntimeSessionConfig,skill_bindings)==4168);
+    static_assert(RUNTIME_SESSION_VERSION==10 && sizeof(RuntimeSessionConfig)==5752
+        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==3400
+        && offsetof(RuntimeSessionConfig,skill_bindings)==5448);
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
     moved.skill_bindings[0]={2,2,17,0,0,0,0};
     for (unsigned slot : {7u,8u}) {

@@ -40,6 +40,10 @@ static bool native_binding_context(DispatchCommand& command) {
     // Both immediate heavy replacement and delayed hold share this lifecycle boundary.
     if (!dispatch || !InterlockedCompareExchange(&dispatch->control.enabled,0,0)) return false;
     if (!snapshot_command(command)) return false;
+    GameInput input{};
+    constexpr WORD blocked=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_B;
+    if (trace && read_game_input(trace->header,input))
+        for (unsigned i=0;i<4;++i) if (!input.codes[i] && (input.buttons[i]&blocked)==blocked) return false;
     // A publisher can advance during controller sampling; compare its committed
     // heartbeat with time read afterward, never the earlier input-poll timestamp.
     LARGE_INTEGER now; QueryPerformanceCounter(&now);

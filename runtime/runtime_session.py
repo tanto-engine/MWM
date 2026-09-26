@@ -1,7 +1,7 @@
 # Stable runtime startup ABI. A move identity never contains these pointers.
 import re
 import struct
-from engine_config import NATIVE_SKILLS, LAUNCH_PROFILES, validate_launch_profiles
+from engine_config import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, validate_launch_profiles, validate_tracking_rates
 from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
@@ -14,9 +14,9 @@ POINTER_FIELDS = (
 MOVE_IMPORT = struct.Struct('<5QIi hHhHHH 9I')
 MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
-SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8 + 'IffI'*2 + 'ff')
-MAGIC, VERSION = 0x3153454e, 9
-assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 4464
+SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8 + 'IffI'*2 + '4f')
+MAGIC, VERSION = 0x3153454e, 10
+assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 5752
 
 
 def encode_session(config, pid, creation_filetime):
@@ -144,7 +144,7 @@ def encode_session(config, pid, creation_filetime):
         adapter=adapters[variant-1]
         if adapter is None and (kind==3 or moves[variant-1]['flags']!=0x184C0000):
             raise ValueError('Skill binding requires an ordinary executable entry')
-        if adapter is not None and adapter['kind']!=5 and not (kind==1 and key==0xCFD and adapter['kind']==1 and adapter['player_key']==0xCF6 and stances==1) and (adapter['kind']!=2 or stances!=1<<list(STANCE_OPENERS.values()).index(adapter['player_key'])):
+        if adapter is not None and adapter['kind']!=5 and not (kind==1 and key==0xBC8 and adapter['kind']==1 and adapter['player_key']==0xCF6 and stances==1) and (adapter['kind']!=2 or stances!=1<<list(STANCE_OPENERS.values()).index(adapter['player_key'])):
             raise ValueError('Skill binding and graph stance differ')
         if kind==1 and (key,motion,rows,flags) not in NATIVE_SKILLS.values() or kind>=2 and any((key,motion,rows,flags)):
             raise ValueError('Unverified native skill signature')
@@ -171,11 +171,10 @@ def encode_session(config, pid, creation_filetime):
             raise ValueError('Frost Moon variant must match its stance skill')
     profiles=config.get('launch_profiles',LAUNCH_PROFILES); boost=config.get('air_juggle_boost',2)
     validate_launch_profiles(profiles,boost)
-    tracking=config.get('izuna_tracking_degrees',45)
-    if type(tracking) not in (int,float) or not 0<=tracking<=90:
-        raise ValueError('Invalid Izuna tracking cone')
+    tracking=config.get('tracking_rates',TRACKING_RATES)
+    validate_tracking_rates(tracking)
     launch=[value for profile in profiles for value in (profile['resistance_below'],profile['weight_scale'],profile['vertical_impulse'],0)]
     return SESSION_CONFIG.pack(MAGIC, VERSION, SESSION_CONFIG.size, pid,
                                int(creation_filetime), int(tag, 16), hold_variant, hold_milliseconds, hold_camera, native_bindings,
                                hold_stances,*frost,window,speed,*pointers,
-                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, tracking)
+                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, *(tracking[key] for key in TRACKING_RATES))

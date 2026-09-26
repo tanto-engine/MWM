@@ -1,9 +1,9 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "name": "Sword baseline",
   "weapon": "sword",
   "tap_move": "okatsu.charged_rush",
-  "hold_move": "jin_hayabusa.flying_swallow_jump",
+  "hold_move": null,
   "modifier_mask": 16,
   "trigger_mask": 4,
   "hold_seconds": 0.25,
@@ -31,6 +31,11 @@
       "source": "dodge_attack",
       "stance": "low",
       "move": "jin_hayabusa.action_0c6f"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0c67"
     }
   ],
   "frost_moon": {
@@ -53,5 +58,9 @@
     }
   ],
   "air_juggle_boost": 2,
-  "izuna_tracking_degrees": 45
+  "tracking_rates": {
+    "izuna": 540,
+    "somersault": 420,
+    "flying_swallow": 180
+  }
 }

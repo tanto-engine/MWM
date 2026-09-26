@@ -212,6 +212,15 @@ static void weight_cases() {
         assert(!launch_weight_count && weight_calls==calls);boss_adapters[5].kind=kind;
     }
     boss_active=active;boss_air_juggle_boost=2;put(player.data(),0x58,player_current);put(player.data(),0x68,player_bank);
+    // Izuna's already-airborne opening must retain native lift for its following catch.
+    // Give the opener its validated bridge and replay the selected player-owned air hit.
+    // Other sword hits above still receive their configured juggle boost.
+    const unsigned count=boss_import_count;boss_import_count=7;
+    boss_imports[6]=boss_imports[5];boss_imports[6].key=0xC7A;
+    boss_adapters[6]=boss_adapters[5];boss_adapters[6].kind=4;
+    put(victim,0x58,address(initial));put(initial_payload,0,uint64_t(0x400));
+    put(event,0xE0,address(boss_private_actions[5].combat_body));
+    assert(!launcher_hit(victim).owner && !launch_weight_count);boss_import_count=count;
     weight_native_impulse=16;
     native_set_weight=nullptr;original_action=saved_action;weight_accept=true;
 }
@@ -523,10 +532,47 @@ static void airborne_cases() {
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
 
+static void mid_string_cases() {
+    // Give each of four source strikes the same verified Mid heavy input template.
+    // The native buffered/direct rows request the next source only after another Triangle press.
+    // Confirm source isolation, native exits, final termination and unchanged stance ownership.
+    hold_reset(1,false);pending_heavy={};boss_hold_stances=0;boss_import_count=9;
+    static uint8_t descriptors[4][0xD0]{},payloads[4][0xB0]{},rows[4][75][0x30]{};
+    static uint64_t pointers[4][75];
+    const auto base=boss_imports[5];const auto adapter=boss_adapters[5];
+    const char* follows[]={"ffff5100ffffffffffff020101ffff00000000007b0c0000ff806464000040000a002900ffffffffffffffffffffffff",
+        "ffff5100ffffffffffff000101ffff00000000007b0c000400806464000040002a003400ffffffffffffffffffffffff"};
+    for (unsigned r=0;r<2;++r) for (unsigned b=0;b<0x30;++b) {
+        unsigned byte=0;assert(std::sscanf(follows[r]+b*2,"%2x",&byte)==1);player_rows[0][7+r][b]=uint8_t(byte);
+    }
+    for (unsigned phase=0;phase<4;++phase) {
+        auto& move=boss_imports[5+phase];move=base;move.key=0xC67+phase;move.motion=2200+10*int(phase);
+        move.recovery_frame=phase==0 ? 20 : phase==2 ? 25 : 30;move.transition_count=75;
+        memcpy(descriptors[phase],jin_descriptors[0].data(),0xD0);memcpy(payloads[phase],jin_payloads[0].data(),0xB0);
+        move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
+        put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
+        put(descriptors[phase],0x78,address(pointers[phase]));put(descriptors[phase],0x80,uint16_t(0));
+        put(descriptors[phase],0x82,uint16_t(75));put(payloads[phase],0x20,move.motion);put(payloads[phase],0x24,move.recovery_frame);
+        memset(rows[phase],0xff,sizeof(rows[phase]));for (unsigned r=0;r<75;++r)pointers[phase][r]=address(rows[phase][r]);
+        boss_adapters[5+phase]=adapter;boss_adapters[5+phase].kind=phase ? 4 : 2;boss_private_actions[5+phase]={};
+    }
+    for (unsigned phase=0;phase<4;++phase) {
+        const unsigned slot=5+phase;assert(boss_prepare_private_action(slot));
+        const auto& clone=boss_private_actions[slot];
+        for (unsigned r : {7u,8u}) {
+            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase<3 ? 0xC68+phase : -1)));
+            assert(clone.transition_bodies[r][0x0B]==1 && clone.transition_bodies[r][0x0C]==1);
+        }
+        assert(grapple_field(address(player_rows[0][7].data()),0x14,int16_t(0xC7B)));
+        assert(boss_native_successor(slot,0xC68+phase)==(phase<3 ? int(slot+1) : -1));
+        assert(clone.payload[0x0B]==4);
+    }
+}
+
 static void tracking_cases() {
-    // Replay one native yaw correction through the active private Izuna frame path.
-    // Range, cone, paired/source ownership and locked-handle changes must fail without movement writes.
-    // Serial ownership allows one correction per entry and never changes positions or camera data.
+    // Follow moving targets after startup while bounding each turn by real frame delta.
+    // Range, paired/source ownership and locked-handle changes reject without position writes.
+    // Pauses and NPC callbacks never accumulate turns or change camera data.
     static uint8_t controller[0x80]{},movement[0x100]{},target[0xF00]{},target_actor[0x800]{},component[0x10]{},profile[0x10]{},target_current[0xD0]{},target_payload[0xB0]{};
     static uint64_t registry=0x123456,handle=0x1234000000012345ULL,result=0,camera=0x987654;
     static unsigned calls=0,scenario=0;
@@ -542,7 +588,7 @@ static void tracking_cases() {
     };
     tracking_registry=address(&registry);
     for (scenario=0;scenario<24;++scenario) {
-        boss_hold_stances=7;hold_reset(0,false);pending_heavy={};izuna_tracking={};
+        boss_hold_stances=7;hold_reset(0,false);pending_heavy={};
         boss_import_count=7;boss_imports[5].key=0xC79;boss_imports[5].motion=5014;boss_imports[5].recovery_frame=-1;boss_imports[5].clip=0x123450;
         boss_imports[6]=boss_imports[5];boss_imports[6].key=scenario==8 ? 0 : 0xC7A;
         boss_adapters[6]=boss_adapters[5];boss_adapters[6].kind=4;
@@ -552,7 +598,7 @@ static void tracking_cases() {
         put(player.data(),0x58,boss_private_descriptor_address(5));put(player.data(),8,address(controller));
         put(controller,0x40,handle);put(player.data(),0xDC,uint32_t(50));put(movement,0x54,0.0f);
         put(player.data(),0x38,scenario==19 ? uint64_t(0) : address(movement));put(player.data(),0x18,address(movement));
-        put(player.data(),0x28,scenario==9 ? 12.0f : scenario==18 ? std::numeric_limits<float>::quiet_NaN() : 0.0f);
+        put(player.data(),0x28,scenario==9 ? 26.0f : scenario==18 ? std::numeric_limits<float>::quiet_NaN() : 0.0f);
         put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);put(motion.data(),0x58,boss_imports[5].clip);
         put(owner.data(),0xF0,0.0f);put(owner.data(),0xF4,0.0f);put(owner.data(),0xF8,0.0f);
         put(target,0,handle);put(target,0xF0,scenario==5 || scenario==21 ? 3.0f : scenario==20 ? -1.0f : 1.0f);
@@ -565,27 +611,43 @@ static void tracking_cases() {
         put(target_actor,0x58,address(target_current));put(target_current,0x20,address(target_payload));
         put(target_payload,0x18,uint64_t(scenario==23 ? 0x20000000 : 0));
         result=scenario==1 ? 0 : scenario==2 ? boss_session.player_owner : address(target);
-        boss_izuna_tracking_degrees=scenario==10 ? 0 : scenario==21 ? 90 : 45;
+        boss_tracking_rates[0]=scenario==10 ? 0 : 540;
         boss_session.player_camera_slot=address(&camera);const auto before_camera=camera;
         uint8_t before_player[12],before_target[12];memcpy(before_player,owner.data()+0xF0,12);memcpy(before_target,target+0xF0,12);
         const unsigned before=calls;SetLastError(ACTION_ERROR);boss_advance_clock(player.data(),1);
-        const bool accepted=scenario==0 || scenario==19 || scenario==20 || scenario==21;
+        const bool accepted=scenario==0 || scenario==5 || scenario==19 || scenario==20 || scenario==21 || scenario==22;
         if (calls!=before+unsigned(accepted)) std::fprintf(stderr,"tracking scenario%u calls%u expected%u\n",scenario,calls-before,unsigned(accepted));
         assert(calls==before+unsigned(accepted));
         assert(!memcmp(before_player,owner.data()+0xF0,12) && !memcmp(before_target,target+0xF0,12) && camera==before_camera);
         if (accepted) {
             float angle=0;assert(copy_field(address(movement)+0x54,angle));
-            assert(std::abs(angle-std::atan2(scenario==21 ? 3.0f : scenario==20 ? -1.0f : 1.0f,scenario==21 ? 1.0f : 3.0f))<.00001f);
-            assert(GetLastError()==ACTION_ERROR);put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
-            boss_advance_clock(player.data(),1);assert(calls==before+1);
-            put(player.data(),0xDC,uint32_t(51));put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
+            constexpr float step=540.0f/60*3.141592741f/180;
+            assert(std::abs(angle-(scenario==20 ? -step : step))<.00001f);
+            assert(GetLastError()==ACTION_ERROR);
+            put(target,0xF0,-3.0f);put(target,0xF8,1.0f);put(player.data(),0x28,18.0f);
+            put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
             boss_advance_clock(player.data(),1);assert(calls==before+2);
-            boss_advance_clock(target_actor,1);assert(calls==before+2);
-            boss_imports[5].motion=999;boss_advance_clock(player.data(),1);boss_imports[5].motion=5014;
-            put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);boss_advance_clock(player.data(),1);assert(calls==before+3);
+            float turned=0;assert(copy_field(address(movement)+0x54,turned) && std::abs(turned-(angle-step))<.00001f);
+            boss_advance_clock(player.data(),0);boss_advance_clock(target_actor,1);assert(calls==before+2);
+            put(target_payload,0x18,uint64_t(0x20000000));boss_advance_clock(player.data(),1);assert(calls==before+2);
+            put(target_payload,0x18,uint64_t(0));
+            for (unsigned group=1;group<=2;++group) {
+                for (unsigned phase=0;phase<3;++phase) {
+                    auto& move=boss_imports[5];move.key=(group==1 ? 0xC81 : 0xC71)+phase;
+                    move.motion=phase==0 ? 1050 : group==1 ? (phase==1 ? 5050 : 5051) : (phase==1 ? 5000 : 5001);
+                    move.flags=(group==1 && phase==2) ? 0x1BCE0000 : 0;move.recovery_frame=-1;move.next_variant=-1;
+                    move.transition_count=group==1 ? (phase==2 ? 75 : 18) : (phase==1 ? 17 : 18);
+                    boss_adapters[5].kind=phase ? 4 : 2;
+                    put(player.data(),0x28,20.0f);put(player.data(),0x24,1.0f);put(player.data(),0x6A8,1.0f);
+                    put(movement,0x54,0.0f);put(profile,0xC,uint32_t(1));
+                    const auto prior=calls;boss_advance_clock(player.data(),1);assert(calls==prior+1);
+                    float yaw=0;assert(copy_field(address(movement)+0x54,yaw));
+                    assert(std::abs(yaw+boss_tracking_rates[group]/60*3.141592741f/180)<.00001f);
+                }
+            }
         }
     }
-    native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;boss_izuna_tracking_degrees=45;izuna_tracking={};
+    native_set_yaw=nullptr;native_locked_target=nullptr;tracking_registry=0;boss_tracking_rates[0]=540;
 }
 
 static void slam_cases() {
@@ -782,6 +844,7 @@ int main() {
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     held_slot_cases();
     airborne_cases();
+    mid_string_cases();
     tracking_cases();
     slam_cases();
     frost_cases();

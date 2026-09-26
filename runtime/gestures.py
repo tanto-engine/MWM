@@ -33,7 +33,7 @@ class ControllerGesture:
         if not isinstance(frequency, (int, float)) or not math.isfinite(frequency) or frequency <= 0:
             raise ValueError('Invalid input clock')
         self.variants = binding.get('variants', [0, 1])
-        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or not 0<=v<24) for v in self.variants):
+        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or not 0<=v<32) for v in self.variants):
             raise ValueError('Unknown move variant')
         self.frequency = frequency
         self.threshold = int(binding['hold_seconds'] * frequency)
@@ -121,6 +121,9 @@ class ControllerGesture:
             if self.string_held:
                 return dict(kind='logical_input', connected=True, lt=True, rt=True,
                             chord_sequence=self.chord_sequence)
+        if buttons & ~(self.lb_mask | self.circle_mask):
+            self.reset()
+            return None
         lb, circle = bool(buttons & self.lb_mask), bool(buttons & self.circle_mask)
         if not circle:
             if self.started and not self.fired:

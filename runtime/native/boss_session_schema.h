@@ -72,13 +72,13 @@ struct RuntimeSessionConfig {
     uint64_t hold_stances, frost_variants[3], frost_milliseconds, frost_speed;
     BossSession session;
     uint32_t import_count, string_variant;
-    MoveImport imports[24];
-    MoveAdapter adapters[24];
+    MoveImport imports[32];
+    MoveAdapter adapters[32];
     SkillBinding skill_bindings[8];
     LaunchProfile launch_profiles[2];
-    float air_juggle_boost, izuna_tracking_degrees;
+    float air_juggle_boost, tracking_rates[3];
 };
-static_assert(sizeof(RuntimeSessionConfig) == 4464 && offsetof(RuntimeSessionConfig, imports) == 328,
+static_assert(sizeof(RuntimeSessionConfig) == 5752 && offsetof(RuntimeSessionConfig, imports) == 328,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 9;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 10;

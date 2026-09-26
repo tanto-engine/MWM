@@ -1,0 +1,131 @@
+{
+  "base_commit": "8416589",
+  "session": {
+    "pid": 11564,
+    "creation_filetime": "134349074321430317",
+    "module_base": "0x7ff7669c0000",
+    "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+    "vtable": "0x7ff767b63530",
+    "vtable_rva": "0x11a3530"
+  },
+  "dodge": {
+    "observed_calls": [
+      {
+        "sequence": 2521,
+        "input_key": 3338,
+        "before_key": 3422,
+        "after_key": 3326,
+        "motion_key": 1080,
+        "native_result": 1
+      },
+      {
+        "sequence": 2522,
+        "input_key": 3016,
+        "before_key": 3326,
+        "after_key": 3410,
+        "motion_key": 2710,
+        "native_result": 1
+      },
+      {
+        "sequence": 2524,
+        "input_key": 3318,
+        "before_key": 3410,
+        "after_key": 3183,
+        "motion_key": 2410,
+        "native_result": 1
+      }
+    ],
+    "source": [
+      {
+        "key": "0xbc8",
+        "motion": -1,
+        "flags": "0x0",
+        "count": 18,
+        "redirect_rows": [
+          "b400ffffffffffffffff00ffffffff0000000000b90f000300806464000000000080ff7fffffffffffffffffafe30000",
+          "b400ffffffffffffffff00ffffffff00000000004a0d000300806464000000000080ff7fffffffffffffffffe6710000",
+          "4600ffffffffffffffffffffffffff0000000000cc0b000300806464200000000080ff7fffffffffffffffffffffffff",
+          "a200ffffffffffffffff00ffffffff0000000000310d000300806464000000000080ff7fffffffffffffffffffffffff",
+          "5700ffffffffffffffff000100030000000000003b0d000300806464010000000080ff7fffffffffffffffffffffffff",
+          "5700ffffffffffffffff00ffffffff00000000003a0d000300806464200000000080ff7fffffffffffffffffffffffff",
+          "5100ffffffffffffffff00ffffffff0000000000520d000300806464200000000080ff7fffffffffffffffffffffffff",
+          "5000ffffffffffffffff00ffffffff0000000000520d000300806464200000000080ff7fffffffffffffffffffffffff",
+          "5200ffffffffffffffff00ffffffff0000000000520d000300806464200000000080ff7fffffffffffffffffffffffff"
+        ]
+      },
+      {
+        "key": "0xbc9",
+        "motion": -1,
+        "flags": "0x0",
+        "count": 19,
+        "redirect_rows": [
+          "b400ffffffffffffffff00ffffffff0000000000b90f000300806464000000000080ff7fffffffffffffffffafe30000",
+          "b400ffffffffffffffff00ffffffff00000000004a0d000300806464000000000080ff7fffffffffffffffffe6710000",
+          "4600ffffffffffffffffffffffffff0000000000cc0b000300806464200000000080ff7fffffffffffffffffffffffff",
+          "a200ffffffffffffffff00ffffffff0000000000310d000300806464000000000080ff7fffffffffffffffffffffffff",
+          "5700ffffffffffffffff000100030000000000003b0d000300806464010000000080ff7fffffffffffffffffffffffff",
+          "5700ffffffffffffffff00ffffffff00000000003a0d000300806464200000000080ff7fffffffffffffffffffffffff",
+          "4600ffffffffffffffffffffffffff0000000000cc0b000300806464200000000080ff7fffffffffffffffffffffffff",
+          "5100ffffffffffffffff00ffffffff0000000000530d000300806464200000000080ff7fffffffffffffffffffffffff",
+          "5000ffffffffffffffff00ffffffff0000000000530d000300806464200000000080ff7fffffffffffffffffffffffff"
+        ]
+      }
+    ],
+    "change": "BC8/BC9 native Triangle selection chooses C6F; CFD no longer used"
+  },
+  "shortcut": {
+    "before": "LB+RB+Circle created a legacy tap intent",
+    "after": "Additional buttons cancel chord intent; native import context rejects LB+RB+Circle; standalone jump unassigned"
+  },
+  "mid_heavy": {
+    "source_keys": [
+      "C67",
+      "C68",
+      "C69",
+      "C6A"
+    ],
+    "native_template": "C7A/2300; buffered/direct Triangle rows remap to successive owned source states",
+    "source_voices": {
+      "2200": [],
+      "2210": [
+        {
+          "frame": 4,
+          "index": 9,
+          "hash": 2543008070
+        }
+      ],
+      "2220": [
+        {
+          "frame": 8,
+          "index": 9,
+          "hash": 2543008070
+        }
+      ],
+      "2230": []
+    },
+    "classification": "Four sword strikes; original light/heavy classification remains unverified"
+  },
+  "tracking": {
+    "before": "Once per action serial, C79 frames0..12 only",
+    "after": "Continuous bounded horizontal turn during Izuna, somersault and Flying Swallow phases; no target retained",
+    "degrees_per_second": {
+      "izuna": 540,
+      "somersault": 420,
+      "flying_swallow": 180
+    }
+  },
+  "airborne_izuna": {
+    "observed": "C79 -> C7A -> native fall18; successful native paired routes also recorded",
+    "adjustment": "Exclude Izuna opening from generic airborne lift; steer its catch phase",
+    "status": "gameplay_verification_pending"
+  },
+  "verification": {
+    "offline": 172,
+    "crash": 8,
+    "native_fixtures": "Triangle dodge, extra chord cancellation, four-strike chain, moving-target rates after startup, pause/NPC/pair exclusions",
+    "dll_sha256": {
+      "nioh_resources.dll": "158bed6f2086d28e030e530cfda0e36b5195432431ec8f0115fbe8558dc35f6d",
+      "nioh_skill_runtime.dll": "535e4a3288726a652a0dc9d7e231847b6ce7f26949f72f1fad1535ba1c7bd46f"
+    }
+  }
+}

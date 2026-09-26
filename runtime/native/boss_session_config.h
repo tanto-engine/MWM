@@ -2,15 +2,15 @@
 #include "boss_session_schema.h"
 static uint64_t BOSS_CONFIG_TAG;
 static BossSession boss_session{};
-static MoveImport boss_imports[24]{};
-static MoveAdapter boss_adapters[24]{};
+static MoveImport boss_imports[32]{};
+static MoveAdapter boss_adapters[32]{};
 static uint32_t boss_import_count, boss_string_variant;
 static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank;
 static uint64_t boss_native_grapple;
 static uint64_t boss_native_bindings;
 static SkillBinding boss_skill_bindings[8]{};
 static LaunchProfile boss_launch_profiles[2]={{75,.75f,14,0},{200,.45f,17,0}};
-static float boss_air_juggle_boost=2, boss_izuna_tracking_degrees=45;
+static float boss_air_juggle_boost=2, boss_tracking_rates[3]={540,420,180};
 static uint64_t boss_hold_stances=7, boss_frost_variants[3]{}, boss_frost_milliseconds=750, boss_frost_speed=8;
 static bool runtime_session_configured;
 
@@ -33,11 +33,12 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
-    if (config.import_count < 2 || config.import_count > 24 || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
+    if (config.import_count < 2 || config.import_count > 32 || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
         || config.hold_stances>7 || (config.frost_milliseconds && config.frost_milliseconds<100) || config.frost_milliseconds>1500
         || config.frost_speed<1 || config.frost_speed>8)
         return false;
-    if (!(config.izuna_tracking_degrees>=0 && config.izuna_tracking_degrees<=90) || !(config.air_juggle_boost>=0 && config.air_juggle_boost<=5)) return false;
+    if (!(config.air_juggle_boost>=0 && config.air_juggle_boost<=5)) return false;
+    for (float rate : config.tracking_rates) if (!(rate>=0 && rate<=720)) return false;
     uint32_t previous=0;
     for (const auto& profile : config.launch_profiles) {
         if (profile.reserved || profile.resistance_below<=previous || profile.resistance_below>10000
@@ -63,13 +64,14 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         }
         if (!adapter.kind && config.imports[binding.variant-1].flags!=0x184C0000ULL) return false;
         if (adapter.kind) {
-            bool owner=adapter.kind==5 || (binding.kind==1 && binding.key==0xCFD && adapter.kind==1 && adapter.player_key==0xCF6 && binding.stances==1);
+            bool owner=adapter.kind==5 || (binding.kind==1 && binding.key==0xBC8 && adapter.kind==1 && adapter.player_key==0xCF6 && binding.stances==1);
             for (unsigned stance=0;stance<3;++stance)
                 owner=owner || (adapter.kind==2 && binding.stances==(1u<<stance) && adapter.player_key==openers[stance]);
             if (!owner) return false;
         }
         if (binding.kind==1 ? !((binding.key==0xFAA && binding.motion==5090 && binding.transition_count==21 && binding.flags==0x40017C00000ULL)
-                || (binding.key==0xCFD && binding.motion==4820 && binding.transition_count==40 && binding.flags==0x8000000594C0000ULL))
+                || (binding.key==0xBC8 && binding.motion==-1 && binding.transition_count==18 && !binding.flags)
+                || (binding.key==0xC7A && binding.motion==2300 && binding.transition_count==42 && binding.flags==0x8000000594C0000ULL))
             : (binding.key || binding.motion || binding.transition_count || binding.flags)) return false;
         for (unsigned prior=0;prior<index;++prior) {
             const auto& earlier=config.skill_bindings[prior];
@@ -86,7 +88,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     const MoveImport empty{};
     const MoveAdapter no_adapter{};
     bool grapple_target=false;
-    for (unsigned i = config.import_count; i != 24; ++i)
+    for (unsigned i = config.import_count; i != 32; ++i)
         if (memcmp(&config.imports[i], &empty, sizeof(empty))
             || memcmp(&config.adapters[i], &no_adapter, sizeof(no_adapter))) return false;
     for (unsigned i = 0; i != config.import_count; ++i) {
@@ -222,7 +224,7 @@ static DWORD load_runtime_session(const void* parameter) {
             && incoming.hold_stances==boss_hold_stances && incoming.frost_milliseconds==boss_frost_milliseconds
             && incoming.frost_speed==boss_frost_speed
             && incoming.air_juggle_boost==boss_air_juggle_boost
-            && incoming.izuna_tracking_degrees==boss_izuna_tracking_degrees
+            && !memcmp(incoming.tracking_rates,boss_tracking_rates,sizeof(boss_tracking_rates))
             && !memcmp(incoming.launch_profiles,boss_launch_profiles,sizeof(boss_launch_profiles))
             && !memcmp(incoming.frost_variants,boss_frost_variants,sizeof(boss_frost_variants))
             && !memcmp(incoming.skill_bindings,boss_skill_bindings,sizeof(boss_skill_bindings))
@@ -233,7 +235,7 @@ static DWORD load_runtime_session(const void* parameter) {
     memcpy(boss_skill_bindings,incoming.skill_bindings,sizeof(boss_skill_bindings));
     memcpy(boss_launch_profiles,incoming.launch_profiles,sizeof(boss_launch_profiles));
     boss_air_juggle_boost=incoming.air_juggle_boost;
-    boss_izuna_tracking_degrees=incoming.izuna_tracking_degrees;
+    memcpy(boss_tracking_rates,incoming.tracking_rates,sizeof(boss_tracking_rates));
     memcpy(boss_imports, incoming.imports, sizeof(boss_imports));
     memcpy(boss_adapters, incoming.adapters, sizeof(boss_adapters));
     boss_import_count = incoming.import_count;

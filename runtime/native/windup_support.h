@@ -19,8 +19,6 @@ using TrackingTargetFn = uint64_t (*)(const uint64_t*);
 static TrackingYawFn native_set_yaw;
 static TrackingTargetFn native_locked_target;
 static uint64_t tracking_registry;
-struct IzunaTracking { uint64_t player,owner; uint32_t serial; };
-static IzunaTracking izuna_tracking{};
 
 static bool resolve_tracking_helpers(uint64_t module) {
     // Pin the native yaw-only setter and exact-handle registry lookup for this executable.
@@ -38,15 +36,13 @@ static bool resolve_tracking_helpers(uint64_t module) {
     tracking_registry=module+0x18A0448;return true;
 }
 
-static void track_izuna(uint64_t player, unsigned slot, float frame) {
-    // Correct only an entry's initial facing toward its current locked human target, before contact.
-    // Native711DD0 writes movement yaw alone;755890 borrows an exact-handle entity for this callback.
-    // Recheck all identities after resolution, then consume this serial once without accumulating turns.
+static void track_locked_target(uint64_t player, unsigned slot, float delta, unsigned group) {
+    // Follow the current lock target through each supported attack phase with bounded horizontal turning.
+    // Native711DD0 writes yaw alone; rate times unaccelerated delta preserves per-second turn speed.
+    // Recheck identities each callback and retain no target, position, camera or accumulated-turn state.
     uint32_t serial=0,human=1;uint16_t type=1;uint64_t controller=0,handle=0,registry=0,preferred=0,movement=0;
     uint64_t profile=0,component=0,target_actor=0,target_current=0,target_payload=0,flags=0;
-    if (!(boss_izuna_tracking_degrees>0 && boss_izuna_tracking_degrees<=90) || !(frame>=0 && frame<12)
-        || !native_set_yaw || !native_locked_target || !copy_field(player+0xDC,serial)
-        || (izuna_tracking.player==player && izuna_tracking.owner==boss_session.player_owner && izuna_tracking.serial==serial)
+    if (!native_set_yaw || !native_locked_target || !copy_field(player+0xDC,serial)
         || !copy_field(boss_private_payload_address(slot)+0x18,flags) || (flags&0x20000000ULL)
         || !copy_field(player+8,controller) || !copy_field(controller+0x40,handle) || !handle
         || !copy_field(tracking_registry,registry) || !registry || !copy_field(player+0x38,preferred)) return;
@@ -55,7 +51,7 @@ static void track_izuna(uint64_t player, unsigned slot, float frame) {
     const uint64_t target=native_locked_target(&handle);
     if (!target || target==boss_session.player_owner || !same_field(target,0,handle)
         || !copy_field(target+4,type) || type || !copy_field(target+0xE90,profile)
-        || !copy_field(profile+0x0C,human) || human || !copy_field(target+0x230,component)
+        || !copy_field(profile+0x0C,human) || (!group && human) || !copy_field(target+0x230,component)
         || !copy_field(component+8,target_actor) || target_actor==player || !same_field(target_actor,0,boss_session.vtable)
         || !same_field(target_actor,0x50,target) || !copy_field(target_actor+0x58,target_current)
         || !copy_field(target_current+0x20,target_payload) || !copy_field(target_payload+0x18,flags)
@@ -64,18 +60,18 @@ static void track_izuna(uint64_t player, unsigned slot, float frame) {
     if (!copy_bytes(boss_session.player_owner+0xF0,origin,sizeof(origin)) || !copy_bytes(target+0xF0,position,sizeof(position))
         || !copy_field(movement+0x54,yaw) || !std::isfinite(yaw)) return;
     const float dx=position[0]-origin[0],dy=position[1]-origin[1],dz=position[2]-origin[2];
-    if (!(dx*dx+dz*dz>0.000001f && dx*dx+dy*dy+dz*dz<=36)) return;
+    if (!(dx*dx+dz*dz>0.000001f && dx*dx+dz*dz<=(group ? 144 : 36) && std::abs(dy)<=12)) return;
     constexpr float pi=3.141592741f;
     const float aim=std::atan2(dx,dz),difference=std::remainder(aim-yaw,2*pi);
-    if (!(std::abs(difference)<=boss_izuna_tracking_degrees*pi/180) || !windup_writable_float(movement+0x54)
+    const float step=boss_tracking_rates[group]*delta*pi/(60*180);
+    if (std::abs(difference)<0.00001f || !windup_writable_float(movement+0x54)
         || !boss_player_valid() || !same_field(player,8,controller) || !same_field(controller,0x40,handle)
         || !same_field(player,0x58,boss_private_descriptor_address(slot)) || !same_field(player,0x38,preferred)
         || (!preferred && !same_field(player,0x18,movement)) || !same_field(target,0,handle)
         || !same_field(target,0x230,component) || !same_field(component,8,target_actor)
         || !same_field(target_actor,0x50,target) || !same_field(target_actor,0x58,target_current)) return;
     uint32_t after=0;if (!copy_field(player+0xDC,after) || after!=serial) return;
-    izuna_tracking={player,boss_session.player_owner,serial};
-    native_set_yaw(reinterpret_cast<void*>(movement),aim);
+    native_set_yaw(reinterpret_cast<void*>(movement),std::remainder(yaw+(difference>step ? step : difference < -step ? -step : difference),2*pi));
 }
 
 static float boss_advance_clock(void* actor, float native_delta) {
@@ -85,13 +81,13 @@ static float boss_advance_clock(void* actor, float native_delta) {
     const uint64_t player = reinterpret_cast<uint64_t>(actor);
     if (player!=boss_session.player) return native_delta;
     const unsigned slot=boss_active_slot;
-    if (slot>=boss_import_count) {izuna_tracking={};return native_delta;}
-    const bool izuna=boss_adapters[slot].kind==2 && boss_imports[slot].key==0xC79
-        && boss_imports[slot].motion==5014 && boss_native_successor(slot,0xC7A)>=0;
-    if (!boss_active || !izuna) izuna_tracking={};
-    const auto& move=boss_imports[slot];
-    const auto timing=boss_move_timing(slot);
-    if (!timing.startup_end) return native_delta;
+    if (slot>=boss_import_count) return native_delta;
+    const auto& move=boss_imports[slot];const auto timing=boss_move_timing(slot);
+    const bool izuna=(move.key==0xC79 && move.motion==5014 && boss_native_successor(slot,0xC7A)>=0)
+        || (move.key==0xC7A && move.motion==1050 && boss_native_successor(slot,0x3B2)>=0);
+    const unsigned group=izuna ? 0 : airborne_sword(move,boss_adapters[slot]) && boss_adapters[slot].kind!=5
+        ? (move.key>=0xC81 ? 1 : 2) : 3;
+    if (!timing.startup_end && group==3) return native_delta;
     if (!trace || !dispatch || !InterlockedCompareExchange(&trace->header.enabled, 0, 0)
         || !InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)
         || !InterlockedCompareExchange(&boss_active, 0, 0)
@@ -105,7 +101,10 @@ static float boss_advance_clock(void* actor, float native_delta) {
         || !copy_field(player + 0x24, delta)
         || !(frame >= 0.0f && speed > 0.0f && speed <= 8.0f
              && delta > 0.0f && delta <= 4.0f && delta == native_delta)) return native_delta;
-    if (izuna) {const DWORD error=GetLastError();track_izuna(player,slot,frame);SetLastError(error);}
+    const float tracking_end=move.key==0xC79 ? 26 : move.key==0xC83 ? 29 : move.key==0xC74 ? 20 : 1000;
+    if (group<3 && boss_tracking_rates[group]>0 && frame<tracking_end) {
+        const DWORD error=GetLastError();track_locked_target(player,slot,native_delta,group);SetLastError(error);
+    }
     const float boundary=timing.startup_end;
     if (frame>=boundary) return native_delta;
     const float remaining = boundary - frame;
