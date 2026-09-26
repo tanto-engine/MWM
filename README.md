@@ -117,3 +117,5 @@ Offline validation covers signature rejection, timing boundaries, retained priva
 | Native semantics | Capture damage, Ki damage, hitbox/contact and unknown record fields against controlled baselines; matching bytes alone do not establish their meaning. |
 
 Further executable builds/releases and live gameplay verification are deferred. No readiness receipt is implied by the offline checks.
+
+The contributor UI now lives entirely in Recorder: dark resizable widgets, a registered global hotkey, required encounter names, descriptions, and background export. Engine's read-only scout path retains at most 32 transition rows for unassigned enemies (none for the identified player); this preserves candidate string evidence without inventing boss attribution. Known boss captures keep their existing requested limit. The existing test entrypoints cover the recorder's UI lifecycle and data boundaries alongside Sword. No game control or new EXE release is part of this review.

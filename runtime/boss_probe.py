@@ -526,7 +526,9 @@ def record(game, cfg, folder, seconds, interval_ms, player, boss, entry_limit,
                         action_events += 1
                         last[address] = state
                         if current:
-                            limit = entry_limit if role == "boss_candidate" else 0
+                            # Unknown enemies still need bounded transition evidence;
+                            # a contributor's name never upgrades their actor role.
+                            limit = entry_limit if role == "boss_candidate" else min(entry_limit,32) if boss is None and role == "unassigned" else 0
                             key = (address, current, d, limit)
                             if key not in known_metadata and len(known_metadata) < 8192:
                                 try:

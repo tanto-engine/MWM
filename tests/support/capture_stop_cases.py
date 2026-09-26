@@ -103,6 +103,13 @@ class FakeGame:
 
 
 class CaptureStopTests(unittest.TestCase):
+    def test_scout_keeps_enemy_transition_metadata_without_assigning_boss(self):
+        with patch.object(probe,'metadata',wraps=probe.metadata) as read:
+            _,events=self.run_capture(FakeGame(),boss=None)
+        self.assertTrue(any(event.get('role')=='unassigned' for event in events))
+        self.assertFalse(any(event.get('role')=='boss_candidate' for event in events))
+        self.assertIn(4,[call.args[2] for call in read.call_args_list])
+
     def run_capture(self, game, metadata_failure=False, include_extra=False, player=PLAYER, boss=BOSS):
         # Run the real recording loop against fake actors, clock and neutral inputs.
         # Write events to a temporary take and read its final status back.

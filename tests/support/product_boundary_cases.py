@@ -6,6 +6,11 @@ import struct
 import tempfile
 import unittest
 import zipfile
+import threading
+import tkinter as tk
+from unittest.mock import patch
+import recorder
+from recording_hotkey import GlobalHotkey
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT),str(ROOT.parent/'tanto-recorder/src')]
@@ -17,6 +22,146 @@ from encounter_recording_cases import state, metadata
 
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_description_editor_saves_a_span_and_retains_revision_history(self):
+        root=tk.Tk();root.withdraw()
+        def descendants(widget):
+            for child in widget.winfo_children():
+                yield child
+                yield from descendants(child)
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                folder=Path(td);take=folder/'take-0001';take.mkdir()
+                (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',recording_id='editor')))
+                (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
+                app=recorder.Recorder(root,enable_hotkey=False,settings_path=folder/'settings.json');app.folder=folder
+                app.describe()
+                for description in ('Jump then slash','Jump then two slashes'):
+                    widgets=list(descendants(app.dialog));editor=next(w for w in widgets if isinstance(w,tk.Text))
+                    editor.delete('1.0','end');editor.insert('1.0',description)
+                    next(w for w in widgets if w.winfo_class()=='TButton' and w.cget('text')=='Save description').invoke()
+                    label=recorder.load_annotations(folder)[0]
+                    self.assertEqual((label['start_t'],label['end_t']),(0,3.5))
+                    self.assertEqual(label['label'],description)
+                    if label['revision']==1:
+                        app.labels.selection_set(label['label_id']);app.edit_selected()
+                self.assertEqual(label['revision'],2);app.close()
+        finally:
+            try: root.destroy()
+            except tk.TclError: pass
+
+    def test_intake_reports_raw_context_disagreeing_with_submission(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);take=folder/'take-0001';take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',recording_id='context',created_at=1)))
+            (take/'events.jsonl').write_text(json.dumps(dict(kind='session',encounter_context=dict(boss_id='maria'))))
+            archive=export_capture(folder,folder/'share.zip');report=intake_bundle(archive,folder/'intake')
+            self.assertIn('capture_context',{item['kind'] for item in report['conflicts']})
+
+    def test_intake_rejects_malformed_manifest_shapes_before_staging(self):
+        for manifest in ([],dict(kind='tanto_recording',schema_version=1,boss_id='okatsu',files=[{}])):
+            with tempfile.TemporaryDirectory() as td:
+                folder=Path(td);archive_path=folder/'malformed.zip'
+                with zipfile.ZipFile(archive_path,'w') as archive:
+                    archive.writestr('manifest.json',json.dumps(manifest))
+                with self.assertRaises(ValueError): intake_bundle(archive_path,folder/'intake')
+                self.assertFalse((folder/'intake').exists())
+
+    def test_recorder_requires_name_and_serializes_hotkey_stop_and_close(self):
+        root=tk.Tk();root.withdraw();entered=threading.Event();finish=threading.Event()
+        def capture(boss,folder,**options):
+            self.assertTrue(boss.startswith('encounter_'))
+            self.assertEqual(options['boss_name'],'Onryoki')
+            entered.set();finish.wait(3)
+        try:
+            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'record_encounter',side_effect=capture) as backend:
+                app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
+                app.toggle();backend.assert_not_called()
+                app.boss.set('  Onryoki  ');app.toggle();self.assertTrue(entered.wait(1))
+                worker=app.thread;app.toggle();app.toggle()
+                self.assertIs(app.thread,worker);self.assertTrue(app.stop.is_set());self.assertEqual(backend.call_count,1)
+                app.close();self.assertTrue(root.winfo_exists())
+                finish.set();worker.join(2);self.assertFalse(worker.is_alive())
+                app.close()
+        finally:
+            finish.set()
+            try: root.destroy()
+            except tk.TclError: pass
+
+    def test_recorder_layout_resizes_at_multiple_font_scales(self):
+        for scaling in (1.33,2.0,2.67):
+            root=tk.Tk();root.attributes('-alpha',0);root.tk.call('tk','scaling',scaling)
+            try:
+                with tempfile.TemporaryDirectory() as td:
+                    app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
+                    for width,height in ((680,650),(960,740),(1400,950)):
+                        root.geometry(f'{width}x{height}');root.update()
+                        for widget in (app.selector,app.primary,app.describe_button,app.help_label,app.labels,*app.idle_buttons):
+                            self.assertGreater(widget.winfo_width(),20)
+                            self.assertGreaterEqual(widget.winfo_rootx(),root.winfo_rootx())
+                            self.assertLessEqual(widget.winfo_rootx()+widget.winfo_width(),root.winfo_rootx()+root.winfo_width())
+                            self.assertLessEqual(widget.winfo_rooty()+widget.winfo_height(),root.winfo_rooty()+root.winfo_height())
+                    app.close()
+            finally:
+                try: root.destroy()
+                except tk.TclError: pass
+
+    def test_export_is_background_work_and_close_waits_for_it(self):
+        root=tk.Tk();root.withdraw();entered=threading.Event();finish=threading.Event()
+        def export(folder,path):
+            entered.set();finish.wait(3);return path
+        try:
+            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'export_capture',side_effect=export):
+                app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json');app.folder=Path(td)
+                app.export();self.assertTrue(entered.wait(1));self.assertEqual(app.operation,'export')
+                worker=app.thread;app.toggle();self.assertIs(app.thread,worker)
+                root.update();app.close();self.assertTrue(root.winfo_exists())
+                finish.set();worker.join(2);app.close()
+        finally:
+            finish.set()
+            try: root.destroy()
+            except tk.TclError: pass
+
+    def test_global_hotkey_registration_conflict_and_release_without_key_input(self):
+        events=[];first=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:events.append((kind,value)))
+        # Register on separate threads; no key presses, hooks or game access.
+        try:
+            import time
+            deadline=time.monotonic()+2
+            while not events and time.monotonic()<deadline: time.sleep(.01)
+            self.assertEqual(events[0][0],'hotkey_ready')
+            conflict=[];second=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:conflict.append((kind,value)))
+            second.thread.join(2);second.close()
+            self.assertEqual(conflict[0][0],'hotkey_error')
+        finally: first.close()
+        released=[];third=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:released.append((kind,value)))
+        try:
+            deadline=time.monotonic()+2
+            while not released and time.monotonic()<deadline: time.sleep(.01)
+            self.assertEqual(released[0][0],'hotkey_ready')
+        finally: third.close()
+
+    def test_unknown_boss_name_survives_export_and_intake_without_verification(self):
+        boss,name=recorder.boss_identity('大蝦蟇')
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);take=folder/'take-0001';take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps(dict(boss_id=boss,boss_name=name,recording_id='unknown',created_at=1)))
+            (take/'events.jsonl').write_text(json.dumps(state(.1,role='unassigned')))
+            target=export_capture(folder,folder/'share.zip');report=intake_bundle(target,folder/'intake')
+            self.assertEqual(report['boss_name'],name);self.assertEqual(report['review_status'],'pending')
+            with zipfile.ZipFile(target) as archive:
+                summary=json.loads(archive.read('Summary.json'))
+                self.assertTrue(all(row['confidence']=='identity_unverified' for row in summary['actions']))
+
+    def test_failed_export_leaves_no_shareable_partial_archive(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td);take=folder/'take-0001';take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',recording_id='failure',created_at=1)))
+            (take/'events.jsonl').write_text('{"kind":"end","t":1}\n')
+            target=folder/'share.zip'
+            with patch('zipfile.ZipFile.writestr',side_effect=OSError('Disk full')):
+                with self.assertRaises(OSError): export_capture(folder,target)
+            self.assertFalse(target.exists())
+
     def test_recorder_package_contains_only_read_only_engine_modules(self):
         # A recorder release must never depend on gameplay policy, hooks or catalogue workbooks.
         # Exercise the same staging operation used by the binary build.

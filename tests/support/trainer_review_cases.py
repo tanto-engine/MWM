@@ -6,7 +6,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 ROOT = Path(__file__).resolve().parents[2]
 MOD_ROOT = ROOT.parent/'tanto-sword-mod'
@@ -18,6 +18,13 @@ from gestures import ControllerGesture
 
 
 class PresetTests(unittest.TestCase):
+    def test_cancel_save_does_not_apply_pending_edits(self):
+        app=SimpleNamespace(root=None,apply=Mock(return_value=True))
+        with tempfile.TemporaryDirectory() as td, patch.object(trainer,'RUNTIME',Path(td)), \
+             patch('tkinter.filedialog.asksaveasfilename',return_value=''):
+            trainer.Trainer.save(app)
+        app.apply.assert_not_called()
+
     def test_public_preset_excludes_engine_physics(self):
         # Public bindings and timing controls must not carry enemy-physics policy.
         # Reject new private fields and discard historical tuning during explicit migration.
