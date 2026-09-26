@@ -130,7 +130,7 @@ class Trainer:
         self.control_row(play, 5, 'Hold threshold (seconds)', ttk.Spinbox(play, textvariable=self.threshold, from_=.08, to=2, increment=.01, width=10))
         self.native_choices = {'Native':None, 'Jin string C':'jin_hayabusa.action_0bc0',
                               'Jin string D':'jin_hayabusa.action_0c6e'}
-        self.skill_choices = {'Native':None, 'Jin launcher':'jin_hayabusa.action_0c79',
+        self.skill_choices = {'Native':None, 'Jin string A':'jin_hayabusa.action_0bbf', 'Jin launcher':'jin_hayabusa.action_0c79',
                              'Jin downward slash':'jin_hayabusa.action_0c75', 'Jin somersault':'jin_hayabusa.action_0c81', 'Izuna Drop':'jin_hayabusa.izuna_drop', 'Flying Swallow':'jin_hayabusa.action_0c71'}
         self.native_fields = {}
         for row,(key,label,choices) in enumerate([('low_heavy','Low Triangle taps',self.native_choices),
@@ -139,8 +139,7 @@ class Trainer:
             self.control_row(play,row,label,ttk.Combobox(play,textvariable=self.native_fields[key],values=list(choices),state='readonly',width=42))
         frost=ttk.LabelFrame(play,text='Frost Moon: RB + same stance button twice',padding=10)
         frost.grid(row=0,column=2,rowspan=10,sticky='nw',padx=(24,0))
-        self.frost_choices={'Disabled':None,'Jin downward slash':'jin_hayabusa.action_0c75', 'Jin somersault':'jin_hayabusa.action_0c81',
-                            'Izuna Drop':'jin_hayabusa.izuna_drop','Flying Swallow':'jin_hayabusa.action_0c71'}
+        self.frost_choices={'Disabled':None, **{label:move for label,move in self.skill_choices.items() if move}}
         self.frost_fields={stance:tk.StringVar() for stance in ('low','mid','high')}
         for row,(stance,field) in enumerate(self.frost_fields.items()):
             self.control_row(frost,row,stance.title(),ttk.Combobox(frost,textvariable=field,
@@ -152,7 +151,8 @@ class Trainer:
         self.native_toggles={field:tk.BooleanVar() for field in ('tiger_sprint','mid_light_ender')}
         for row,(field,label) in enumerate((('tiger_sprint','Tiger Sprint override'),('mid_light_ender','Mid light â†’ LB + Triangle: Living Weapon heavy')),6):
             ttk.Checkbutton(frost,text=label,variable=self.native_toggles[field]).grid(row=row,column=0,columnspan=2,sticky='w')
-        self.guard_choices=dict(self.frost_choices, **{'Okatsu dash':'okatsu.charged_rush','Okatsu leap':'okatsu.leaping_slash'})
+        self.guard_choices=dict(self.frost_choices, **{'Okatsu dash':'okatsu.charged_rush','Okatsu leap':'okatsu.leaping_slash',
+                                                     'Flying Swallow jump':'jin_hayabusa.flying_swallow_jump'})
         self.guard_light=tk.StringVar()
         self.control_row(frost,8,'High LB + Square',ttk.Combobox(frost,textvariable=self.guard_light,
             values=list(self.guard_choices),state='readonly',width=24))
@@ -257,7 +257,7 @@ class Trainer:
             trigger_mask=self.button_choices[self.trigger.get()], hold_seconds=float(self.threshold.get()),
             low_heavy=self.native_choices[self.native_fields['low_heavy'].get()],
             skill_bindings=[b for b in self.preset['skill_bindings'] if b['source']!='tiger_sprint' and (b['source'],b['stance'])!=('guard_light','high')]
-                +([next((b for b in self.preset['skill_bindings'] if b['source']=='tiger_sprint'),dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush'))] if self.native_toggles['tiger_sprint'].get() else [])
+                +(([b for b in self.preset['skill_bindings'] if b['source']=='tiger_sprint'] or [dict(source='tiger_sprint',stance='any',move='okatsu.charged_rush')]) if self.native_toggles['tiger_sprint'].get() else [])
                 +([dict(source='guard_light',stance='high',move=self.guard_choices[self.guard_light.get()])] if self.guard_choices[self.guard_light.get()] else []),
             frost_moon={stance:self.frost_choices[field.get()] for stance,field in self.frost_fields.items()},
             frost_window_seconds=float(self.frost_window.get()),frost_startup_speed=int(self.frost_speed.get()),
