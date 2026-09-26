@@ -7,7 +7,7 @@
     "vtable": "0x7ff767b63530",
     "vtable_rva": "0x11a3530"
   },
-  "scope": "Read-only exact-build source capture; native entry replacement awaits gameplay verification",
+  "scope": "Exact-build source capture and player-confirmed smooth Mid Tiger Sprint startup",
   "source": [
     {
       "key": "0xe2",
@@ -108,5 +108,73 @@
     "selected_input": "native selector14 state0/1",
     "selected_skill": -1,
     "mid_stance_only": true
+  },
+  "gameplay_acceptance": {
+    "date": "2026-09-26",
+    "scope": "Mid Tiger Sprint immediate Okatsu dash startup from idle/after attack",
+    "user_response": "yes. its smooth",
+    "trace": "C:\\Users\\vikna\\Downloads\\GitHub\\nioh1-skill-expanded\\runtime\\sessions\\20260926-101415-5096\\trace-1",
+    "native_calls": [
+      {
+        "sequence": 848,
+        "input_key": 3002,
+        "before_key": 0,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 936,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 941,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 948,
+        "input_key": 3002,
+        "before_key": 199,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1019,
+        "input_key": 3398,
+        "before_key": 3450,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1071,
+        "input_key": 3398,
+        "before_key": 3450,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      },
+      {
+        "sequence": 1184,
+        "input_key": 3398,
+        "before_key": 3453,
+        "after_key": 3172,
+        "native_result": 1,
+        "final_exact_match": true
+      }
+    ],
+    "dll_sha256": {
+      "nioh_resources.dll": "42cdae83adf8d4de65126718a8f7ef3cead85d2edeb8fb37705fafb7e50b9a71",
+      "nioh_skill_runtime.dll": "c3a7a6ed94354756d45d343916a2ba4db48afadebc73df510d0e5d86a9b62188"
+    }
   }
 }
