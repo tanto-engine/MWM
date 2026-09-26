@@ -267,11 +267,11 @@ int main() {
     tick(); assert(frame_calls==1 && action_calls==2 && boss_active && dispatch->control.dispatch_count==1);
     assert(boss_private_actions[0].transition_count==32);
     for (unsigned i=0;i!=3;++i) {
-        auto expected=pulse_rows[i]; put(expected.data(),0x20,int16_t(65));
+        auto expected=pulse_rows[i]; put(expected.data(),0x20,int16_t(54));
         assert(!memcmp(boss_private_actions[0].transition_bodies[28+i],expected.data(),0x30));
         assert(!memcmp(pulse_rows[i].data(),boss_pulse_templates[i],0x30));
     }
-    auto expected_dodge=dodge_row; put(expected_dodge.data(),0x20,int16_t(65));
+    auto expected_dodge=dodge_row; put(expected_dodge.data(),0x20,int16_t(54));
     assert(!memcmp(boss_private_actions[0].transition_bodies[31],expected_dodge.data(),0x30));
     ++checks;
     assert((trace->records[1].valid_fields & ((1u<<18)|TRACE_FINAL_MATCH)) == ((1u<<18)|TRACE_FINAL_MATCH)); ++checks;

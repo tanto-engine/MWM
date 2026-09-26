@@ -7,43 +7,83 @@ struct FrostMoonInput {
     WORD buttons;
     bool available, spent;
     DWORD packet;
-    float fill;
 };
 static FrostMoonInput frost_input{};
 
+static void frost_window(FrostMoonInput& state, int64_t now, unsigned stance,
+        uint64_t descriptor, bool available, int64_t frequency) {
+    // Latch the first native D5 opportunity, before RB can consume its Ki timer.
+    // Pulse consumption, Flux and refills retain that original750ms deadline.
+    // A subsequent attack can open a new window after this one is spent or expired.
+    if (available && !state.available && (!state.opened || state.spent
+        || now-state.opened>=frequency*int64_t(boss_frost_milliseconds)/1000)) {
+        state.opened=now;state.origin=stance;state.descriptor=descriptor;state.choice=3;state.spent=false;
+    }
+    state.available=available;
+}
+
+static void latch_native_frost() {
+    // Observe Ki availability before native action selection consumes the pulse.
+    // Reuse the current frame's device/lifecycle observation without generating input edges.
+    // This closes the same-frame RB race without an additional hook or direct Ki write.
+    uint64_t vitals=0,current=0;uint32_t stance=0;float pulse[4]{};GameInput sample{};
+    if (!frost_input.sampled || !trace || !dispatch || !dispatch->control.enabled || !boss_player_valid()
+        || !read_game_input(trace->header,sample) || !copy_field(boss_session.player+0x470,stance) || stance>2
+        || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
+        || !copy_field(boss_session.player+0x58,current)) return;
+    LARGE_INTEGER now;QueryPerformanceCounter(&now);
+    frost_window(frost_input,now.QuadPart,stance==2 ? 0 : stance==0 ? 1 : 2,current,
+        pulse[0]+pulse[2]>0 && (pulse[1]>0 || pulse[3]>0),dispatch->control.qpc_frequency);
+}
+
 static unsigned frost_edge(FrostMoonInput& state, const GameInput& sample, unsigned slot,
-        unsigned stance, unsigned epoch, bool available, uint64_t descriptor, int64_t frequency, float fill=0) {
+        unsigned stance, unsigned epoch, bool available, uint64_t descriptor, int64_t frequency) {
     // Start one wall-clock window on the native Ki Pulse availability edge.
-    // Require RB throughout two separate presses of the same different-stance face button.
+    // Accept two distinct RB/face chord edges, including releasing and repressing RB.
     // Device, lifecycle and sampling gaps discard the window without replaying held inputs.
     const WORD buttons=sample.buttons[slot];
     const bool reset=!state.sampled || state.slot!=slot || state.epoch!=epoch
         || sample.qpc<=state.sampled || sample.qpc-state.sampled>=frequency/10 || sample.packets[slot]<state.packet;
     if (reset) {
-        state={0,sample.qpc,descriptor,stance,3,stance,slot,epoch,buttons,available,false,sample.packets[slot],fill};
+        state={0,sample.qpc,descriptor,stance,3,stance,slot,epoch,buttons,available,false,sample.packets[slot]};
         return 0;
     }
     const WORD pressed=buttons&~state.buttons;
-    if (available && (!state.available || fill>state.fill)) {
-        state.opened=sample.qpc; state.origin=state.stance; state.descriptor=descriptor;
-        state.choice=3; state.spent=false;
-    }
-    state.sampled=sample.qpc; state.stance=stance; state.available=available; state.buttons=buttons;
-    state.packet=sample.packets[slot]; state.fill=fill;
+    frost_window(state,sample.qpc,state.stance,descriptor,available,frequency);
+    state.sampled=sample.qpc;state.stance=stance;state.buttons=buttons;state.packet=sample.packets[slot];
     if (!state.opened || state.spent || sample.qpc-state.opened>=frequency*int64_t(boss_frost_milliseconds)/1000) return 0;
     constexpr WORD faces=XINPUT_GAMEPAD_A|XINPUT_GAMEPAD_X|XINPUT_GAMEPAD_Y;
     constexpr WORD cancel=XINPUT_GAMEPAD_B|XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_START|XINPUT_GAMEPAD_BACK;
     if ((buttons&cancel) || sample.left_trigger[slot]>30 || sample.right_trigger[slot]>30) {
         state.spent=true; return 0;
     }
-    if (!(buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER)) { state.choice=3; return 0; }
+    if (!(buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER)) return 0;
     const WORD face=buttons&faces;
-    if (!(pressed&faces)) return 0;
+    if (!face) return 0;
+    if (!(pressed&(faces|XINPUT_GAMEPAD_RIGHT_SHOULDER))) return 0;
     const unsigned choice=face==XINPUT_GAMEPAD_A ? 0 : face==XINPUT_GAMEPAD_X ? 1 : face==XINPUT_GAMEPAD_Y ? 2 : 3;
     if (choice==3 || choice==state.origin) { state.choice=3; return 0; }
     if (state.choice!=choice) { state.choice=choice; return 0; }
     state.spent=true;
     return choice+1;
+}
+
+static bool frost_continuation(uint64_t descriptor, uint32_t key) {
+    // Native Pulse and Flux redirects are control states, not interruptions.
+    // A recognized chord may also override its accidental light/heavy/dodge action.
+    // Damage, paired animations and unrelated actions still invalidate the opportunity.
+    uint64_t payload=0;int32_t motion=0;
+    if (repeat_current_allowed(descriptor,key)) return true;
+    if (!copy_field(descriptor+0x20,payload) || !copy_field(payload+0x20,motion)) return false;
+    if (key>=0xD60 && key<=0xD62) return motion==2009+int(key-0xD60)*1000;
+    if (key>=0xD73 && key<=0xD78) return motion==2006+int((key-0xD73)/2)*1000+int((key-0xD73)%2);
+    if (frost_input.choice>=3) return false;
+    if (key==9 && motion==10) return true;
+    constexpr uint32_t openers[]={0xC76,0xC7A,0xCB3,0xCB7,0xCF0,0xCF5};
+    constexpr int32_t motions[]={2100,2300,3100,3300,4100,4300};
+    for (unsigned index=0;index<6;++index)
+        if (key>=openers[index] && key<=openers[index]+2 && motion==motions[index]+int(key-openers[index])*10) return true;
+    return false;
 }
 
 static DispatchReason choose_frost_moon(DispatchCommand& command) {
@@ -59,17 +99,15 @@ static DispatchReason choose_frost_moon(DispatchCommand& command) {
     const unsigned mapped=stance==2 ? 0 : stance==0 ? 1 : 2;
     const bool available=pulse[0]+pulse[2]>0 && (pulse[1]>0 || pulse[3]>0);
     const unsigned choice=frost_edge(frost_input,sample,slot,mapped,dispatch->control.reserved0>>16,
-        available,current,dispatch->control.qpc_frequency,pulse[1]);
-    uint32_t key=0; uint64_t payload=0; int32_t motion=0;
+        available,current,dispatch->control.qpc_frequency);
+    uint32_t key=0;
     if (!copy_field(current,key)) { frost_input.spent=true; return ContextChanged; }
-    const bool pulse_action=key>=0xD60 && key<=0xD62 && copy_field(current+0x20,payload)
-        && copy_field(payload+0x20,motion) && motion==2009+int(key-0xD60)*1000;
-    if (frost_input.opened && current!=frost_input.descriptor && !pulse_action && !repeat_current_allowed(current,key)) {
+    if (frost_input.opened && current!=frost_input.descriptor && !frost_continuation(current,key)) {
         frost_input.spent=true; return ContextChanged;
     }
     if (!choice || !boss_frost_variants[choice-1]) return IneligibleRequest;
     const unsigned target=unsigned(boss_frost_variants[choice-1]-1);
-    if (!replacement_context(command,boss_adapters[target])) return ContextChanged;
+    if (!native_binding_context(command)) return ContextChanged;
     const auto& move=boss_imports[target];
     command.reserved[1]=target; command.desired_key=move.key; command.expected_motion=move.motion;
     command.expected_descriptor=move.descriptor; command.expected_payload=move.payload; command.edge_qpc=sample.qpc;

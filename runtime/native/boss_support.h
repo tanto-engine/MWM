@@ -42,10 +42,10 @@ struct BossPrivateAction {
     bool ready;
 };
 static BossPrivateAction boss_private_actions[24]{};
-struct MoveTiming { int16_t recovery; float startup_end, startup_speed; };
+struct MoveTiming { int16_t recovery; float startup_end, startup_speed; float tail_end=0; };
 static MoveTiming boss_move_timing(unsigned slot) {
     // Own private recovery and shared-clock startup tuning together, by source identity.
-    // C79 recovers after non-audio event53; clips and event cursors remain unchanged.
+    // Recovery follows the final active hit; optional fast tails retain every native event.
     // Paired actions retain their source lifecycle; gameplay acceptance of these values is pending.
     const auto& move=boss_imports[slot];
     if (airborne_sword(move,boss_adapters[slot]) && move.key==0xC83)
@@ -55,10 +55,14 @@ static MoveTiming boss_move_timing(unsigned slot) {
     if (boss_adapters[slot].kind==2 && move.key==0xCAC && move.motion==5110 && move.flags==0x200194C0000ULL)
         for (auto frost : boss_frost_variants) if (frost==slot+1) return {move.recovery_frame,28,float(boss_frost_speed)};
     if (!boss_adapters[slot].kind && move.key==0xC64 && move.motion==1220 && move.flags==0x184C0000)
-        return {move.recovery_frame,30,2};
+        return {54,30,2};
+    if (!boss_adapters[slot].kind && move.key==0xC66 && move.motion==1230 && move.flags==0x184C0000)
+        return {78,0,1};
     if (boss_adapters[slot].kind==2 && move.key==0xC79 && move.motion==5014
         && move.flags==0x194C0000 && move.recovery_frame==-1)
-        return {54,8,boss_frost_variants[1]==slot+1 ? float(boss_frost_speed) : 2};
+        return {boss_adapters[slot].player_key==0xCF5 ? int16_t(21) : int16_t(54),8,
+                boss_frost_variants[1]==slot+1 ? float(boss_frost_speed) : 2,
+                boss_adapters[slot].player_key==0xCF5 ? 65.0f : 0.0f};
     return {move.recovery_frame,0,1};
 }
 static uint64_t boss_private_descriptor_address(unsigned slot = 0) {
@@ -156,7 +160,7 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
             memcpy(bodies[i]+0x14,&disabled,2);
         }
     }
-    if (boss_imports[slot].recovery_frame < 0) {
+    if (boss_move_timing(slot).recovery < 0) {
         total = source_count;
         return copy_bytes(source_slice,source_check,source_count*8)
             && !memcmp(source_pointers,source_check,source_count*8);
@@ -173,14 +177,14 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
     for (unsigned i = 0; i != 3; ++i) {
         auto* body = bodies[source_count + i];
         if (!copy_bytes(pulse_pointers[i], body, 0x30) || memcmp(body, boss_pulse_templates[i], 0x30)) return false;
-        const int16_t recovery_start = boss_imports[slot].recovery_frame;
+        const int16_t recovery_start = boss_move_timing(slot).recovery;
         memcpy(body + 0x20, &recovery_start, 2); // Never enable a pulse before attack recovery.
     }
     uint64_t dodge_pointer=0, dodge_check=0; uint8_t dodge[0x30];
     if (!copy_field(table+(uint64_t(start)+48)*8,dodge_pointer)
         || !copy_bytes(dodge_pointer,dodge,sizeof(dodge))
         || memcmp(dodge,boss_dodge_template,sizeof(dodge))) return false;
-    const int16_t recovery_start=boss_imports[slot].recovery_frame;
+    const int16_t recovery_start=boss_move_timing(slot).recovery;
     memcpy(dodge+0x20,&recovery_start,2);
     unsigned insertion=source_count+3;
     for (unsigned i=0;i<source_count;++i) {
@@ -350,6 +354,9 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (key != expected_key || !descriptor[0x40] || source_payload != expected_payload
         || motion != expected_motion || flags != spec.flags) return false;
     payload[0x0B] = 4; // Native0x70F3A3: keep current+0x470, retain+0x47C=1 behavior.
+    constexpr uint8_t stances[]={2,0,1};
+    for (unsigned stance=0;stance<3;++stance)
+        if (boss_frost_variants[stance]==slot+1) payload[0x0B]=stances[stance];
     int16_t recovery_start = 0, base_ki_cost = 0;
     memcpy(&recovery_start, payload + 0x24, sizeof(recovery_start));
     memcpy(&base_ki_cost, payload + 0x16, sizeof(base_ki_cost));

@@ -110,12 +110,13 @@ int main() {
     // R1, Living Water and buffered exits need the same positive recovery boundary.
     int16_t cancel_frame=0;
     memcpy(&cancel_frame,regular.payload+0x26,2);
-    assert(cancel_frame==65);
+    assert(cancel_frame==54);
     assert(memcmp(source_payload.data(), payload, 0xB0) == 0 && descriptor == source_descriptor);
     auto expected_regular = source_payload;
     expected_regular[0xB] = 4; expected_regular[0x33] = 40;
-    put(expected_regular.data(), 0x26, int16_t(65));
-    put(expected_regular.data(), 0x38, int16_t(65)); put(expected_regular.data(), 0x3A, int16_t(25));
+    put(expected_regular.data(), 0x24, int16_t(54));
+    put(expected_regular.data(), 0x26, int16_t(54));
+    put(expected_regular.data(), 0x38, int16_t(54)); put(expected_regular.data(), 0x3A, int16_t(25));
     put(expected_regular.data(), 0x3C, int16_t(24));
     assert(memcmp(regular.payload, expected_regular.data(), 0xB0) == 0);
     for (unsigned i = 0; i < 0xD0; ++i)
@@ -130,7 +131,7 @@ int main() {
         assert(regular.transition_pointers[i] == reinterpret_cast<uint64_t>(regular.transition_bodies[i]));
         if (i < 28) assert(memcmp(regular.transition_bodies[i], source_rows[i].data(), 0x30) == 0);
         else {
-            auto expected = i==31 ? dodge_row : pulse_rows[i-28]; put(expected.data(), 0x20, int16_t(65));
+            auto expected = i==31 ? dodge_row : pulse_rows[i-28]; put(expected.data(), 0x20, int16_t(54));
             assert(memcmp(regular.transition_bodies[i], expected.data(), 0x30) == 0);
         }
     }
@@ -187,8 +188,9 @@ int main() {
     assert(charged_payload == original_charged_payload && charged.payload[0xB] == 4);
     auto expected_charged = original_charged_payload;
     expected_charged[0xB] = 4; expected_charged[0x33] = 40;
-    put(expected_charged.data(), 0x26, int16_t(90));
-    put(expected_charged.data(), 0x38, int16_t(90)); put(expected_charged.data(), 0x3A, int16_t(25));
+    put(expected_charged.data(), 0x24, int16_t(78));
+    put(expected_charged.data(), 0x26, int16_t(78));
+    put(expected_charged.data(), 0x38, int16_t(78)); put(expected_charged.data(), 0x3A, int16_t(25));
     put(expected_charged.data(), 0x3C, int16_t(24));
     assert(memcmp(charged.payload, expected_charged.data(), 0xB0) == 0);
     assert(charged.transition_count == 26);
@@ -196,7 +198,7 @@ int main() {
         assert(charged.transition_pointers[i] == reinterpret_cast<uint64_t>(charged.transition_bodies[i]));
         if (i < 22) assert(memcmp(charged.transition_bodies[i], source_rows[i].data(), 0x30) == 0);
         else {
-            auto expected = i==25 ? dodge_row : pulse_rows[i-22]; put(expected.data(), 0x20, int16_t(90));
+            auto expected = i==25 ? dodge_row : pulse_rows[i-22]; put(expected.data(), 0x20, int16_t(78));
             assert(memcmp(charged.transition_bodies[i], expected.data(), 0x30) == 0);
         }
     }

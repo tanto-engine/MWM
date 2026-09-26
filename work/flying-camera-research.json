@@ -1,0 +1,375 @@
+{
+  "scope": "Read-only audit; no game writes, control, capture or gameplay claim. One earlier exact-identity passive camera read; remaining research offline.",
+  "supported_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "assets": {
+    "catalogue/resource_assets/jin_hayabusa/motion.dat": {
+      "bytes": 2468896,
+      "sha256": "29c7c5f5d3adf05bb08d6171da18d8f40794d097e6df7ca11ddd9039479a2763"
+    },
+    "catalogue/resource_assets/jin_hayabusa/timing.dat": {
+      "bytes": 204688,
+      "sha256": "9c5420e93f0f3c3761038ee99da02e3048ffe55103b09fc3c54bda5ea4a0c2e6"
+    },
+    "catalogue/resource_assets/jin_hayabusa/camera.dat": {
+      "bytes": 432,
+      "sha256": "28b8741a71446b98d9370259391aaad3761e4a421ce6b93cfb0e0ead3efcc6e7"
+    },
+    "catalogue/imports/jin_hayabusa.json": {
+      "bytes": 17382,
+      "sha256": "79a61231e8d8fc727656154bb0b0b5e46617a8210c941d6d021dc21c00d18904"
+    }
+  },
+  "selector": {
+    "native_action_selection": "70ED46 reads actionnode+68. Bank1 maps motion+48 and camera+20 to0 at70ED99; bank0 maps1 at70EDA8; bit4 payload override maps2 at70ED8A. Flying Swallow C71..73 first payload flags0x402 do not set bit4; C74 first flags2 also lacks it.",
+    "script_camera_consumers": "917615/917627 and9179E4/9179F9 read camera+20 then slot+8+8*index. A null bank returns without replacing prior clip+28; a non-null bank lacking the key writes clip0.",
+    "event_route": "Timing kind30 dispatch at968466/968477 and969E27/969E39 calls965E50. Handler965EE7 calls917600. Kind31 calls917A70 to end the camera. Consumption is through timing processing, not an unconditional camera-animation lookup merely because the action changed.",
+    "flying_swallow_events": {
+      "1050": [
+        [
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          10,
+          1
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          2,
+          10,
+          0
+        ],
+        [
+          2,
+          10,
+          10
+        ],
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          10,
+          8
+        ],
+        [
+          4,
+          10,
+          9
+        ]
+      ],
+      "5000": [
+        [
+          0,
+          10,
+          3
+        ],
+        [
+          0,
+          10,
+          4
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          1,
+          10,
+          0
+        ],
+        [
+          1,
+          10,
+          1
+        ],
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          3,
+          10,
+          2
+        ],
+        [
+          13,
+          1,
+          0
+        ]
+      ],
+      "5001": [
+        [
+          0,
+          10,
+          0
+        ],
+        [
+          0,
+          20,
+          0
+        ]
+      ],
+      "5002": [
+        [
+          0,
+          10,
+          1
+        ],
+        [
+          0,
+          10,
+          4
+        ],
+        [
+          0,
+          20,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ],
+        [
+          28,
+          10,
+          5
+        ],
+        [
+          32,
+          10,
+          2
+        ],
+        [
+          38,
+          10,
+          0
+        ],
+        [
+          40,
+          0,
+          2
+        ],
+        [
+          40,
+          10,
+          3
+        ],
+        [
+          42,
+          10,
+          6
+        ]
+      ]
+    },
+    "result": "All four source timing records lack kind30/31 and have empty +18 camera sections. Retained Jin camera package has only key5020, used by paired Izuna. No direct normal-follow camera-height consumer of camera+20 was established.",
+    "passive_snapshot": {
+      "pid": 11564,
+      "creation_filetime": 134349074321430317,
+      "module_base": "0x7ff7669c0000",
+      "actor": "0x265595bcc20",
+      "owner": "0x26548348ce0",
+      "camera": "0x2654834e380",
+      "camera_index": 2,
+      "slots": [
+        "0x0",
+        "0x265a84a4770",
+        "0x265a84a1e40"
+      ],
+      "identity_validation": "session profile process birth/module/actor vtable/owner validated; owner-camera pointer rechecked. Historical observation only; must revalidate before any subsequent read."
+    },
+    "scoped_restore_assessment": "Could preserve the pre-entry valid nonpaired player camera selector after a committed private C71..74 setter on the same component, with exact identity/current descriptor and field ownership checks. This has no proved connection to the reported vertical camera symptom and should not be implemented as a claimed fix. Do not borrow Jin camera bank or touch paired camera, lock-on, view angles, or input."
+  },
+  "vertical_motion": {
+    "clock": "Runtime windup_support.h updates actionnode+6A8 speed and+24 delta together.6FF8F1..6FF920 transfers speed to motion+F4;955A67 advances clip frame from this speed. C71 startup0..19 at8x compresses19 animation frames into about2.375 normal-frame intervals, without seeking events.",
+    "source_payload": "C71/C72/C73 first flags0x402 contain bit10; C74 flags2 lacks it. Native73B41B state2 returns payload bit10; state3 tests0x200000400.",
+    "source_curve": {
+      "motion": 1050,
+      "clip_offset": 48160,
+      "clip_frames": 54,
+      "fps": 60,
+      "bone": 1,
+      "channel": 1,
+      "curve_header_offset_in_clip": 280,
+      "curve_data_base_in_clip": 2500,
+      "samples": [
+        {
+          "frame": 0,
+          "xyz_source_units": [
+            0.0,
+            82.822998,
+            0.0
+          ]
+        },
+        {
+          "frame": 1,
+          "xyz_source_units": [
+            -0.301758,
+            82.049316,
+            12.01001
+          ]
+        },
+        {
+          "frame": 2,
+          "xyz_source_units": [
+            -0.790771,
+            79.442139,
+            26.496826
+          ]
+        },
+        {
+          "frame": 3,
+          "xyz_source_units": [
+            -0.622803,
+            68.976807,
+            41.266113
+          ]
+        },
+        {
+          "frame": 4,
+          "xyz_source_units": [
+            -0.627441,
+            67.290771,
+            56.647461
+          ]
+        },
+        {
+          "frame": 8,
+          "xyz_source_units": [
+            -1.050293,
+            159.362305,
+            122.124512
+          ]
+        },
+        {
+          "frame": 12,
+          "xyz_source_units": [
+            -1.179256,
+            217.671059,
+            182.491402
+          ]
+        },
+        {
+          "frame": 16,
+          "xyz_source_units": [
+            -1.310547,
+            208.192871,
+            254.775391
+          ]
+        },
+        {
+          "frame": 19,
+          "xyz_source_units": [
+            -1.341309,
+            201.61084,
+            242.658691
+          ]
+        }
+      ],
+      "max_adjacent_polynomial_endpoint_difference_source_units": 0.02301025390625
+    },
+    "curve_decode_proof": "34EE10 loader: bone count is fileu16+12>>4; descriptors begin+1C; curve headers follow descriptor array for fileu32+14 bytes; each coefficient record is32 bytes.3500E0 selects bone and channel1;350520 selects knot span;34E7C0 decodes four packed signed cubic coefficient vectors.",
+    "limit": "These are source bone translation coordinates, not measured player world height or camera displacement. Native movement6FF9B0 samples the curve at700972/700AD6 but clears the Y term at700C6C for horizontal root-motion projection; airborne state2 separately applies action delta times actor stat+14 at700D70..700DA4. Therefore zeroing curve Y or clearing airborne flags is not an evidence-backed camera fix and can change contact/landing semantics.",
+    "recommendation": "Player A/B8x versus1x startup can isolate accelerated motion as cause while leaving native camera and action flags intact.1x is a diagnostic, not fulfillment of near-instant Frost. If8x alone reproduces the symptom, preserve fast grounded preparation but derive a verified airborne boundary before retuning its phase; no grounded/airborne split point is established by this audit."
+  },
+  "input": "controller_input.h only reads existing XINPUT1_3!XInputGetState. Snapshot contains buttons/triggers/packets, no stick axes. No runtime XInputSetState, SendInput, mouse_event, SetCursor, deadzone, or sThumb writes found. Right-stick drift cannot be diagnosed from current snapshot.",
+  "minhook": {
+    "keep": true,
+    "active_hook_rvas": [
+      "0x70ECE0",
+      "0x719050",
+      "0x9670A0",
+      "0x73FA40"
+    ],
+    "resource_loader": "Temporary719050 hook loads packages on game thread. Both DLLs statically link the same four MinHook objects.",
+    "reason": "Active x64 detour/trampoline and thread/IP lifecycle support; no camera or XInput hook and no per-frame MinHook API overhead. Removing needs a replacement hooking backend.",
+    "optional_dead_x86_files": [
+      "third_party/minhook/src/hde/hde32.c",
+      "third_party/minhook/src/hde/hde32.h",
+      "third_party/minhook/src/hde/table32.h"
+    ],
+    "optional_bytes": 15276,
+    "optional_lines": 502
+  },
+  "native_spans": [
+    {
+      "name": "selector mapping",
+      "rva_start": "0x70ed36",
+      "rva_end_exclusive": "0x70edae",
+      "sha256": "6c0f4172db133caf5c22cbd87dea244e2bc56138d8ef2089ff9ca71014410af3",
+      "finding": "Bank1 assigns camera selector0."
+    },
+    {
+      "name": "camera lookup",
+      "rva_start": "0x917600",
+      "rva_end_exclusive": "0x917674",
+      "sha256": "70ff937282b4a7ea4a3630b97522551fd3e99ddbb144c3d13e4bbbdd3991e3be",
+      "finding": "Selector-indexed bank and null/missing distinctions."
+    },
+    {
+      "name": "camera event handler",
+      "rva_start": "0x965e50",
+      "rva_end_exclusive": "0x965f07",
+      "sha256": "4a70877a5de49b4c122c2f8e13a58306584cacdbb78da3f9b3cbb527c9a47a83",
+      "finding": "Native timed camera dispatch."
+    },
+    {
+      "name": "timing event routing",
+      "rva_start": "0x9683c4",
+      "rva_end_exclusive": "0x9684a7",
+      "sha256": "29879b3d81ac254e89ba9755d5ed1f29e5bce31fcf76edf3492f1351aa66ea91",
+      "finding": "Kinds30/31 are camera start/end."
+    },
+    {
+      "name": "G2A source loader",
+      "rva_start": "0x34ee10",
+      "rva_end_exclusive": "0x34f0f1",
+      "sha256": "46d203c1d640aa92097e52f3409aaa64c6584b45fe7cf30e5c587dd5fce3b66f",
+      "finding": "Verified offline source format."
+    },
+    {
+      "name": "bone channel sampler",
+      "rva_start": "0x3500e0",
+      "rva_end_exclusive": "0x3501ce",
+      "sha256": "7e09c8b3dee4e5c2ce6f88fe4b2e216b5cd0b84a0dd08a2b4e6e4f0d8c7dea01",
+      "finding": "Bone identity and translation channel1."
+    },
+    {
+      "name": "cubic coefficient unpack",
+      "rva_start": "0x34e7c0",
+      "rva_end_exclusive": "0x34e9b9",
+      "sha256": "bb05284d7fe7e8b1a1cbae2f7248c86cb1ebecfe75dbc1e86f4455b4cf4ec5b8",
+      "finding": "Packed cubic translation coefficient decode."
+    },
+    {
+      "name": "shared body clock",
+      "rva_start": "0x955a40",
+      "rva_end_exclusive": "0x955a97",
+      "sha256": "7c4ed1a733cd7e99e5069cb7724b94f16570e82ec998e9980be6f511f878cd9e",
+      "finding": "Motion frame uses shared speed."
+    },
+    {
+      "name": "horizontal projection and airborne movement",
+      "rva_start": "0x700c5a",
+      "rva_end_exclusive": "0x700dac",
+      "sha256": "b94f7cab8082e70e42a6c88940d23cd27f25ada92024cb81127129dc2413e21d",
+      "finding": "Curve Y cleared; airborne movement uses action delta separately."
+    }
+  ]
+}

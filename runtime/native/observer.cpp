@@ -72,6 +72,9 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
     DispatchCommand command{};
     DispatchReason reason = Disabled;
 #ifdef RESEARCH_REPEAT
+    if (record_this && request==ActionRequest::Native && key>=0xD5F && key<=0xD78
+        && reinterpret_cast<uint64_t>(actor)==boss_session.player)
+        latch_native_frost();
     if (record_this && request==ActionRequest::Frost) reason=choose_frost_moon(command);
     else if (record_this && request==ActionRequest::Heavy) reason=choose_heavy(command);
     else if (record_this && request==ActionRequest::Chain) reason = choose_chain(actor, command);

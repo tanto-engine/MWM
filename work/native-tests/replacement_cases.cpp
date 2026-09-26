@@ -415,15 +415,43 @@ static void frost_cases() {
             fired+=frost_edge(input,sample,failure==7 && tick>=20 ? 1 : 0,
                 tick<10 ? 0 : 2,failure==8 && tick>=20 ? 1 : 0,tick>=1 && tick<15,0x10000,1000000);
         }
-        assert(fired==(failure==0 ? 3u : 0u));
+        assert(fired==(failure==0 || failure==4 ? 3u : 0u));
     }
     FrostMoonInput continued{}; GameInput continuous{};
     continuous.qpc=1; frost_edge(continued,continuous,0,0,0,false,0x10000,1000000);
-    continuous.qpc=10001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,25);
-    continuous.qpc=20001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,24);
+    continuous.qpc=10001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
+    continuous.qpc=20001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
     assert(continued.opened==10001);
-    continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000,25);
-    assert(continued.opened==30001); // A new attack resets native fill without an intervening false D5 sample.
+    continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
+    assert(continued.opened==10001); // Refills cannot slide the window away from first availability.
+    for (unsigned target=0;target<3;++target) {
+        const unsigned native[]={2,0,1};const WORD faces[]={XINPUT_GAMEPAD_A,XINPUT_GAMEPAD_X,XINPUT_GAMEPAD_Y};
+        boss_hold_stances=7;hold_reset(native[target]);pending_heavy={};frost_input={};pad_buttons=0;
+        boss_hold_stances=0;boss_frost_variants[target]=6;
+        static uint8_t vitals[0xA0]{},flux[0xD0]{},flux_payload[0xB0]{};
+        memset(vitals,0,sizeof(vitals));put(owner.data(),0x240,address(vitals));
+        put(player.data(),0x470,uint32_t(target==0 ? 1 : 2));publish();tick();
+        put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);publish();tick();
+        const auto opened=frost_input.opened;assert(opened);
+        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];publish();tick();
+        assert(frost_input.choice==target && !boss_active);
+        pad_buttons=0;memset(vitals,0,sizeof(vitals));publish();tick();
+        put(flux,0,uint32_t(target==0 ? 0xD74 : target==1 ? 0xD78 : 0xD77));
+        put(flux,0x20,address(flux_payload));put(flux_payload,0x20,int32_t(target==0 ? 2007 : target==1 ? 4007 : 4006));
+        put(player.data(),0x58,address(flux));
+        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];publish();tick();
+        assert(boss_active && dispatch->control.dispatch_count==1 && frost_input.opened==opened);
+        assert(boss_private_actions[5].payload[0x0B]==native[target]);
+        boss_frost_variants[target]=0;
+    }
+    // Native action callbacks can see the opportunity before RB consumes its timer.
+    boss_hold_stances=7;hold_reset(2);pending_heavy={};frost_input={};pad_buttons=0;
+    boss_frost_variants[0]=6;
+    static uint8_t early_vitals[0xA0]{};put(owner.data(),0x240,address(early_vitals));
+    publish();tick();put(early_vitals,0x8C,25.0f);put(early_vitals,0x90,25.0f);
+    latch_native_frost();assert(frost_input.opened);
+    const auto earliest=frost_input.opened;memset(early_vitals,0,sizeof(early_vitals));
+    publish();tick();assert(frost_input.opened==earliest);boss_frost_variants[0]=0;
     for (bool damage : {false,true}) {
     boss_hold_stances=7;
     hold_reset(1); pending_heavy={}; frost_input={}; pad_buttons=0;
@@ -727,19 +755,19 @@ int main() {
     // Paired/colliding keys must not inherit the launcher tuning.
     int16_t combo=0,cancel=0,pulse=0,source_recovery=0;
     const auto private_payload=boss_private_payload_address(5);
-    assert(copy_field(private_payload+0x24,combo) && combo==54);
-    assert(copy_field(private_payload+0x26,cancel) && cancel==54);
-    assert(copy_field(private_payload+0x38,pulse) && pulse==54);
+    assert(copy_field(private_payload+0x24,combo) && combo==21);
+    assert(copy_field(private_payload+0x26,cancel) && cancel==21);
+    assert(copy_field(private_payload+0x38,pulse) && pulse==21);
     assert(copy_field(launcher.payload+0x24,source_recovery) && source_recovery==-1);
     unsigned pulses=0;
     for (unsigned i=0;i<boss_private_actions[5].transition_count;++i) {
         const auto* body=boss_private_actions[5].transition_bodies[i]; int16_t key=0,start=0;
         memcpy(&key,body+0x14,2); memcpy(&start,body+0x20,2);
-        if (key==0xD5F) { assert(start==54); ++pulses; }
+        if (key==0xD5F) { assert(start==21); ++pulses; }
     }
     assert(pulses==3);
     original_frame=native_clock_frame; put(motion.data(),0x58,launcher.clip);
-    for (const auto& sample : {std::array<float,2>{0,2},{6.5f,1.5f},{7,1},{8,1},{12,1},{60,1}}) {
+    for (const auto& sample : {std::array<float,2>{0,2},{6.5f,1.5f},{7,1},{8,1},{12,1},{20,1},{21,8},{53,8},{60,5},{64,1},{65,1}}) {
         put(player.data(),0x28,sample[0]); SetLastError(INCOMING);
         assert(observed_frame(player.data(),1.0f)==sample[1]);
         float speed=0,delta=0,frame=0;

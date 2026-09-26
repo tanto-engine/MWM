@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-26",
+  "runtime_dlls": {
+    "nioh_skill_runtime.dll": "55406ee38d1a2ea97a1b27ddf9efbb77ee25bf20df37b4293c9bf0311fb82581",
+    "nioh_resources.dll": "223c18a7ffba79804135e11fa58a5d28909da6800aed1d700d8f6f8fbda10e2a"
+  },
+  "user_report": "everything worked. I like the current flying swallow speed and stuff, dont change.",
+  "tested": [
+    "Mid, High and Low Frost Moon after attacks, including repeated RB releases",
+    "Earlier Ki Pulse after Okatsu dash, leap and low launcher",
+    "Low launcher end lag"
+  ],
+  "controller_confirmation": "User confirms RB + Square selects Mid; RB + Triangle selects High. No controller remapping made.",
+  "reproduction": [
+    "Old frost_edge rejected two chord presses when RB was released between them; existing native regression failed before the fix.",
+    "Old continuation policy rejected recorded Flux D73-D78 transitions.",
+    "Recovery was dash65,leap90,launcher54; source contact windows end at53,77,20 respectively."
+  ],
+  "fixes": [
+    "Latch first native D5 availability before native Pulse can consume it; retain original750ms deadline through Flux and releases.",
+    "Count complete RB/face chord edges and select the bound stance through the private imported payload.",
+    "Recognized chord may override ordinary native light/heavy/dodge actions. Unrelated interruptions still cancel.",
+    "Private recovery/cancel/Pulse start at54,78,21; low C79 tail21..65 runs8x with source events and clip intact."
+  ],
+  "native_exact_matches": {
+    "0C79": 8,
+    "0C71": 7,
+    "0C72": 7,
+    "0C73": 7,
+    "0C74": 7,
+    "0C7A": 1,
+    "03B2": 1,
+    "03B6": 1
+  },
+  "native_evidence_scope": "Exact imported action/clip commits observed; user confirmation covers the requested feel/input checks, not the complete gameplay-readiness matrix.",
+  "flying_swallow": "Unchanged at user request. Existing8x startup retained. Camera research identifies possible vertical-motion effects but no proven camera-field fix; no camera patch applied.",
+  "dependencies": "MinHook retained for four runtime hooks and native-thread resource loading. No code writes controller stick axes.",
+  "checks": {
+    "offline": 172,
+    "crash": 8,
+    "build": "passed",
+    "workbook": "repository and Downloads copies synchronized"
+  },
+  "runtime_sources": {
+    "runtime/native/boss_support.h": "6a8e3e16f5e1fb60cfcc684d71cd3e7075da1b4f018b8590c3f7ab28606373c5",
+    "runtime/native/frost_moon.h": "fcdcb58f79a1ef0e840eb9ad5684327ed1f12caba96c6ad489600a4e1f3c423b",
+    "runtime/native/observer.cpp": "66482077fbf1aff37c7838fafc099afc87f7005497c69bd22152d4e840da2e1f",
+    "runtime/native/windup_support.h": "133f70b9ff9aa8572d54aa3ba1acc99f3ffddfdc3370c1564f818a2069cc5092"
+  }
+}

@@ -608,6 +608,11 @@ int main() {
     // controller combo requests are disabled, and simple moves gain pulse rows.
     chain_reset(); reach(2);
     assert(boss_prepare_private_action(0) && boss_prepare_private_action(1));
+    for (unsigned slot=0;slot<2;++slot) {
+        const int16_t earliest=slot==0 ? 54 : 78;
+        for (unsigned offset : {0x24u,0x26u,0x38u})
+            assert(grapple_field(boss_private_payload_address(slot),offset,earliest));
+    }
     for (unsigned slot=0;slot<5;++slot) for (uint8_t direction : {0x1f,0x21,0x22,0xff}) {
         int16_t selected=-1;
         for (unsigned row=0;row<boss_private_actions[slot].transition_count;++row) {
@@ -617,7 +622,7 @@ int main() {
             const bool directional=body[0x0B]==direction && body[0x0C]==4 && body[0x0D]==2 && body[0x0E]==1;
             if (condition!=0x5c || (!dodge && !directional)) continue;
             std::array<uint8_t,0x30> expected{}; memcpy(expected.data(),native_dodge_row,0x30);
-            put(expected.data(),0x20,boss_imports[slot].recovery_frame);
+            put(expected.data(),0x20,boss_move_timing(slot).recovery);
             assert(!memcmp(body,expected.data(),0x30));
             memcpy(&selected,body+0x14,2); break;
         }
@@ -637,7 +642,7 @@ int main() {
         for (unsigned row=boss_imports[slot].transition_count+1;row<clone.transition_count;++row) {
             std::array<uint8_t,0x30> expected{};
             memcpy(expected.data(),boss_pulse_templates[row-boss_imports[slot].transition_count-1],0x30);
-            put(expected.data(),0x20,boss_imports[slot].recovery_frame);
+            put(expected.data(),0x20,boss_move_timing(slot).recovery);
             assert(!memcmp(expected.data(),clone.transition_bodies[row],0x30)); ++checks;
         }
     }

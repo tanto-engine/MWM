@@ -1,7 +1,8 @@
 Nioh 1 Sword Mod
 
 Current build: sword bindings and Frost Moon; gameplay acceptance pending.
-The user will verify gameplay later. Do not infer acceptance from offline tests.
+User confirmed Frost Moon spam, early Pulse and launcher recovery on2026-09-26.
+Flying Swallow speed remains unchanged at user request. Full gameplay coverage is pending.
 
 Run from this repository in PowerShell:
   .\Trainer.ps1           Source UI, preset editing and runtime controls
@@ -28,8 +29,10 @@ Configuration:
   Native guard + light timing/skill gates remain; its full airborne sequence runs at1x.
   Landing recovery/Pulse opens at30 of37 frames. Set high_guard_light=null for native.
   Low held Triangle overrides native empty-Ki grapple; a tap retains grapple.
-  High Frost Moon: hold RB and press Triangle twice, starting in low or mid stance.
-  Window:0.75 seconds from native Ki Pulse availability; no same-stance reuse.
+  High Frost Moon: RB + Triangle twice, starting in low or mid stance.
+  RB may be released between presses; Flux and input spam retain the initial deadline.
+  Window:0.75 seconds from earliest native Ki Pulse availability, before perfect Pulse.
+  No same-stance reuse. Frost selects its target stance and overrides chord attack/dodge spillover.
   Frost startup speed:1..8x, default8x through CAC frame28; timing events remain intact.
   Its previous-action cancellation uses native Pulse availability, not animation end.
   Mid Frost Moon: RB + Square twice, C79 -> C7A contact -> 3B2/3B4 -> 3B6 Izuna.
@@ -37,6 +40,8 @@ Configuration:
   Low Frost Moon: R1 + X (PlayStation) / RB + A (Xbox), twice. Flying Swallow runs
   C71 jump -> C72 dash -> C73 descent -> C74 landing, preserving native transitions.
   Jump startup accelerates through19; dash Ki20 carries to the landing Pulse at20.
+  Dash Pulse/recovery starts at54; leap at78; low launcher at21.
+  Low launcher tail21..65 uses8x shared-clock playback; its complete clip/events remain.
   Low launcher: grounded impulse12 ->16 plus50% native collision weight for its victim
   reaction. Original weight returns on exit, interruption, replacement or cooperative Stop.
   Weight changes push resistance; it is not a proportional airtime/gravity multiplier.

@@ -2,9 +2,9 @@
   "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
   "verification": "Owned-memory checks and source recordings; modified gameplay acceptance pending",
   "frost_moon": {
-    "input": "RB held with two separate presses of one different-stance face button",
+    "input": "Two separate RB + same different-stance face chord presses, including RB release/repress spam. Private source payload selects the requested stance.",
     "window_seconds": 0.75,
-    "clock": "Wall time from first player-frame observation of native conditionD5 becoming available; frame-sampling quantization remains",
+    "clock": "Wall time from first observed nativeD5 opportunity, latched before the native Pulse setter can consume it. Flux, RB releases and refills retain the same750ms deadline; no perfect-Pulse dependency.",
     "native_availability": "736CB0 condition tableD5 selects7397FD; owner+240+40 passed to7AFDF0. Reads vitals+8C,+90,+94,+98: total duration positive and fill or hold remaining positive.",
     "high": "CAC/5110 to CAD/5111; native condition20 continuation retained",
     "startup": "CAC shared native motion/timing clock through frame28, first non-audio timing event. Configurable1..8x; default8. No event seek or clip truncation.",
@@ -12,7 +12,8 @@
     "mid": "C79/5014 -> C7A/1050 native condition22 -> 3B2/5020, optional3B4/5021 -> 3B6/5022. Source recorded together with victims3B3/35300 and3B7/35302 in work/jin-izuna-retry2-20260925/events.jsonl. First8 launcher frames use configured startup; paired camera/speed unchanged.",
     "low": "Enabled in the default preset: full C71/1050 jump -> C72/5000 dash -> C73/5001 descent -> C74/5002 landing. Source conditions unchanged; no grounded cancel rows during flight.",
     "airborne_ki": "Native70FF6E resets Pulse only forpositivecost orpayloadflags&40200. C72 keeps Ki20 and setsprivatepercent40/start-1; zero-cost C73/C74 do notresetthependingbalance. Native71000A accumulatesactualadjustedcost; C74privatepercent40 andstart20 open7B59F0 through715118. No direct Ki writes; gameplay pending.",
-    "graph_regression": "Reproduced C74 successor search leaking into separate low C79; now restrict source edges and stance ownership. Existing native replacement cases cover both graphs."
+    "graph_regression": "Reproduced C74 successor search leaking into separate low C79; now restrict source edges and stance ownership. Existing native replacement cases cover both graphs.",
+    "regression_20260926": "work/frost-live-20260926.json"
   },
   "tiger_sprint": {
     "recording": "work/tiger-sprint-full-20260925/events.jsonl",
@@ -88,12 +89,12 @@
       "tests/test_resource_crashes.py"
     ],
     "trainer": "Hidden UI preset roundtrip passed for Jin somersault and Native;995x730 requested layout fits1030x760.",
-    "workbook_sha256": "c1ddd87db0efd36afebee816b44948ee931d4470de9654eed761b8c8ea0f4d84",
+    "workbook_sha256": "19472932a4f1006ec74f63c7b97e3752ca7f36cecf7424e558b027f921ee826f",
     "runtime_dlls": {
-      "nioh_skill_runtime.dll": "c18b58dc9255cdc7b957d30e1c52062841d1aa6a318eb0c05530b6a0dc1ccad8",
-      "nioh_resources.dll": "cdf79e5589420001ba36c3ae1fb099a99577210d889759de8112755da7f16a66"
+      "nioh_skill_runtime.dll": "55406ee38d1a2ea97a1b27ddf9efbb77ee25bf20df37b4293c9bf0311fb82581",
+      "nioh_resources.dll": "223c18a7ffba79804135e11fa58a5d28909da6800aed1d700d8f6f8fbda10e2a"
     },
-    "gameplay": "Not assessed on the modified build; user previously requested prepare/publish and testing later",
+    "gameplay": "User confirmed Frost Moon spam, early dash/leap/launcher Ki Pulse and launcher end lag on2026-09-26. Broader readiness matrix remains pending.",
     "scratch_deletion": "Automatic approval review rejected deletion as blocked by policy; untracked disposable takes/models excluded from publication"
   },
   "high_guard_light": {
@@ -115,5 +116,12 @@
     "default_total_imports": 21,
     "removed_transition_rows": 57,
     "scope": "Disabled standalone string imports only; retained source packages and ABI allocation unchanged. No FPS claim."
+  },
+  "recovery_20260926": {
+    "dash": 54,
+    "leap": 78,
+    "low_launcher": 21,
+    "low_launcher_tail": "21..65 at8x; full clip and timing retained",
+    "verification": "user spot-check passed; work/frost-live-20260926.json"
   }
 }
