@@ -17,12 +17,108 @@ sys.path[:0]=[str(ROOT),str(ROOT.parent/'tanto-recorder/src')]
 from build_product import READ_ONLY, stage_product
 import build_product
 from recorder import export_capture
-from recording_bundle import intake_bundle, session_summary
+from recording_bundle import intake_bundle, session_summary, export_sessions
+from recording_hotkey import parse_hotkey
 from encounter_recording import save_annotation
 from encounter_recording_cases import state, metadata
 
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_multi_session_export_and_intake_preserve_bosses_takes_and_revisions(self):
+        with tempfile.TemporaryDirectory() as td:
+            base=Path(td);folders=[];originals={}
+            for index,boss in enumerate(('okatsu','okatsu','maria')):
+                folder=base/str(index)/'same-name';take=folder/'take-0001';take.mkdir(parents=True);folders.append(folder)
+                (folder/'encounter.json').write_text(json.dumps(dict(boss_id=boss,boss_name=boss.title(),recording_id=str(index),created_at=1)))
+                (take/'events.jsonl').write_text(json.dumps(state(2)))
+                label=save_annotation(folder,'First description',take.name,0,2)
+                save_annotation(folder,'Revised description',take.name,0,2,label_id=label['label_id'])
+                originals[folder]=(folder/'labels.jsonl').read_bytes()
+            path=export_sessions(folders,base/'tanto-zips/share.zip')
+            report=intake_bundle(path,base/'intake')
+            self.assertEqual([item['boss_id'] for item in report['sessions']],['okatsu','okatsu','maria'])
+            self.assertTrue(all(item['annotations'][0]['revision']==2 for item in report['sessions']))
+            self.assertEqual(intake_bundle(path,base/'intake'),report)
+            self.assertEqual(len(list((base/'intake/captures').glob('*.jsonl'))),1)
+            self.assertIn('boss_identity',{c['kind'] for c in report['sessions'][2]['conflicts']})
+            with zipfile.ZipFile(path) as outer:
+                self.assertEqual(len(outer.namelist()),4)
+                import io
+                for index,folder in enumerate(folders,1):
+                    with zipfile.ZipFile(io.BytesIO(outer.read(f'session-{index:04d}.zip'))) as inner:
+                        self.assertEqual(inner.read('labels.jsonl'),originals[folder])
+                    self.assertEqual((folder/'labels.jsonl').read_bytes(),originals[folder])
+
+    def test_collection_rejects_a_bad_later_session_before_saving_any_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            base=Path(td);folder=base/'session';take=folder/'take-0001';take.mkdir(parents=True)
+            (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',recording_id='test',created_at=1)))
+            (take/'events.jsonl').write_text(json.dumps(state(2)))
+            good=export_capture(folder,base/'good.zip').read_bytes()
+            import io
+            malformed=io.BytesIO()
+            with zipfile.ZipFile(malformed,'w') as archive:archive.writestr('manifest.json','{}')
+            archive_path=base/'bad-collection.zip';entries=[]
+            with zipfile.ZipFile(archive_path,'w') as archive:
+                for index,data in enumerate((good,malformed.getvalue()),1):
+                    name=f'session-{index:04d}.zip';archive.writestr(name,data)
+                    entries.append(dict(path=name,size=len(data),sha256=hashlib.sha256(data).hexdigest()))
+                archive.writestr('manifest.json',json.dumps(dict(kind='tanto_recording_collection',schema_version=1,sessions=entries)))
+            with self.assertRaises(ValueError):intake_bundle(archive_path,base/'intake')
+            self.assertFalse((base/'intake').exists())
+            with self.assertRaises(ValueError):export_sessions([folder,base],base/'failed.zip')
+            self.assertFalse((base/'failed.zip').exists())
+
+    def test_existing_recording_library_and_custom_binding_survive_upgrade(self):
+        with tempfile.TemporaryDirectory() as td:
+            base=Path(td);library=base/'Tanto Recordings';session=library/'old';take=session/'take-0001';take.mkdir(parents=True)
+            (session/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',boss_name='Okatsu',recording_id='old',created_at=1)))
+            raw=b'{"kind":"end","t":2}\n';(take/'events.jsonl').write_bytes(raw)
+            settings=base/'settings.json'
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
+            try:
+                self.assertTrue(app.set_recordings(library));app.load_session(session)
+                app.key.set('Ctrl+Alt+K');app.configure_hotkey();app.close()
+                root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
+                self.assertEqual(app.recordings,library);self.assertEqual(app.folder,session)
+                self.assertEqual(app.key.get(),'Ctrl+Alt+K')
+                app.new_session();app.boss.set('Maria')
+                with patch.object(recorder,'record_encounter') as backend:
+                    app.start();app.thread.join(2)
+                self.assertEqual(app.folder.parent,library);self.assertNotEqual(app.folder,session)
+                self.assertEqual((take/'events.jsonl').read_bytes(),raw)
+                self.assertEqual(backend.call_count,1)
+            finally:app.close()
+
+    def test_custom_hotkey_capture_cancel_and_reserved_shortcuts(self):
+        from types import SimpleNamespace
+        self.assertEqual(parse_hotkey('Ctrl+Alt+K'),(3,ord('K')))
+        for key in ('K','F1','F12','Ctrl+S','Alt+F4','Ctrl+Ctrl+K','Ctrl+Shift'):
+            with self.assertRaises(ValueError):parse_hotkey(key)
+        with tempfile.TemporaryDirectory() as td:
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
+            try:
+                app.begin_binding();app.capture_binding(SimpleNamespace(keysym='Escape'))
+                self.assertEqual(app.key.get(),'F8');self.assertIsNone(app.binding)
+                app.begin_binding();app.capture_binding(SimpleNamespace(keysym='k',state=4|8))
+                self.assertEqual(app.key.get(),'Ctrl+Alt+K');self.assertIsNone(app.binding)
+                self.assertEqual(json.loads(app.settings_path.read_text())['hotkey'],'Ctrl+Alt+K')
+            finally:app.close()
+
+    def test_export_picker_cancellation_is_idle_and_can_export_without_open_session(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
+            try:
+                with patch.object(recorder,'choose_recording_folders',return_value=[]):app.export()
+                self.assertFalse(app.busy());self.assertIsNone(app.operation)
+                with patch.object(recorder,'choose_recording_folders',return_value=[Path(td)]), \
+                     patch.object(recorder,'downloads_dir',return_value=Path(td)/'Downloads'), \
+                     patch.object(recorder,'export_sessions',return_value=Path(td)/'share.zip') as export:
+                    app.export();app.thread.join(2)
+                    self.assertEqual(export.call_args.args[0],[Path(td)])
+                    self.assertEqual(export.call_args.args[1].parent,Path(td)/'Downloads/tanto-zips')
+            finally:app.close()
+
     def test_exe_release_gate_rejects_unversioned_dirty_unpinned_and_reused_builds(self):
         with tempfile.TemporaryDirectory() as td:
             base=Path(td);engine=base/'tanto-engine';engine.mkdir()
@@ -57,10 +153,11 @@ class ProductBoundaryTests(unittest.TestCase):
                 self.assertIsNotNone(app.guide);self.assertTrue(app.guide.winfo_exists())
                 self.assertFalse(app.guide.grab_current())
                 app.toggle();self.assertTrue(app.stop.is_set())
-                canvas=app.guide.winfo_children()[0]
-                next(w for w in canvas.winfo_children() if w.winfo_class()=='TButton').invoke()
+                self.assertIs(app.guide.winfo_toplevel(),root)
+                self.assertNotIsInstance(app.guide,tk.Toplevel)
+                app.guide.done.invoke()
                 self.assertTrue(json.loads(settings.read_text())['tutorial_seen'])
-                self.assertIsNone(app.guide);app.busy=lambda:False;app.close()
+                self.assertEqual(app.current_tab,'Record');app.show_guide();self.assertEqual(app.current_tab,'Guide');app.busy=lambda:False;app.close()
         finally:
             try:root.destroy()
             except tk.TclError:pass
@@ -229,6 +326,7 @@ class ProductBoundaryTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as td, patch.object(recorder,'record_encounter',side_effect=capture) as backend:
                 app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
+                app.recordings=Path(td)/'Recordings'
                 app.toggle();backend.assert_not_called()
                 app.boss.set('  Onryoki  ');app.toggle();self.assertTrue(entered.wait(1))
                 worker=app.thread;app.toggle();app.toggle()
@@ -255,7 +353,7 @@ class ProductBoundaryTests(unittest.TestCase):
                         self.assertEqual(app.backdrop.picture.width(),app.backdrop.winfo_width())
                         self.assertEqual(app.backdrop.picture.height(),app.backdrop.winfo_height())
                         self.assertEqual(app.help_label.photo.get(0,0),app.backdrop.crop(app.help_label).getpixel((0,0)))
-                        for widget in (app.selector,app.primary,app.help_label,app.labels,app.description,app.save_button,*app.idle_buttons):
+                        for widget in (app.selector,app.primary,app.help_label,app.labels,app.description,app.save_button,*app.idle_buttons[:3]):
                             self.assertGreater(widget.winfo_width(),20)
                             self.assertGreaterEqual(widget.winfo_rootx(),root.winfo_rootx())
                             self.assertLessEqual(widget.winfo_rootx()+widget.winfo_width(),root.winfo_rootx()+root.winfo_width())
@@ -270,9 +368,9 @@ class ProductBoundaryTests(unittest.TestCase):
         def export(folder,path):
             entered.set();finish.wait(3);return path
         try:
-            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'export_capture',side_effect=export):
+            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'export_sessions',side_effect=export):
                 app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json');app.folder=Path(td)
-                app.export();self.assertTrue(entered.wait(1));self.assertEqual(app.operation,'export')
+                app.export([app.folder]);self.assertTrue(entered.wait(1));self.assertEqual(app.operation,'export')
                 worker=app.thread;app.toggle();self.assertIs(app.thread,worker)
                 root.update();app.close();self.assertTrue(root.winfo_exists())
                 finish.set();worker.join(2);app.close()
@@ -282,18 +380,18 @@ class ProductBoundaryTests(unittest.TestCase):
             except tk.TclError: pass
 
     def test_global_hotkey_registration_conflict_and_release_without_key_input(self):
-        events=[];first=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:events.append((kind,value)))
+        events=[];first=GlobalHotkey('Ctrl+Alt+K',lambda kind,value:events.append((kind,value)))
         # Register on separate threads; no key presses, hooks or game access.
         try:
             import time
             deadline=time.monotonic()+2
             while not events and time.monotonic()<deadline: time.sleep(.01)
             self.assertEqual(events[0][0],'hotkey_ready')
-            conflict=[];second=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:conflict.append((kind,value)))
+            conflict=[];second=GlobalHotkey('Ctrl+Alt+K',lambda kind,value:conflict.append((kind,value)))
             second.thread.join(2);second.close()
             self.assertEqual(conflict[0][0],'hotkey_error')
         finally: first.close()
-        released=[];third=GlobalHotkey('Ctrl+Shift+R',lambda kind,value:released.append((kind,value)))
+        released=[];third=GlobalHotkey('Ctrl+Alt+K',lambda kind,value:released.append((kind,value)))
         try:
             deadline=time.monotonic()+2
             while not released and time.monotonic()<deadline: time.sleep(.01)
