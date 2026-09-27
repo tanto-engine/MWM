@@ -422,6 +422,8 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     memcpy(&base_ki_cost, payload + 0x16, sizeof(base_ki_cost));
     if (recovery_start != spec.recovery_frame || base_ki_cost < 0
         || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && boss_adapters[slot].kind != 5 && base_ki_cost == 0)) return false;
+    const int16_t player_ki_cost=recorded_player_ki_cost(spec,boss_adapters[slot],base_ki_cost);
+    memcpy(payload+0x16,&player_ki_cost,2);
     recovery_start=boss_move_timing(slot).recovery;
     const auto settings=boss_settings(slot);
     if (airborne_sword(spec,boss_adapters[slot]) && (spec.key==0xC72 || spec.key==0xC82)) {
@@ -434,7 +436,7 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     // Native71000A computes recoverable Ki from this percentage of the actual
     // game-adjusted cost. Native715118 opens its normal timed recovery when the
     // action crosses+0x38; 7B59F0 uses+0x3A/+0x3C as fill/hold durations.
-    // Percentage and durations match player swordCF0. Keep the imported cost.
+    // The private cost above feeds native spending; never invent recoverable Ki without spending it.
     if (recovery_start >= 0) {
         // Native714EB7/+24 and714F06/+26 require a crossed, nonnegative frame.
         // A retained source cancel=-1 never crosses, even after Pulse becomes visible.

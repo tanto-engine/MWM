@@ -34,6 +34,14 @@ static bool recorded_grounded(const MoveImport& move, const MoveAdapter& adapter
     return false;
 }
 
+static inline int16_t recorded_player_ki_cost(const MoveImport& move, const MoveAdapter& adapter, int16_t source_cost) {
+    // Hideyori's zero-cost boss string cannot feed William's native recoverable-Ki calculation.
+    // Use the supported build's Low-quick CF0..CF3 costs: 19 for the opener, then 14 per strike.
+    // Match the full recorded signature; other zero-cost phases, including airborne links, stay unchanged.
+    if (source_cost || move.key<0xD30 || move.key>0xD33 || !recorded_grounded(move,adapter)) return source_cost;
+    return move.key==0xD30 ? 19 : 14;
+}
+
 static inline int recorded_auto_successor(const MoveImport& move) {
     // Oda's selected two-hit Frost route continues at its recorded frame-40 branch.
     // This explicit trial policy replaces the boss's input condition with one automatic second slash.

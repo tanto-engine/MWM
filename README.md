@@ -10,6 +10,8 @@ Native hooks adapt input, transitions, recovery, resources and voice events for 
 
 Preset v8 exposes reviewed bindings and bounded move speeds. Physics, Ki Pulse authoring and Frost Moon timing remain developer-controlled. The current backend is sword-specific; ten weapon mods are not yet implemented.
 
+Hideyori's recorded string has zero boss Ki cost. William's private copies use his native Low-quick costs, 19 then 14 per strike, so native spending can create recoverable Ki. Exact source signatures scope this rule; recordings and legitimate zero-cost airborne phases remain unchanged. The private-payload regression reproduces the former zero-cost failure and checks all four recovery windows.
+
 Keep `tanto-engine`, `MWM` and `tanto-recorder` as sibling checkouts. `runtime/native/Build.ps1` builds native libraries; `Test-Offline.ps1` runs the two maintained suites. Offline results do not establish gameplay or hardware acceptance.
 
 The initial 2026-09-27 multi-boss MWM trial was stopped after reported drift and a missing death screen. Its trace recorded no intended substitutions, and Hideyori resource loading remained pending. The MWM README preserves the ID evidence and uncertainties; new boss adapters require separate source checks.

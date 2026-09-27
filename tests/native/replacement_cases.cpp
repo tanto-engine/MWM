@@ -905,11 +905,36 @@ static void frost_cases() {
     }
 }
 
+static void recorded_pulse_cost_cases() {
+    // Hideyori spends no boss Ki; William needs a real attack cost before native Pulse can recover any.
+    // Exercise all four private payloads with the retained player transitions and authored recovery frames.
+    // Source payloads stay byte-identical while player copies receive the native Low-quick cost schedule.
+    const int16_t recoveries[]={45,30,35,-1};
+    for (unsigned phase=0;phase<4;++phase) {
+        replacement_reset();auto& move=boss_imports[2];auto& adapter=boss_adapters[2];
+        move.key=0xD30+phase;move.motion=2000+int32_t(phase)*10;move.flags=0x184C0000;
+        move.transition_count=phase==3 ? 42 : 46;move.recovery_frame=recoveries[phase];adapter.kind=phase ? 4 : 2;
+        put(jin_descriptors[0].data(),0,move.key);put(jin_descriptors[0].data(),0x82,move.transition_count);
+        put(jin_descriptors[0].data(),0x78,address(player_pointers[0].data()));
+        put(jin_payloads[0].data(),0x18,move.flags);put(jin_payloads[0].data(),0x20,move.motion);
+        put(jin_payloads[0].data(),0x24,move.recovery_frame);put(jin_payloads[0].data(),0x16,int16_t(0));
+        boss_move_settings[2]={1,40,30,36,0};const auto source=jin_payloads[0];
+        assert(boss_prepare_private_action(2));
+        const auto* adapted=boss_private_actions[2].payload;int16_t cost=0,onset=0,fill=0,hold=0;
+        memcpy(&cost,adapted+0x16,2);memcpy(&onset,adapted+0x38,2);
+        memcpy(&fill,adapted+0x3A,2);memcpy(&hold,adapted+0x3C,2);
+        assert(cost==(phase ? 14 : 19));
+        assert(onset==(phase==3 ? 95 : recoveries[phase]) && adapted[0x33]==40 && fill==30 && hold==36);
+        assert(jin_payloads[0]==source);boss_move_settings[2]={};
+    }
+}
+
 int main() {
     // Stress native input priority, resource isolation and recovery under rejected commits.
     // Run the three moves through ordinary setter calls with no armed controller gesture.
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
+    recorded_pulse_cost_cases();
     held_slot_cases();
     weapon_policy_cases();
     airborne_cases();
