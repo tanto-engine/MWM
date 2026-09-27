@@ -1,18 +1,14 @@
 # Release notes
 
-## Unreleased
+## 0.3.0-alpha.3
 
-Replaced the sprawling binding form with stance-based assignments, readable names and one Save action. Controller, Speed and More retain detailed controls. Clean editors follow externally saved settings without overwriting drafts. Source launch builds current Engine DLLs; failed attachment remains visible after the worker exits.
+- Current Sword Rebuild 1 is the default for new installs; existing settings and the original moveset remain available.
+- Choose held Triangle/Y per stance, with separate launcher-only and launcher-plus-Izuna choices. Heavy replacements no longer swallow held bindings.
+- Rebind custom buttons, native overrides and Frost Moon independently. Invalid stance combinations explain how to correct them.
+- Includes the confirmed Jin, Oda, Omnislice and Sanada source setup, Hideyori Ki correction, handgun assets and temporary sword hiding.
+- Portable EXE includes its worker, move definitions, artwork and collection. Packaged checks cover saving, rebinding and XInput translation without accessing the game.
 
-Pending resource loads now detach their temporary frame hook and stop activation on failure. The user confirmed all six Jin inputs, with normal movement and death/retry in the isolated Low-heavy check. Mid dodge-heavy reuses the Mid-heavy string and chains correctly. No new EXE is included.
-
-Source checks also confirmed Oda's Mid Frost Moon and Tachibana's High-heavy follow-up playback. Oda's pair now inherits 1.1x speed. Hideyori's selected resources loaded successfully for the Low-quick trial; Sanada's projectile behavior remains untested.
-
-Corrected Hideyori's player Ki costs after live traces showed zero spending and no recoverable Ki. Its four private phases use William's Low-quick cost schedule; source records stay intact. Native regression checks pass; live Pulse and Sanada's LB+LT shot are awaiting feedback.
-
-Added the complete Sword Rebuild 1 source trial using archive-matched Hideyori, Oda, Tachibana and Sanada resources. Bindings now include Low quick replacement, one-shot High-heavy follow-up and an any-stance chord. Companion animation/timing identities and combat behavior remain gameplay trials. The UI distinguishes trial/subset drafts, saved settings and actual Engine status. No new EXE is included.
-
-Gameplay trial stopped after reported drift and a missing death screen. No intended move substitutions were recorded; attachment/resource/lifecycle investigation remains open. Hideyori's resource load remained pending. Source definitions are retained for diagnosis, not marked accepted.
+Physical Xbox/PS5, broad enemy contact and another-PC checks remain pending.
 
 ## 0.3.0-alpha.2
 

@@ -16,7 +16,7 @@ for folder in (CODE,):
     sys.path.insert(0, str(folder))
 
 from catalogue import load_catalogue
-from engine_config import DEFAULT_PRESET, move_capabilities, atomic_json, read_json, validate_preset, binding_for_preset
+from engine_config import move_capabilities, atomic_json, read_json, validate_preset, binding_for_preset
 from game_controller import BindingCapture, GameController, binding_buttons, game_button_mask
 from controller_reader import ControllerReader
 from trace_reader import Trace
@@ -527,12 +527,12 @@ class Trainer:
             except (OSError, ValueError, KeyError) as error: self.error(error)
 
     def baseline(self):
-        # Restore the maintained sword preset into the form.
+        # Restore the original sword preset into the form.
         # Apply it through the normal binding persistence path.
         # Provide one reproducible baseline for gameplay comparisons.
         try:
             baseline=read_json(ROOT/'data/controller-calibration.json')
-            self.load_fields(remap_preset(DEFAULT_PRESET,baseline,self.calibration))
+            self.load_fields(remap_preset(read_json(ROOT/'data/presets/sword-original.json'),baseline,self.calibration))
             self.apply()
         except (OSError,ValueError,KeyError) as error: self.error(error)
 

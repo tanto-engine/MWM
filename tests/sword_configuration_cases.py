@@ -17,6 +17,8 @@ class SwordConfigurationTests(unittest.TestCase):
         import copy
         from game_controller import game_binding
         preset = config.validate_preset(json.loads((ROOT/'data/presets/sword-rebuild-1.json').read_text(encoding='utf8')))
+        self.assertEqual(json.loads((ROOT/'data/preset.json').read_text(encoding='utf8')), preset,
+                         'Fresh installs must receive the current Sword Rebuild moveset')
         fixture = sessions.RuntimeSessionTests(); fixture.setUp(); fixture.configured_fixture(preset)
         owners = {}
         for move, adapter in zip(fixture.config['imports'],fixture.config['adapters']):

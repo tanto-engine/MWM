@@ -17,8 +17,33 @@ async function runSmoke(window, call, report) {
     if (!collection.moves.length) throw new Error('Packaged move collection missing');
     return {artwork:[artwork.naturalWidth,artwork.naturalHeight],datasetMoves:collection.moves.length};
   })()`);
+  // Capture the actual first-open app before test edits; the release keeps this image with its receipt.
+  await window.webContents.executeJavaScript('document.fonts.ready.then(() => true)');
+  fs.writeFileSync(path.join(path.dirname(report), 'ui-preview.png'), (await window.webContents.capturePage()).toPNG());
+  const uiRebinding = await window.webContents.executeJavaScript(`(async () => {
+    // Change the same visible controls used by players and save through the normal renderer.
+    // Separate stances keep the standalone launcher and paired Izuna graphs distinct.
+    // Read the saved worker state, so merely changing a dropdown cannot pass this check.
+    const wait = () => new Promise(resolve => setTimeout(resolve, 50));
+    async function ready() {
+      for (let i=0;i<200;i++) {
+        if (!document.body.inert && document.querySelector('#validation').dataset.state==='valid') return;
+        await wait();
+      }
+      throw new Error('Packaged rebinding did not validate: '+document.querySelector('#validation').textContent);
+    }
+    for (const [stance, move] of [['low','jin_hayabusa.action_0c79'],['high','jin_hayabusa.izuna_drop']]) {
+      const select=document.querySelector('[data-assignment="hold:'+stance+'"]');
+      if (!select || ![...select.options].some(option=>option.value===move)) throw new Error('Missing held Triangle choice: '+move);
+      select.value=move;select.dispatchEvent(new Event('change',{bubbles:true}));await wait();await ready();
+    }
+    document.querySelector('#apply').click();await wait();await ready();
+    const saved=await window.mwm.request('snapshot');
+    if (saved.preset.stance_holds.low!=='jin_hayabusa.action_0c79' || saved.preset.stance_holds.high!=='jin_hayabusa.izuna_drop') throw new Error('Packaged UI did not save held bindings');
+    return true;
+  })()`);
   const snapshot = await call('snapshot');
-  const preset = await call('starter', {calibration:snapshot.calibration});
+  const preset = snapshot.preset;
   preset.name = 'Packaged check – テスト';
   const params = {...snapshot, preset, nioh_exe:'C:\\Game path test\\nioh.exe'};
   const compiled = await call('preview', params);
@@ -28,11 +53,20 @@ async function runSmoke(window, call, report) {
   await call('binding_export', {...params,group:'frost',path:file});
   const loaded = await call('binding_import', {...params,group:'frost',path:file});
   if (JSON.stringify(loaded.frost_moon) !== JSON.stringify(preset.frost_moon)) throw new Error('Packaged bindings roundtrip failed');
+  // Translate the saved logical buttons into Xbox/XInput, then rebind the custom chord to LB+B.
+  // Preview and persistence use the bundled Engine, with launcher and Frost bindings preserved.
+  const xbox = await call('controller', {...params,choice:'1'});
+  xbox.preset.modifier_mask=0x100;xbox.preset.trigger_mask=0x2000;
+  const rebound={...params,...xbox};
+  await call('preview',rebound);
+  const reboundSaved=await call('apply',rebound);
+  if (reboundSaved.preset.trigger_mask!==0x2000 || reboundSaved.calibration.device.backend!=='xinput'
+      || JSON.stringify(reboundSaved.preset.frost_moon)!==JSON.stringify(preset.frost_moon)) throw new Error('Packaged controller rebinding failed');
   let blocked = false;
   try { await call('enable', params); } catch (error) { blocked = String(error).includes('disabled during the packaged UI check'); }
   if (!blocked) throw new Error('Smoke game isolation failed');
   fs.writeFileSync(report, JSON.stringify({passed:true,...screen,compiledPhases:Object.keys(compiled.moves).length,
-    unicode:true,settings:true,bindings:true,gameAccess:false}, null, 2));
+    unicode:true,settings:true,bindings:true,uiRebinding,xinputRebinding:true,gameAccess:false}, null, 2));
 }
 
 module.exports = {runSmoke};

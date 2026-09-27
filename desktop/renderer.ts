@@ -192,6 +192,8 @@ function moveName(move: Move): string {
     'jin_hayabusa.action_0c6e': 'Jin · Cyclone slash string',
     'jin_hayabusa.action_0c6f': 'Jin · Second cyclone slash',
     'jin_hayabusa.action_0bbf': 'Jin · Five-strike sword string',
+    'jin_hayabusa.action_0c79': 'Jin · Launcher only',
+    'jin_hayabusa.izuna_drop': 'Jin · Launcher + Izuna Drop',
     'oda_nobunaga.action_0c6e': 'Oda · Final two slashes',
     'oda_nobunaga.action_0c6f': 'Oda · Final slash',
     'sanada_yukimura.action_0c6a': 'Sanada · Handgun shot',
@@ -241,7 +243,7 @@ function renderOverview() {
     card.append(element('h3', `${stance[0].toUpperCase() + stance.slice(1)} stance`)); cards.append(card);
     if (stance === 'low') assignment(card, 'Heavy attack string', 'low-heavy', 'heavy_string', p.low_heavy, value => { p.low_heavy = value || null; });
     for (const binding of p.skill_bindings.filter(row => row.stance === stance)) nativeRow(card, binding);
-    if (p.stance_holds[stance]) assignment(card, 'Hold heavy attack', `hold:${stance}`, 'graph', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; if (!value) render(); });
+    assignment(card, 'Hold Triangle / Y', `hold:${stance}`, 'graph', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; });
     assignment(card, 'Frost Moon · stance switch', `frost:${stance}`, 'chord', p.frost_moon[stance], value => { p.frost_moon[stance] = value || null; });
   }
   const shared = element('section', undefined, 'shared-routes');
@@ -256,12 +258,11 @@ function renderOverview() {
   for (const binding of globalBindings) nativeRow(shared, binding);
   content.append(shared);
   const extras = [p.okatsu_grapple && 'Okatsu grapple', p.mid_light_ender && 'mid quick finisher', p.string_enabled && 'quick-attack string'].filter(Boolean);
-  const extra = element('details', undefined, 'overview-extra'); extra.append(element('summary', extras.length ? 'Extra moves · ' + extras.join(', ') : 'Held attacks & extra moves'));
+  const extra = element('details', undefined, 'overview-extra'); extra.append(element('summary', extras.length ? 'Extra moves · ' + extras.join(', ') : 'Extra moves'));
   const fields = element('div', undefined, 'fields'); extra.append(fields);
-  for (const stance of state.capabilities.stances) if (!p.stance_holds[stance]) field(`${stance.toUpperCase()} · hold heavy`, select(moveOptions('graph'), null, value => { p.stance_holds[stance] = value || null; render(); }), fields);
   for (const [key, label] of [['okatsu_grapple', 'Okatsu grapple'], ['mid_light_ender', 'Mid quick-attack finisher'], ['string_enabled', 'Imported quick-attack string']] as const) {
     const check = element('input'); check.type = 'checkbox'; check.checked = p[key];
-    check.onchange = () => { p[key] = check.checked; extra.querySelector('summary')!.textContent = 'Held attacks & extra moves'; changed(); };
+    check.onchange = () => { p[key] = check.checked; extra.querySelector('summary')!.textContent = 'Extra moves'; changed(); };
     field(label, check, fields).classList.add('toggle');
   }
   const more = element('button', 'Edit other inputs →', 'inline-button'); more.onclick = () => navigate('native'); fields.append(more);
@@ -272,7 +273,7 @@ function renderMoves() {
   // Present the existing sword preset's custom chord and native hold choices.
   // Each move menu uses its own capability flag rather than a universal catalogue list.
   // Weapon selection stays sword-only until Engine implements reviewed weapon routing.
-  const p = state.preset, grid = section('Custom input', 'Choose two buttons and assign a tap or hold move.');
+  const p = state.preset, grid = section('Custom input', 'Choose two buttons and assign a tap or hold move. Imported graphs require a Low, Mid or High stance. Launcher only and Launcher + Izuna Drop require different stances.');
   field('Moveset name', input(p.name, value => {
     // Preserve a readable profile name apart from its stable move IDs.
     // Engine enforces its length and nonempty value during Apply.
@@ -283,7 +284,7 @@ function renderMoves() {
     // Each stance maps directly to the Engine's canonical value.
     // No priority label from a recording enters this selector.
     // Titles remain cosmetic.
-    return [stance, stance.toUpperCase()];
+    return [stance, stance === 'any' ? 'ANY · single moves only' : stance.toUpperCase()];
   }), p.chord_stance, value => {
     // Save the concrete stance required by the custom chord.
     // Engine rejects unsupported cross-stance combinations.
@@ -312,7 +313,7 @@ function renderOverrides() {
   // Group stance replacements separately from the custom button chord.
   // Every control edits the same pending preset; nothing is applied on selection.
   // Native overrides below provide explicit source and stance routing.
-  const p = state.preset, grid = section('Stance overrides', 'Native keeps the original action. Choose a heavy string or held-heavy move, then add individual overrides below.');
+  const p = state.preset, grid = section('Stance overrides', 'Native keeps the original action. Hold Triangle / Y for the chosen held move. Launcher only and Launcher + Izuna Drop require different stances; the drop requires contact.');
   field('Low heavy string', select(moveOptions('heavy_string'), p.low_heavy, value => {
     // Select a reviewed heavy-string graph rather than an arbitrary animation.
     // Native clears only this particular replacement.
@@ -320,7 +321,7 @@ function renderOverrides() {
     p.low_heavy = value || null;
   }), grid);
   for (const stance of state.capabilities.stances) {
-    field(stance.toUpperCase() + ' held heavy', select(moveOptions('graph'), p.stance_holds[stance], value => {
+    field(stance.toUpperCase() + ' · hold Triangle / Y', select(moveOptions('graph'), p.stance_holds[stance], value => {
       // Bind a reviewed graph to this stance's held-heavy slot.
       // Shared source actions retain their Engine-authored graph transitions.
       // A blank value restores the native held-heavy behavior.
@@ -393,7 +394,7 @@ function renderFrost() {
   // Let users choose only the destination action for each Frost Moon route.
   // Activation windows, startup speed, Ki Pulse and physics remain Engine-owned.
   // This separates configurable move selection from adaptation internals.
-  const grid = section('Stance-switch moves', 'Frost Moon: hold R1 / RB and press the destination stance button twice.');
+  const grid = section('Stance-switch moves', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice.');
   for (const stance of state.capabilities.stances) field(stance.toUpperCase(), select(moveOptions('chord', 'Disabled'), state.preset.frost_moon[stance], value => {
     // Change this destination stance's reviewed move.
     // Clearing disables its replacement without changing other routes.
@@ -518,7 +519,7 @@ function renderControls() {
   // Present calibrated button meanings and supported OS controller backends.
   // Remapping goes through Engine so changing hardware preserves logical button choices.
   // Physical controller acceptance is not inferred from successfully editing this form.
-  const grid = section('Controller & custom input', 'Saved DS4 mapping or XInput slots 1–4. Release all controls before press-to-bind. Disable Engine before changing mappings.');
+  const grid = section('Controller & custom input', 'Xbox: use XInput. PS5: enable Steam Input for Nioh, then use its XInput slot. Release all controls before press-to-bind; disable the mod before changing mappings.');
   const devices = select([['saved', 'Saved mapping'], ['ds4', 'DS4 mapping'], ['1', 'XInput controller 1'], ['2', 'XInput controller 2'], ['3', 'XInput controller 3'], ['4', 'XInput controller 4']], controllerChoice, value => {
     // Cancel the previous controller listener before translating button masks.
     // Failed remapping preserves the current pending preset.
@@ -555,7 +556,7 @@ function renderCollection() {
   // The layout and exact notes explain which recorded sequences still need adaptation.
   // Filtering only hides cards; it never edits the pending moveset or loses keyboard focus.
   content.append(element('h2', 'Sword Rebuild 1', 'section-title'));
-  content.append(element('p', 'The subset contains Jin moves. The full trial adds four bosses. Save changes stores the draft; Enable mod activates it. See the README for gameplay checks.', 'hint'));
+  content.append(element('p', 'The subset contains Jin moves. Sword Rebuild 1 adds Oda, Tachibana, Hideyori and Sanada. Save changes stores the draft; Enable mod activates it. See each route for its acceptance status.', 'hint'));
   const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge + heavy',
     mid_heavy: 'Mid · heavy', mid_dodge_attack: 'Mid · dodge + heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
     frost_high: 'High Frost Moon', frost_mid: 'Mid Frost Moon', frost_low: 'Low Frost Moon' };
@@ -648,6 +649,8 @@ function render() {
     const guide = element('article', undefined, 'guide');
     guide.append(element('h2', 'Edit, save, enable.'));
     for (const text of ['1. Choose moves for your inputs, then Save changes.', '2. Open Controller to set your device and custom buttons if needed.', '3. Enable mod and test your moves. Check its status above; use Disable mod when finished.']) guide.append(element('p', text));
+    guide.append(element('h2', 'Sword Rebuild 1 defaults'));
+    for (const text of ['Low Triangle / Y and dodge + heavy use Jin’s cyclone string. Mid Triangle / Y and dodge + heavy use Jin’s five strikes. Low Square / X uses Hideyori’s four-hit string.', 'Low LB + LT tap fires Sanada’s handgun. High heavy → LB + Square / X uses Tachibana’s Omnislice.', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice. Low uses Flying Swallow, Mid uses Oda’s final two slashes, High uses the downward slash.', 'Choose Hold Triangle / Y separately in each stance. Launcher only and Launcher + Izuna Drop must use different stances; the drop requires contact.', 'Use Reuse a binding group under Controller or More → Other inputs & options to export or load one group. Other groups and speed settings stay unchanged.']) guide.append(element('p', text));
     content.append(guide);
   }
   schedulePreview();
@@ -670,7 +673,7 @@ async function perform(name: string) {
   if (name === 'reload') { await reload(); return; }
   if (name === 'baseline' || name === 'starter' || name === 'trial' || name === 'load') {
     const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : name, params());
-    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Trial loaded into draft · gameplay unverified.' : name === 'starter' ? 'Subset loaded into draft.' : 'Moveset loaded into draft.'); } return;
+    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Sword Rebuild 1 loaded into draft.' : name === 'starter' ? 'Subset loaded into draft.' : 'Moveset loaded into draft.'); } return;
   }
   if (name === 'save') { if (await window.mwm.request('export', params())) message('Moveset exported. Runtime settings were not changed.'); return; }
   if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); showRuntime(state); message(''); return; }

@@ -1,6 +1,6 @@
 # Sword Rebuild 1
 
-**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four phases play, but zero boss Ki cost prevented Pulse; a player-cost correction is enabled for feedback. Sanada's LB+LT trial is enabled. The full preset still needs broader gameplay checks.
+**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four phases play, but zero boss Ki cost prevented Pulse; a player-cost correction is enabled for feedback. Sanada's Low LB+LT firing, 1.15× speed and temporary sword hiding are confirmed. The full preset still needs broader gameplay checks.
 
 `data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Rebuild trial** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
 
