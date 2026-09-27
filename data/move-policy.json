@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "moves": {
+    "jin_hayabusa.action_0c6e": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "jin_hayabusa.action_0bbf": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "jin_hayabusa.action_0c75": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "jin_hayabusa.action_0c71": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    }
+  }
+}
