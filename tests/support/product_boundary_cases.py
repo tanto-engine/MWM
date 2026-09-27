@@ -22,6 +22,41 @@ from encounter_recording_cases import state, metadata
 
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_windows_hotkey_messages_start_and_stop_capture_without_game_input(self):
+        import ctypes as C
+        from ctypes import wintypes as W
+        import time
+        root=tk.Tk();root.withdraw();entered=threading.Event();stopped=threading.Event()
+        def capture(boss,folder,**options):
+            entered.set()
+            if options['stop_event'].wait(3): stopped.set()
+        def until(predicate):
+            deadline=time.monotonic()+2
+            while not predicate() and time.monotonic()<deadline:
+                root.update();time.sleep(.01)
+            self.assertTrue(predicate())
+        try:
+            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'record_encounter',side_effect=capture) as backend, \
+                 patch.object(recorder,'downloads_dir',return_value=Path(td)/'Redirected Downloads'):
+                settings=Path(td)/'settings.json';settings.write_text('{"hotkey":"Ctrl+Shift+R"}')
+                app=recorder.Recorder(root,settings_path=settings);app.boss.set('Onryoki')
+                until(lambda:'starts / stops' in app.hotkey_status.get())
+                api=C.WinDLL('user32',use_last_error=True)
+                api.PostThreadMessageW.argtypes=[W.DWORD,W.UINT,W.WPARAM,W.LPARAM];api.PostThreadMessageW.restype=W.BOOL
+                def message():
+                    self.assertTrue(api.PostThreadMessageW(app.hotkey.thread.native_id,0x0312,1,0))
+                message();until(entered.is_set)
+                self.assertEqual(app.folder.parent,Path(td)/'Redirected Downloads/Tanto Recordings')
+                message();until(stopped.is_set);until(lambda:not app.busy())
+                self.assertEqual(backend.call_count,1)
+                app.close();self.assertFalse(app.hotkey)
+        finally:
+            if 'app' in locals():
+                app.stop.set()
+                if app.hotkey: app.hotkey.close()
+            try: root.destroy()
+            except tk.TclError: pass
+
     def test_description_editor_saves_a_span_and_retains_revision_history(self):
         root=tk.Tk();root.withdraw()
         def descendants(widget):
