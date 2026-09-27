@@ -115,18 +115,30 @@ def main():
     # Use a fresh build directory rather than deleting or overwriting source workspaces.
     parser=argparse.ArgumentParser(description='Build a Tanto product from selected engine components')
     parser.add_argument('project',type=Path);parser.add_argument('--stage-only',action='store_true')
-    parser.add_argument('--onedir',action='store_true');args=parser.parse_args()
+    parser.add_argument('--onedir',action='store_true')
+    parser.add_argument('--skip-tests-reason',help='Explicit user-authorized exception for an untested prerelease')
+    args=parser.parse_args()
     project=args.project.resolve();build=project/'.build'/str(time.time_ns());stage=build/'stage'
     if args.stage_only: stage_product(project,stage);print(stage);return
     spec,sources,dependencies=release_inputs(project)
+    skip_reason=args.skip_tests_reason.strip() if args.skip_tests_reason is not None else None
+    if skip_reason is not None and (not skip_reason or '-' not in spec['version']):
+        raise ValueError('Skipping tests requires a stated reason and a prerelease version')
     build.mkdir(parents=True)
     if spec['kind']=='sword':
         subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'runtime/native/Build.ps1')],check=True)
+    # An explicit prerelease exception records unknown results, never recycled passes from an older EXE.
+    # Normal builds still require both maintained suites and the packaged Recorder smoke check.
+    counts=[None,None]
     with (build/'offline-tests.log').open('w',encoding='utf8') as log:
-        subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'Test-Offline.ps1'),'-PythonRuntime',sys.executable],
-                       stdout=log,stderr=subprocess.STDOUT,check=True)
-    counts=re.findall(r'Ran (\d+) tests?',(build/'offline-tests.log').read_text(encoding='utf8'))
-    if len(counts)!=2:raise ValueError('Both maintained offline test entrypoints must report their results')
+        if skip_reason:log.write('NOT RUN: '+skip_reason+'\n')
+        else:
+            subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'Test-Offline.ps1'),'-PythonRuntime',sys.executable],
+                           stdout=log,stderr=subprocess.STDOUT,check=True)
+    if not skip_reason:
+        counts=re.findall(r'Ran (\d+) tests?',(build/'offline-tests.log').read_text(encoding='utf8'))
+        if len(counts)!=2:raise ValueError('Both maintained offline test entrypoints must report their results')
+        counts=[int(count) for count in counts]
     stage_product(project,stage)
     numeric=tuple(int(n) for n in spec['version'].split('-')[0].split('.'))+(0,)
     version_file=build/'version-info.txt'
@@ -152,8 +164,11 @@ def main():
     if spec['kind']=='recorder':
         exe=package/spec['name']/f'{spec["name"]}.exe' if args.onedir else package/f'{spec["name"]}.exe'
         smoke=package/'ui-smoke.json'
-        subprocess.run([str(exe),'--ui-smoke',str(smoke)],check=True,timeout=60)
-        if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
+        if skip_reason:
+            smoke.write_text(json.dumps(dict(passed=None,status='not_run',reason=skip_reason))+'\n',encoding='utf8')
+        else:
+            subprocess.run([str(exe),'--ui-smoke',str(smoke)],check=True,timeout=60)
+            if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
         (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
     if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
     shutil.copyfile(stage/'build-manifest.json',package/'build-manifest.json')
@@ -161,7 +176,8 @@ def main():
     shutil.copyfile(project/'CHANGELOG.md',package/'CHANGELOG.md')
     receipt=dict(schema_version=1,product=spec['name'],version=spec['version'],prerelease='-' in spec['version'],
         built_at=datetime.now(timezone.utc).isoformat(),sources=sources,python=sys.version,dependencies=dependencies,
-        packaging='onedir' if args.onedir else 'onefile',workflow_tests=int(counts[0]),resource_tests=int(counts[1]),
+        packaging='onedir' if args.onedir else 'onefile',workflow_tests=counts[0],resource_tests=counts[1],
+        automated_validation=dict(status='not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
         gameplay_acceptance=False,other_pc_acceptance=False)
     (package/'release.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf8')
     hashes={p.relative_to(package).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
