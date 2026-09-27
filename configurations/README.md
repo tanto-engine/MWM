@@ -1,6 +1,6 @@
 # Sword Rebuild 1
 
-**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four clips now load and Low quicks are enabled for feedback; Sanada is untested. The full preset still needs broader gameplay checks. See the root README for evidence and ID interpretation.
+**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four phases play, but zero boss Ki cost prevented Pulse; a player-cost correction is enabled for feedback. Sanada's LB+LT trial is enabled. The full preset still needs broader gameplay checks.
 
 `data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Rebuild trial** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
 
@@ -26,5 +26,7 @@ Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatic
 Action numbers above are shorthand, scoped to their boss and source bank. The design stores full IDs. Hideyori's four-hit string is directly supported by the recording; a fifth hit is not inferred. Omnislice should bypass its preparation by entering the attack phase, without seeking past damage or effect events. Its follow-up must open only after a High heavy, consume one fresh LB + Square press, and clear on damage, stance/weapon change or expiration; ordinary High guard-light is not an equivalent binding.
 
 `../data/move-policy.json` gives all eight selected graph roots 40% recoverable Ki, 30 fill frames and 36 hold frames, inherited by their continuations. Airborne phases retain pending Ki until landing. Frost Moon follows the native Ki window, so extending hold provides more input leeway. Newly inferred recovery frames need gameplay tuning; native unmodified attacks retain their game windows.
+
+Hideyori's source actions cost zero Ki. Engine adapts only William's copies to his Low-quick costs (19, 14, 14, 14), keeping the recorded values intact. Pulse recovers a fraction of actual game-adjusted spending; a nonzero percentage alone cannot create a window from a zero-cost string.
 
 Both presets disable the old Okatsu replacements, held-heavy launcher and Mid light ender. The subset leaves the four new boss routes unassigned. High Frost uses 1x playback across all three phases without startup acceleration. Broader contact and recovery acceptance remains pending.

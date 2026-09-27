@@ -24,7 +24,7 @@ A subsequent isolated test reproduced a loader hook remaining attached while arc
 
 Oda's Mid Frost Moon subsequently played both slashes (`C6E → C6F`, motions `1010 → 1011`). Both now inherit 1.1× speed, which the user preferred. Tachibana's Omnislice also played from High heavy → LB+Square, with `D8D`/motion `5011` in the trace. These source checks confirm playback and binding, not every damage, contact or recovery case.
 
-Hideyori's four selected clips subsequently loaded successfully in the same Jin mission, and Low quick replacement is enabled for feedback. The earlier resource stall did not recur in this source check. Sanada's gun remains the next untested binding; animation playback alone cannot establish projectile ownership or damage.
+Hideyori's four Low-quick phases play, but their zero boss Ki cost prevented Pulse. William's private copies now use his native Low-quick costs (19, then 14 per strike). The native regression passes; live telemetry shows an opener spending 14.25 after modifiers and creating 5.7 recoverable Ki. Pulse/Frost Moon input feedback remains pending. Sanada's LB+LT binding is enabled for feedback; animation playback alone cannot establish projectile ownership or damage.
 
 Boss action IDs are bank-local keys, not universal move names or boss identifiers. Jin and Oda both use `0x00000C6E`/`0x00000C6F` for different motions. Preserve the full 32-bit key, boss/source bank, payload bytes, motion/timing keys and game build together. One execution can contain several hits, and consecutive IDs do not prove a combo. Actor addresses can change or be reused after a death; generation and action-counter continuity matter more than the address alone.
 
