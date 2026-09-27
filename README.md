@@ -43,7 +43,7 @@ Automated checks cover logical Xbox/PS mappings, analog triggers, slot changes, 
 
 ![Settings travel from UI to validated Engine actions](docs/settings-flow.svg)
 
-`desktop/` owns the Electron/TypeScript/CSS editor. `app/web_worker.py` validates complete drafts through Engine, saves settings atomically and reports lifecycle state. Engine expands selected graphs, loads their assets, and selects private player-adapted actions on the game thread. Borrowed resources and temporary sword visibility are restored on exit; the renderer never writes game memory.
+`desktop/` owns the Electron/TypeScript/CSS editor. `app/web_worker.py` validates complete drafts through Engine, saves settings atomically and reports lifecycle state. Engine expands selected graphs, loads their assets, and selects private player-adapted actions on the game thread. The publisher sends the custom chord's logical buttons and stance, letting native input handling reserve matching attack inputs. Borrowed resources and temporary sword visibility are restored on exit; the renderer never writes game memory.
 
 ![Recordings become reviewed move graphs and supported bindings](docs/data-flow.svg)
 
