@@ -1,5 +1,9 @@
 # Release notes
 
+## Unreleased
+
+Added independent binding-group save/load with controller translation, atomic chord-button swapping and compatible override seeding. Invalid saved presets open as editable baseline drafts without overwriting the original. Group imports preserve unrelated bindings and tuning, reject conflicts and remain pending until Apply. These source changes do not add extra runtime chord slots or constitute gameplay acceptance.
+
 ## 0.3.0-alpha.1
 
 Added an Electron/TypeScript/CSS interface with reviewed move choices, native overrides, Frost Moon destinations, bounded speeds and controller binding. A restricted worker reuses Engine validation and lifecycle; Load and Baseline edit the form, Apply saves, and Save as exports without enabling gameplay.

@@ -16,6 +16,7 @@ type Preset = {
 type Snapshot = {
   runtime: string; preset: Preset; calibration: Calibration; buttons: Record<string, number>; nioh_exe: string;
   running: boolean; status: string; detail: string;
+  binding_groups: { id: string; label: string }[]; load_warning?: string;
   capabilities: { moves: Move[]; native_sources: { id: string; label: string }[]; stances: Stance[]; speed: { min: number; max: number } };
 };
 type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
@@ -30,6 +31,7 @@ let state: Snapshot;
 let collection: Collection;
 let tab = 'moves', dirty = false, busy = false, capture: 'modifier_mask' | 'trigger_mask' | null = null;
 let controllerChoice = 'saved';
+let bindingGroup = 'chord';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let captureGeneration = 0, draftGeneration = 0;
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
@@ -74,7 +76,7 @@ function schedulePreview() {
   clearTimeout(draftTimer);
   const label = document.querySelector<HTMLElement>('#validation')!;
   label.textContent = 'Checking settings…'; label.classList.remove('error');
-  for (const id of ['apply', 'save', 'enable']) document.querySelector<HTMLButtonElement>('#' + id)!.disabled = true;
+  for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = true;
   document.querySelector('#profile-name')!.textContent = state.preset.name + (dirty ? ' · unsaved' : '');
   draftTimer = setTimeout(async () => {
     // Capture browser-invalid number fields before blank/NaN values reach JSON serialization.
@@ -86,7 +88,7 @@ function schedulePreview() {
       const result = await window.mwm.request<Preview>('preview', params());
       if (generation !== draftGeneration) return;
       preview = result; label.textContent = dirty ? 'Ready to apply' : 'Settings valid'; label.classList.remove('error');
-      for (const id of ['apply', 'save', 'enable']) document.querySelector<HTMLButtonElement>('#' + id)!.disabled = false;
+      for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = false;
     } catch (error) {
       if (generation !== draftGeneration) return;
       preview = null; label.textContent = String(error).replace(/^Error: /, ''); label.classList.add('error');
@@ -285,10 +287,13 @@ function renderNative() {
     row.append(remove); content.append(row);
   }
   const add = element('button', '+ Add replacement'); add.onclick = () => {
-    // Seed an editable row with known source and move IDs.
-    // A duplicated seed is allowed as a draft but cannot pass Engine validation.
-    // The player must select the intended source and stance before Apply.
-    state.preset.skill_bindings.push({ source: state.capabilities.native_sources[0].id, stance: 'low', move: moveOptions('native')[1][0] }); changed(); render();
+    // Ask the worker for an unoccupied source/stance with a compatible reviewed move.
+    // Capacity and graph restrictions are checked before a row reaches the form.
+    // The returned row remains editable and is not applied automatically.
+    void action(async () => {
+      await cancelCapture(); state.preset = await window.mwm.request<Preset>('add_override', params());
+      changed(); render();
+    });
   };
   content.append(add);
 }
@@ -394,6 +399,18 @@ function renderChordButtons(grid: HTMLElement) {
     };
     wrapper.append(bind);
   }
+  const swap = element('button', 'Swap buttons');
+  swap.onclick = () => {
+    // Exchange both halves of the chord as one draft change, avoiding an intermediate duplicate.
+    // Cancel binding capture so a delayed physical press cannot overwrite the swap.
+    // Move choices, hold duration and all Frost destinations remain unchanged.
+    void action(async () => {
+      await cancelCapture();
+      [state.preset.modifier_mask, state.preset.trigger_mask] = [state.preset.trigger_mask, state.preset.modifier_mask];
+      changed(); render();
+    });
+  };
+  swap.className = 'swap-buttons'; grid.append(swap);
   if (capture) {
     const cancel = element('button', 'Cancel binding');
     cancel.onclick = () => {
@@ -490,11 +507,45 @@ function renderCollection() {
   };
 }
 
+function renderBindingModules() {
+  // Reuse one binding group across movesets without overwriting name, speed or unrelated routes.
+  // File dialogs stay in the main process; the worker validates and remaps the merged draft.
+  // Selecting a group is a UI preference and must not mark the moveset dirty.
+  const panel = element('details', undefined, 'binding-modules');
+  panel.append(element('summary', 'Reuse a binding group'));
+  const controls = element('div', undefined, 'module-controls');
+  const groups = element('select'); groups.setAttribute('aria-label', 'Binding group');
+  for (const group of state.binding_groups) groups.add(new Option(group.label, group.id));
+  groups.value = bindingGroup;
+  groups.onchange = () => { bindingGroup = groups.value; };
+  controls.append(groups);
+  for (const [operation, label] of [['binding_export', 'Save group…'], ['binding_import', 'Load group…']]) {
+    const button = element('button', label);
+    if (operation === 'binding_export') button.dataset.bindingExport = '';
+    button.onclick = () => {
+      // A cancelled dialog leaves the draft intact; a loaded group replaces only its owned fields.
+      // Failed cross-group compatibility checks preserve every original draft value.
+      // Group loading never applies settings or enables the mod.
+      void action(async () => {
+        await cancelCapture();
+        const result = await window.mwm.request<Preset | boolean | null>(operation, { ...params(), group: bindingGroup });
+        if (!result) return;
+        if (operation === 'binding_import') { state.preset = result as Preset; changed(); render(); }
+        message(operation === 'binding_import' ? 'Binding group loaded. Other groups and tuning are unchanged. Apply to save.' : 'Binding group exported.');
+      });
+    };
+    controls.append(button);
+  }
+  panel.append(controls, element('p', 'Only the selected group is replaced. Chord buttons translate to your current controller; incompatible combinations are rejected.', 'hint'));
+  content.append(panel);
+}
+
 function render() {
   // Rebuild only the selected tab from the pending model.
   // Ordinary input edits stay in place; tab changes and structural edits request a rebuild.
   // All text supplied by data remains escaped by DOM construction.
   content.replaceChildren(); content.setAttribute('aria-busy', 'false');
+  if (['moves', 'native', 'frost'].includes(tab)) renderBindingModules();
   for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.classList.toggle('selected', button.dataset.tab === tab);
   if (tab === 'collection') renderCollection();
   else if (tab === 'moves') { renderMoves(); renderControls(); }
@@ -514,9 +565,9 @@ async function reload() {
   // Read a fresh snapshot only when explicitly loading or discarding pending edits.
   // Keep periodic runtime status reads separate so they never overwrite form choices.
   // Display actual process-backed Engine status alongside the loaded configuration.
-  await cancelCapture(); state = await window.mwm.request<Snapshot>('snapshot'); controllerChoice = 'saved'; dirty = false; render();
+  await cancelCapture(); state = await window.mwm.request<Snapshot>('snapshot'); controllerChoice = 'saved'; dirty = Boolean(state.load_warning); render();
   document.querySelector('#runtime')!.textContent = state.status.replaceAll('_', ' ');
-  message('Ready. Changes stay pending until Apply.');
+  message(state.load_warning || 'Ready. Changes stay pending until Apply.', Boolean(state.load_warning));
 }
 
 async function perform(name: string) {

@@ -6,7 +6,7 @@ const { createInterface } = require('node:readline');
 const path = require('node:path');
 const fs = require('node:fs');
 const root = path.resolve(__dirname, '..');
-const methods = new Set(['snapshot', 'validate', 'preview', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
+const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
 const pending = new Map();
 let window, worker, nextId = 0;
 
@@ -93,14 +93,16 @@ async function request(event, method, params = {}) {
   // Native file dialogs supply import/export paths; arbitrary renderer paths are not honored.
   // Cancellation returns null and leaves both saved and pending settings unchanged.
   if (event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error('Unknown window');
-  if (method === 'export') {
-    const selected = await dialog.showSaveDialog(window, { title: 'Save moveset', defaultPath: path.join(app.getPath('downloads'), 'MWM-moveset.json'), filters: [{ name: 'Moveset', extensions: ['json'] }] });
-    return selected.canceled ? null : call('export', { ...params, path: selected.filePath });
+  if (method === 'export' || method === 'binding_export') {
+    const group = method === 'binding_export';
+    const selected = await dialog.showSaveDialog(window, { title: group ? 'Save binding group' : 'Save moveset', defaultPath: path.join(app.getPath('downloads'), group ? 'MWM-bindings.json' : 'MWM-moveset.json'), filters: [{ name: group ? 'Binding group' : 'Moveset', extensions: ['json'] }] });
+    return selected.canceled ? null : call(method, { ...params, path: selected.filePath });
   }
-  if (method === 'import' || method === 'game_path') {
-    const selected = await dialog.showOpenDialog(window, { title: method === 'import' ? 'Load moveset' : 'Select nioh.exe', properties: ['openFile'], filters: [{ name: method === 'import' ? 'Moveset' : 'Nioh', extensions: [method === 'import' ? 'json' : 'exe'] }] });
+  if (method === 'import' || method === 'binding_import' || method === 'game_path') {
+    const game = method === 'game_path';
+    const selected = await dialog.showOpenDialog(window, { title: game ? 'Select nioh.exe' : method === 'binding_import' ? 'Load binding group' : 'Load moveset', properties: ['openFile'], filters: [{ name: game ? 'Nioh' : 'Configuration', extensions: [game ? 'exe' : 'json'] }] });
     if (selected.canceled) return null;
-    return method === 'game_path' ? selected.filePaths[0] : call('import', { ...params, path: selected.filePaths[0] });
+    return game ? selected.filePaths[0] : call(method, { ...params, path: selected.filePaths[0] });
   }
   if (method === 'collection') return JSON.parse(fs.readFileSync(path.join(__dirname, 'collection.json'), 'utf8'));
   if (!methods.has(method)) throw new Error('Unsupported desktop operation');

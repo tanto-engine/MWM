@@ -1,4 +1,5 @@
 """Line-delimited desktop requests; configuration uses the existing Engine validators."""
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ from controller_reader import ControllerReader
 from process_support import active_runtime, process_matches
 from trace_reader import Trace
 from prepare_session import configured_imports, configured_replacements, compiled_move_settings, compiled_skill_bindings
+from binding_groups import describe_groups, export_group, import_group
 
 
 class Desktop:
@@ -36,13 +38,21 @@ class Desktop:
         # Missing local settings display shipped defaults without creating files.
         # A surviving status file is only live when its process identity still matches.
         runtime = self.location()
-        calibration = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
-        preset = validate_preset(read_json(runtime/'controller-binding.json', DEFAULT_PRESET))
+        source_calibration = read_json(trainer.ROOT/'data/controller-calibration.json')
+        calibration = read_json(runtime/'controller-calibration.json', source_calibration)
+        warning = ''
+        try:
+            saved = read_json(runtime/'controller-binding.json')
+            preset = (trainer.remap_preset(DEFAULT_PRESET, source_calibration, calibration) if saved is None else validate_preset(saved))
+        except (ValueError, KeyError, TypeError) as error:
+            preset = trainer.remap_preset(DEFAULT_PRESET, source_calibration, calibration)
+            warning = 'Saved moveset could not be loaded. Showing a baseline draft; the saved file is unchanged. ' + str(error)
         alive = process_matches(read_json(runtime/'play-process.json'))
         state = read_json(runtime/'play-status.json', {}) if alive else {}
         return dict(runtime=str(runtime), preset=preset, calibration=calibration,
                     buttons=binding_buttons(calibration['device'], calibration.get('button_map')),
                     capabilities=self.capabilities, running=alive,
+                    binding_groups=describe_groups(), load_warning=warning,
                     status=state.get('state', 'disabled'), detail=state.get('detail', ''),
                     nioh_exe=read_json(runtime/'trainer-settings.json', {}).get('nioh_exe', ''))
 
@@ -55,7 +65,8 @@ class Desktop:
         buttons = binding_buttons(calibration['device'], calibration.get('button_map'))
         if any(preset[key] not in buttons.values() for key in ('modifier_mask', 'trigger_mask')):
             raise ValueError('Choose buttons supported by the selected controller mapping')
-        if calibration.get('controller_slot') not in (None, 0, 1, 2, 3):
+        slot = calibration.get('controller_slot')
+        if slot is not None and (type(slot) is not int or slot not in (0, 1, 2, 3)):
             raise ValueError('Controller slot must be automatic or 1–4')
         binding_for_preset(calibration, preset)
         return preset
@@ -93,6 +104,28 @@ class Desktop:
         atomic_json(runtime/'controller-calibration.json', params['calibration'])
         atomic_json(runtime/'controller-binding.json', preset)
         return self.snapshot()
+
+    def add_override(self, params):
+        # Seed a reusable row in an unoccupied source/stance rather than duplicating the first row.
+        # Try reviewed moves against real graph compilation, including stance ownership and slot limits.
+        # Return a new draft only; a full table or incompatible setup leaves the caller unchanged.
+        preset = self.validate(params)
+        if len(preset['skill_bindings']) + sum(value is not None for value in preset['stance_holds'].values()) >= 8:
+            raise ValueError('All eight override slots are occupied. Remove an override or held-heavy binding first.')
+        for source in self.capabilities['native_sources']:
+            for stance in self.capabilities['stances']:
+                if any(row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):
+                    continue
+                for move in self.capabilities['moves']:
+                    if not move['native']:
+                        continue
+                    candidate = deepcopy(preset)
+                    candidate['skill_bindings'].append(dict(source=source['id'], stance=stance, move=move['id']))
+                    try:
+                        return self.preview(dict(params, preset=candidate))['preset']
+                    except ValueError:
+                        continue
+        raise ValueError('No compatible override slot is available with these bindings.')
 
     def cancel_capture(self):
         # Cancel a pending press without changing either preset button.
@@ -145,6 +178,8 @@ class Desktop:
             return self.validate(params)
         if method == 'preview':
             return self.preview(params)
+        if method == 'add_override':
+            return self.add_override(params)
         if method == 'apply':
             return self.apply(params)
         if method == 'baseline':
@@ -167,6 +202,13 @@ class Desktop:
             atomic_json(params['path'], dict(schema_version=1, kind='sword_moveset', preset=preset,
                         controller={key:params['calibration'][key] for key in ('device', 'button_map') if key in params['calibration']}))
             return True
+        if method == 'binding_export':
+            value = export_group(self.preview(params)['preset'], params['calibration'], params['group'])
+            atomic_json(params['path'], value)
+            return True
+        if method == 'binding_import':
+            candidate = import_group(read_json(params['path']), params['preset'], params['calibration'], params['group'])
+            return self.preview(dict(params, preset=candidate))['preset']
         if method == 'import':
             return trainer.saved_moveset(read_json(params['path']), params['calibration'])
         if method == 'capture_start':
