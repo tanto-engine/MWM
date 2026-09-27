@@ -33,6 +33,22 @@
           "motion_id": 5014
         }
       ]
+    },
+    {
+      "id": "toyotomi_hideyori",
+      "name": "Toyotomi Hideyori"
+    },
+    {
+      "id": "oda_nobunaga",
+      "name": "Oda Nobunaga"
+    },
+    {
+      "id": "tachibana_muneshige",
+      "name": "Tachibana Muneshige"
+    },
+    {
+      "id": "sanada_yukimura",
+      "name": "Sanada Yukimura"
     }
   ],
   "moves": [
@@ -66935,6 +66951,222 @@
       "steps": [],
       "evidence": [],
       "capture": {}
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d30",
+      "name": "Toyotomi Hideyori · 0D30 trial",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3376,
+        "action_hex": "0D30",
+        "motion_id": 2000,
+        "timing_id": 2000,
+        "flags": 407633920,
+        "ki_cost": 0,
+        "recovery_frame": 45
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d31",
+      "name": "Toyotomi Hideyori · 0D31 trial",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3377,
+        "action_hex": "0D31",
+        "motion_id": 2010,
+        "timing_id": 2010,
+        "flags": 407633920,
+        "ki_cost": 0,
+        "recovery_frame": 30
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d32",
+      "name": "Toyotomi Hideyori · 0D32 trial",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3378,
+        "action_hex": "0D32",
+        "motion_id": 2020,
+        "timing_id": 2020,
+        "flags": 407633920,
+        "ki_cost": 0,
+        "recovery_frame": 35
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d33",
+      "name": "Toyotomi Hideyori · 0D33 trial",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3379,
+        "action_hex": "0D33",
+        "motion_id": 2030,
+        "timing_id": 2030,
+        "flags": 407633920,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "oda_nobunaga.action_0c6e",
+      "name": "Oda Nobunaga · 0C6E trial",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3182,
+        "action_hex": "0C6E",
+        "motion_id": 1010,
+        "timing_id": 1010,
+        "flags": 423624704,
+        "ki_cost": 10,
+        "recovery_frame": -1
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "oda_nobunaga.action_0c6f",
+      "name": "Oda Nobunaga · 0C6F trial",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3183,
+        "action_hex": "0C6F",
+        "motion_id": 1011,
+        "timing_id": 1011,
+        "flags": 423624704,
+        "ki_cost": 10,
+        "recovery_frame": -1
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "tachibana_muneshige.action_0d8d",
+      "name": "Tachibana Muneshige · 0D8D trial",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3469,
+        "action_hex": "0D8D",
+        "motion_id": 5011,
+        "timing_id": 5011,
+        "flags": 1498152960,
+        "ki_cost": 40,
+        "recovery_frame": 120
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
+    },
+    {
+      "id": "sanada_yukimura.action_0c6a",
+      "name": "Sanada Yukimura · 0C6A trial",
+      "boss_id": "sanada_yukimura",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3178,
+        "action_hex": "0C6A",
+        "motion_id": 1130,
+        "timing_id": 1130,
+        "flags": 4398470660096,
+        "ki_cost": 5,
+        "recovery_frame": -1
+      },
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "default_binding": null
     }
   ],
   "observations": [],

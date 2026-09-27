@@ -192,6 +192,9 @@ class Desktop:
         if method == 'starter':
             return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets/sword-rebuild-1-supported.json')),
                                        read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
+        if method == 'trial':
+            return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets/sword-rebuild-1.json')),
+                                       read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
         if method == 'controller':
             choice = params['choice']
             if choice not in ('saved', 'ds4', '1', '2', '3', '4'):

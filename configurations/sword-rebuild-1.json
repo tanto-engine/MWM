@@ -4,7 +4,7 @@
   "id": "sword_rebuild_1",
   "name": "Sword Rebuild 1",
   "weapon": "sword",
-  "status": "blocked",
+  "status": "source_gameplay_trial",
   "executable": false,
   "routes": [
     {
@@ -22,12 +22,8 @@
         "stage_1",
         "stage_2"
       ],
-      "runtime_move": null,
-      "blockers": [
-        "Resolve the missing gun phase/counter 404; observed C6A repetitions do not establish a complete draw/fire/sheath graph.",
-        "Author firearm resources and projectile ownership/ammunition/recovery adapter.",
-        "Support an analog LT chord in all stances across calibrated controllers."
-      ],
+      "runtime_move": "sanada_yukimura.action_0c6a",
+      "blockers": [],
       "source_actions": [
         {
           "action_id": "0x00000C6A",
@@ -40,7 +36,7 @@
           "timing_id": 1130
         }
       ],
-      "status": "blocked",
+      "status": "gameplay_trial",
       "speed": 1.0
     },
     {
@@ -162,11 +158,8 @@
         "stage_3",
         "stage_4"
       ],
-      "runtime_move": null,
-      "blockers": [
-        "Author Hideyori resource profile and sword import with player damage ownership, recovery and voice adaptation.",
-        "Add Low quick-chain replacement routing, including the fourth hit and input continuation."
-      ],
+      "runtime_move": "toyotomi_hideyori.action_0d30",
+      "blockers": [],
       "source_actions": [
         {
           "action_id": "0x00000D30",
@@ -189,7 +182,7 @@
           "timing_id": 2030
         }
       ],
-      "status": "blocked",
+      "status": "gameplay_trial",
       "speed": 1.0
     },
     {
@@ -216,11 +209,8 @@
       "step_ids": [
         "attack"
       ],
-      "runtime_move": null,
-      "blockers": [
-        "Author Tachibana resources and direct D8D entry; initialize any state normally set by D8C.",
-        "Add a one-shot High-heavy follow-up gate; ordinary guard-light is not equivalent."
-      ],
+      "runtime_move": "tachibana_muneshige.action_0d8d",
+      "blockers": [],
       "source_actions": [
         {
           "action_id": "0x00000D8D",
@@ -228,7 +218,7 @@
           "timing_id": 5011
         }
       ],
-      "status": "blocked",
+      "status": "gameplay_trial",
       "speed": 1.0
     },
     {
@@ -276,11 +266,8 @@
         "stage_4",
         "stage_5"
       ],
-      "runtime_move": null,
-      "blockers": [
-        "Author Oda resource profile and two-step sword import, including recovery, player hit ownership and voice adaptation.",
-        "Allow the reviewed Oda graph through configuration and Frost routing."
-      ],
+      "runtime_move": "oda_nobunaga.action_0c6e",
+      "blockers": [],
       "source_actions": [
         {
           "action_id": "0x00000C6E",
@@ -293,7 +280,7 @@
           "timing_id": 1011
         }
       ],
-      "status": "blocked",
+      "status": "gameplay_trial",
       "speed": 1.0
     },
     {
@@ -350,7 +337,11 @@
     "Quick string 2 means Jin quick string B: BBF/C63/C64/C65/C66, excluding its recorded Flying Swallow follow-up.",
     "Omnislice enters attack D8D directly, skipping step-back/sheath D8C. Instant means no extra preparation or hold delay, not zero animation duration.",
     "Frost stance labels are destination stances, matching existing Engine semantics.",
-    "High downward-slash phases stay at 1x; preserve the existing specialized Flying Swallow adaptation."
+    "High downward-slash phases stay at 1x; preserve the existing specialized Flying Swallow adaptation.",
+    "New boss trials match full recorded payload prefixes to installed archive assets. Companion timing/motion packages are reviewed source hypotheses requiring gameplay verification.",
+    "Handgun trial enters one C6A execution per LB+LT tap; repeated observations are not forced into a two-shot sequence.",
+    "Omnislice accepts a fresh LB+Square press during native High-heavy recovery and consumes it once."
   ],
-  "supported_preset": "data/presets/sword-rebuild-1-supported.json"
+  "supported_preset": "data/presets/sword-rebuild-1-supported.json",
+  "trial_preset": "data/presets/sword-rebuild-1.json"
 }

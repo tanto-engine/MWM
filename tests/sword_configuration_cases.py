@@ -10,6 +10,34 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_complete_trial_compiles_separate_boss_owners_and_requested_bindings(self):
+        # Compile the exact requested trial through the same encoder used to enable gameplay.
+        # Colliding Jin/Oda action numbers must remain in separate resource-owner banks.
+        # These checks establish routing/identity contracts, not projectile or hitbox acceptance.
+        import copy
+        from game_controller import game_binding
+        preset = config.validate_preset(json.loads((ROOT/'data/presets/sword-rebuild-1.json').read_text(encoding='utf8')))
+        fixture = sessions.RuntimeSessionTests(); fixture.setUp(); fixture.configured_fixture(preset)
+        owners = {}
+        for move, adapter in zip(fixture.config['imports'],fixture.config['adapters']):
+            if adapter is None: continue
+            boss=move['id'].partition('.')[0]
+            owners.setdefault(boss,len(owners)+1)
+            offset=owners[boss]*0x10000000
+            for field in ('action_resource','timing_resource','bank','motion_bank','timing_wrapper'):
+                adapter[field]+=offset
+            for field in ('descriptor','payload','clip','timing_record'): move[field]+=offset
+        self.assertEqual(len(fixture.config['imports']),25)
+        self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),6144)
+        self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,5,4])
+        self.assertEqual(preset['chord_stance'],'any')
+        calibration=json.loads((ROOT/'data/controller-calibration.json').read_text())
+        _, binding=game_binding(calibration,config.binding_for_preset(calibration,preset,fixture.config['imports']))
+        self.assertEqual((binding['modifier_mask'],binding['trigger_mask']),(0x100,0x400))
+        gun=next(i for i,m in enumerate(fixture.config['imports']) if m['id'].startswith('sanada'))
+        broken=copy.deepcopy(fixture.config);broken['imports'][gun]['flags']^=1
+        with self.assertRaises(ValueError): encode_session(broken,fixture.pid,fixture.born)
+
     def test_portable_launches_preserve_the_owned_worker(self):
         # Reproduce shared extraction using the pinned installer generator's actual option branch.
         # Model launcher cleanup with owned temporary files, then reopen the retained worker.

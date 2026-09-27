@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "sanada_yukimura.resources.v1",
+  "boss_id": "sanada_yukimura",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 134,
+      "source_name": "/AE6BC233B5E1CF1BAB89ABFA38077CD9E761EE92FC71735162522EA4958761D0",
+      "size": 154012,
+      "sha256": "c754a667e937941a862f890cb9b24a854ad8d2d13f4e640f25bd6de35bcc3f34"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4038,
+      "source_name": "/621FBF9579EE9AFC3863C968CE26E85809A4CC04338ED5329A9A5D567E8884E6",
+      "size": 189184,
+      "sha256": "5c3c35a125525b10a56fa6c243eff76cf3dc42d931fcacc24b7fa06ca1ff7c18"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4039,
+      "source_name": "/3AAE04C44257F21B22777B58397EB409F29AD7F080CE319355B408E6E219EFD7",
+      "size": 3642208,
+      "sha256": "d497c1c7bd1f82b77a53836950267365b4b41a211b87f7c6a12b78b77bb1f070"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4040,
+      "source_name": "/E62E237BA454B9B026DEE041AD9E7BC2EB9A2632B0661C522BF46B69C1FC59B7",
+      "size": 1888,
+      "sha256": "28d016fa56bfbd06967d64393615edcfeb3eb5a299683ce5c306ac262ff6a984"
+    }
+  },
+  "moves": {
+    "C6A": {
+      "motion_key": 1130,
+      "timing_key": 1130,
+      "motion_index": 38,
+      "motion_record_offset": 1060832,
+      "timing_index": 41,
+      "timing_record_offset": 68352,
+      "timing_event_count": 22,
+      "source_payload_offset": 17468
+    }
+  }
+}

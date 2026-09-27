@@ -28,6 +28,34 @@
         "fill_frames": 30,
         "hold_frames": 36
       }
+    },
+    "sanada_yukimura.action_0c6a": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "toyotomi_hideyori.action_0d30": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "oda_nobunaga.action_0c6e": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
+    },
+    "tachibana_muneshige.action_0d8d": {
+      "ki_pulse": {
+        "percent": 40,
+        "fill_frames": 30,
+        "hold_frames": 36
+      }
     }
   }
 }

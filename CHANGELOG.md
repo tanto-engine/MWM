@@ -1,5 +1,11 @@
 # Release notes
 
+## Unreleased
+
+Added the complete Sword Rebuild 1 source trial using archive-matched Hideyori, Oda, Tachibana and Sanada resources. Bindings now include Low quick replacement, one-shot High-heavy follow-up and an any-stance chord. Companion animation/timing identities and combat behavior remain gameplay trials. The UI distinguishes trial/subset drafts, saved settings and actual Engine status. No new EXE is included.
+
+Gameplay trial stopped after reported drift and a missing death screen. No intended move substitutions were recorded; attachment/resource/lifecycle investigation remains open. Hideyori's resource load remained pending. Source definitions are retained for diagnosis, not marked accepted.
+
 ## 0.3.0-alpha.2
 
 First portable MWM desktop release candidate. The EXE includes its own Engine worker, reviewed move data, artwork and collection. Each launch extracts separately; versioned worker files survive editor closure so an enabled Engine can retain its runtime. Apply now saves the selected game path before refreshing the form. The release gate checks the copied EXE's startup, configuration and bundled assets with gameplay disabled.

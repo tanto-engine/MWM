@@ -29,7 +29,7 @@ The worker pipe explicitly uses UTF-8 so Windows code pages cannot corrupt prese
 | `data/preset.json` | Default stance, native/custom bindings and reviewed speeds | Schema v8 settings are validated; private physics/Pulse/timing policy is not an unrestricted user field. |
 | `data/controller-calibration.json` | Saved controller layout and raw/logical button meaning | A bitmask represents button states; a source-device bit may differ from its game-facing equivalent. |
 | `dataset/weapons/<weapon>/<boss>/*.json` | Fresh move strings, ordered source IDs, hypotheses and evidence references | Candidate names and descriptions are unconfirmed until reviewed; archived bytes are retained in `dataset/evidence/`. |
-| `data/moves.json` | Legacy catalogue required by the existing sword runtime | Compatibility data only; do not merge its old research into the fresh dataset. |
+| `data/moves.json` | Runtime catalogue of existing adapters and new source trials | Runtime choices remain separate from immutable research evidence and gameplay acceptance. |
 | `data/imports/*.json` | Reviewed source signatures, graph phases, continuations, recovery and voice events | Full bank/action identity matters. Identical small action numbers from different bosses are not interchangeable. |
 | `data/resources/*.json` | Installed archive entries, sizes, hashes and motion/timing mappings | These identify game assets; they are not extracted animation archives shipped with the mod. |
 
@@ -42,6 +42,7 @@ Match each description against the last few action executions before recording S
 ## Concrete migration boundaries
 
 - **Evidence intake:** retain immutable raw JSONL and original descriptions in private `dataset/evidence/` archives. Index by file hash, session, take and time; review the tail across all actor candidates. Missing takes remain missing evidence, never synthetic move definitions.
+- **Current source trial:** `dataset/compile_trial.py` derives four boss import manifests from recorded payload prefixes and installed archive fingerprints. The full Sword Rebuild 1 preset links their phases and bindings; companion resources and combat behavior still need gameplay validation. A native resource-loading failure is distinct from missing recorded action evidence.
 - **Catalogue normalization:** extract shared source actions, then reference them from move graphs and weapon adaptations. Use stable IDs and JSON Schema; generate the existing catalogue/import format first so the current 39-ID baseline can be compared without a simultaneous runtime rewrite.
 - **Weapon support:** Engine currently discovers specific sword imports. A reviewed weapon manifest and equipped-weapon routing must exist before exposing another weapon tab. `move_capabilities()` remains the UI authority; new data cannot bypass an unimplemented adapter.
 - **Packaging:** Engine's gate compiles `launch.py` as the console `MWMWorker.exe` with bundled `app/`, `runtime/` and `data/`, then copies its onedir output into `desktop-worker/`. Electron Builder includes that directory as `resources/worker/` and launches `MWMWorker.exe --desktop-worker`; `--worker` remains the allowlisted gameplay subprocess route. The UI itself needs only `desktop-dist/`, product metadata and release notes inside ASAR. UI compilation alone is not an EXE release; standalone lifecycle acceptance remains required.

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "oda_nobunaga.resources.v1",
+  "boss_id": "oda_nobunaga",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 103,
+      "source_name": "/61080226204DD813E51E5F9E89C5DC0CFBA0D66C6E1189F3E029A80B77773ED1",
+      "size": 61500,
+      "sha256": "e3c0afd4c07c2c991ad23a2329757ba2096d7d32521bed24052af7751dc7fdf0"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3996,
+      "source_name": "/D865BF25265E551DD6DAD5508F0AA8F398C3EBB28518B5BE360E6BB506FB8499",
+      "size": 86400,
+      "sha256": "98606d79654f5930a3c16d8d91e5470ebca7a64e88b38c899d9586eab1f7d033"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3997,
+      "source_name": "/89E0853D32F59D7FD76D9556F9009996C985806AE67018347682239F3C7923B4",
+      "size": 1117424,
+      "sha256": "b45986596cb18d3557db962ef9dddd16f38b00e10734f6635aa0ab80fcc1241e"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3998,
+      "source_name": "/630D1956CF36EC7B2741F48B0F954DAE9861C69649EDC1FA72011025B1E1F1CC",
+      "size": 672,
+      "sha256": "4b86e740369f300250ca05065b7544d91e61a64c81421cb29f84c08997448328"
+    }
+  },
+  "moves": {
+    "C6E": {
+      "motion_key": 1010,
+      "timing_key": 1010,
+      "motion_index": 28,
+      "motion_record_offset": 490496,
+      "timing_index": 28,
+      "timing_record_offset": 34304,
+      "timing_event_count": 24,
+      "source_payload_offset": 11996
+    },
+    "C6F": {
+      "motion_key": 1011,
+      "timing_key": 1011,
+      "motion_index": 29,
+      "motion_record_offset": 517664,
+      "timing_index": 29,
+      "timing_record_offset": 36224,
+      "timing_event_count": 25,
+      "source_payload_offset": 12172
+    }
+  }
+}

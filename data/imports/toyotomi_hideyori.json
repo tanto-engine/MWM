@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "boss_id": "toyotomi_hideyori",
+  "resource_profile_id": "toyotomi_hideyori.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "toyotomi_hideyori.action_0d30": [
+      "toyotomi_hideyori.action_0d30",
+      "toyotomi_hideyori.action_0d31",
+      "toyotomi_hideyori.action_0d32",
+      "toyotomi_hideyori.action_0d33"
+    ]
+  },
+  "moves": [
+    {
+      "id": "toyotomi_hideyori.action_0d30",
+      "key": 3376,
+      "motion": 2000,
+      "flags": 407633920,
+      "ki_cost": 0,
+      "recovery_frame": 45,
+      "transition_count": 46,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 25,
+          "index": 4,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "00000000000100000000ff01300dffffff0900000000000000004c1800000000d00700002d005500ffff160001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d31",
+      "key": 3377,
+      "motion": 2010,
+      "flags": 407633920,
+      "ki_cost": 0,
+      "recovery_frame": 30,
+      "transition_count": 46,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 8,
+          "index": 5,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "00000000000100000000ff01310dffffff0900000000000000004c1800000000da0700001e003700ffff160001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d32",
+      "key": 3378,
+      "motion": 2020,
+      "flags": 407633920,
+      "ki_cost": 0,
+      "recovery_frame": 35,
+      "transition_count": 46,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 8,
+          "index": 4,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "00000000000100000000ff01320dffffff0900000000000000004c1800000000e407000023004100ffff160001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "toyotomi_hideyori.action_0d33",
+      "key": 3379,
+      "motion": 2030,
+      "flags": 407633920,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 42,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "00000000000100000000ff01330dffffff0900000000000000004c1800000000ee070000ffff5f00ffff160001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}

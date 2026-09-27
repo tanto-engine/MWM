@@ -8,7 +8,7 @@ type Calibration = { device: Record<string, unknown>; controller_slot?: number |
 type Binding = { source: string; stance: string; move: string };
 type Preset = {
   schema_version: number; name: string; weapon: string; tap_move: string | null; hold_move: string | null;
-  modifier_mask: number; trigger_mask: number; hold_seconds: number; chord_stance: Stance;
+  modifier_mask: number; trigger_mask: number; hold_seconds: number; chord_stance: Stance | 'any';
   low_heavy: string | null; stance_holds: Record<Stance, string | null>; frost_moon: Record<Stance, string | null>;
   skill_bindings: Binding[]; move_settings: Record<string, { speed: number }>;
   okatsu_grapple: boolean; mid_light_ender: boolean; string_enabled: boolean;
@@ -17,7 +17,7 @@ type Snapshot = {
   runtime: string; preset: Preset; calibration: Calibration; buttons: Record<string, number>; nioh_exe: string;
   running: boolean; status: string; detail: string;
   binding_groups: { id: string; label: string }[]; load_warning?: string;
-  capabilities: { moves: Move[]; native_sources: { id: string; label: string }[]; stances: Stance[]; speed: { min: number; max: number } };
+  capabilities: { moves: Move[]; native_sources: { id: string; label: string; stances?: string[] }[]; stances: Stance[]; chord_stances?: (Stance | 'any')[]; speed: { min: number; max: number } };
 };
 type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
   priority: string | null; review_notes: string[]; steps: { source: { action_id: string; motion_id: number } }[];
@@ -184,14 +184,14 @@ function renderMoves() {
   // Present the existing sword preset's custom chord and native hold choices.
   // Each move menu uses its own capability flag rather than a universal catalogue list.
   // Weapon selection stays sword-only until Engine implements reviewed weapon routing.
-  const p = state.preset, grid = section('Custom binding', 'Choose two buttons, then assign a tap or hold action. The current Engine supports one custom chord in one stance.');
+  const p = state.preset, grid = section('Custom binding', 'Choose two buttons, then assign a tap or hold action. The current Engine supports one custom chord; choose its stance below.');
   field('Moveset name', input(p.name, value => {
     // Preserve a readable profile name apart from its stable move IDs.
     // Engine enforces its length and nonempty value during Apply.
     // Renaming a preset does not change weapon support.
     p.name = value;
   }), grid);
-  field('Custom chord stance', select(state.capabilities.stances.map(stance => {
+  field('Custom chord stance', select((state.capabilities.chord_stances || state.capabilities.stances).map(stance => {
     // Each stance maps directly to the Engine's canonical value.
     // No priority label from a recording enters this selector.
     // Titles remain cosmetic.
@@ -200,7 +200,7 @@ function renderMoves() {
     // Save the concrete stance required by the custom chord.
     // Engine rejects unsupported cross-stance combinations.
     // This edits only the draft.
-    p.chord_stance = value as Stance;
+    p.chord_stance = value as Stance | 'any';
   }), grid);
   renderChordButtons(grid);
   for (const [key, label] of [['tap_move', 'Tap / release'], ['hold_move', 'Hold']] as const) {
@@ -265,8 +265,11 @@ function renderNative() {
       // Source IDs come from Engine's maintained list.
       // Semantic overlap is checked with the entire preset.
       binding.source = value;
+      const stances = state.capabilities.native_sources.find(source => source.id === value)?.stances;
+      if (stances && !stances.includes(binding.stance)) binding.stance = stances[0];
+      render();
     }), row);
-    field('Stance', select([['any', 'Any'], ['low', 'Low'], ['mid', 'Mid'], ['high', 'High']], binding.stance, value => {
+    field('Stance', select((state.capabilities.native_sources.find(source => source.id === binding.source)?.stances || ['any', 'low', 'mid', 'high']).map(stance => [stance, stance.toUpperCase()]), binding.stance, value => {
       // Any is valid only where the selected action permits it.
       // Graphs requiring a concrete stance are rejected by Engine.
       // No automatic conflict resolution silently removes another row.
@@ -464,7 +467,7 @@ function renderCollection() {
   // The layout and exact notes explain which recorded sequences still need adaptation.
   // Filtering only hides cards; it never edits the pending moveset or loses keyboard focus.
   content.append(element('h2', 'Sword Rebuild 1', 'section-title'));
-  content.append(element('p', 'Five routes are available in the subset. Four need integration. Use the subset button below to load a draft, then Apply when ready.', 'hint'));
+  content.append(element('p', 'Load the trial to edit experimental routes, or the subset for its smaller selection. Apply saves the draft; Enable requests attachment. Gameplay remains unverified.', 'hint'));
   const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge attack',
     mid_heavy: 'Mid · heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
     frost_high: 'High Frost Moon', frost_mid: 'Mid Frost Moon', frost_low: 'Low Frost Moon' };
@@ -472,9 +475,9 @@ function renderCollection() {
     frost_mid: 'Oda · final two slashes', frost_low: 'Jin · Flying Swallow', high_heavy_omnislice: 'Tachibana · Omnislice attack immediately' };
   const routes = element('dl', undefined, 'route-list');
   for (const route of collection.design.routes) {
-    const move = collection.moves.find(move => move.id === route.dataset_id)!;
+    const move = collection.moves.find(move => move.id === route.dataset_id);
     routes.append(element('dt', labels[route.id] || route.id));
-    const value = element('dd', `${actions[route.id] || move.name} · ${route.status === 'blocked' ? 'Needs integration' : 'In subset'}`);
+    const value = element('dd', `${actions[route.id] || move?.name || route.dataset_id} · ${route.status.replaceAll('_', ' ')} · gameplay unverified`);
     if (route.blockers.length) value.append(element('p', route.blockers.join(' '), 'hint'));
     routes.append(value);
   }
@@ -567,6 +570,7 @@ async function reload() {
   // Display actual process-backed Engine status alongside the loaded configuration.
   await cancelCapture(); state = await window.mwm.request<Snapshot>('snapshot'); controllerChoice = 'saved'; dirty = Boolean(state.load_warning); render();
   document.querySelector('#runtime')!.textContent = state.status.replaceAll('_', ' ');
+  document.querySelector('#runtime-detail')!.textContent = state.detail;
   message(state.load_warning || 'Ready. Changes stay pending until Apply.', Boolean(state.load_warning));
 }
 
@@ -576,12 +580,12 @@ async function perform(name: string) {
   // No UI path bypasses Engine's preset validator.
   await cancelCapture();
   if (name === 'reload') { await reload(); return; }
-  if (name === 'baseline' || name === 'starter' || name === 'load') {
+  if (name === 'baseline' || name === 'starter' || name === 'trial' || name === 'load') {
     const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : name, params());
-    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'starter' ? 'Five supported routes loaded. Four remain unavailable; see Collection. Apply to save.' : 'Moveset loaded into the form. Apply to save.'); } return;
+    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Experimental trial loaded as a draft. Gameplay unverified. Apply to save, then Enable to request attachment.' : name === 'starter' ? 'Subset loaded as a draft. Apply to save.' : 'Moveset loaded into the form. Apply to save.'); } return;
   }
   if (name === 'save') { if (await window.mwm.request('export', params())) message('Moveset exported. Runtime settings were not changed.'); return; }
-  if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); message('Preset saved. Active Engine will recover and reattach when required.'); return; }
+  if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); message(state.running ? 'Preset saved. Engine will recover and reattach when required; check its status.' : 'Preset saved. Enable to request attachment.'); return; }
   if (name === 'enable') { await window.mwm.request('enable', params()); dirty = false; render(); message('Attachment requested. Engine reports readiness after it verifies gameplay resources.'); return; }
   if (name === 'disable') { await window.mwm.request('disable'); message('Disable requested. Engine completes owned recovery before detaching.'); }
 }
@@ -617,6 +621,7 @@ async function pollStatus() {
     try {
       const snapshot = await window.mwm.request<Snapshot>('snapshot');
       document.querySelector('#runtime')!.textContent = snapshot.status.replaceAll('_', ' ') + (dirty ? ' · unsaved edits' : '');
+      document.querySelector('#runtime-detail')!.textContent = snapshot.detail;
     } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; }
   }
   setTimeout(pollStatus, 1800);

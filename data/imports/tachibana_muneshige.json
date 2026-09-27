@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "boss_id": "tachibana_muneshige",
+  "resource_profile_id": "tachibana_muneshige.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "tachibana_muneshige.action_0d8d": [
+      "tachibana_muneshige.action_0d8d"
+    ]
+  },
+  "moves": [
+    {
+      "id": "tachibana_muneshige.action_0d8d",
+      "key": 3469,
+      "motion": 5011,
+      "flags": 1498152960,
+      "ki_cost": 40,
+      "recovery_frame": 120,
+      "transition_count": 27,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 2,
+          "index": 5,
+          "hash": 465981000
+        }
+      ],
+      "source_payload_prefix": "02000000000220000000ff048d0dffff01090a000400280000004c59000000009313000078008200ffff000001000200ffffff28ffffffff78001e001800ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}
