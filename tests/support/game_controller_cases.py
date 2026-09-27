@@ -34,7 +34,7 @@ class GameInputTests(unittest.TestCase):
         self.clock.start()
         self.addCleanup(self.clock.stop)
 
-    def sample(self, sequence=2, qpc=1000, slot=0, buttons=0, connected=None):
+    def sample(self, sequence=2, qpc=1000, slot=0, buttons=0, connected=None, lt=0, rt=0):
         # Publish one four-slot XInput snapshot into owned trace memory.
         # Write sequence, QPC, connection codes, masks, axes and packets in ABI order.
         # Corrupt publication and ambiguous-device cases must reach the real decoder.
@@ -43,7 +43,8 @@ class GameInputTests(unittest.TestCase):
             codes[index] = 0
         masks = [0]*4
         masks[slot] = buttons
-        raw = controller.INPUT.pack(sequence, qpc, *codes, *masks, *([0]*8), *([1]*4))
+        triggers=[0]*8;triggers[slot]=lt;triggers[4+slot]=rt
+        raw = controller.INPUT.pack(sequence, qpc, *codes, *masks, *triggers, *([1]*4))
         C.memmove(self.trace.address+64, raw, len(raw))
 
     def test_odd_zero_and_torn_sequence_never_emit_input(self):
@@ -172,6 +173,26 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(controller.game_button_mask(DEVICE,128),0x800)
         self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,128,127),0x400)
         self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,127,128),0x800)
+        for device,lb,triggers in ((DEVICE,16,(4,64,128,8)),(controller.GAME_DEVICE,0x100,(0x2000,0x400,0x800,0x8000))):
+            for trigger in triggers:
+                for held in (False,True):
+                    profile,binding=controller.game_binding(dict(device=device,lb_mask=lb),
+                        dict(device=device,lb_mask=lb,circle_mask=trigger,hold_seconds=.25))
+                    backend=controller.GameController(self.trace,profile)
+                    reader=ControllerReader(backends=[backend],clock=lambda:1.)
+                    gate=ControllerGesture(profile,binding,1000)
+                    logical=binding['trigger_mask']
+                    # Slot 2 intentionally differs from the saved WinMM slot; only game-facing selection matters.
+                    for sequence,pressed,now in ((2,False,1000),(4,True,1100),(6,held,1200)):
+                        buttons=0x100 if sequence>2 else 0
+                        self.sample(sequence,slot=2,buttons=buttons|(logical if pressed and logical>=0x1000 else 0),
+                            lt=128 if pressed and logical==0x400 else 127,
+                            rt=128 if pressed and logical==0x800 else 127)
+                        for event in reader.poll():gate.process(event,now)
+                    fields=gate.fields(1350 if held else 1201)
+                    self.assertTrue(fields['armed'])
+                    self.assertEqual(fields['variant'],int(held))
+                    self.assertEqual(backend.source_slot,2)
 
     def test_explicit_slot_never_falls_back_to_another_pad(self):
         # Ensure selecting a particular controller does not silently accept another connected pad.

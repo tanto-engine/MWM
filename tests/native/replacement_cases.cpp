@@ -26,6 +26,7 @@ static uint64_t weight_reaction;
 static bool weight_accept=true;
 static float weight_native_impulse=16;
 static uint64_t weight_component_after;
+static const char* launcher_contact_text="80000000000000080e00ffff05000000b4005f000500060c0e00060c3c320500ffffff64ffffffff1600230000002d00000000000000ff0223000c0037000064000200000000020000ff000108ff0a01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
 static void owned_weight(void* actor, float weight) {
     // Model Character::SetWeight with owned fields and the native negative sentinel.
@@ -391,6 +392,24 @@ static void held_slot_cases() {
     // Frost/guard entries share native heavy templates but do not own held Triangle.
     // Place optional entries before and after a real hold to reproduce both selection orders.
     // Ordinary heavy and empty-Ki grapple must resolve the same configured hold slot.
+    for (unsigned stance : {2u,1u,0u}) for (bool held : {false,true}) {
+        boss_hold_stances=7; hold_reset(stance,false);
+        const auto& adapter=boss_adapters[5];
+        put(heavy_payloads[0].data(),0x18,uint64_t(0x8000000594C0000ULL));
+        boss_skill_bindings[1]={1,1u<<(2-stance),1,adapter.player_key,adapter.player_motion,
+            adapter.transition_count,0x8000000594C0000ULL};
+        const auto original=heavy_descriptors[0];
+        assert(!observed_action(player.data(),0xBC0,nullptr));
+        assert(pending_heavy.active && pending_heavy.tap==0 && pending_heavy.hold==5 && !boss_active);
+        bindings(false);
+        if (held) pending_heavy.started-=frequency/4;
+        else pad_buttons=0;
+        publish(); tick();
+        assert(!pending_heavy.active && boss_active && boss_active_slot==(held ? 5u : 0u));
+        assert(dispatch->control.dispatch_count==1 && heavy_descriptors[0]==original);bindings(true);
+        put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());
+        assert(!boss_active);bindings(false);
+    }
     for (unsigned stance : {2u,0u}) {
         boss_hold_stances=7; hold_reset(stance); pending_heavy={};
         boss_imports[6]=boss_imports[5]; boss_adapters[6]=boss_adapters[5]; boss_import_count=7;
@@ -533,6 +552,74 @@ static void airborne_cases() {
         assert(boss_active_slot==slot && grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot)));
     }
     put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());assert(!boss_active);bindings(false);
+    // Dispatch each real C79 graph through held Triangle, chord intent and native heavy selection.
+    // Rebind both roles across all stances while retaining separate successor ownership.
+    // Supply native contact-success selections for the full paired graph; launcher-only cannot borrow its bridge.
+    static uint8_t contact[0x80]{};static uint64_t contact_pointer=address(contact);
+    for (unsigned byte=0;byte<sizeof(contact);++byte) {
+        unsigned value=0;assert(std::sscanf(launcher_contact_text+byte*2,"%2x",&value)==1);contact[byte]=uint8_t(value);
+    }
+    put(descriptors[0],0x48,address(&contact_pointer));put(descriptors[0],0x52,uint16_t(1));
+    static uint8_t camera[0x28]{},camera_bank[8]{};
+    boss_session.source_camera_bank=boss_hold_camera_bank=address(camera_bank);
+    boss_session.player_camera_slot=address(camera+8);boss_session.camera_original=0;
+    put(camera_bank,0,address(GetModuleHandleW(nullptr))+0x13C8FA0);put(owner.data(),0x48,address(camera));
+    uint8_t* templates[]={high_descriptor,heavy_descriptors[0].data(),low_descriptor};
+    uint8_t* template_payloads[]={high_payload,heavy_payloads[0].data(),low_payload};
+    constexpr uint32_t keys[]={0xCB7,0xC7A,0xCF5};
+    constexpr int32_t motions[]={3300,2300,4300};
+    constexpr uint16_t counts[]={40,42,46};
+    constexpr int16_t recoveries[]={58,46,38};
+    for (unsigned stance=0;stance<3;++stance) {
+        template_payloads[stance][0x0B]=uint8_t(stance);
+        put(template_payloads[stance],0x18,uint64_t(0x8000000594C0000ULL));
+    }
+    original_lookup=[](void*,uint32_t,uint32_t* bank) {
+        // Resolve the currently selected stance's verified native heavy descriptor.
+        // This fixture's lookup supplies owned memory while production code chooses the import.
+        // No controller input or action is sent to the game.
+        *bank=0;SetLastError(ACTION_ERROR);return boss_adapters[boss_hold_variant-1].player_descriptor;
+    };
+    boss_frost_variants[0]=boss_frost_variants[1]=0;
+    for (unsigned target : {5u,17u}) for (unsigned stance=0;stance<3;++stance) for (unsigned route=0;route<3;++route) {
+        for (unsigned slot=5;slot<boss_import_count;++slot) boss_private_actions[slot]={};
+        for (unsigned slot : {5u,6u,17u}) {
+            const unsigned mapped=(slot==17)==(target==17) ? stance : (stance+1)%3;
+            auto& adapter=boss_adapters[slot];
+            adapter.player_descriptor=address(templates[mapped]);adapter.player_key=keys[mapped];
+            adapter.player_motion=motions[mapped];adapter.transition_count=counts[mapped];adapter.recovery_frame=recoveries[mapped];
+        }
+        for (auto& binding : boss_skill_bindings) binding={};
+        pending_heavy={};boss_hold_variant=target+1;boss_hold_stances=7;
+        put(player.data(),0x470,stance);put(player.data(),0x58,address(neutral.data()));
+        command.armed=0;dispatch->control.dispatch_count=0;dispatch->control.consumed_sequence=0;
+        pad_buttons=0;observe_game_input(trace->header);pad_buttons=XINPUT_GAMEPAD_Y;observe_game_input(trace->header);
+        publish_player_context(.25f);publish();
+        if (route==0) {
+            boss_skill_bindings[0]={3,1u<<(2-stance),target+1,0,0,0,0};
+            assert(!observed_action(player.data(),keys[stance],nullptr) && pending_heavy.active);
+            pending_heavy.started-=frequency/4;publish();tick();
+        } else if (route==1) {
+            const auto& move=boss_imports[target];command.armed=command.held=1;command.reserved[1]=target;
+            command.desired_key=move.key;command.expected_motion=move.motion;
+            command.expected_descriptor=move.descriptor;command.expected_payload=move.payload;publish();tick();
+        } else {
+            boss_skill_bindings[0]={1,1u<<(2-stance),target+1,keys[stance],motions[stance],counts[stance],0x8000000594C0000ULL};
+            assert(observed_action(player.data(),keys[stance],nullptr));
+        }
+        if (!boss_active || boss_active_slot!=target || dispatch->control.dispatch_count!=1)
+            std::fprintf(stderr,"C79 target%u stance%u route%u active%ld slot%u count%lld reason%ld\n",target,stance,route,boss_active,boss_active_slot,dispatch->control.dispatch_count,dispatch->control.last_reason);
+        assert(boss_active && boss_active_slot==target && dispatch->control.dispatch_count==1);
+        assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(target)));
+        assert(boss_native_successor(target,0xC7A)==(target==5 ? 6 : -1));
+        if (target==5) for (unsigned next : {6u,7u,8u,9u}) {
+            SetLastError(FRAME_ERROR);
+            assert(observed_action(player.data(),boss_imports[next].key,nullptr) && boss_active_slot==next);
+            assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(next)));
+        }
+        command.armed=0;put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());
+        assert(!boss_active);bindings(false);
+    }
     boss_skill_bindings[0]={};boss_native_bindings=0;original_lookup=native_lookup;
     boss_frost_variants[0]=boss_frost_variants[1]=0;
 }
@@ -1160,9 +1247,8 @@ int main() {
     put(jin_payloads[0].data(),0x20,launcher.motion);
     put(jin_payloads[0].data(),0x24,int16_t(-1)); put(jin_payloads[0].data(),0x26,int16_t(-1));
     static uint8_t launcher_combat[0x80]; static uint64_t launcher_combat_pointer;
-    const char* contact="80000000000000080e00ffff05000000b4005f000500060c0e00060c3c320500ffffff64ffffffff1600230000002d00000000000000ff0223000c0037000064000200000000020000ff000108ff0a01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     for (unsigned byte=0;byte<sizeof(launcher_combat);++byte) {
-        unsigned value=0; assert(std::sscanf(contact+byte*2,"%2x",&value)==1); launcher_combat[byte]=uint8_t(value);
+        unsigned value=0; assert(std::sscanf(launcher_contact_text+byte*2,"%2x",&value)==1); launcher_combat[byte]=uint8_t(value);
     }
     launcher_combat_pointer=address(launcher_combat);
     put(jin_descriptors[0].data(),0x48,address(&launcher_combat_pointer));

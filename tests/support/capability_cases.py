@@ -104,7 +104,7 @@ class CapabilityTests(unittest.TestCase):
         self.assertNotIn('jin_hayabusa.action_0cac',moves)
         old=dict(config.DEFAULT_PRESET,schema_version=7,frost_startup_speed=2,frost_window_seconds=.75)
         old.pop('move_settings');old.pop('chord_stance')
-        self.assertEqual(config.validate_preset(old),config.DEFAULT_PRESET)
+        self.assertEqual(config.validate_preset(old),dict(config.DEFAULT_PRESET,move_settings={}))
         self.assertEqual(old['frost_startup_speed'],2)
 
     def test_frost_shared_import_retains_one_stance_owner(self):
@@ -120,6 +120,20 @@ class CapabilityTests(unittest.TestCase):
         fixture.config['skill_bindings'][0]['stances']=7
         with self.assertRaisesRegex(ValueError,'stance ownership'):
             encode_session(fixture.config,fixture.pid,fixture.born)
+
+    def test_graph_chords_and_izuna_roles_require_distinct_concrete_stances(self):
+        # Reject settings whose native stance template cannot honor the advertised binding.
+        # Launcher and drop share source bytes and need separate stance ownership.
+        # Valid rebinding still reaches the native session encoder in every concrete stance.
+        for stance in ('low','mid','high'):
+            preset=empty_preset();preset.update(tap_move='jin_hayabusa.action_0c79',chord_stance=stance)
+            preset['stance_holds'][stance]='jin_hayabusa.izuna_drop'
+            with self.assertRaisesRegex(ValueError,'different stances'):config.validate_preset(preset)
+            preset['stance_holds'][stance]=None
+            preset['stance_holds'][{'low':'mid','mid':'high','high':'low'}[stance]]='jin_hayabusa.izuna_drop'
+            self.fixture(preset)
+            preset['chord_stance']='any'
+            with self.assertRaisesRegex(ValueError,'Choose Low, Mid or High'):config.validate_preset(preset)
 
     def test_recording_metadata_cannot_promote_native_sources_or_moves(self):
         # Prove that adding a promising-looking recording does not make it executable.

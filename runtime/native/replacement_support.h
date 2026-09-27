@@ -337,6 +337,13 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         DispatchCommand command{};
         const int guard_slot=native_bound_slot(key,descriptor,command);
         if (guard_slot>=0) {
+            // Defer before importing the tap so a same-stance Triangle hold can select its own destination.
+            const unsigned hold=stance_hold(key);
+            if (hold<boss_import_count && replacement_context(command,boss_adapters[hold])) {
+                if (const uint64_t deferred=defer_heavy(player,key,unsigned(guard_slot),hold,command)) {
+                    SetLastError(native_error); return deferred;
+                }
+            }
             if (const uint64_t adapted=native_skill_import(unsigned(guard_slot),key,command)) {
                 *bank_index=1; SetLastError(native_error); return adapted;
             }

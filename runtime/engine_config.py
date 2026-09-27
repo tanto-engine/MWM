@@ -188,6 +188,8 @@ def validate_preset(value):
         raise ValueError('Frost Moon destinations must use distinct imports')
     entries += [(result['chord_stance'],result[field]) for field in ('tap_move','hold_move')
                 if result[field] in HELD_MOVES or result[field] is not None and result[field] in frost.values()]
+    if result['chord_stance']=='any' and any(result[field] in HELD_MOVES for field in ('tap_move','hold_move')):
+        raise ValueError('Choose Low, Mid or High stance for a custom chord using an imported graph')
     occupied=set()
     for binding in bindings:
         if not isinstance(binding,dict) or set(binding)!={'source','stance','move'}:
@@ -211,6 +213,8 @@ def validate_preset(value):
     for stance,move in entries:
         if any(other!=stance and identifier==move for other,identifier in entries):
             raise ValueError('An imported graph or Frost move must use the same stance across bindings')
+        if move=='jin_hayabusa.action_0c79' and (stance,'jin_hayabusa.izuna_drop') in entries:
+            raise ValueError('Izuna launcher only and launcher + drop must use different stances')
     if result['low_heavy'] and any(move==result['low_heavy'] for _,move in entries):
         raise ValueError('Disable the low-heavy string before using that graph on another binding')
     if sum(3 if binding['source']=='heavy_attack' and binding['stance']=='any' else 1 for binding in bindings)+len(enabled)>8:

@@ -237,6 +237,9 @@ def main():
                 report=isolated/'ui-smoke.json'
                 subprocess.run([str(isolated_exe),'--ui-smoke',str(report)],cwd=isolated,env=environment,check=True,timeout=180)
                 shutil.copyfile(report,smoke)
+                # Preserve an app-owned screenshot, if supplied, without retaining temporary user state.
+                preview=isolated/'ui-preview.png'
+                if preview.is_file():shutil.copyfile(preview,package/preview.name)
             if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
         (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
     if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
