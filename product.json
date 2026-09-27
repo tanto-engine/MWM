@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "kind": "sword",
-  "name": "TantoSword",
+  "name": "SKM",
   "engine_repository": "https://github.com/neuriv/tanto-engine.git",
-  "engine_commit": "69f34bede93cf576d87944984ee702b26968dc94"
+  "engine_commit": "ebb39e25782bf5b49c8005a850f394ac3994e98b",
+  "version": "0.2.0-alpha.1"
 }

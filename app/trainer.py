@@ -95,7 +95,7 @@ class Trainer:
             registration = active_runtime()
             if registration:
                 self.set_runtime(registration)
-        root.title('Nioh 1 Sword Mod')
+        root.title('SKM · Single-Katana Moveset Mod')
         root.geometry('1030x760')
         root.minsize(900, 680)
         self.catalogue_path = Path((self.runtime_registration or {}).get('catalogue_path', os.environ.get('NIOH_CATALOGUE_PATH', ROOT/'data/moves.json')))
@@ -118,7 +118,7 @@ class Trainer:
             os.environ['NIOH_EXE'] = self.exe_path.get()
         outer = ttk.Frame(root, padding=16)
         outer.pack(fill='both', expand=True)
-        ttk.Label(outer, text='Nioh 1 Sword Mod', font=('Segoe UI', 20, 'bold')).pack(anchor='w')
+        ttk.Label(outer, text='SKM · Single-Katana Moveset Mod', font=('Segoe UI', 20, 'bold')).pack(anchor='w')
         ttk.Label(outer, textvariable=self.status, font=('Segoe UI', 11)).pack(anchor='w', pady=(8, 4))
         bar = ttk.Frame(outer)
         bar.pack(fill='x')

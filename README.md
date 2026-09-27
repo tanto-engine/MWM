@@ -1,6 +1,6 @@
-# Tanto Sword Mod
+# SKM — Single-Katana Moveset Mod
 
-The standalone Nioh 1 Sword Skills Expanded product, developed with Tanto Engine. Users receive `TantoSword.exe`; they do not install or run the development engine. The executable includes the selected micro-runtime, two native libraries, validated Sword definitions and the configuration UI. It excludes engine source headers, tests, research, recordings and developer authoring tools.
+The standalone Nioh 1 Sword Skills Expanded product, developed with Tanto Engine. Users receive `SKM.exe`; they do not install or run the development engine. The executable includes the selected micro-runtime, two native libraries, validated Sword definitions and the configuration UI. It excludes engine source headers, tests, research, recordings and developer authoring tools.
 
 Launch the application, review the moveset and choose **Enable / attach**. **Disable** cooperatively restores owned native state. Closing the window leaves an enabled session running. Settings live under `%LOCALAPPDATA%\Tanto\Sword\runtime` in the packaged application. The game installation provides its assets; the package contains asset identities and checks, not extracted game archives.
 
@@ -42,3 +42,7 @@ python .\review_import.py .\data\imports\okatsu.json --evidence C:\Captures\revi
 Omit `--evidence` to inspect definition and resource gaps first. `--catalogue` and `--resources` accept draft inputs outside the product tree. The report checks existing import validation, catalogue signatures, resource identities and supplied reconstruction identities, and lists missing requirements. `--reviewed` records a developer attestation; it does not certify execution or gameplay. The helper writes only a report, rejects replacing inputs/product data, and never installs a recording or enables a move.
 
 After addressing the report, review player adaptation, ownership, recovery, voices, paired roles and installed archive bytes. Add the reviewed definitions to the maintained product imports, run the Engine's existing offline test entrypoints and obtain current-build gameplay evidence before distributing a build. This source change includes no new executable or gameplay certification. The previous Downloads workbook remains archival, not a runtime dependency.
+
+## Release discipline
+
+Every EXE compilation uses `Build.ps1` and Engine’s shared release gate. Set a new version and corresponding `CHANGELOG.md` entry, commit all three repositories, and pin the exact Engine commit first. Output is immutable `dist/<version>/` with checksums, source hashes, test log and `release.json`. See `../tanto-engine/RELEASES.md`. No build replaces a published version. Offline checks never imply gameplay acceptance.
