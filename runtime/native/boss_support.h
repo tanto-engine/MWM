@@ -14,6 +14,8 @@ static uint32_t boss_chain_epoch;
 static bool boss_chain_cancelled, boss_camera_active;
 static uint64_t boss_camera_borrowed;
 static thread_local bool boss_native_grapple_entry;
+struct HiddenWeaponModel { uint64_t slot, object, model; };
+static HiddenWeaponModel boss_hidden_weapons[4]{};
 #endif
 
 [[maybe_unused]] static bool boss_paired(uint64_t flags) {
@@ -49,6 +51,7 @@ static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
     // Native704E50 schedules these source effects;709002 applies their equipment command.
     // Jin rows46/47 select weapon slots by stance, so remove only those exact pure commands.
     // Preserve every other event and all shared source data; reject changed effect identities.
+    // TODO(weapon-visibility): hide inactive melee/ranged weapons, restoring owned visibility on use, interruption and equipment change.
     if (!boss_adapters[slot].kind || recorded_grounded(boss_imports[slot],boss_adapters[slot])) return true;
     static const uint8_t expected[0x80]={
         0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,
@@ -568,6 +571,7 @@ static bool boss_player_valid() {
 #ifdef RESEARCH_REPEAT
     boss_camera_active = false;
     boss_chain_cancelled = true;
+    for (auto& part : boss_hidden_weapons) part = {};
 #endif
     InterlockedExchange(&boss_active, 0);
     return true;
@@ -584,6 +588,47 @@ static bool writable_slot(uint64_t slot) {
 }
 
 #ifdef RESEARCH_REPEAT
+static void boss_restore_weapon(HiddenWeaponModel& part) {
+    // Restore only a model this action hid, still attached to the same player.
+    // Search both melee slots: equipment changes may move the retained weapon between them.
+    // Changed or destroyed objects lose ownership; never write through their former pointers.
+    bool owned=false;
+    if (part.model && same_field(boss_active_player,0,boss_session.vtable)
+        && same_field(boss_active_player,0x50,boss_active_owner))
+        for (unsigned i=0;i<8;++i)
+            owned=owned || same_field(boss_active_owner,0x500+i*0x60,part.object);
+    if (owned && same_field(part.object,0x18,part.model) && same_field(part.model,0,part.object)
+        && writable_slot(part.model+8))
+        __sync_val_compare_and_swap(reinterpret_cast<volatile uint8_t*>(part.model+0x0A),uint8_t(1),uint8_t(0));
+    part={};
+}
+static void boss_update_weapon_visibility() {
+    // Native959610 clears draw flags, then95964F skips models with local-hide byte +0x0A set.
+    // Hide only the equipped melee models during the exact Sanada C6A import; his spawned gun is separate.
+    // Capture only visible models, keep existing native hides, and release every owned flag on exit/disable.
+    const bool gun=dispatch && dispatch->control.enabled && boss_active && boss_active_slot<boss_import_count
+        && sword_move_matches({0xC6A,1130,0x40019480000ULL,2,9,-1},
+                              boss_imports[boss_active_slot],boss_adapters[boss_active_slot])
+        && boss_player_valid()
+        && same_field(boss_active_player,0x58,boss_private_descriptor_address(boss_active_slot));
+    uint64_t equipment=0; uint8_t selected=0;
+    if (!gun || !copy_field(boss_active_owner+0x240,equipment)
+        || !copy_field(equipment+0x9CC,selected) || selected>1) {
+        for (auto& part : boss_hidden_weapons) boss_restore_weapon(part);
+        return;
+    }
+    for (unsigned i=0;i<4;++i) {
+        auto& part=boss_hidden_weapons[i];
+        const uint64_t slot=boss_active_owner+0x500+((selected ? 0 : 4)+i)*0x60;
+        uint64_t object=0,model=0; uint16_t kind=0; uint8_t visibility_mode=0;
+        const bool valid=copy_field(slot,object) && copy_field(object+4,kind) && kind==3
+            && copy_field(object+0x18,model) && same_field(model,0,object)
+            && copy_field(model+0x15,visibility_mode) && !visibility_mode && writable_slot(model+8);
+        if (!valid || part.slot!=slot || part.object!=object || part.model!=model) boss_restore_weapon(part);
+        if (valid && __sync_val_compare_and_swap(reinterpret_cast<volatile uint8_t*>(model+0x0A),uint8_t(0),uint8_t(1))==0)
+            part={slot,object,model};
+    }
+}
 static bool boss_camera_available() {
     // Validate the private action's camera slot before attempting the grab.
     // Require the recorded owner, reserved slot and expected original or borrowed value.
@@ -629,6 +674,10 @@ static bool boss_set_bindings(bool borrow, unsigned slot = boss_active_slot) {
     // Swap all four player motion and timing slots as one guarded operation.
     // Preflight each value and roll back only values installed by this call.
     // Third-party or replaced resource pointers must survive failed adaptation unchanged.
+    // Restore before the native exit setter can apply its own death/damage/equipment visibility.
+#ifdef RESEARCH_REPEAT
+    if (!borrow) for (auto& part : boss_hidden_weapons) boss_restore_weapon(part);
+#endif
     if (!boss_player_valid()) return false;
     uint64_t before[4]{};
     for (unsigned i = 0; i != 4; ++i) {
@@ -867,4 +916,7 @@ static void boss_finish_call(void* actor) {
         InterlockedExchange(&boss_active, 0);
         InterlockedExchange(&dispatch->control.status, 3);
     } else InterlockedExchange(&dispatch->control.status, 2);
+#ifdef RESEARCH_REPEAT
+    boss_update_weapon_visibility();
+#endif
 }

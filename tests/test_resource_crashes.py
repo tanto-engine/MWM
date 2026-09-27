@@ -9,6 +9,7 @@ import io
 import os
 from pathlib import Path
 import subprocess
+import struct
 import sys
 import tempfile
 import unittest
@@ -120,12 +121,14 @@ class ResourceCrashTests(unittest.TestCase):
             build = root / 'native/build'
             build.mkdir(parents=True)
             (build / 'nioh_resources.dll').write_bytes(b'owned test DLL; never loaded')
-            game = SimpleNamespace(identity=dict(pid=123, creation_filetime='456', build_sha256='build'), alive=lambda: True)
+            object_ready = True
+            game = SimpleNamespace(identity=dict(pid=123, creation_filetime='456', build_sha256='build'),
+                                   alive=lambda: True, bytes=lambda address, count: bytes([object_ready]))
             assets = {kind: dict(archive='archive_00.lnk', entry_id=index, source_name='/'+kind,
                                 size=100+index, sha256=str(index)*64)
                       for index,kind in enumerate(('actions','timing','motion','camera'))}
             first = dict(resource_profile_id='first.resources.v1', boss_id='first', build_sha256='build', assets=assets)
-            second = dict(first, resource_profile_id='second.resources.v1')
+            second = dict(first, resource_profile_id='second.resources.v1', object_keys=[3257,3258])
             paths = [root/'first.json', root/'second.json']
             for path, profile in zip(paths, (first, second)):
                 path.write_text(json.dumps(profile))
@@ -155,11 +158,13 @@ class ResourceCrashTests(unittest.TestCase):
                 # Echo its process birth and profile identity in a disposable local byte stream.
                 # The caller must verify the echoed identity before accepting any pointer values.
                 mappings.append(tagname)
-                self.assertEqual(length, 112)
-                self.assertEqual(len(requests[-1]), 544)
+                self.assertEqual(length, 144)
+                self.assertEqual(len(requests[-1]), 568)
                 identity = bytes(32) if corrupt_identity else requests[-1][24:56]
-                return StatusView(resources.STATE.pack(0x3152504e, 4, phase, 0, 456, identity,
-                                                       1, 2, 3, 4, 15 if phase == 3 else 1, 1, 5, 6))
+                object_count = struct.unpack_from('<I', requests[-1], 544)[0]
+                objects = [0x10000+i*4096 if i<object_count else 0 for i in range(4)]
+                return StatusView(resources.STATE.pack(0x3152504e, 5, phase, 0, 456, identity,
+                                                       1, 2, 3, 4, 15 if phase == 3 else 1, 1, 5, 6, *objects))
             class StatusView(io.BytesIO):
                 def __getitem__(self, key):
                     # Expose the slice-reading interface used by a read-only mmap.
@@ -187,6 +192,17 @@ class ResourceCrashTests(unittest.TestCase):
                     with self.assertRaisesRegex(resources.ResourceLoadError, 'waiting for timing, motion, camera'):
                         resources.load_resources(game, paths[0])
                 self.assertEqual(len(detaches), 5, 'Pending I/O must release the frame hook once before timeout')
+                # Finished animations are insufficient while a required model/projectile is pending.
+                # Abort without reattaching the frame hook or reporting a usable move.
+                # A later completed dependency still reuses the same retained native owner.
+                phase, object_ready = 3, False
+                with patch.object(resources.time, 'monotonic', side_effect=[0, 0, 31]):
+                    with self.assertRaisesRegex(resources.ResourceLoadError, 'object assets 3257, 3258'):
+                        resources.load_resources(game, paths[1])
+                self.assertEqual(len(detaches), 6)
+                object_ready = True
+                self.assertEqual(resources.load_resources(game, paths[1]), (1,2,3,4,5,6))
+                self.assertEqual(struct.unpack_from('<6I', requests[-1], 544), (2,3257,3258,0,0,0))
             self.assertEqual(len(loaded), 2, 'Different profiles reused one native DLL owner')
             self.assertNotEqual(mappings[0], mappings[1])
             self.assertEqual(mappings[0], mappings[2])
@@ -202,6 +218,8 @@ class ResourceCrashTests(unittest.TestCase):
         profile = json.loads((MOD_ROOT/'data/resources/okatsu.json').read_text())
         identity = resources.resource_identity(profile)
         self.assertNotEqual(resources.resource_identity(profile, [1220]), identity)
+        # A model/projectile dependency must invalidate an animation-only cached owner.
+        self.assertNotEqual(resources.resource_identity(dict(profile, object_keys=[3257,3258])), identity)
         profile['assets']['actions']['evidence'] = 'Different research wording'
         profile['status'] = 'different editorial status'
         self.assertEqual(resources.resource_identity(profile), identity)

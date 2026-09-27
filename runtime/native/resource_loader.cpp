@@ -7,7 +7,7 @@
 // The game constructs file resources on its update thread, then queues native
 // archive I/O and decoding. Keep the constructor's reference until process exit:
 // a mission's actor lifetime must never own an imported animation package.
-// The fixed request ABI carries up to four package names/sizes and a 32-byte profile identity.
+// The request carries four animation packages, up to four object-asset factory keys and a profile identity.
 // birth is the process creation time, preventing a stale request from matching a reused PID.
 struct ResourceRequest {
     uint32_t magic, version, pid, count;
@@ -16,6 +16,7 @@ struct ResourceRequest {
     uint64_t sizes[4];
     char names[4][80];
     uint32_t motion_count, motion_keys[32], reserved;
+    uint32_t object_count, object_keys[4], object_reserved;
 };
 // Phase/error and completion fields publish progress from native callbacks to the external launcher.
 // Published object addresses remain backed by retained resources, even after the temporary frame hook is disabled.
@@ -28,9 +29,10 @@ struct ResourceState {
     volatile LONG completed;
     DWORD thread;
     uint64_t player, owner;
+    uint64_t object_assets[4]; // Native E84E60 reads each asset's completion byte at +0x160.
 };
-static_assert(sizeof(ResourceRequest) == 544);
-static_assert(sizeof(ResourceState) == 112);
+static_assert(sizeof(ResourceRequest) == 568);
+static_assert(sizeof(ResourceState) == 144);
 static ResourceRequest request;
 static ResourceState* state;
 static HANDLE mapping;
@@ -210,6 +212,24 @@ static void submit_resources() {
         return;
     }
     auto data_allocator = *reinterpret_cast<void**>(system + 0x20);
+    // Effects can create an empty object even when its model/projectile resource is absent.
+    // F91850 is the native object-asset retain/load path used at 760F67; each successful
+    // request owns one reference. Reattaching this immutable loader never submits it again.
+    if (request.object_count) {
+        auto objects = *reinterpret_cast<void**>(base + 0x1766110);
+        auto object_allocator = game_function<void* (*)()>(0xFA6FF0)();
+        if (!objects || !object_allocator) { InterlockedExchange(&submitting, 0); return; }
+        for (unsigned i=0; i<request.object_count; ++i) {
+            auto asset = game_function<void* (*)(void*, int, void*, int)>(0xF91850)(
+                objects, int(request.object_keys[i]), object_allocator, 0);
+            if (!asset) {
+                InterlockedExchange(&state->error, ERROR_OUTOFMEMORY);
+                InterlockedExchange(&state->phase, 4);
+                return;
+            }
+            state->object_assets[i] = reinterpret_cast<uintptr_t>(asset);
+        }
+    }
     auto allocate = reinterpret_cast<void* (*)(void*, size_t, size_t, void*)>(
         (*reinterpret_cast<uintptr_t**>(allocator))[7]);
     uint64_t category[2] = {0x2d, 0};
@@ -268,8 +288,15 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     ResourceRequest incoming{};
     SIZE_T copied = 0;
     if (!ReadProcessMemory(GetCurrentProcess(), parameter, &incoming, sizeof(incoming), &copied)
-        || copied != sizeof(incoming) || incoming.magic != 0x3152504e || incoming.version != 4
-        || incoming.pid != GetCurrentProcessId() || incoming.count != 4 || incoming.motion_count>32 || incoming.reserved) return ERROR_INVALID_DATA;
+        || copied != sizeof(incoming) || incoming.magic != 0x3152504e || incoming.version != 5
+        || incoming.pid != GetCurrentProcessId() || incoming.count != 4 || incoming.motion_count>32 || incoming.reserved
+        || incoming.object_count>4 || incoming.object_reserved) return ERROR_INVALID_DATA;
+    // The validated build has 0x149A native asset factories; profile keys select those factories,
+    // never caller-provided function pointers. Canonical order also prevents duplicate retains.
+    for (unsigned i=0; i<4; ++i)
+        if (i<incoming.object_count ? (incoming.object_keys[i]>=0x149A
+                || (i && incoming.object_keys[i]<=incoming.object_keys[i-1])) : incoming.object_keys[i]!=0)
+            return ERROR_INVALID_DATA;
     FILETIME born{}, exit{}, kernel{}, user{};
     if (!GetProcessTimes(GetCurrentProcess(), &born, &exit, &kernel, &user)) return GetLastError();
     if (incoming.birth != (uint64_t(born.dwHighDateTime) << 32 | born.dwLowDateTime)) return ERROR_INVALID_DATA;
@@ -289,7 +316,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     const uint8_t expected[] = {0x40,0x53,0x48,0x83,0xec,0x20,0xf3,0x0f,0x11,0x89,0xa4,0x06,0,0};
     if (memcmp(frame_target, expected, sizeof(expected))) return ERROR_REVISION_MISMATCH;
     wchar_t name[128];
-    const int prefix = wsprintfW(name, L"Local\\NiohResources_v7_%lu_", GetCurrentProcessId());
+    const int prefix = wsprintfW(name, L"Local\\NiohResources_v8_%lu_", GetCurrentProcessId());
     const wchar_t digits[] = L"0123456789abcdef";
     for (unsigned i = 0; i != 32; ++i) {
         name[prefix + i * 2] = digits[incoming.profile_identity[i] >> 4];
@@ -308,7 +335,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
         return error;
     }
     request = incoming;
-    state->magic = 0x3152504e; state->version = 4; state->birth = request.birth;
+    state->magic = 0x3152504e; state->version = 5; state->birth = request.birth;
     memcpy(state->profile_identity, request.profile_identity, sizeof(request.profile_identity));
     MH_STATUS result = MH_Initialize();
     if (result == MH_OK) result = MH_CreateHook(frame_target, reinterpret_cast<void*>(&resource_frame), reinterpret_cast<void**>(&frame_original));

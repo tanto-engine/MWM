@@ -255,6 +255,7 @@ static float observed_frame(void* actor, float delta) {
         if (copy_field(boss_active_player + 0x58, current) && !boss_is_preview_descriptor(current))
             boss_finish_call(actor);
     }
+    if (player_frame) boss_update_weapon_visibility();
     result = boss_advance_clock(actor, result);
     // Recovery above must still run when the native clock is frozen or banks
     // are changing. Epochs also invalidate gestures across sub-poll interruptions.

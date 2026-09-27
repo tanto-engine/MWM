@@ -17,7 +17,7 @@ from engine_config import atomic_json, read_json
 from resource_assets import read_asset
 
 from project_paths import DATA
-STATE = struct.Struct('<IIiiQ32s4QII2Q')
+STATE = struct.Struct('<IIiiQ32s4QII2Q4Q')
 loader.K.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
 loader.K.OpenFileMappingW.restype = W.HANDLE
 
@@ -47,7 +47,8 @@ def resource_identity(profile, motion_keys=()):
     # Different bosses or revised assets must never share mutable module-local resource state.
     assets = [{key: profile['assets'][kind][key] for key in ('archive', 'entry_id', 'source_name', 'size', 'sha256')}
               for kind in ('actions', 'timing', 'motion', 'camera')]
-    identity = [profile['resource_profile_id'], profile['build_sha256'], assets, list(motion_keys)]
+    identity = [profile['resource_profile_id'], profile['build_sha256'], assets, list(motion_keys),
+                sorted(profile.get('object_keys', []))]
     return hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).digest()
 
 
@@ -66,13 +67,19 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
     motion_keys=sorted(set(motion_keys))
     if len(motion_keys)>32 or any(type(key) is not int or not 0<=key<2**31 for key in motion_keys):
         raise ValueError('Resource motion selection exceeds the reviewed import table')
+    object_keys = profile.get('object_keys', [])
+    if (not isinstance(object_keys, list) or len(object_keys)>4
+            or any(type(key) is not int or not 0<=key<0x149A for key in object_keys)
+            or len(set(object_keys))!=len(object_keys)):
+        raise ValueError('Object assets must be distinct keys from the supported native factory table')
+    object_keys = sorted(object_keys)
     identity = resource_identity(profile, motion_keys)
     tag = identity.hex()
     state = Path(os.environ.get('NIOH_RUNTIME_HOME', Path(__file__).parent))
     code = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).parent))
     owner_file = state / 'resource-owners' / f'{tag}.json'
     owner = read_json(owner_file)
-    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 7
+    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 8
             and owner['resource_identity'] == tag):
         dll = Path(owner['dll'])
     else:
@@ -85,7 +92,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
         elif dll.read_bytes() != source.read_bytes():
             raise ValueError('Resource DLL identity collision')
     args = Namespace(pid=pid, creation_filetime=birth, harness=False, timeout_ms=10000)
-    payload = struct.pack('<4IQ32s4Q', 0x3152504e, 4, pid, 4, birth, identity, *(a['size'] for a in assets))
+    payload = struct.pack('<4IQ32s4Q', 0x3152504e, 5, pid, 4, birth, identity, *(a['size'] for a in assets))
     for asset in assets:
         # FD3FD0 prepends the archive-root slash before lookup.
         name = asset['source_name'].removeprefix('/').encode('ascii')
@@ -93,23 +100,25 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
             raise ValueError('Archive identifier exceeds native request size')
         payload += name.ljust(80, b'\0')
     payload += struct.pack('<34I',len(motion_keys),*motion_keys,*([0]*(32-len(motion_keys))),0)
+    payload += struct.pack('<6I',len(object_keys),*object_keys,*([0]*(4-len(object_keys))),0)
     handle = loader.checked(loader.K.OpenProcess(0x143A, False, pid), 'OpenProcess(resource_loader)')
     started = detached = False
     try:
         loader.validate_target(handle, args)
         module = loader.module_at_path(pid, dll) or loader.load_dll(handle, args, dll)
-        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=7,
-                                    resource_identity=tag, resource_profile_id=profile['resource_profile_id'], motion_keys=motion_keys))
+        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=8,
+                                    resource_identity=tag, resource_profile_id=profile['resource_profile_id'],
+                                    motion_keys=motion_keys, object_keys=object_keys))
         start = loader.remote_export(handle, module, 'NiohResourcesStart')
         started = True
         code = loader.call_export(handle, args, start, payload)
         if code:
             raise ResourceLoadError(f'Resource request rejected: {code}')
-        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v7_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
+        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v8_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
             deadline = time.monotonic() + 30
             while True:
-                magic, version, phase, error, observed_birth, observed_identity, actions, timing, motion, camera, completed, thread, player, owner = STATE.unpack(status[:])
-                if (magic, version, observed_birth, observed_identity) != (0x3152504e, 4, birth, identity):
+                magic, version, phase, error, observed_birth, observed_identity, actions, timing, motion, camera, completed, thread, player, owner, *object_assets = STATE.unpack(status[:])
+                if (magic, version, observed_birth, observed_identity) != (0x3152504e, 5, birth, identity):
                     raise ValueError('Resource owner identity mismatch')
                 if not detached and phase >= 2 and (player or error):
                     detach_resources(handle, args, module)
@@ -118,13 +127,20 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                     if error or phase != 3 or completed != 15:
                         detail=f'clip index {error&0x1fffffff}' if error&0x20000000 else f'error {error}'
                         raise ResourceLoadError(f"{profile['boss_id']}: native resource decode failed ({detail}, completed={completed}, motions={motion_keys})")
-                    return actions, timing, motion, camera, player, owner
+                    # E84E60 reads asset+0x160: native decoding must finish before the action can
+                    # instantiate its model or projectile. The frame hook is already detached.
+                    pending_objects = [str(key) for key, address in zip(object_keys, object_assets)
+                                       if not address or game.bytes(address+0x160, 1) != b'\x01']
+                    if not pending_objects:
+                        return actions, timing, motion, camera, player, owner
                 if not game.alive():
                     raise TimeoutError('Nioh exited during resource loading')
                 if time.monotonic() >= deadline:
                     if phase == 2:
                         pending = ', '.join(kind for index, kind in enumerate(('actions', 'timing', 'motion', 'camera')) if not completed & (1 << index))
                         raise ResourceLoadError(f"{profile['boss_id'].replace('_', ' ').title()}: archive loading stalled; waiting for {pending}. Activation stopped; restart Nioh before retrying.")
+                    if phase == 3 and player:
+                        raise ResourceLoadError(f"{profile['boss_id']}: waiting for object assets {', '.join(pending_objects)}. Activation stopped.")
                     raise TimeoutError(f'Waiting for the current player (phase={phase}, completed={completed})')
                 time.sleep(.05)
     finally:

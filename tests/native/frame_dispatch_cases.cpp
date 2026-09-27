@@ -47,7 +47,7 @@ extern "C" MH_STATUS WINAPI MH_DisableHook(void*) {
 }
 
 alignas(8) static std::array<uint8_t,0x800> player{};
-alignas(8) static std::array<uint8_t,0x248> owner{};
+alignas(8) static std::array<uint8_t,0x800> owner{};
 alignas(8) static std::array<uint8_t,0x478> source{}, source_owner{};
 alignas(8) static std::array<uint8_t,0x100> motion{}, timing{}, source_motion{}, source_timing{};
 alignas(8) static std::array<uint8_t,0x138> bank{}, player_bank{};
@@ -175,6 +175,8 @@ static void reset() {
     motion.fill(0); timing.fill(0); source_motion.fill(0); source_timing.fill(0);
     bank.fill(0); player_bank.fill(0); neutral.fill(0); desired.fill(0); payload.fill(0);
     boss_session = {}; boss_private_actions[0] = {}; boss_private_actions[1] = {}; boss_active = boss_inflight = 0;
+    boss_adapters[0]={};boss_adapters[1]={};
+    for (auto& part : boss_hidden_weapons) part={};
     boss_session.player=address(player.data()); boss_session.player_owner=address(owner.data());
     boss_session.source_action_resource=address(source.data()); boss_session.source_timing_resource=address(source_owner.data());
     boss_session.vtable=0xabcdef; boss_session.source_bank=address(bank.data());
@@ -252,11 +254,43 @@ static void exit_move() {
     assert(!boss_active && GetLastError()==ACTION_ERROR); bindings(false);
 }
 
+static void handgun_visibility_cases() {
+    // Reproduce the visible sword through owned weapon/model buffers, including nonzero adjacent bytes.
+    // Verify the same restoration path used before native exits, disabling, and equipment changes.
+    // A pre-hidden model or a replaced actor must never be unhidden by this action's cleanup.
+    reset();
+    alignas(8) std::array<uint8_t,0xA00> equipment{};
+    alignas(8) std::array<uint8_t,0x30> weapon{}, sheath{}, model{}, sheath_model{};
+    put(owner.data(),0x240,address(equipment.data())); equipment[0x9CC]=1;
+    put(owner.data(),0x500,address(weapon.data())); put(owner.data(),0x560,address(sheath.data()));
+    put(weapon.data(),4,uint16_t(3)); put(weapon.data(),6,uint16_t(1));
+    put(sheath.data(),4,uint16_t(3)); put(sheath.data(),6,uint16_t(1));
+    put(weapon.data(),0x18,address(model.data())); put(sheath.data(),0x18,address(sheath_model.data()));
+    put(model.data(),0,address(weapon.data())); put(sheath_model.data(),0,address(sheath.data()));
+    model[0x18]=sheath_model[0x18]=0xA5; sheath_model[0x0A]=1;
+    boss_active=1;boss_active_player=address(player.data());boss_active_owner=address(owner.data());boss_active_slot=0;
+    boss_imports[0].key=0xC6A;boss_imports[0].motion=1130;boss_imports[0].flags=0x40019480000ULL;
+    boss_imports[0].transition_count=9;boss_imports[0].recovery_frame=-1;boss_adapters[0].kind=2;
+    put(player.data(),0x58,boss_private_descriptor_address(0));
+    boss_update_weapon_visibility();assert(model[0x0A]==1 && sheath_model[0x0A]==1);
+    assert(equipment[0x9CC]==1); // Hiding must not change which weapon is equipped.
+    assert(boss_set_bindings(false));assert(model[0x0A]==0 && sheath_model[0x0A]==1);
+    boss_update_weapon_visibility();assert(model[0x0A]==1);
+    // Moving the weapon to the second equipment slot retains ownership for restoration.
+    put(owner.data(),0x500,uint64_t(0));put(owner.data(),0x680,address(weapon.data()));
+    dispatch->control.enabled=0;boss_update_weapon_visibility();assert(model[0x0A]==0);
+    dispatch->control.enabled=1;equipment[0x9CC]=0;boss_update_weapon_visibility();assert(model[0x0A]==1);
+    put(player.data(),0x50,uint64_t(0));boss_update_weapon_visibility();assert(model[0x0A]==1);
+    for (const auto& part : boss_hidden_weapons) assert(!part.model);
+    ++checks;
+}
+
 int main() {
     // Exercise frame scheduling, lifecycle suspension, windup and voice adaptation.
     // Drive real wrappers using owned memory and configurable native callback outcomes.
     // Gameplay acceptance still requires live evidence beyond these deterministic invariants.
     LARGE_INTEGER f; QueryPerformanceFrequency(&f); frequency=f.QuadPart;
+    handgun_visibility_cases();
     reset();
     dispatch->control.last_reason=CurrentNotAllowed;
     SetLastError(INCOMING); assert(observed_action(player.data(),25,nullptr));

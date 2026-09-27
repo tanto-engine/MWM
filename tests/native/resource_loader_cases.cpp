@@ -94,13 +94,19 @@ int main(int argc,char**) {
         return 0;
     }
     ResourceRequest incoming{};
-    incoming.magic=0x3152504e;incoming.version=4;incoming.pid=GetCurrentProcessId();incoming.count=4;
+    incoming.magic=0x3152504e;incoming.version=5;incoming.pid=GetCurrentProcessId();incoming.count=4;
     FILETIME born{},ended{},kernel{},user{};
     assert(GetProcessTimes(GetCurrentProcess(),&born,&ended,&kernel,&user));
     incoming.birth=(uint64_t(born.dwHighDateTime)<<32)|born.dwLowDateTime;
     for (unsigned i=0;i<4;++i) { incoming.names[i][0]='A'+char(i);incoming.sizes[i]=1; }
     assert(NiohResourcesStart(&incoming)==ERROR_INVALID_DATA && !state && !mapping);
     memset(incoming.profile_identity,0x11,sizeof(incoming.profile_identity));
+    auto invalid=incoming;invalid.object_count=5;
+    assert(NiohResourcesStart(&invalid)==ERROR_INVALID_DATA && !state);
+    invalid=incoming;invalid.object_count=1;invalid.object_keys[0]=0x149A;
+    assert(NiohResourcesStart(&invalid)==ERROR_INVALID_DATA && !state);
+    invalid=incoming;invalid.object_count=2;invalid.object_keys[0]=invalid.object_keys[1]=3257;
+    assert(NiohResourcesStart(&invalid)==ERROR_INVALID_DATA && !state);
     reject_mapping=true;
     assert(NiohResourcesStart(&incoming)==ERROR_NOT_ENOUGH_MEMORY);
     assert(!state && !mapping);
@@ -108,7 +114,7 @@ int main(int argc,char**) {
     assert(!GetHandleInformation(rejected_handle,&flags) && GetLastError()==ERROR_INVALID_HANDLE);
     reject_mapping=false;
     assert(NiohResourcesStart(&incoming)==0 && state && mapping && state->phase==1);
-    assert(state->version==4 && !memcmp(state->profile_identity,incoming.profile_identity,32));
+    assert(state->version==5 && !memcmp(state->profile_identity,incoming.profile_identity,32));
     submitting=1;submit_resources();
     assert(submitting==0 && state->phase==1 && !state->error && !state->objects[0]);
     // An unfinished archive decode no longer needs the temporary player-frame hook.
