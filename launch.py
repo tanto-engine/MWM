@@ -1,3 +1,6 @@
+# Select packaged or sibling Engine code and dispatch the trainer or an allowed runtime worker.
+# PyInstaller exposes bundled files through _MEIPASS; source development uses this checkout.
+# Keep product data/state paths separate from shared implementation; see CODE_GUIDE.md.
 import json
 import os
 from pathlib import Path

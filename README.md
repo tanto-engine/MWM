@@ -1,5 +1,7 @@
 # SKM — Single-Katana Moveset Mod
 
+New to the code? Start with [CODE_GUIDE.md](CODE_GUIDE.md), which explains the Nioh concepts, file roles and implementation flow.
+
 The standalone Nioh 1 Sword Skills Expanded product, developed with Tanto Engine. Users receive `SKM.exe`; they do not install or run the development engine. The executable includes the selected micro-runtime, two native libraries, validated Sword definitions and the configuration UI. It excludes engine source headers, tests, research, recordings and developer authoring tools.
 
 Launch the application, review the moveset and choose **Enable / attach**. **Disable** cooperatively restores owned native state. Closing the window leaves an enabled session running. Settings live under `%LOCALAPPDATA%\Tanto\Sword\runtime` in the packaged application. The game installation provides its assets; the package contains asset identities and checks, not extracted game archives.

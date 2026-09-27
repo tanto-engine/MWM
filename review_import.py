@@ -15,6 +15,9 @@ from move_imports import read_import_manifest
 
 
 def review_import(path, catalogue_path=ROOT/'data/moves.json', resources=ROOT/'data/resources', evidence=None, reviewed=False):
+    # Explain what is missing before a recorded boss move can become an SKM import.
+    # Compare authored import, catalogue, resource and optional reconstruction identities without loading game memory.
+    # The report stays a developer review artifact; marking reviewed never installs a move or proves gameplay.
     """Check authored definitions against maintained adapters and retained evidence."""
     path = Path(path)
     report = dict(schema_version=1, kind='import_review', import_path=str(path.resolve()),
@@ -82,6 +85,9 @@ def review_import(path, catalogue_path=ROOT/'data/moves.json', resources=ROOT/'d
 
 
 def main(argv=None):
+    # Run the offline import-review command with explicitly selected inputs.
+    # Resolve optional evidence/catalogue/resource files and reject an output that would replace source definitions.
+    # Write only the review report, keeping experimental recordings outside the playable product data.
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('import_path',type=Path)
     parser.add_argument('--catalogue',type=Path,default=ROOT/'data/moves.json')

@@ -24,6 +24,9 @@ from process_support import active_runtime, process_matches, worker_command
 
 
 def remap_preset(preset, source, target):
+    # Keep a player's chosen physical buttons when switching controller mappings.
+    # Translate saved bits through logical game buttons, then back into the destination mapping.
+    # Reject missing equivalents and validate the translated preset before it can replace saved settings.
     """Preserve physical button meaning when the saved mask namespace changes."""
     buttons=binding_buttons(target['device'],target.get('button_map'))
     masks={game_button_mask(target['device'],mask,target.get('button_map')):mask for mask in buttons.values()}
@@ -36,6 +39,9 @@ def remap_preset(preset, source, target):
 
 
 def saved_moveset(value, calibration):
+    # Load either a controller-aware moveset file or an older bare preset.
+    # New bundles validate their shape and translate logical controls into the current calibration.
+    # Old presets retain the current saved-mask namespace and still pass normal preset validation.
     if isinstance(value,dict) and value.get('kind')=='sword_moveset':
         if value.get('schema_version')!=1 or set(value)!={'schema_version','kind','preset','controller'}:
             raise ValueError('Unsupported saved moveset bundle')
@@ -132,6 +138,9 @@ class Trainer:
         notebook.add(play, text='Moveset')
         self.capabilities = move_capabilities()
         def choices(flag, empty='Disabled'):
+            # Build readable selector entries from reviewed capability rows.
+            # Apply the caller's role predicate before exposing any move in that selector.
+            # The resulting label-to-ID dictionary keeps display names separate from stable configuration identities.
             return {empty: None, **{move['name']+' ['+move['id']+']': move['id']
                 for move in self.capabilities['moves'] if move[flag]}}
         self.move_names = choices('chord')
@@ -144,7 +153,12 @@ class Trainer:
         self.modifier, self.trigger, self.threshold = tk.StringVar(), tk.StringVar(), tk.StringVar()
         self.chord_stance = tk.StringVar()
         self.device_choice, self.slot_choice = tk.StringVar(value='Saved mapping'), tk.StringVar()
-        self.slot_choice.trace_add('write', lambda *_: self.cancel_capture())
+        self.slot_choice.trace_add('write', lambda *_: (
+            # Cancel a pending controller binding when the selection it depends on changes.
+            # Tk passes trace arguments that this callback intentionally does not use.
+            # Discarding the partial press prevents it from binding under a different controller selection.
+            self.cancel_capture()
+        ))
         self.control_row(play, 0, 'Moveset name', ttk.Entry(play, textvariable=self.name, width=52))
         self.control_row(play, 1, 'Chord stance', ttk.Combobox(play, textvariable=self.chord_stance,
             values=self.capabilities['stances'], state='readonly'))
@@ -157,7 +171,12 @@ class Trainer:
             selector = ttk.Combobox(frame, textvariable=variable, values=list(self.button_choices), width=24, state='readonly')
             selector.pack(side='left')
             self.button_selectors.append(selector)
-            ttk.Button(frame, text='Press to bind', command=lambda v=variable: self.begin_capture(v)).pack(side='left', padx=8)
+            ttk.Button(frame, text='Press to bind', command=lambda v=variable: (
+                # Start press-to-bind for this particular form field.
+                # Capture the loop's current variable as a default argument instead of the final loop value.
+                # The result edits that field only; Apply remains responsible for saving the preset.
+                self.begin_capture(v)
+            )).pack(side='left', padx=8)
             self.control_row(play, row, label, frame)
         self.control_row(play, 6, 'Hold threshold (seconds)', ttk.Spinbox(play, textvariable=self.threshold, from_=.08, to=2, increment=.01, width=10))
         device = ttk.Combobox(play, textvariable=self.device_choice,
@@ -287,6 +306,9 @@ class Trainer:
         self.notice.set(str(error))
 
     def load_fields(self, preset):
+        # Show a validated preset in the trainer's editable controls.
+        # Convert stable move IDs and saved button masks into readable labels, then refresh binding and speed summaries.
+        # These are form values; displaying a preset does not attach to Nioh or apply it to a running session.
         names = {v:k for k,v in self.move_names.items()}
         self.name.set(preset['name'])
         self.tap.set(names[preset['tap_move']]); self.hold.set(names[preset['hold_move']])
@@ -308,6 +330,9 @@ class Trainer:
         self.refresh_speeds()
 
     def form(self):
+        # Collect the currently edited moveset without saving it yet.
+        # Translate displayed labels back to IDs and numeric values, preserving unrelated preset fields.
+        # Run the same engine validator used at startup so invalid combinations cannot bypass the UI.
         return validate_preset(dict(self.preset, name=self.name.get(), tap_move=self.move_names[self.tap.get()],
             hold_move=self.move_names[self.hold.get()], modifier_mask=self.button_choices[self.modifier.get()],
             trigger_mask=self.button_choices[self.trigger.get()], hold_seconds=float(self.threshold.get()),
@@ -319,6 +344,9 @@ class Trainer:
             **{field:variable.get() for field,variable in self.native_toggles.items()}))
 
     def refresh_bindings(self):
+        # Redraw the list of native skill replacements the player has selected.
+        # Use list indices as row IDs and translate source/move IDs into their readable labels.
+        # Rebuilding the table changes presentation only; Apply remains the persistence boundary.
         self.binding_table.delete(*self.binding_table.get_children())
         names={value:key for key,value in self.native_move_choices.items()}
         sources={value:key for key,value in self.source_choices.items()}
@@ -326,12 +354,18 @@ class Trainer:
             self.binding_table.insert('', 'end', iid=str(index), values=(sources[binding['source']],binding['stance'],names[binding['move']]))
 
     def select_native_binding(self, event=None):
+        # Copy the highlighted replacement into the row editor.
+        # Read the table's source, stance and move labels in the same order they were displayed.
+        # No selection leaves the current editor values alone and writes no settings.
         selected=self.binding_table.selection()
         if selected:
             values=self.binding_table.item(selected[0],'values')
             for field,value in zip((self.binding_source,self.binding_stance,self.binding_move),values): field.set(value)
 
     def set_native_binding(self):
+        # Replace just one native skill and stance combination in the pending form.
+        # Temporarily install the candidate list and validate the entire moveset, rolling back on failure.
+        # Choosing Native removes that override; other skill/stance replacements remain intact.
         try:
             source,stance,move=self.source_choices[self.binding_source.get()],self.binding_stance.get(),self.native_move_choices[self.binding_move.get()]
             bindings=[binding for binding in self.skill_bindings if (binding['source'],binding['stance'])!=(source,stance)]
@@ -344,13 +378,22 @@ class Trainer:
         except (ValueError,KeyError) as error: self.error(error)
 
     def remove_native_binding(self):
+        # Remove highlighted overrides so those inputs return to native behavior.
+        # Delete selected list indices from highest to lowest to avoid shifting later targets.
+        # Refresh the pending table; the player must still Apply to save the edited moveset.
         for index in sorted(map(int,self.binding_table.selection()),reverse=True): self.skill_bindings.pop(index)
         self.refresh_bindings()
 
     def select_speed(self, event=None):
+        # Show the selected move's current multiplier in the speed editor.
+        # Read its existing form variable rather than inventing a new default on every selection.
+        # Selecting a move does not change its speed or write the preset.
         self.speed_value.set(self.speed_fields[self.speed_choices[self.speed_choice.get()]].get())
 
     def set_speed(self):
+        # Try a new multiplier for the selected reviewed move.
+        # Validate the full form and restore the previous field if conversion or bounds checks fail.
+        # A successful edit updates the summary but waits for Apply before saving.
         try:
             identifier=self.speed_choices[self.speed_choice.get()]
             old=self.speed_fields[identifier].get(); self.speed_fields[identifier].set(self.speed_value.get())
@@ -361,6 +404,9 @@ class Trainer:
         except (ValueError,KeyError) as error: self.error(error)
 
     def refresh_speeds(self):
+        # Summarize only moves whose playback differs from their original speed.
+        # Temporarily unlock the read-only text widget, replace its contents, then lock it again.
+        # Keep the separate numeric editor synchronized with the selected move's form value.
         self.speed_summary.configure(state='normal')
         self.speed_summary.delete('1.0','end')
         self.speed_summary.insert('1.0','\n'.join(f'{label}: {self.speed_fields[identifier].get()}×' for label,identifier in self.speed_choices.items()
@@ -369,6 +415,9 @@ class Trainer:
         if self.speed_choice.get(): self.select_speed()
 
     def choose_controller(self, event=None):
+        # Switch mappings while keeping the intended logical buttons in the moveset.
+        # Cancel pending capture, remap through the old/new calibrations and rebuild the available button labels.
+        # Hardware protocol support is checked here; this does not certify a physical controller in gameplay.
         try:
             self.cancel_capture()
             preset=self.form()
@@ -387,6 +436,9 @@ class Trainer:
         except (ValueError,KeyError) as error: self.error(error)
 
     def begin_capture(self, variable):
+        # Arm press-to-bind for one pending trainer field.
+        # Use the running engine's controller observations when available, otherwise use the OS reader.
+        # Keep trace resources owned by this capture and close them if setup fails or capture is cancelled.
         try:
             self.cancel_capture()
             calibration=dict(self.calibration,controller_slot=None if self.slot_choice.get().startswith('Auto') else int(self.slot_choice.get())-1)
@@ -401,11 +453,17 @@ class Trainer:
             self.cancel_capture(); self.error(error)
 
     def cancel_capture(self):
+        # Stop press-to-bind without changing the pending or saved button choice.
+        # Drop the temporary reader and release any shared-memory trace handle.
+        # This also clears partially observed presses before another binding starts.
         self.capture=self.capture_reader=None
         if self.capture_trace: self.capture_trace.close()
         self.capture_trace=None
 
     def poll_capture(self):
+        # Advance the binding listener from its latest controller observations.
+        # A successful single-button result updates the target form label and closes the temporary capture.
+        # Until then, show release/reconnect guidance; Apply still controls saving the choice.
         if not self.capture: return
         for event in self.capture_reader.poll():
             result=self.capture.process(event)
