@@ -11,7 +11,7 @@ static RuntimeSessionConfig config() {
     // Startup validation can then reject malformed contracts without accessing a game.
     RuntimeSessionConfig result{};
     result.magic = RUNTIME_SESSION_MAGIC; result.version = RUNTIME_SESSION_VERSION;
-    result.frost_milliseconds = 750;
+    result.frost_milliseconds = 0;
     result.frost_speed = 8;
     memcpy(result.launch_profiles,boss_launch_profiles,sizeof(result.launch_profiles)); result.air_juggle_boost=2;
     result.size = sizeof(result); result.pid = GetCurrentProcessId(); result.config_tag = 0x123456789abcdef0ULL;
@@ -52,6 +52,19 @@ int main() {
     // Mutate the seven-import ABI and drive owned frame recovery scenarios.
     // Stale process identities and reused actor pointers must not authorize native writes.
     auto incoming = config();
+    for (unsigned field=0;field<9;++field) {
+        auto changed=incoming;changed.move_settings[0]={1.5f,65,18,35,0};
+        if (field==0) {assert(runtime_imports_valid(changed));continue;}
+        if (field==1) changed.move_settings[0].speed=std::numeric_limits<float>::quiet_NaN();
+        if (field==2) changed.move_settings[0].speed=2.1f;
+        if (field==3) changed.move_settings[0].pulse_percent=101;
+        if (field==4) changed.move_settings[0].pulse_fill=0;
+        if (field==5) changed.move_settings[0].pulse_hold=121;
+        if (field==6) changed.move_settings[0].reserved=1;
+        if (field==7) changed.move_settings[6]=changed.move_settings[0]; // Paired attacker keeps native timing.
+        if (field==8) changed.controller_selection=5;
+        assert(!runtime_imports_valid(changed));
+    }
     auto aerial=incoming; aerial.import_count=20; aerial.hold_variant=20; aerial.hold_milliseconds=250;
     aerial.hold_camera_bank=0x960000; aerial.hold_stances=1; aerial.frost_variants[0]=13; aerial.frost_variants[1]=8;
     for (unsigned phase=0;phase<12;++phase) {
@@ -96,7 +109,7 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==10 && sizeof(RuntimeSessionConfig)==5752
+    static_assert(RUNTIME_SESSION_VERSION==11 && sizeof(RuntimeSessionConfig)==6144
         && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==3400
         && offsetof(RuntimeSessionConfig,skill_bindings)==5448);
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
@@ -143,7 +156,7 @@ int main() {
         assert(!runtime_imports_valid(wrong));
     }
     wrong=frost;wrong.frost_speed=1;
-    assert(runtime_imports_valid(wrong));
+    assert(!runtime_imports_valid(wrong));
     auto binding=incoming;binding.skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};
     assert(runtime_imports_valid(binding));
     for (unsigned failure=0;failure<11;++failure) {

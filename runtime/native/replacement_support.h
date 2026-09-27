@@ -17,21 +17,16 @@ static PendingHeavy pending_heavy{};
 
 static bool heavy_button(unsigned& controller, bool& down, bool& interrupted) {
     // Read Triangle from the player frame's timestamped controller snapshot.
-    // Require one connected controller and preserve thumbstick/lock-on independence.
+    // Follow the configured controller and preserve thumbstick/lock-on independence.
     // Disconnects, ambiguous controllers and competing actions cancel a pending hold.
     GameInput sample{};
-    if (!trace || !read_game_input(trace->header,sample)) return false;
-    unsigned connected=0;
-    for (DWORD slot=0;slot<4;++slot) {
-        if (sample.codes[slot]!=ERROR_SUCCESS) continue;
-        ++connected; controller=slot;
-        down=(sample.buttons[slot] & XINPUT_GAMEPAD_Y)!=0;
-        constexpr WORD cancel=XINPUT_GAMEPAD_A|XINPUT_GAMEPAD_B|XINPUT_GAMEPAD_X
-            |XINPUT_GAMEPAD_START|XINPUT_GAMEPAD_BACK|XINPUT_GAMEPAD_RIGHT_SHOULDER;
-        interrupted=(sample.buttons[slot] & cancel)!=0
-            || sample.left_trigger[slot]>30 || sample.right_trigger[slot]>30;
-    }
-    return connected==1;
+    if (!trace || !read_game_input(trace->header,sample) || !selected_game_controller(sample,controller)) return false;
+    down=(sample.buttons[controller] & XINPUT_GAMEPAD_Y)!=0;
+    constexpr WORD cancel=XINPUT_GAMEPAD_A|XINPUT_GAMEPAD_B|XINPUT_GAMEPAD_X
+        |XINPUT_GAMEPAD_START|XINPUT_GAMEPAD_BACK|XINPUT_GAMEPAD_RIGHT_SHOULDER;
+    interrupted=(sample.buttons[controller] & cancel)!=0
+        || sample.left_trigger[controller]>30 || sample.right_trigger[controller]>30;
+    return true;
 }
 
 static bool native_binding_context(DispatchCommand& command) {
@@ -42,8 +37,10 @@ static bool native_binding_context(DispatchCommand& command) {
     if (!snapshot_command(command)) return false;
     GameInput input{};
     constexpr WORD blocked=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_B;
-    if (trace && read_game_input(trace->header,input))
-        for (unsigned i=0;i<4;++i) if (!input.codes[i] && (input.buttons[i]&blocked)==blocked) return false;
+    if (trace && read_game_input(trace->header,input)) {
+        unsigned slot=0;
+        if (!selected_game_controller(input,slot) || (input.buttons[slot]&blocked)==blocked) return false;
+    }
     // A publisher can advance during controller sampling; compare its committed
     // heartbeat with time read afterward, never the earlier input-poll timestamp.
     LARGE_INTEGER now; QueryPerformanceCounter(&now);

@@ -74,14 +74,10 @@ class PresetTests(unittest.TestCase):
         preset=copy.deepcopy(config.DEFAULT_PRESET)
         self.assertEqual(config.validate_preset(preset)['frost_moon'],
                          dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high='jin_hayabusa.action_0c75'))
-        self.assertEqual(preset['frost_startup_speed'],8)
-        for value in (0,9,True,8.0,'8'):
-            with self.subTest(speed=value), self.assertRaises(ValueError):
-                config.validate_preset(dict(preset,frost_startup_speed=value))
-        self.assertEqual(config.validate_preset(dict(preset,frost_startup_speed=1))['frost_startup_speed'],1)
-        for value in (float('nan'),float('inf'),.099,1.501,True,'0.75'):
-            with self.subTest(window=value), self.assertRaises(ValueError):
-                config.validate_preset(dict(preset,frost_window_seconds=value))
+        for field in ('frost_startup_speed','frost_window_seconds','ki_pulse'):
+            self.assertNotIn(field,preset)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError,'Unknown preset'):
+                config.validate_preset(dict(preset,**{field:1}))
         for value in (None,{},dict(low=None,mid=None),dict(low=None,mid=None,high='jin_hayabusa.action_0c79'),
                       dict(low='jin_hayabusa.action_0cac',mid=None,high='jin_hayabusa.action_0cac'),
                       dict(low='jin_hayabusa.izuna_drop',mid=None,high='jin_hayabusa.action_0cac'),
@@ -194,6 +190,7 @@ class RuntimeRegistryTests(unittest.TestCase):
             messages = []
             app = SimpleNamespace(adopt_running=True, runtime_registration=None, catalogue_path=catalogue,
                 calibration=calibration, binding=binding, preset=dict(config.DEFAULT_PRESET),
+                cancel_capture=Mock(), button_selectors=[], slot_choice=SimpleNamespace(get=lambda:'Auto'),
                 refresh_table=lambda: (
                     # Skip visual table refresh in the handle-free trainer fixture.
                     # Return without constructing any widget or touching display state.

@@ -4,6 +4,24 @@ LAUNCH_PROFILES = [dict(resistance_below=75,weight_scale=.75,vertical_impulse=14
                    dict(resistance_below=200,weight_scale=.45,vertical_impulse=17)]
 TRACKING_RATES = dict(izuna=720,somersault=720,flying_swallow=540)
 AIR_JUGGLE_BOOST = 2
+FROST_MILLISECONDS, FROST_STARTUP_SPEED = 0, 8
+KI_PULSE = dict(percent=40, fill_frames=25, hold_frames=24)
+
+
+def validate_move_policy(value, identifiers):
+    # Developer authoring data is never a public preset field or raw payload patch.
+    if not isinstance(value,dict) or set(value)!={'schema_version','moves'} or type(value['schema_version']) is not int or value['schema_version']!=1 or not isinstance(value['moves'],dict):
+        raise ValueError('Move policy requires schema_version 1 and moves')
+    for identifier, policy in value['moves'].items():
+        if identifier not in identifiers or not isinstance(policy,dict) or set(policy)!={'ki_pulse'}:
+            raise ValueError('Developer move policy requires an implemented move and ki_pulse')
+        pulse=policy['ki_pulse']
+        if not isinstance(pulse,dict) or set(pulse)!=set(KI_PULSE):
+            raise ValueError('Ki Pulse requires percent, fill_frames and hold_frames')
+        for key,lower,upper in (('percent',0,100),('fill_frames',1,120),('hold_frames',0,120)):
+            if type(pulse[key]) is not int or not lower<=pulse[key]<=upper:
+                raise ValueError('Ki Pulse '+key+' is outside developer policy bounds')
+    return value
 
 
 def validate_tracking_rates(rates):

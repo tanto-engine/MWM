@@ -22,6 +22,25 @@ from encounter_recording_cases import state, metadata
 
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_local_guide_opens_while_busy_and_does_not_block_stop(self):
+        root=tk.Tk();root.withdraw()
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                settings=Path(td)/'settings.json'
+                app=recorder.Recorder(root,enable_hotkey=False,settings_path=settings)
+                app.busy=lambda:True
+                app.backdrop.on_guide()
+                self.assertIsNotNone(app.guide);self.assertTrue(app.guide.winfo_exists())
+                self.assertIsNone(app.dialog)
+                app.toggle();self.assertTrue(app.stop.is_set())
+                canvas=app.guide.winfo_children()[0]
+                next(w for w in canvas.winfo_children() if w.winfo_class()=='TButton').invoke()
+                self.assertTrue(json.loads(settings.read_text())['tutorial_seen'])
+                self.assertIsNone(app.guide);app.busy=lambda:False;app.close()
+        finally:
+            try:root.destroy()
+            except tk.TclError:pass
+
     def test_windows_hotkey_messages_start_and_stop_capture_without_game_input(self):
         import ctypes as C
         from ctypes import wintypes as W
@@ -125,11 +144,16 @@ class ProductBoundaryTests(unittest.TestCase):
     def test_recorder_layout_resizes_at_multiple_font_scales(self):
         for scaling in (1.33,2.0,2.67):
             root=tk.Tk();root.attributes('-alpha',0);root.tk.call('tk','scaling',scaling)
+            errors=[];root.report_callback_exception=lambda kind,error,trace:errors.append(str(error))
             try:
                 with tempfile.TemporaryDirectory() as td:
                     app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
                     for width,height in ((680,650),(960,740),(1400,950)):
                         root.geometry(f'{width}x{height}');root.update()
+                        self.assertFalse(errors)
+                        self.assertEqual(app.backdrop.picture.width(),app.backdrop.winfo_width())
+                        self.assertEqual(app.backdrop.picture.height(),app.backdrop.winfo_height())
+                        self.assertEqual(app.help_label.photo.get(0,0),app.backdrop.crop(app.help_label).getpixel((0,0)))
                         for widget in (app.selector,app.primary,app.describe_button,app.help_label,app.labels,*app.idle_buttons):
                             self.assertGreater(widget.winfo_width(),20)
                             self.assertGreaterEqual(widget.winfo_rootx(),root.winfo_rootx())

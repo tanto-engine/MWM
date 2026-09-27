@@ -121,6 +121,15 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.backend.reads, 4)
         self.assertEqual(self.reader.status()["unexpected_error_events"], 0)
 
+    def test_trigger_threshold_crossing_survives_axis_bucketing(self):
+        self.setup_reader('xinput')
+        self.backend.value = 0, dict(buttons=0, pov=None, axes={'lt':127, 'rt':0})
+        self.inputs()
+        self.backend.value = 0, dict(buttons=0, pov=None, axes={'lt':128, 'rt':0})
+        event, = self.inputs()
+        self.assertEqual(event['logical_buttons'], 0x400)
+        self.assertEqual(event['buttons'], 0, 'Raw observations retain their native masks')
+
     def test_unexpected_error_logs_only_changes_and_recovery_resets_it(self):
         # Report changed backend failures once and reset state on recovery.
         # Repeat one backend failure, change its code and restore valid input.

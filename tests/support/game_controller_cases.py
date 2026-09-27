@@ -160,3 +160,80 @@ class GameInputTests(unittest.TestCase):
         struct.pack_into('<I',raw,48,0)
         C.memmove(self.trace.address+64,bytes(raw),64)
         self.assertEqual(self.backend.read(0),(1167,None))
+
+    def test_triggers_compile_in_both_saved_namespaces(self):
+        self.assertEqual(controller.game_button_mask(DEVICE,64),0x400)
+        self.assertEqual(controller.game_button_mask(DEVICE,128),0x800)
+        self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,128,127),0x400)
+        self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,127,128),0x800)
+
+    def test_explicit_slot_never_falls_back_to_another_pad(self):
+        backend=controller.GameController(self.trace,{'device':DEVICE,'controller_slot':1})
+        self.sample(slot=1,buttons=0x2100,connected=[0,1])
+        self.assertEqual(backend.read(0)[1]['buttons'],20)
+        self.sample(slot=0,buttons=0x2100,connected=[0])
+        self.assertEqual(backend.read(0),(1167,None))
+
+    def test_capture_requires_release_single_press_and_reconnect_release(self):
+        capture=controller.BindingCapture({'device':controller.GAME_DEVICE})
+        def event(buttons,edge='previous_observation',kind='input'):
+            return dict(kind=kind,backend='xinput',slot=0,buttons=buttons,
+                        axes={'lt':0,'rt':0},edge_basis=edge)
+        self.assertIsNone(capture.process(event(0x100,'unknown')))
+        self.assertIsNone(capture.process(event(0x2000)))
+        self.assertIsNone(capture.process(event(0)))
+        self.assertEqual(capture.process(event(0x2000))['mask'],0x2000)
+        capture.reset()
+        capture.process(event(0))
+        self.assertIsNone(capture.process(event(0x2100)))
+        self.assertIsNone(capture.process(event(0x2000)))
+        capture.process(event(0))
+        capture.process(event(0,kind='input_unavailable'))
+        self.assertIsNone(capture.process(event(0x2000,'unknown')))
+        capture.process(dict(controller.GAME_DEVICE,kind='input_device'))
+        capture.process(event(0))
+        self.assertEqual(capture.process(event(0x100))['logical_mask'],0x100)
+
+    def test_calibrated_winmm_layout_and_unknown_modes(self):
+        device=dict(DEVICE,product=1)
+        mapping={'16':0x100,'4':0x2000}
+        self.assertEqual(controller.game_button_mask(device,4,mapping),0x2000)
+        self.assertEqual(controller.saved_buttons(device,0x2100,0,0,mapping),20)
+        self.assertEqual(controller.binding_buttons(device,mapping)['Circle / B'],4)
+        with self.assertRaises(ValueError): controller.binding_buttons(device)
+        for invalid in ({'3':0x100},{'4':0x100,'16':0x100},{'4':0x10000}):
+            with self.assertRaises(ValueError): controller.binding_buttons(device,invalid)
+        with self.assertRaises(ValueError): controller.binding_buttons({'backend':'hid'})
+
+    def test_selection_and_capture_preserve_logical_masks(self):
+        for value in (-1,4,True,'0'):
+            with self.assertRaises(ValueError): controller.controller_selection({'controller_slot':value})
+        calibration={'device':DEVICE,'lb_mask':16,'controller_slot':2}
+        profile,_=controller.game_binding(calibration,dict(calibration,circle_mask=64))
+        self.assertEqual(controller.controller_selection(profile),3)
+        capture=controller.BindingCapture({'device':controller.GAME_DEVICE})
+        base=dict(kind='input',backend='xinput',slot=0,buttons=0,pov=None,axes={'lt':127,'rt':0})
+        self.assertIsNone(capture.process(base))
+        self.assertIsNone(capture.process(dict(base,slot=1,axes={'lt':128,'rt':0})))
+        self.assertEqual(capture.process(dict(base,axes={'lt':128,'rt':0}))['logical_mask'],0x400)
+
+    def test_capture_uses_saved_mask_from_the_native_observer(self):
+        capture=controller.BindingCapture({'device':DEVICE})
+        reader=ControllerReader(backends=[self.backend],clock=lambda:1.0,rescan_seconds=.1)
+        results=[]
+        for sequence,buttons in ((2,0x2000),(4,0),(6,0x2000)):
+            self.sample(sequence,buttons=buttons)
+            for event in reader.poll():
+                result=capture.process(event)
+                if result: results.append(result)
+        self.assertEqual(results,[dict(mask=4,logical_mask=0x2000,label='Circle / B')])
+
+    def test_capture_rejects_an_unmapped_game_button_in_a_chord(self):
+        calibration={'device':dict(DEVICE,product=1),'button_map':{'4':0x2000}}
+        backend=controller.GameController(self.trace,calibration)
+        capture=controller.BindingCapture(calibration)
+        reader=ControllerReader(backends=[backend],clock=lambda:1.0)
+        for sequence,buttons in ((2,0),(4,0xA000)):
+            self.sample(sequence,buttons=buttons)
+            for event in reader.poll():
+                self.assertIsNone(capture.process(event),'Unmapped Y must prevent capturing B+Y as B')

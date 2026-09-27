@@ -10,6 +10,8 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0,str(ROOT/'runtime'))
+from engine_policy import validate_move_policy
 READ_ONLY = ('nioh_memory','boss_probe','action_banks','controller_reader')
 
 
@@ -21,6 +23,12 @@ def stage_product(project, destination):
     spec=json.loads((project/'product.json').read_text(encoding='utf8'))
     if spec['kind'] not in ('recorder','sword'): raise ValueError('Unsupported product backend')
     if destination.exists(): raise ValueError('Build destination must be new')
+    policy_path=project/'data/move-policy.json';policy=None
+    if spec['kind']=='sword' and policy_path.is_file():
+        identifiers={move['id'] for name in ('okatsu','jin_hayabusa')
+            for move in json.loads((project/'data/imports'/f'{name}.json').read_text(encoding='utf8'))['moves']
+            if move['flags'] not in (0x8078000000,0x8038000000)}
+        policy=validate_move_policy(json.loads(policy_path.read_text(encoding='utf-8-sig')),identifiers)
     destination.mkdir(parents=True)
     runtime=destination/'runtime';runtime.mkdir()
     modules=READ_ONLY if spec['kind']=='recorder' else tuple(p.stem for p in (ROOT/'runtime').glob('*.py'))
@@ -41,6 +49,8 @@ def stage_product(project, destination):
         for name in ('mod.json','moves.json','preset.json','controller-calibration.json'):
             shutil.copyfile(project/'data'/name,data/name)
         for name in ('imports','resources'): shutil.copytree(project/'data'/name,data/name)
+        if policy is not None:
+            (data/'move-policy.json').write_text(json.dumps(policy,indent=2)+'\n',encoding='utf8')
         native=runtime/'native/build';native.mkdir(parents=True)
         for name in ('nioh_skill_runtime.dll','nioh_resources.dll'):
             shutil.copyfile(ROOT/'runtime/native/build'/name,native/name)

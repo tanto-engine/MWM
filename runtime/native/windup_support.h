@@ -97,7 +97,8 @@ static float boss_advance_clock(void* actor, float native_delta) {
         || (move.key==0xC7A && move.motion==1050 && boss_native_successor(slot,0x3B2)>=0);
     const unsigned group=izuna ? 0 : airborne_sword(move,boss_adapters[slot]) && boss_adapters[slot].kind!=5
         ? (move.key>=0xC81 ? 1 : 2) : 3;
-    if (!timing.startup_end && group==3) return native_delta;
+    const float playback=boss_frost_playback || boss_paired(move.flags) ? 1 : boss_settings(slot).speed;
+    if (!timing.startup_end && group==3 && playback==1) return native_delta;
     if (!trace || !dispatch || !InterlockedCompareExchange(&trace->header.enabled, 0, 0)
         || !InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)
         || !InterlockedCompareExchange(&boss_active, 0, 0)
@@ -115,9 +116,8 @@ static float boss_advance_clock(void* actor, float native_delta) {
     if (group<3 && boss_tracking_rates[group]>0 && frame<tracking_end) {
         const DWORD error=GetLastError();track_locked_target(player,slot,native_delta,group);SetLastError(error);
     }
-    const float accelerated=move_timing_delta(timing,frame,delta);
-    // Never slow an ordinary update when it already crosses the boundary.
-    if (!(accelerated > delta) || !windup_writable_float(player + 0x24)
+    const float accelerated=move_playback_delta(timing,frame,delta,playback);
+    if (accelerated == delta || !windup_writable_float(player + 0x24)
         || !windup_writable_float(player + 0x6A8)) return native_delta;
     const float accelerated_speed = speed * (accelerated / delta);
     // Both native-owned fields are updated on the existing player game thread,

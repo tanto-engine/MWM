@@ -49,6 +49,19 @@ struct SwordTimingDefinition {
     bool frost_only=false, configured_speed=false;
 };
 
+static inline int sword_string_successor(const MoveImport& move) {
+    // These reviewed strings reuse William's next-press rows, never an automatic recording edge.
+    struct String { uint32_t keys[5]; int32_t motion; unsigned count; };
+    constexpr String strings[]={{{0xBBF,0xC63,0xC64,0xC65,0xC66},2100,5},
+        {{0xBC0,0xC6C,0xC6D,0,0},2300,3},{{0xC6E,0xC6F,0xC70,0,0},2400,3}};
+    if (move.flags!=0x194C0000ULL) return -1;
+    for (const auto& string : strings) for (unsigned i=0;i<string.count;++i)
+        if (move.key==string.keys[i] && move.motion==string.motion+int32_t(i)*10
+            && move.transition_count==(i+1==string.count ? 74 : 75))
+            return i+1<string.count ? int(string.keys[i+1]) : 0;
+    return -1;
+}
+
 // First applicable row owns recovery and startup together. All unlisted phases keep source timing.
 static constexpr SwordTimingDefinition sword_timing_definitions[]={
     {{0xC64,1220,0x184C0000,0,28,65},{54,30,2}},

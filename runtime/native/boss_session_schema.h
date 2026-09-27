@@ -64,6 +64,8 @@ struct SkillBinding {
 static_assert(sizeof(SkillBinding)==32,"Skill binding ABI size");
 
 struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };
+struct MoveSettings { float speed; uint16_t pulse_percent, pulse_fill, pulse_hold, reserved; };
+static_assert(sizeof(MoveSettings)==12,"Move settings ABI size");
 
 struct RuntimeSessionConfig {
     uint32_t magic, version, size, pid;
@@ -77,8 +79,10 @@ struct RuntimeSessionConfig {
     SkillBinding skill_bindings[8];
     LaunchProfile launch_profiles[2];
     float air_juggle_boost, tracking_rates[3];
+    MoveSettings move_settings[32];
+    uint32_t controller_selection, reserved;
 };
-static_assert(sizeof(RuntimeSessionConfig) == 5752 && offsetof(RuntimeSessionConfig, imports) == 328,
+static_assert(sizeof(RuntimeSessionConfig) == 6144 && offsetof(RuntimeSessionConfig, imports) == 328,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 10;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 11;

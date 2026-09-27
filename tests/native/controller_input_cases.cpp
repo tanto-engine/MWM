@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <cstring>
 #include "../../runtime/native/trace_protocol.h"
+static uint32_t boss_controller_selection;
 #include "../../runtime/native/controller_input.h"
 
 static DWORD codes[4] = {0, ERROR_DEVICE_NOT_CONNECTED, ERROR_DEVICE_NOT_CONNECTED, ERROR_DEVICE_NOT_CONNECTED};
 static unsigned calls[4];
+static WORD buttons[4] = {0x2100,0x2100,0x2100,0x2100};
 static GameInput* published;
 static DWORD WINAPI fake_input(DWORD slot, XINPUT_STATE* state) {
     // Provide deterministic per-slot XInput responses to the native sampler.
@@ -19,7 +21,7 @@ static DWORD WINAPI fake_input(DWORD slot, XINPUT_STATE* state) {
     ++calls[slot];
     if (!codes[slot]) {
         state->dwPacketNumber = 7;
-        state->Gamepad.wButtons = XINPUT_GAMEPAD_LEFT_SHOULDER | XINPUT_GAMEPAD_B;
+        state->Gamepad.wButtons = buttons[slot];
         state->Gamepad.bLeftTrigger = 128;
     }
     return codes[slot];
@@ -61,6 +63,30 @@ int main() {
     input_rescan = 0;
     observe_game_input(header);
     assert(published->codes[0] == 0 && published->codes[1] == 0);
+    unsigned selected=0;
+    assert(!selected_game_controller(*published,selected));
+    boss_controller_selection=2;
+    assert(selected_game_controller(*published,selected) && selected==1);
+    buttons[1]=XINPUT_GAMEPAD_Y;
+    observe_game_input(header);
+    assert(!triangle_input.pressed);
+    buttons[1]=0; observe_game_input(header);
+    buttons[1]=XINPUT_GAMEPAD_Y; observe_game_input(header);
+    assert(triangle_input.pressed && triangle_input.slot==1);
+    boss_controller_selection=1;
+    buttons[0]=XINPUT_GAMEPAD_Y; observe_game_input(header);
+    assert(!triangle_input.pressed && !triangle_input.neutral);
+    codes[0]=ERROR_DEVICE_NOT_CONNECTED; observe_game_input(header);
+    codes[0]=0; input_rescan=0; observe_game_input(header);
+    assert(!triangle_input.pressed);
+    buttons[0]=0; observe_game_input(header);
+    buttons[0]=XINPUT_GAMEPAD_Y; observe_game_input(header);
+    assert(triangle_input.pressed && triangle_input.slot==0);
+    boss_controller_selection=3;
+    assert(!selected_game_controller(*published,selected));
+    boss_controller_selection=5;
+    assert(!selected_game_controller(*published,selected));
+    boss_controller_selection=0;
     game_input_state = nullptr;
     input_rescan = 0;
     observe_game_input(header);

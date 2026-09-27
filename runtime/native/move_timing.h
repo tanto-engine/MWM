@@ -14,9 +14,14 @@ static constexpr bool move_timing_valid(const MoveTiming& timing) {
 }
 
 static inline float move_timing_delta(const MoveTiming& timing, float frame, float delta) {
-    if (!move_timing_valid(timing) || !(frame>=0 && frame<timing.startup_end) || !(delta>0 && delta<=4)) return delta;
+    if (!move_timing_valid(timing) || !(frame>=0 && frame<timing.startup_end) || !(delta>0 && delta<=8)) return delta;
     const float remaining=timing.startup_end-frame;
     const float scaled=delta*timing.startup_speed;
     const float bounded=scaled<remaining ? scaled : remaining;
     return bounded>delta ? bounded : delta;
+}
+
+static inline float move_playback_delta(const MoveTiming& timing, float frame, float delta, float speed) {
+    if (!(speed>=.25f && speed<=2) || !(delta>0 && delta<=4)) return delta;
+    return move_timing_delta(timing,frame,delta*speed);
 }

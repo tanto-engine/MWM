@@ -32,8 +32,8 @@ class RuntimeSessionTests(unittest.TestCase):
         # Encode a complete session and unpack its fixed header and pointer sequence.
         # Version seven places the stance mask, Frost slots, window and startup speed before resource pointers.
         values = SESSION_CONFIG.unpack(encode_session(self.config, self.pid, self.born))
-        self.assertEqual(values[:16], (MAGIC, 10, 5752, self.pid, self.born,
-                                      0x123456789abcdef0, 0, 0, 0, 0, 0, 0, 0, 0, 750, 8))
+        self.assertEqual(values[:16], (MAGIC, 11, 6144, self.pid, self.born,
+                                      0x123456789abcdef0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8))
         self.assertEqual(values[16:42], tuple(self.config[key] for key in POINTER_FIELDS)
                          + tuple(self.config['originals']))
         self.assertEqual(values[42:44], (7,2))
@@ -172,7 +172,7 @@ class RuntimeSessionTests(unittest.TestCase):
         self.config['imports']=[copy.deepcopy(originals[move['id']]) for move in baseline['moves']]
         offset=len(self.config['imports']);self.config['adapters']=[None]*offset
         self.config['string_variant']=baseline['string_variant']
-        for source in compiled['moves']:
+        for source in compiled['moves'] if compiled else []:
             move=copy.deepcopy(source);address=0x500000+move['key']*0x1000
             move.update(descriptor=address,payload=address+0x100,clip=address+0x200,timing_record=address+0x300)
             if move['next_variant']>=0: move['next_variant']+=offset
@@ -181,10 +181,14 @@ class RuntimeSessionTests(unittest.TestCase):
                 motion_bank=0x940000,timing_wrapper=0x950000,kind=move['adapter_kind'],
                 player_descriptor=0xA00000+template['player_key']*0x100 if template['player_key'] else 0,**template)
             self.config['imports'].append(move);self.config['adapters'].append(adapter)
-        self.config.update(hold_variant=compiled['hold_variant']+offset,hold_milliseconds=250,hold_camera_bank=0x960000,
-            hold_stances=compiled['hold_stances'],frost_variants=[slot+offset if slot else 0 for slot in compiled['frost_variants']],
+        entry=compiled['hold_variant'] if compiled else 0
+        slots={move['id']:index+1 for index,move in enumerate(self.config['imports'])}
+        self.config.update(hold_variant=entry+offset if entry else 0,hold_milliseconds=250 if entry else 0,
+            hold_camera_bank=0x960000 if any(a and a['kind']==3 for a in self.config['adapters']) else 0,
+            hold_stances=compiled['hold_stances'] if compiled else 0,frost_variants=[slots.get(move,0) for move in settings['frost_moon'].values()],
             native_grapple=settings['okatsu_grapple'],mid_light_ender=settings['mid_light_ender'],
-            skill_bindings=prepare.compiled_skill_bindings(settings,self.config['imports']))
+            skill_bindings=prepare.compiled_skill_bindings(settings,self.config['imports']),
+            move_settings=prepare.compiled_move_settings(settings,self.config['imports']))
         return compiled
 
     def test_sword_preset_expands_only_selected_stance_dependencies(self):
@@ -202,7 +206,7 @@ class RuntimeSessionTests(unittest.TestCase):
         self.assertEqual(binding['variants'],[0,None])
         self.assertEqual(self.config['adapters'][22]['kind'],2)
         encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
-        self.assertEqual((values[9],values[42],len(encoded)),(5,27,5752))
+        self.assertEqual((values[9],values[42],len(encoded)),(5,27,6144))
         self.assertEqual(self.config['skill_bindings'],[
             dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
             dict(kind=2,stances=4,variant=18,key=0,motion=0,transition_count=0,flags=0),

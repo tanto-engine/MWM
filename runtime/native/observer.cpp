@@ -116,6 +116,7 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
 #ifdef RESEARCH_REPEAT
     // A failed frame preflight never turns into an unsolicited key-0 setter.
     if (frame_mode && reason != Accepted && reason != NativeHeavyTap) { SetLastError(incoming_error); return false; }
+    if (request==ActionRequest::Frost && reason==Accepted) boss_frost_playback=true;
 #endif
 #endif
 #ifdef RESEARCH_DISPATCH

@@ -13,6 +13,14 @@ XINPUT_BUTTONS = {
     0x0040: "left_stick", 0x0080: "right_stick", 0x0100: "lb",
     0x0200: "rb", 0x1000: "a", 0x2000: "b", 0x4000: "x", 0x8000: "y",
 }
+TRIGGER_THRESHOLD = 128
+LEFT_TRIGGER, RIGHT_TRIGGER = 0x0400, 0x0800
+
+
+def logical_buttons(buttons, lt=0, rt=0):
+    # Reserved XInput bits carry thresholded triggers only in our logical masks.
+    return ((buttons & 0xF3FF) | (LEFT_TRIGGER if lt >= TRIGGER_THRESHOLD else 0)
+            | (RIGHT_TRIGGER if rt >= TRIGGER_THRESHOLD else 0))
 
 
 class JoyInfo(C.Structure):
@@ -195,7 +203,9 @@ class ControllerReader:
         axes = state["axes"]
         buckets = tuple((name, round(value / (16 if backend == "xinput" and name in ("lt", "rt") else 4096)))
                         for name, value in sorted(axes.items()))
-        return state["buttons"], state.get("pov"), buckets
+        logical = (logical_buttons(state['buttons'], axes.get('lt', 0), axes.get('rt', 0))
+                   if backend == 'xinput' else state.get('logical_buttons'))
+        return state["buttons"], state.get("pov"), buckets, logical
 
     def poll(self):
         # Poll connected slots and periodically search for returning devices.
@@ -237,6 +247,9 @@ class ControllerReader:
                     events.append(dict(kind="input_device", **common, **backend.describe(slot)))
                 self._active.add(key)
                 self._last_error.pop(key, None)
+                if backend.name == 'xinput':
+                    state = dict(state, logical_buttons=logical_buttons(
+                        state['buttons'], state['axes'].get('lt', 0), state['axes'].get('rt', 0)))
                 change_key = self.input_change_key(backend.name, state)
                 prior = self._last.get(key)
                 # A reconnect establishes a new baseline. Unknown edges remain

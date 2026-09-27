@@ -6,6 +6,9 @@ static volatile LONG boss_inflight;
 static uint64_t boss_active_player, boss_active_owner;
 static unsigned boss_active_slot;
 #ifdef RESEARCH_REPEAT
+static bool boss_frost_playback;
+#endif
+#ifdef RESEARCH_REPEAT
 static uint64_t boss_chain_sequence;
 static uint32_t boss_chain_epoch;
 static bool boss_chain_cancelled, boss_camera_active;
@@ -71,6 +74,9 @@ static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
     return true;
 }
 static int boss_native_successor(unsigned slot, uint32_t key);
+static MoveSettings boss_settings(unsigned slot) {
+    return boss_move_settings[slot].speed ? boss_move_settings[slot] : MoveSettings{1,40,25,24,0};
+}
 static MoveTiming boss_move_timing(unsigned slot) {
     const auto& move=boss_imports[slot];
     bool frost_bound=false;
@@ -119,7 +125,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
-        || (source.key==0xBBF && key==0xC63) || (source.key>=0xC63 && source.key<=0xC65 && key==source.key+1)
+        || (sword_string_successor(source)>0 && uint32_t(sword_string_successor(source))==key)
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
         || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
@@ -274,12 +280,11 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             }
         }
         int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
-        const uint32_t source_key=boss_imports[slot].key;
-        if ((source_key==0xBBF || (source_key>=0xC63 && source_key<=0xC66)) && target==int16_t(adapter.player_key+1)) {
+        const int next=sword_string_successor(boss_imports[slot]);
+        if ((adapter.kind==2 || adapter.kind==4) && next>=0 && target==int16_t(adapter.player_key+1)) {
             // One physical Triangle per strike, using William's buffered/direct heavy rows.
-            // All five source phases retain the selected stance and native exits.
-            // The fifth strike disables this continuation instead of restarting the string.
-            const uint32_t next=source_key==0xBBF ? 0xC63 : source_key+1;
+            // Every source phase retains the selected stance and native exits.
+            // The final strike disables this continuation instead of restarting the string.
             target=boss_native_successor(slot,next)>=0 ? int16_t(next) : int16_t(-1);
             memcpy(bodies[i]+0x14,&target,2);
             continue;
@@ -400,11 +405,12 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (recovery_start != spec.recovery_frame || base_ki_cost < 0
         || (!boss_paired(spec.flags) && boss_adapters[slot].kind != 2 && boss_adapters[slot].kind != 4 && boss_adapters[slot].kind != 5 && base_ki_cost == 0)) return false;
     recovery_start=boss_move_timing(slot).recovery;
+    const auto settings=boss_settings(slot);
     if (airborne_sword(spec,boss_adapters[slot]) && (spec.key==0xC72 || spec.key==0xC82)) {
         // Native71000A accumulates recoverable Ki from the airborne attack's actual cost.
         // A negative onset keeps it pending throughout the airborne phases.
         // Zero-cost follow-ups preserve the balance until their landing recovery frame.
-        payload[0x33]=40;
+        payload[0x33]=uint8_t(settings.pulse_percent);
         const int16_t pending=-1; memcpy(payload+0x38,&pending,2);
     }
     // Native71000A computes recoverable Ki from this percentage of the actual
@@ -417,8 +423,8 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
         // One boundary grants attack/cancel permissions and starts recoverable Ki.
         memcpy(payload+0x24,&recovery_start,2);
         memcpy(payload+0x26,&recovery_start,2);
-        payload[0x33] = 40;
-        const int16_t fill_frames = 25, hold_frames = 24;
+        payload[0x33] = uint8_t(settings.pulse_percent);
+        const int16_t fill_frames = int16_t(settings.pulse_fill), hold_frames = int16_t(settings.pulse_hold);
         memcpy(payload + 0x38, &recovery_start, sizeof(recovery_start));
         memcpy(payload + 0x3A, &fill_frames, sizeof(fill_frames));
         memcpy(payload + 0x3C, &hold_frames, sizeof(hold_frames));
@@ -789,6 +795,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
     context = private_banks;
 #ifdef RESEARCH_REPEAT
     boss_active_slot = private_slot;
+    if (!paired_transition) boss_frost_playback=false;
     if (!continuing) {
         boss_chain_sequence = command.chord_sequence;
         boss_chain_epoch = uint32_t(command.reserved[2]);

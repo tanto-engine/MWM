@@ -2,6 +2,7 @@ import contextlib
 import ctypes as C
 import io
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
@@ -68,7 +69,8 @@ class DispatchTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'motion resource'):
             dispatch.prepare(game, profile)
 
-    def exercise_main(self, *, close_errors=False, dispatch_once=False, start_failure=None):
+    def exercise_main(self, *, close_errors=False, dispatch_once=False, start_failure=None,
+                      calibration_change=None, prepared_selection=None):
         # Run dispatcher startup and cleanup against fake mappings and exports.
         # Optionally inject disposal failures or a dispatch observed late during shutdown.
         # Native Stop and recovery waiting must survive errors from other cleanup steps.
@@ -149,17 +151,25 @@ class DispatchTests(unittest.TestCase):
             folder = Path(temp)
             profile, calibration = folder/'profile.json', folder/'calibration.json'
             profile.write_text(json.dumps(PROFILE))
-            (folder/'boss-session.json').write_text(json.dumps(BOSS))
+            (folder/'boss-session.json').write_text(json.dumps(dict(BOSS,
+                controller_selection=0 if prepared_selection is None else prepared_selection)))
             calibration.write_text((MOD_ROOT/'data/controller-calibration.json').read_text())
             (folder/'controller-binding.json').write_text((MOD_ROOT/'data/preset.json').read_text())
             argv = ['run_dispatch.py', '--profile', str(profile), '--calibration', str(calibration),
                     '--seconds', '.4', '--outdir', str(folder/'result')]
-            reader = type('Reader', (), {'poll': lambda self: (
-                # Keep controller polling empty during dispatcher cleanup tests.
-                # Return no events from the replacement reader.
-                # Recovery grace and Stop attempts must not depend on fresh player input.
-                []
-            )})()
+            changed=False
+            def poll(self):
+                nonlocal changed
+                if calibration_change and not changed:
+                    value=json.loads(calibration.read_text())
+                    if calibration_change=='slot': value['controller_slot']=1
+                    if calibration_change=='map': value['button_map']={'4':0x2000,'16':0x100}
+                    stamp=calibration.stat().st_mtime_ns
+                    calibration.write_text(json.dumps(value))
+                    os.utime(calibration,ns=(stamp+1_000_000,stamp+1_000_000))
+                    changed=True
+                return []
+            reader = type('Reader', (), {'poll': poll})()
             with patch.object(sys, 'argv', argv), patch.object(dispatch, 'HERE', folder), patch.object(dispatch, 'LiveGame', Game), \
                  patch.object(dispatch, 'CommandMap', Command), patch.object(dispatch, 'Trace', Trace), \
                  patch.object(dispatch, 'prepare', return_value=CONFIG.copy()), \
@@ -169,12 +179,27 @@ class DispatchTests(unittest.TestCase):
                  patch.object(dispatch, 'verify_boss_after_stop', return_value={'all_slots_original':True}), \
                  patch.object(dispatch, 'ControllerReader', return_value=reader), \
                  patch.object(dispatch.time, 'sleep'), contextlib.redirect_stdout(io.StringIO()):
-                if close_errors or start_failure is not None:
+                if prepared_selection is not None:
+                    with self.assertRaisesRegex(ValueError,'Controller selection changed'):
+                        dispatch.main()
+                    return calls,{},None
+                if close_errors or start_failure is not None or calibration_change in ('slot','map'):
                     with self.assertRaises(SystemExit): dispatch.main()
                 else:
                     dispatch.main()
             status = json.loads((folder/'result/status.json').read_text())
         return calls, status, instances[0] if instances else None
+
+    def test_calibration_edits_require_reacquisition_but_identical_rewrite_does_not(self):
+        for change in ('slot','map','touch'):
+            calls,status,command=self.exercise_main(calibration_change=change)
+            self.assertEqual(calls,['start','stop'])
+            self.assertFalse(command.published[-1]['armed'])
+            self.assertEqual(any('Controller calibration changed' in error for error in status['errors']),change!='touch')
+
+    def test_prepared_controller_selection_must_match_before_start(self):
+        calls,_,_=self.exercise_main(prepared_selection=2)
+        self.assertEqual(calls,[])
 
     def test_cleanup_exceptions_do_not_skip_stop(self):
         # Attempt native Stop even when trace or command cleanup raises.

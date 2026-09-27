@@ -20,8 +20,8 @@ from load_resources import load_resources
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
-from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST
-from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES
+from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
+from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES
 
 IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -185,15 +185,17 @@ def configured_replacements(configuration=None, baseline=None):
     configuration = validate_preset(configuration if configuration is not None else read_json(CURRENT_CONFIG))
     candidate = HEAVY_STRINGS.get(configuration['low_heavy'])
     entries=list(dict.fromkeys((stance,identifier) for bindings in ('stance_holds','frost_moon')
-                               for stance,identifier in configuration[bindings].items() if identifier))
+                               for stance,identifier in configuration[bindings].items() if identifier in HELD_MOVES))
     entries=list(dict.fromkeys(entries+[(binding['stance'],binding['move'])
-        for binding in configuration['skill_bindings'] if binding['move'] in HELD_MOVES]))
+        for binding in configuration['skill_bindings'] if binding['move'] in HELD_MOVES]+
+        [(configuration['chord_stance'],configuration[field]) for field in ('tap_move','hold_move') if configuration[field] in HELD_MOVES]))
     hold = bool(entries)
     jump='jin_hayabusa.flying_swallow_jump' in (configuration['tap_move'],configuration['hold_move'],
-        *(binding['move'] for binding in configuration['skill_bindings']))
+        *configuration['frost_moon'].values(), *(binding['move'] for binding in configuration['skill_bindings']))
     if candidate is None and not hold and not jump:
         return None
     manifest = read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
+    chains={**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}
     selected = list(manifest['candidates'][candidate]) if candidate else []
     by_id = {move['id']: move for move in manifest['moves']}
     if candidate and (len(selected) != 3 or len(set(selected)) != 3 or any(key not in by_id for key in selected)):
@@ -204,9 +206,9 @@ def configured_replacements(configuration=None, baseline=None):
         for stance, identifier in entries:
             player_key=STANCE_OPENERS[stance]
             if (identifier not in by_id or by_id[identifier]['adapter_kind'] not in (1, 2)
-                    or identifier not in manifest['hold_chains']):
+                    or identifier not in chains):
                 raise ValueError('Held entry has no supported input adapter')
-            chain = manifest['hold_chains'][identifier]
+            chain = chains[identifier]
             if not isinstance(chain, list) or not chain or chain[0] != identifier or any(item not in by_id for item in chain):
                 raise ValueError('Held entry has invalid native dependencies')
             # Stance belongs to the binding, not the boss move's permanent identity.
@@ -237,8 +239,8 @@ def configured_replacements(configuration=None, baseline=None):
                                      if move['adapter_kind'] == 2), 0)
     manifest['hold_milliseconds'] = round(configuration['hold_seconds']*1000) if manifest['hold_variant'] else 0
     manifest['hold_stances'] = sum(1<<i for i,stance in enumerate(STANCE_OPENERS) if configuration['stance_holds'][stance])
-    manifest['frost_variants'] = [positions[configuration['frost_moon'][stance]]+1 if configuration['frost_moon'][stance] else 0 for stance in STANCE_OPENERS]
-    manifest['frost_milliseconds'] = round(configuration['frost_window_seconds']*1000)
+    manifest['frost_variants'] = [positions[configuration['frost_moon'][stance]]+1 if configuration['frost_moon'][stance] in positions else 0 for stance in STANCE_OPENERS]
+    manifest['frost_milliseconds'] = FROST_MILLISECONDS
     manifest['candidate'] = candidate
     return manifest
 
@@ -251,12 +253,36 @@ def compiled_skill_bindings(configuration, imports):
     result=[]
     for binding in configuration['skill_bindings']:
         source,stance,move=(binding[field] for field in ('source','stance','move'))
-        key,motion,rows,flags=NATIVE_SKILLS.get(source,(0,0,0,0))
-        result.append(dict(kind=2 if source=='guard_light' else 1,
-            stances=7 if stance=='any' else 1<<list(STANCE_OPENERS).index(stance),
-            variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
+        scopes=list(STANCE_OPENERS) if source=='heavy_attack' and stance=='any' else [stance]
+        for scope in scopes:
+            key,motion,rows,flags=NATIVE_SKILLS.get(source,(0,0,0,0))
+            if source=='heavy_attack':
+                key=STANCE_OPENERS[scope]; motion,rows,_=PLAYER_TEMPLATES[key]
+            result.append(dict(kind=2 if source=='guard_light' else 1,
+                stances=7 if scope=='any' else 1<<list(STANCE_OPENERS).index(scope),
+                variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
     for stance,move in configuration['stance_holds'].items():
         if move: result.append(dict(kind=3,stances=1<<list(STANCE_OPENERS).index(stance),variant=slots[move],key=0,motion=0,transition_count=0,flags=0))
+    if len(result)>8: raise ValueError('At most eight compiled native skill/chord bindings are supported')
+    return result
+
+
+def compiled_move_settings(configuration, imports, policy=None):
+    configuration=validate_preset(configuration)
+    policy=validate_move_policy(policy if policy is not None else
+        read_json(DATA/'move-policy.json',dict(schema_version=1,moves={})), SPEED_MOVES)
+    manifest=read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
+    chains={**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}
+    present={move['id'] for move in imports}
+    inherited={child:root for root,chain in chains.items() if root in present for child in chain}
+    result=[]
+    for move in imports:
+        identifier=move['id']; root=inherited.get(identifier,identifier)
+        settings=configuration['move_settings']
+        speed=settings.get(identifier,settings.get(root,{})).get('speed',1)
+        pulse=policy['moves'].get(identifier,policy['moves'].get(root,{})).get('ki_pulse',KI_PULSE)
+        if move['flags'] in (0x8078000000,PLAYER_PAIRED_FLAGS): speed,pulse=1,KI_PULSE
+        result.append(dict(speed=speed,**pulse))
     return result
 
 
@@ -307,7 +333,7 @@ def fresh_profile(game):
     moves, imports = resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest)
     adapters = [None] * len(imports)
     hold_variant = hold_milliseconds = hold_camera_bank = 0
-    hold_stances=0; frost_variants=[0,0,0]; frost_milliseconds=750
+    hold_stances=0; frost_variants=[0,0,0]; frost_milliseconds=FROST_MILLISECONDS
     base = int(game.identity['module_base'], 0)
     if U64(stable.pin(camera_bank, 8), 0) != base + 0x13C8FA0:
         raise ValueError('Owned camera resource has an unexpected type')
@@ -359,12 +385,17 @@ def fresh_profile(game):
                 hold_camera_bank=hold_camera
         imports.extend(additional)
     native_grapple = configuration['okatsu_grapple']
+    slots={move['id']:index+1 for index,move in enumerate(imports)}
+    frost_variants=[slots.get(move,0) for move in configuration['frost_moon'].values()]
+    from game_controller import controller_selection
+    selection=controller_selection(read_json(HERE/'controller-calibration.json',{}))
     stable.check()
     return dict(session=game.identity, player=player, source=source, charged_candidate=moves[1], preset=configuration,
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
                 hold_variant=hold_variant, hold_milliseconds=hold_milliseconds, hold_camera_bank=hold_camera_bank,
                 hold_stances=hold_stances, frost_variants=frost_variants, frost_milliseconds=frost_milliseconds,
-                frost_speed=configuration['frost_startup_speed'],launch_profiles=LAUNCH_PROFILES,air_juggle_boost=AIR_JUGGLE_BOOST,tracking_rates=TRACKING_RATES,
+                frost_speed=FROST_STARTUP_SPEED,launch_profiles=LAUNCH_PROFILES,air_juggle_boost=AIR_JUGGLE_BOOST,tracking_rates=TRACKING_RATES,
+                move_settings=compiled_move_settings(configuration,imports),controller_selection=selection,
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
@@ -404,6 +435,8 @@ def boss_fields(profile):
     fields['native_grapple'] = profile.get('native_grapple', False)
     fields['mid_light_ender']=profile.get('mid_light_ender',False)
     fields['skill_bindings']=profile.get('skill_bindings',[])
+    fields['move_settings']=profile.get('move_settings')
+    fields['controller_selection']=profile.get('controller_selection',0)
     fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed','launch_profiles','air_juggle_boost','tracking_rates'))
     return fields, originals
 

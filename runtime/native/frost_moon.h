@@ -108,10 +108,9 @@ static DispatchReason choose_frost_moon(DispatchCommand& command) {
     // Native conditionD5 calls7AFDF0 on owner+240+40: positive duration and remaining fill/hold.
     // Observe those four floats without writing Ki or changing native stance inputs.
     // Dispatch only a configured skill after its double tap and fresh player/resource checks.
-    GameInput sample{}; unsigned connected=0,slot=0; uint32_t stance=0; uint64_t vitals=0,current=0; float pulse[4]{};
+    GameInput sample{}; unsigned slot=0; uint32_t stance=0; uint64_t vitals=0,current=0; float pulse[4]{};
     if (!trace || !read_game_input(trace->header,sample)) { frost_input={}; return IneligibleRequest; }
-    for (unsigned i=0;i<4;++i) if (!sample.codes[i]) { ++connected; slot=i; }
-    if (connected!=1 || !copy_field(boss_session.player+0x470,stance) || stance>2
+    if (!selected_game_controller(sample,slot) || !copy_field(boss_session.player+0x470,stance) || stance>2
         || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
         || !copy_field(boss_session.player+0x58,current)) { frost_input={}; return IneligibleRequest; }
     const unsigned mapped=2-stance; // Native high0/mid1/low2 -> preset low0/mid1/high2.

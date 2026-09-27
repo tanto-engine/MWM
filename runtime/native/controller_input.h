@@ -23,6 +23,16 @@ struct TriangleInput {
 };
 static TriangleInput triangle_input{};
 
+static bool selected_game_controller(const GameInput& sample, unsigned& slot) {
+    if (boss_controller_selection) {
+        slot=boss_controller_selection-1;
+        return slot<4 && !sample.codes[slot];
+    }
+    unsigned connected=0;
+    for (unsigned i=0;i<4;++i) if (!sample.codes[i]) { ++connected; slot=i; }
+    return connected==1;
+}
+
 static void resolve_game_input() {
     // Find the same XInput entrypoint already imported by Nioh.
     // Resolve from the loaded module so Steam's in-process controller translation is retained.
@@ -61,12 +71,12 @@ static void observe_game_input(TraceHeader& header) {
     }
     QueryPerformanceCounter(&now);
     sample.qpc = now.QuadPart; // Timestamp the completed sample, after device latency.
-    unsigned connected=0, slot=0;
-    for (unsigned i=0;i<4;++i) if (!sample.codes[i]) { ++connected; slot=i; }
-    if (connected!=1 || !input.sequence || input.codes[slot]
+    unsigned slot=0;
+    const bool selected=selected_game_controller(sample,slot);
+    if (!selected || !input.sequence || input.codes[slot]
         || slot!=triangle_input.slot || sample.packets[slot]<input.packets[slot]
         || sample.qpc-input.qpc>=header.qpc_frequency/10) triangle_input={};
-    if (connected==1) {
+    if (selected) {
         const bool down=(sample.buttons[slot]&XINPUT_GAMEPAD_Y)!=0;
         if (!down) {
             triangle_input.neutral=true;

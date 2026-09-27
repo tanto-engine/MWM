@@ -1,7 +1,10 @@
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,6 +17,30 @@ from process_support import worker_command
 
 
 class Portability(unittest.TestCase):
+    def test_authored_developer_pulse_policy_survives_product_staging(self):
+        from build_product import stage_product
+        policy=dict(schema_version=1,moves={'okatsu.charged_rush':dict(ki_pulse=dict(percent=65,fill_frames=18,hold_frames=35))})
+        with tempfile.TemporaryDirectory() as temporary:
+            folder=Path(temporary);project=folder/'sword';stage=folder/'stage'
+            shutil.copytree(ROOT.parent/'tanto-sword-mod',project,ignore=shutil.ignore_patterns('.git','.build','dist','runtime','__pycache__'))
+            (project/'data/move-policy.json').write_text(json.dumps(policy),encoding='utf8')
+            stage_product(project,stage)
+            staged=stage/'data/move-policy.json'
+            self.assertTrue(staged.is_file(),'Sword staging dropped authored developer Pulse policy')
+            self.assertEqual(json.loads(staged.read_text()),policy)
+            manifest=json.loads((stage/'build-manifest.json').read_text())
+            self.assertEqual(manifest['files']['data/move-policy.json'],hashlib.sha256(staged.read_bytes()).hexdigest())
+            code="import sys,json;sys.path.insert(0,sys.argv[1]);from prepare_session import compiled_move_settings;from engine_config import DEFAULT_PRESET;print(json.dumps(compiled_move_settings(DEFAULT_PRESET,[dict(id='okatsu.charged_rush',flags=0x184C0000)])))"
+            result=subprocess.run([sys.executable,'-B','-c',code,str(stage/'runtime')],capture_output=True,text=True,
+                env=dict(os.environ,TANTO_MOD_ROOT=str(stage)),timeout=20)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(json.loads(result.stdout),[dict(speed=1,percent=65,fill_frames=18,hold_frames=35)])
+            policy['moves']['okatsu.charged_rush']['ki_pulse']['percent']=101
+            (project/'data/move-policy.json').write_text(json.dumps(policy),encoding='utf8')
+            with self.assertRaisesRegex(ValueError,'Ki Pulse percent'):
+                stage_product(project,folder/'invalid')
+            self.assertFalse((folder/'invalid').exists())
+
     def test_same_config_uses_same_dll_across_supervisor_restarts(self):
         # Retained native mappings require the original module path on restart.
         # Reuse the same compiled runtime for an unchanged supervisor configuration.

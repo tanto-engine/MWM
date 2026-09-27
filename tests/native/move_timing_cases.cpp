@@ -20,4 +20,10 @@ int main() {
     assert(move_timing_delta(timing,0,0)==0);
     assert(move_timing_delta(timing,std::numeric_limits<float>::quiet_NaN(),1)==1);
     assert(move_timing_delta(timing,std::numeric_limits<float>::infinity(),1)==1);
+    assert(move_playback_delta(timing,20,1,.5f)==.5f);
+    assert(move_playback_delta(timing,20,1,2)==2);
+    assert(move_playback_delta(timing,0,1,.5f)==4);
+    assert(move_playback_delta(timing,11.5f,1,.5f)==.5f);
+    assert(move_playback_delta(timing,0,0,2)==0);
+    assert(move_playback_delta(timing,0,1,std::numeric_limits<float>::quiet_NaN())==1);
 }

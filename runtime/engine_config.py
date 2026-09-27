@@ -20,14 +20,33 @@ if os.name == 'nt':
 
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
 # Preset validation does not certify gameplay acceptance.
-MOVE_VARIANTS = {'okatsu.charged_rush': 0, 'okatsu.leaping_slash': 1, 'jin_hayabusa.flying_swallow_jump': 2}
-HEAVY_STRINGS = {'jin_hayabusa.action_0bc0': 'C', 'jin_hayabusa.action_0c6e': 'D'}
-HELD_MOVES = {'jin_hayabusa.action_0bbf', 'jin_hayabusa.action_0c75', 'jin_hayabusa.action_0c79', 'jin_hayabusa.action_0c81', 'jin_hayabusa.izuna_drop', 'jin_hayabusa.action_0c71'}
 from engine_policy import NATIVE_SKILLS
-
-PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon frost_window_seconds frost_startup_speed'.split())
 from project_paths import DATA
-DEFAULT_PRESET = json.loads((DATA/'preset.json').read_text(encoding='utf8'))
+
+# Product manifests own the choices; native preparation still verifies every source signature.
+_ordinary = json.loads((DATA/'imports/okatsu.json').read_text(encoding='utf8'))
+_sword = json.loads((DATA/'imports/jin_hayabusa.json').read_text(encoding='utf8'))
+MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:2] +
+    [move for move in _sword['moves'] if move['adapter_kind']==5])}
+HEAVY_STRINGS = {chain[0]: name for name, chain in _sword['candidates'].items()}
+HELD_MOVES = frozenset(_sword['hold_chains']) | frozenset(HEAVY_STRINGS)
+CHORD_MOVES = frozenset(MOVE_VARIANTS) | HELD_MOVES
+SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + _sword['moves']
+    if move['flags'] not in (0x8078000000, 0x8038000000))
+PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon chord_stance move_settings'.split())
+
+
+def move_capabilities():
+    from catalogue import load_catalogue, iter_moves
+    names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
+    ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + _sword['moves'])
+    return dict(moves=[dict(id=identifier, name=names[identifier], chord=identifier in CHORD_MOVES,
+        graph=identifier in HELD_MOVES, heavy_string=identifier in HEAVY_STRINGS,
+        native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
+        speed=identifier in SPEED_MOVES) for identifier in ids],
+        native_sources=[dict(id=source, label=source.replace('_',' ').title())
+                        for source in (*NATIVE_SKILLS,'guard_light')],
+        speed=dict(min=.25,max=2.0), stances=['low','mid','high'])
 
 
 def atomic_json(path, value):
@@ -103,10 +122,12 @@ def validate_preset(value):
     # Reject movesets the current runtime cannot execute.
     # Check schema, implemented move IDs, distinct button bits and hold time.
     # Corrupt settings cannot silently become a different binding.
-    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version'] in (4,5,6):
-        value={key:item for key,item in value.items() if key not in ('launch_profiles','air_juggle_boost','tracking_rates','izuna_tracking_degrees')}
-        value=dict(value,schema_version=7)
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 7:
+    if isinstance(value,dict) and type(value.get('schema_version')) is int and value['schema_version'] in (4,5,6,7):
+        value={key:item for key,item in value.items() if key not in ('launch_profiles','air_juggle_boost','tracking_rates','izuna_tracking_degrees','frost_window_seconds','frost_startup_speed')}
+        value=dict(value,schema_version=8)
+        value.setdefault('chord_stance','low')
+        value.setdefault('move_settings',{})
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 8:
         raise ValueError('Unsupported moveset version')
     missing = [key for key in PRESET_FIELDS if key not in value]
     if missing:
@@ -117,8 +138,18 @@ def validate_preset(value):
     if not isinstance(result['name'], str) or not result['name'].strip() or len(result['name']) > 100:
         raise ValueError('Give the moveset a name of 1 to 100 characters')
     for key in ('tap_move', 'hold_move'):
-        if result[key] is not None and (not isinstance(result[key], str) or result[key] not in MOVE_VARIANTS):
+        if result[key] is not None and (not isinstance(result[key], str) or result[key] not in CHORD_MOVES):
             raise ValueError('This move has no implemented runtime adapter: ' + str(result[key]))
+    if result['chord_stance'] not in ('low','mid','high'):
+        raise ValueError('Choose a concrete stance for the custom chord')
+    settings=result['move_settings']
+    if not isinstance(settings,dict): raise ValueError('Move settings must map move IDs to speed')
+    for identifier, fields in settings.items():
+        if identifier not in SPEED_MOVES or not isinstance(fields,dict) or set(fields)!={'speed'}:
+            raise ValueError('Move settings accept only speed for implemented unpaired moves')
+        speed=fields['speed']
+        if type(speed) not in (int,float) or not math.isfinite(speed) or not .25<=speed<=2:
+            raise ValueError('Move speed must be between 0.25 and 2')
     for key in ('modifier_mask', 'trigger_mask'):
         bit = result[key]
         if not isinstance(bit, int) or isinstance(bit, bool) or not 0 < bit <= 0x80000000 or bit & (bit-1):
@@ -141,12 +172,16 @@ def validate_preset(value):
     frost=result['frost_moon']
     if not isinstance(frost,dict) or set(frost)!=set(holds):
         raise ValueError('Frost Moon requires low, mid and high entries')
-    if any(identifier is not None and identifier not in HELD_MOVES for identifier in frost.values()):
+    if any(identifier is not None and (not isinstance(identifier,str) or identifier not in CHORD_MOVES) for identifier in frost.values()):
         raise ValueError('Frost Moon requires a supported sword move')
     bindings=result['skill_bindings']
     if not isinstance(bindings,list) or len(bindings)+len(enabled)>8:
         raise ValueError('At most eight native skill/chord bindings are supported')
     entries=[(stance,move) for mapping in (holds,frost) for stance,move in mapping.items() if move]
+    if len([move for move in frost.values() if move])!=len({move for move in frost.values() if move}):
+        raise ValueError('Frost Moon destinations must use distinct imports')
+    entries += [(result['chord_stance'],result[field]) for field in ('tap_move','hold_move')
+                if result[field] in HELD_MOVES or result[field] is not None and result[field] in frost.values()]
     occupied=set()
     for binding in bindings:
         if not isinstance(binding,dict) or set(binding)!={'source','stance','move'}:
@@ -162,18 +197,20 @@ def validate_preset(value):
         for scope in scopes:
             if (source,scope) in occupied: raise ValueError('Skill binding sources overlap in this stance')
             occupied.add((source,scope))
-        if move in HELD_MOVES: entries.append((stance,move))
+        if move in HELD_MOVES or move in frost.values(): entries.append((stance,move))
     for stance,move in entries:
         if any(other!=stance and identifier==move for other,identifier in entries):
-            raise ValueError('One imported graph must use the same stance across bindings')
-    seconds=result['frost_window_seconds']
-    if type(seconds) not in (int,float) or not math.isfinite(seconds) or seconds!=0 and not .1<=seconds<=1.5:
-        raise ValueError('Frost Moon window: 0 follows Ki Pulse, otherwise 0.1 to 1.5 seconds')
-    if type(result['frost_startup_speed']) is not int or not 1<=result['frost_startup_speed']<=8:
-        raise ValueError('Frost Moon startup speed must be an integer from 1 to 8')
+            raise ValueError('An imported graph or Frost move must use the same stance across bindings')
+    if result['low_heavy'] and any(move==result['low_heavy'] for _,move in entries):
+        raise ValueError('Disable the low-heavy string before using that graph on another binding')
+    if sum(3 if binding['source']=='heavy_attack' and binding['stance']=='any' else 1 for binding in bindings)+len(enabled)>8:
+        raise ValueError('At most eight compiled native skill/chord bindings are supported')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
     return result
+
+
+DEFAULT_PRESET = validate_preset(json.loads((DATA/'preset.json').read_text(encoding='utf8')))
 
 
 def binding_for_preset(calibration, preset, imports=None):

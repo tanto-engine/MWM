@@ -1,7 +1,7 @@
 # Stable runtime startup ABI. A move identity never contains these pointers.
 import re
 import struct
-from engine_policy import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, validate_launch_profiles, validate_tracking_rates
+from engine_policy import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, KI_PULSE, FROST_MILLISECONDS, FROST_STARTUP_SPEED, validate_launch_profiles, validate_tracking_rates
 from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
@@ -14,9 +14,10 @@ POINTER_FIELDS = (
 MOVE_IMPORT = struct.Struct('<5QIi hHhHHH 9I')
 MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
-SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8 + 'IffI'*2 + '4f')
-MAGIC, VERSION = 0x3153454e, 10
-assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 5752
+MOVE_SETTINGS = struct.Struct('<f4H')
+SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8 + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I')
+MAGIC, VERSION = 0x3153454e, 11
+assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 6144
 
 
 def encode_session(config, pid, creation_filetime):
@@ -103,12 +104,6 @@ def encode_session(config, pid, creation_filetime):
                 or not 80 <= hold_milliseconds <= 2000
                 or not (hold_camera==0 and not paired_slots or 0x10000 <= hold_camera <= 0x7fffffffffff)):
             raise ValueError('Hold entry, timing or camera differs from native adapters')
-        frost_slots=config.get('frost_variants',[])
-        if not isinstance(frost_slots,list):
-            raise ValueError('Frost Moon requires three variant slots')
-        hold_keys = [adapters[index-1]['player_key'] for index in hold_slots if index not in frost_slots and index not in [binding['variant'] for binding in config.get('skill_bindings',[])]]
-        if len(set(hold_keys)) != len(hold_keys):
-            raise ValueError('Only one held entry may own a player stance opener')
         for index, adapter in enumerate(adapters):
             if adapter is None or adapter['kind'] != 4:
                 continue
@@ -146,8 +141,11 @@ def encode_session(config, pid, creation_filetime):
             raise ValueError('Skill binding requires an ordinary executable entry')
         if adapter is not None and adapter['kind']!=5 and not (kind==1 and key==0xBC8 and adapter['kind']==1 and adapter['player_key']==0xCF6 and stances==1) and (adapter['kind']!=2 or stances!=1<<list(STANCE_OPENERS.values()).index(adapter['player_key'])):
             raise ValueError('Skill binding and graph stance differ')
-        if kind==1 and (key,motion,rows,flags) not in NATIVE_SKILLS.values() or kind>=2 and any((key,motion,rows,flags)):
+        signatures=(*NATIVE_SKILLS.values(),*((key,*PLAYER_TEMPLATES[key][:2],0x8000000594C0000) for key in STANCE_OPENERS.values()))
+        if kind==1 and (key,motion,rows,flags) not in signatures or kind>=2 and any((key,motion,rows,flags)):
             raise ValueError('Unverified native skill signature')
+        if kind==1 and key in STANCE_OPENERS.values() and stances!=1<<list(STANCE_OPENERS.values()).index(key):
+            raise ValueError('Native heavy source differs from its stance')
         for stance in range(3):
             if not stances&(1<<stance): continue
             identity=(kind,key,stance)
@@ -156,19 +154,47 @@ def encode_session(config, pid, creation_filetime):
         encoded_bindings.extend(fields)
     encoded_bindings.extend([0]*(7*(8-len(bindings))))
     hold_stances=config.get('hold_stances',7 if hold_variant else 0)
-    frost=config.get('frost_variants',[0,0,0]); window=config.get('frost_milliseconds',750)
-    speed=config.get('frost_speed',8)
-    if type(speed) is not int or not 1<=speed<=8:
-        raise ValueError('Frost Moon startup speed must be from 1 to 8')
-    if type(hold_stances) is not int or not 0<=hold_stances<=7 or type(window) is not int or window!=0 and not 100<=window<=1500:
+    frost=config.get('frost_variants',[0,0,0]); window=config.get('frost_milliseconds',FROST_MILLISECONDS)
+    speed=config.get('frost_speed',FROST_STARTUP_SPEED)
+    if type(speed) is not int or speed!=FROST_STARTUP_SPEED:
+        raise ValueError('Frost Moon startup speed is engine-owned')
+    if type(hold_stances) is not int or not 0<=hold_stances<=7 or type(window) is not int or window!=FROST_MILLISECONDS:
         raise ValueError('Invalid skill binding mask or Frost Moon window')
     if sum(b['stances'] for b in bindings if b['kind']==3)!=hold_stances:
         raise ValueError('Held stance mask differs from explicit bindings')
     if not isinstance(frost,list) or len(frost)!=3:
         raise ValueError('Frost Moon requires three variant slots')
     for slot,key in zip(frost,STANCE_OPENERS.values()):
-        if type(slot) is not int or not 0<=slot<=len(moves) or slot and (slot not in hold_slots or adapters[slot-1]['player_key']!=key):
+        if type(slot) is not int or not 0<=slot<=len(moves):
+            raise ValueError('Frost Moon variant is outside the import table')
+        adapter=adapters[slot-1] if slot else None
+        if slot and not (adapter is None and moves[slot-1]['flags']==0x184C0000 or adapter is not None and (adapter['kind']==5 or adapter['kind']==2 and adapter['player_key']==key)):
             raise ValueError('Frost Moon variant must match its stance skill')
+    if len([slot for slot in frost if slot])!=len({slot for slot in frost if slot}):
+        raise ValueError('Frost Moon variants must be distinct')
+    for stance,slot in enumerate(frost):
+        if slot and any(binding['variant']==slot and binding['stances']!=1<<stance for binding in bindings):
+            raise ValueError('Frost Moon and native binding stance ownership differs')
+    settings=config.get('move_settings')
+    if settings is None: settings=[dict(speed=1,**KI_PULSE) for _ in moves]
+    if not isinstance(settings,list) or len(settings)!=len(moves):
+        raise ValueError('Every import requires move settings')
+    encoded_settings=[]
+    for move,setting in zip(moves,settings):
+        if not isinstance(setting,dict) or set(setting)!={'speed',*KI_PULSE}:
+            raise ValueError('Invalid compiled move settings')
+        rate,percent,fill,hold=(setting[field] for field in ('speed','percent','fill_frames','hold_frames'))
+        if (type(rate) not in (int,float) or not .25<=rate<=2
+                or any(type(v) is not int for v in (percent,fill,hold))
+                or not 0<=percent<=100 or not 1<=fill<=120 or not 0<=hold<=120):
+            raise ValueError('Invalid move speed or Ki Pulse policy')
+        if move['flags'] in (0x8078000000,PLAYER_PAIRED_FLAGS) and setting!=dict(speed=1,**KI_PULSE):
+            raise ValueError('Paired actions retain native timing and Pulse policy')
+        encoded_settings.extend((rate,percent,fill,hold,0))
+    encoded_settings.extend([0]*((IMPORT_LIMIT-len(moves))*5))
+    selection=config.get('controller_selection',0)
+    if type(selection) is not int or not 0<=selection<=4:
+        raise ValueError('Controller selection requires auto or an XInput slot')
     profiles=config.get('launch_profiles',LAUNCH_PROFILES); boost=config.get('air_juggle_boost',AIR_JUGGLE_BOOST)
     validate_launch_profiles(profiles,boost)
     tracking=config.get('tracking_rates',TRACKING_RATES)
@@ -177,4 +203,4 @@ def encode_session(config, pid, creation_filetime):
     return SESSION_CONFIG.pack(MAGIC, VERSION, SESSION_CONFIG.size, pid,
                                int(creation_filetime), int(tag, 16), hold_variant, hold_milliseconds, hold_camera, native_bindings,
                                hold_stances,*frost,window,speed,*pointers,
-                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, *(tracking[key] for key in TRACKING_RATES))
+                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, *(tracking[key] for key in TRACKING_RATES),*encoded_settings,selection,0)

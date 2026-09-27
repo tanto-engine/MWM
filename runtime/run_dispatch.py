@@ -17,7 +17,7 @@ from process_support import run, loader_report, CommandFailure, process_identity
 from gestures import ControllerGesture
 from engine_config import atomic_json, read_json, validate_preset, binding_for_preset
 from trace_reader import Trace, CAPACITY
-from game_controller import GameController, game_binding
+from game_controller import GameController, game_binding, controller_selection
 from boss_probe import LiveGame, U64, I32, U32
 from controller_reader import ControllerReader
 
@@ -280,11 +280,14 @@ def main():
     boss = read_json(HERE / 'boss-session.json')
     if boss['session'] != profile['session']:
         raise ValueError('Session targets a different game process')
-    calibration = read_json(args.calibration)
+    calibration_stamp = args.calibration.stat().st_mtime_ns
+    saved_calibration = read_json(args.calibration)
+    if controller_selection(saved_calibration) != boss.get('controller_selection', 0):
+        raise ValueError('Controller selection changed during preparation; reacquisition required')
     preset = validate_preset(read_json(args.binding))
     if profile.get('preset', preset) != preset:
         raise ValueError('Preset changed during preparation; reacquisition required')
-    calibration, runtime_binding = game_binding(calibration, binding_for_preset(calibration, preset, boss['imports']))
+    calibration, runtime_binding = game_binding(saved_calibration, binding_for_preset(saved_calibration, preset, boss['imports']))
     args.outdir.mkdir(parents=True, exist_ok=False)
     session = profile['session']
     base = [CODE / 'native_loader.py', '--pid', session['pid'], '--creation-filetime', session['creation_filetime'],
@@ -386,6 +389,11 @@ def main():
                             if validate_preset(read_json(args.binding)) != preset:
                                 raise ValueError('Sword preset changed; reacquisition required')
                             binding_stamp = args.binding.stat().st_mtime_ns
+                        current_calibration_stamp = args.calibration.stat().st_mtime_ns
+                        if current_calibration_stamp != calibration_stamp:
+                            if read_json(args.calibration) != saved_calibration:
+                                raise ValueError('Controller calibration changed; reacquisition required')
+                            calibration_stamp = current_calibration_stamp
                         next_check = now + int(.1 * frequency)
                     fields = intent.fields(now)
                     if fields['chord_sequence'] != last_gesture:

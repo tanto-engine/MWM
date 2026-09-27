@@ -551,11 +551,14 @@ static void weapon_policy_cases() {
     boss_private_actions[2]={};effects[0][0x18]=0;assert(!boss_prepare_private_action(2));effects[0][0x18]=0xff;
 }
 
-static void mid_string_cases() {
+static void mid_string_cases(unsigned family) {
     // Give each of five source strikes the same verified Mid heavy input template.
     // The native buffered/direct rows request the next source only after another Triangle press.
     // Confirm source isolation, native exits, final termination and unchanged stance ownership.
-    hold_reset(1,false);pending_heavy={};boss_hold_stances=0;boss_import_count=10;
+    constexpr unsigned keys[3][5]={{0xBBF,0xC63,0xC64,0xC65,0xC66},{0xBC0,0xC6C,0xC6D,0,0},{0xC6E,0xC6F,0xC70,0,0}};
+    constexpr int16_t recovery[3][5]={{20,25,35,30,30},{25,30,30,0,0},{35,45,45,0,0}};
+    const unsigned count=family ? 3 : 5;
+    hold_reset(1,false);pending_heavy={};boss_hold_stances=0;boss_import_count=5+count;
     static uint8_t descriptors[5][0xD0]{},payloads[5][0xB0]{},rows[5][75][0x30]{};
     static uint64_t pointers[5][75];
     const auto base=boss_imports[5];const auto adapter=boss_adapters[5];
@@ -564,26 +567,27 @@ static void mid_string_cases() {
     for (unsigned r=0;r<2;++r) for (unsigned b=0;b<0x30;++b) {
         unsigned byte=0;assert(std::sscanf(follows[r]+b*2,"%2x",&byte)==1);player_rows[0][7+r][b]=uint8_t(byte);
     }
-    for (unsigned phase=0;phase<5;++phase) {
-        auto& move=boss_imports[5+phase];move=base;move.key=phase ? 0xC62+phase : 0xBBF;move.motion=2100+10*int(phase);
-        move.recovery_frame=phase==0 ? 20 : phase==1 ? 25 : phase==2 ? 35 : 30;move.transition_count=75;
+    for (unsigned phase=0;phase<count;++phase) {
+        auto& move=boss_imports[5+phase];move=base;move.key=keys[family][phase];move.motion=(family==0 ? 2100 : family==1 ? 2300 : 2400)+10*int(phase);
+        move.recovery_frame=recovery[family][phase];move.transition_count=phase+1==count ? 74 : 75;
         memcpy(descriptors[phase],jin_descriptors[0].data(),0xD0);memcpy(payloads[phase],jin_payloads[0].data(),0xB0);
         move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
         put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
         put(descriptors[phase],0x78,address(pointers[phase]));put(descriptors[phase],0x80,uint16_t(0));
-        put(descriptors[phase],0x82,uint16_t(75));put(payloads[phase],0x20,move.motion);put(payloads[phase],0x24,move.recovery_frame);
+        put(descriptors[phase],0x82,move.transition_count);put(payloads[phase],0x20,move.motion);put(payloads[phase],0x24,move.recovery_frame);
         memset(rows[phase],0xff,sizeof(rows[phase]));for (unsigned r=0;r<75;++r)pointers[phase][r]=address(rows[phase][r]);
         boss_adapters[5+phase]=adapter;boss_adapters[5+phase].kind=phase ? 4 : 2;boss_private_actions[5+phase]={};
     }
-    for (unsigned phase=0;phase<5;++phase) {
+    for (unsigned phase=0;phase<count;++phase) {
         const unsigned slot=5+phase;assert(boss_prepare_private_action(slot));
         const auto& clone=boss_private_actions[slot];
         for (unsigned r : {7u,8u}) {
-            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase<4 ? 0xC63+phase : -1)));
+            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase+1<count ? keys[family][phase+1] : -1)));
             assert(clone.transition_bodies[r][0x0B]==1 && clone.transition_bodies[r][0x0C]==1);
         }
         assert(grapple_field(address(player_rows[0][7].data()),0x14,int16_t(0xC7B)));
-        assert(boss_native_successor(slot,0xC63+phase)==(phase<4 ? int(slot+1) : -1));
+        if (phase+1<count) assert(boss_native_successor(slot,keys[family][phase+1])==int(slot+1));
+        else assert(sword_string_successor(boss_imports[slot])==0);
         assert(clone.payload[0x0B]==4);
     }
 }
@@ -743,6 +747,7 @@ static void slam_cases() {
 }
 
 static void frost_cases() {
+    boss_frost_milliseconds=750; // Explicit historical engine-policy fixture; production now fixes the native window.
     // Exercise same-stance rejection, genuine double edges and the exact750ms expiry.
     // Keep sampling continuous while testing controller/lifecycle resets and conflicting inputs.
     // Then pass the native Ki Pulse fields through the actual frame dispatcher and import adapter.
@@ -866,7 +871,7 @@ int main() {
     held_slot_cases();
     weapon_policy_cases();
     airborne_cases();
-    mid_string_cases();
+    for (unsigned family=0;family<3;++family) mid_string_cases(family);
     tracking_cases();
     slam_cases();
     frost_cases();

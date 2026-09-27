@@ -146,6 +146,20 @@ int main() {
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     guard_binding_cases();
     tiger_entry_cases();
+    for (unsigned stance=0;stance<3;++stance) {
+        constexpr uint32_t keys[]={0xCF5,0xC7A,0xCB7};
+        constexpr int32_t motions[]={4300,2300,3300};
+        constexpr uint32_t rows[]={46,42,40};
+        sword_reset(0);boss_native_bindings=0;
+        const auto key=keys[stance];
+        put(player.data(),0x470,2-stance);put(light.data(),0,key);put(light.data(),0x82,uint16_t(rows[stance]));
+        put(light_payload.data(),0x20,motions[stance]);
+        boss_skill_bindings[0]={1,1u<<stance,1,key,motions[stance],rows[stance],0x8000000594C0000ULL};
+        DispatchCommand selected{};assert(native_bound_slot(key,address(light.data()),selected)==0);
+        put(player.data(),0x470,(3-stance)%3);assert(native_bound_slot(key,address(light.data()),selected)==-1);
+        put(player.data(),0x470,2-stance);put(light.data(),0,uint32_t(0xCD5));
+        assert(native_bound_slot(0xCD5,address(light.data()),selected)==-1);
+    }
     for (unsigned index=0;index<3;++index) {
         sword_reset(index); const auto before=light; const auto rows=light_rows;
         DispatchReason reason=Disabled; DispatchCommand request{}; ReplacementScope scope(player.data(),request,reason);
