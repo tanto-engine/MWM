@@ -15,6 +15,19 @@ from game_controller import game_button_mask
 
 
 class BindingGroupTests(unittest.TestCase):
+    def test_terminal_attachment_failure_remains_visible_after_worker_exit(self):
+        # A failed resource loader stops its supervisor instead of retrying indefinitely.
+        # Keep its failure text visible even though the process is no longer running.
+        # Stale enabled status must still collapse to disabled when its owner has exited.
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            with patch.object(worker.Desktop, 'location', return_value=runtime), patch.object(worker, 'process_matches', return_value=False):
+                worker.atomic_json(runtime/'play-status.json', dict(state='preparation_failed', detail='Hideyori archive stalled'))
+                result = worker.Desktop().snapshot()
+                self.assertEqual((result['running'], result['status'], result['detail']), (False, 'preparation_failed', 'Hideyori archive stalled'))
+                worker.atomic_json(runtime/'play-status.json', dict(state='enabled', detail='Old session'))
+                self.assertEqual(worker.Desktop().snapshot()['status'], 'disabled')
+
     def test_apply_persists_game_path_before_refreshing_the_form(self):
         # Save to an isolated runtime so this check cannot change the user's selected game.
         # Apply must persist the executable alongside the preset before returning a fresh snapshot.

@@ -28,6 +28,11 @@
       "move": "jin_hayabusa.action_0bbf"
     },
     {
+      "source": "dodge_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0bbf"
+    },
+    {
       "source": "light_attack",
       "stance": "low",
       "move": "toyotomi_hideyori.action_0d30"

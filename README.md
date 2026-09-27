@@ -2,11 +2,11 @@
 
 MWM is the shared application for ten planned Nioh weapon movesets, starting with single katana; Engine owns gameplay integration and Recorder supplies evidence for developer review.
 
-`desktop/` is the Electron, TypeScript and CSS interface; `app/web_worker.py` connects it to Engine's reviewed configuration and lifecycle APIs. After `npm ci`, use `Trainer.ps1` or `npm start` with the pinned sibling Engine and Python. `Trainer.ps1 -LegacyUI` retains the previous trainer for comparison.
+`desktop/` is the Electron, TypeScript and CSS interface; `app/web_worker.py` connects it to Engine's configuration and lifecycle APIs. After `npm ci`, use `Trainer.ps1` with the sibling Engine and Python. Source launch builds current native DLLs and the UI; opening the editor does not attach to Nioh or package an EXE.
 
-Collection shows recorded moves, original notes and integration status. **Rebuild trial** loads the full requested Sword Rebuild 1 layout; Apply saves it and Enable attaches Engine. The older Jin-only subset remains available. Product checks live in `tests/` and run through Engine's `Test-Offline.ps1`.
+Moves groups actual assignments by stance, with the custom input underneath. **Save changes** validates and saves the draft; **Enable mod** separately requests attachment. More contains the full Rebuild trial, Jin subset, previous preset, imports, exports and Collection. Product checks run through Engine's `Test-Offline.ps1`.
 
-Bindings edits the custom chord and controller mapping; Overrides edits stance and native-action replacements; Tuning shows effective per-phase speeds. Blank speed fields inherit, while explicit `1` forces native playback. Live compilation flags conflicts before Apply, and Save as/Load preserve the complete draft. Recorder's artwork is bundled locally with a darker CSS overlay.
+Controller edits buttons and device mapping; Speed edits per-phase playback. Blank speeds inherit, while explicit `1` forces native playback. Detailed replacements remain available under More. The same Engine validator checks every editor path, and runtime errors remain visible after a failed supervisor exits. Recorder's artwork stays dim behind compact controls.
 
 Reuse a binding group saves or loads the custom chord, stance overrides, native overrides or Frost Moon independently. Chord files preserve logical buttons across controller mappings; imports preserve unrelated settings and reject incompatible combinations. `app/binding_groups.py` owns this file contract. The runtime still supports one custom chord, alongside its native override slots.
 
@@ -16,7 +16,11 @@ Reuse a binding group saves or loads the custom chord, stance overrides, native 
 
 `configurations/` documents the complete Sword Rebuild 1 layout. Hideyori, Oda, Tachibana and Sanada now have source trial adapters alongside Jin; their behavior on William still needs gameplay review. `data/move-policy.json` gives the selected graph roots shared Ki recovery leeway. See [configuration status](configurations/README.md) for bindings and uncertainties.
 
-**Current gameplay blocker:** the 2026-09-27 source trial was disabled after reported left-stick drift and a missing death screen. Its trace contains 3,572 action calls, zero intended substitutions and zero custom dispatches; the last sampled resource slots were original. This points investigation toward attachment, resource loading and lifecycle handling before individual move choreography, but does not establish the cause. Hideyori's timing/motion/camera load remained pending. Offline checks did not predict these failures; do not treat this trial as ready for gameplay.
+**Full-trial blocker:** the initial 2026-09-27 multi-boss source trial was disabled after reported left-stick drift and a missing death screen. Its trace contains 3,572 action calls, zero intended substitutions and zero custom dispatches; the last sampled resource slots were original. Hideyori's timing/motion/camera load remained pending. These observations focus investigation on attachment and lifecycle handling but do not establish the cause.
+
+A subsequent isolated test reproduced a loader hook remaining attached while archive loading was pending. Engine now detaches it after submission and on errors/timeouts, and stops activation on native load failure. The regression passes offline; new boss routes still need separate source checks before retrying the full preset.
+
+**Local source checks, 2026-09-27:** the user confirmed all six Jin inputs: Low heavy, Low dodge-heavy, Mid heavy, Mid dodge-heavy and Low/High Frost Moon. The isolated Low-heavy test also passed normal movement and death/retry. Native traces matched all 15 phases without intended-substitution mismatches, including Mid dodge entry `BC8 → BBF` and continuation `C63 → C64 → C65 → C66`. These results cover the Jin subset, not the full multi-boss preset or every contact/physics case.
 
 Boss action IDs are bank-local keys, not universal move names or boss identifiers. Jin and Oda both use `0x00000C6E`/`0x00000C6F` for different motions. Preserve the full 32-bit key, boss/source bank, payload bytes, motion/timing keys and game build together. One execution can contain several hits, and consecutive IDs do not prove a combo. Actor addresses can change or be reused after a death; generation and action-counter continuity matter more than the address alone.
 

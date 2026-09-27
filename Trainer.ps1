@@ -24,6 +24,10 @@ if ($Enable -or $Disable) {
     # npm ci is an explicit development prerequisite; this path never invokes electron-builder or makes an EXE.
     # The child inherits an optional Python override, which is restored in this shell immediately afterward.
     if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'node_modules'))) { throw 'Run npm ci in MWM before launching the desktop UI.' }
+    # Source testing must use the current native code, not a DLL left by a previous release.
+    # Build only the Engine DLLs; opening this editor still performs no game attachment.
+    # Enable copies the completed libraries into its immutable session before using them.
+    & (Join-Path $PSScriptRoot '..\tanto-engine\runtime\native\Build.ps1')
     Push-Location $PSScriptRoot
     try {
         & npm.cmd run build:ui

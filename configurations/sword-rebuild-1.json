@@ -145,6 +145,53 @@
       "speed": 1.0
     },
     {
+      "id": "mid_dodge_attack",
+      "trigger": {
+        "kind": "native",
+        "source": "dodge_attack",
+        "stance": "mid"
+      },
+      "dataset_id": "sword.jin_hayabusa.quick_string_b_flying_swallow",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3",
+        "stage_4",
+        "stage_5"
+      ],
+      "runtime_move": "jin_hayabusa.action_0bbf",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000BBF",
+          "motion_id": 2100,
+          "timing_id": 2100
+        },
+        {
+          "action_id": "0x00000C63",
+          "motion_id": 2110,
+          "timing_id": 2110
+        },
+        {
+          "action_id": "0x00000C64",
+          "motion_id": 2120,
+          "timing_id": 2120
+        },
+        {
+          "action_id": "0x00000C65",
+          "motion_id": 2130,
+          "timing_id": 2130
+        },
+        {
+          "action_id": "0x00000C66",
+          "motion_id": 2140,
+          "timing_id": 2140
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
       "id": "low_quick",
       "trigger": {
         "kind": "native",

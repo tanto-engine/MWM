@@ -29,7 +29,7 @@ class SwordConfigurationTests(unittest.TestCase):
             for field in ('descriptor','payload','clip','timing_record'): move[field]+=offset
         self.assertEqual(len(fixture.config['imports']),25)
         self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),6144)
-        self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,5,4])
+        self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,1,5,4])
         self.assertEqual(preset['chord_stance'],'any')
         calibration=json.loads((ROOT/'data/controller-calibration.json').read_text())
         _, binding=game_binding(calibration,config.binding_for_preset(calibration,preset,fixture.config['imports']))
@@ -110,7 +110,7 @@ class SwordConfigurationTests(unittest.TestCase):
     def test_sword_rebuild_subset_compiles_with_pulse_and_native_speed(self):
         # Compile the new product preset through real dependency selection and the native encoder.
         # Check Pulse inheritance on every selected Jin phase, including dodge and landing continuations.
-        # Unimplemented boss routes stay absent instead of silently substituting a different boss move.
+        # New boss trials stay absent; standing and dodging Mid heavies reuse one Jin graph.
         import json
         from project_paths import DATA
         preset = config.validate_preset(json.loads((DATA/'presets/sword-rebuild-1-supported.json').read_text(encoding='utf8')))
@@ -118,10 +118,14 @@ class SwordConfigurationTests(unittest.TestCase):
         encoded = encode_session(fixture.config, fixture.pid, fixture.born)
         self.assertIsNone(preset['tap_move'])
         self.assertIsNone(preset['frost_moon']['mid'])
-        self.assertEqual(len(preset['skill_bindings']), 2)
+        self.assertEqual(len(preset['skill_bindings']), 3)
         self.assertEqual(preset['low_heavy'], 'jin_hayabusa.action_0c6e')
         self.assertEqual(preset['skill_bindings'][0]['move'], 'jin_hayabusa.action_0c6f')
         self.assertEqual(preset['skill_bindings'][1]['move'], 'jin_hayabusa.action_0bbf')
+        self.assertEqual(preset['skill_bindings'][2], dict(source='dodge_attack', stance='mid', move='jin_hayabusa.action_0bbf'))
+        standing, dodging = fixture.config['skill_bindings'][1:3]
+        self.assertEqual(standing['variant'], dodging['variant'])
+        self.assertEqual((dodging['key'], dodging['stances']), (0xBC8, 2))
         self.assertEqual(preset['frost_moon'], dict(low='jin_hayabusa.action_0c71',mid=None,high='jin_hayabusa.action_0c75'))
         jin = [move for move in fixture.config['imports'] if move['id'].startswith('jin_hayabusa.')]
         self.assertEqual(len(jin), 15)  # Three heavy, five quick, four Swallow, three downward-slash phases.

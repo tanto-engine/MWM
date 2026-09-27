@@ -29,12 +29,13 @@ declare global { interface Window { mwm: { request<T>(method: string, params?: u
 
 let state: Snapshot;
 let collection: Collection;
-let tab = 'moves', dirty = false, busy = false, capture: 'modifier_mask' | 'trigger_mask' | null = null;
+let tab = 'overview', dirty = false, busy = false, capture: 'modifier_mask' | 'trigger_mask' | null = null;
 let controllerChoice = 'saved';
 let bindingGroup = 'chord';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let captureGeneration = 0, draftGeneration = 0;
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 type Preview = { preset: Preset; used: string[]; moves: Record<string, { speed: number; percent: number; fill_frames: number; hold_frames: number }> };
 let preview: Preview | null = null, showUnused = false;
 const content = document.querySelector<HTMLElement>('#content')!;
@@ -44,6 +45,8 @@ function message(text: string, error = false) {
   // Show one current operation result without hiding it behind modal dialogs.
   // textContent prevents descriptions or Engine errors from becoming executable markup.
   // Error color adds emphasis while the full text remains available to assistive technology.
+  clearTimeout(noticeTimer);
+  if (text && !error) noticeTimer = setTimeout(() => { notice.textContent = ''; }, 5000);
   notice.textContent = text; notice.classList.toggle('error', error);
 }
 
@@ -52,7 +55,7 @@ function changed() {
   // Apply validates the combined form, including conflicts across different tabs.
   // Reload remains available to discard edits and reread the Engine's actual state.
   dirty = true;
-  message('Unsaved changes. Apply to use this moveset; Save as exports a copy.');
+  message('');
   schedulePreview();
 }
 
@@ -64,7 +67,7 @@ function refreshTuning() {
     const id = row.dataset.speedId!, compiled = preview?.moves[id];
     const used = preview?.used.includes(id);
     row.hidden = !showUnused && preview !== null && !used && !state.preset.move_settings[id];
-    row.querySelector('output')!.textContent = compiled && used ? `Effective ${compiled.speed}× · Ki recovery ${compiled.fill_frames} + ${compiled.hold_frames} frames` : preview ? 'Not assigned in this moveset' : 'Resolve settings to preview';
+    row.querySelector('output')!.textContent = compiled && used ? `Effective ${compiled.speed}× · ${state.preset.move_settings[id] ? 'custom speed' : 'inherited'}` : preview ? 'Not assigned in this moveset' : 'Resolve settings to preview';
   }
 }
 
@@ -75,7 +78,7 @@ function schedulePreview() {
   const generation = ++draftGeneration;
   clearTimeout(draftTimer);
   const label = document.querySelector<HTMLElement>('#validation')!;
-  label.textContent = 'Checking settings…'; label.classList.remove('error');
+  label.textContent = 'Checking changes…'; label.dataset.state = 'checking'; label.classList.remove('error');
   for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = true;
   document.querySelector('#profile-name')!.textContent = state.preset.name + (dirty ? ' · unsaved' : '');
   draftTimer = setTimeout(async () => {
@@ -87,21 +90,22 @@ function schedulePreview() {
       if (invalid) throw new Error(`${invalid.closest('label')?.querySelector('span')?.textContent || 'Value'}: ${invalid.validationMessage}`);
       const result = await window.mwm.request<Preview>('preview', params());
       if (generation !== draftGeneration) return;
-      preview = result; label.textContent = dirty ? 'Ready to apply' : 'Settings valid'; label.classList.remove('error');
-      for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = false;
+      preview = result; label.textContent = dirty ? 'Unsaved changes · ready to save' : 'Saved moveset'; label.dataset.state = 'valid'; label.classList.remove('error');
+      for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = button.id === 'apply' ? !dirty : button.id === 'enable' && dirty;
+      document.querySelector<HTMLButtonElement>('#enable')!.title = dirty ? 'Save changes before enabling' : '';
     } catch (error) {
       if (generation !== draftGeneration) return;
-      preview = null; label.textContent = String(error).replace(/^Error: /, ''); label.classList.add('error');
+      preview = null; label.dataset.state = 'invalid'; label.textContent = String(error).replace(/^Error: /, ''); label.classList.add('error');
     }
     refreshTuning();
   }, 180);
 }
 
-function params() {
+function params(value = state) {
   // Include the runtime identity shown when the form was loaded.
   // The worker rejects writes if another Engine became active meanwhile.
   // No game pointer or arbitrary file path is included in this form payload.
-  return { runtime: state.runtime, preset: state.preset, calibration: state.calibration, nioh_exe: state.nioh_exe };
+  return { runtime: value.runtime, preset: value.preset, calibration: value.calibration, nioh_exe: value.nioh_exe };
 }
 
 async function action(operation: () => Promise<void>) {
@@ -168,7 +172,7 @@ function moveOptions(role: MoveRole, empty = 'Native'): [string, string][] {
   // Research-only catalogue records never appear in these controls.
   // The Engine repeats this check when validating a submitted preset.
   const choices: [string, string][] = [['', empty]];
-  for (const move of state.capabilities.moves) if (move[role]) choices.push([move.id, move.name]);
+  for (const move of state.capabilities.moves) if (move[role]) choices.push([move.id, moveName(move)]);
   return choices;
 }
 
@@ -180,18 +184,102 @@ function section(title: string, hint: string) {
   const grid = element('div', undefined, 'fields'); content.append(grid); return grid;
 }
 
+function moveName(move: Move): string {
+  // UI names describe recorded moves; stable IDs still cross the worker boundary.
+  // Trial labels come from the curated route descriptions, not inferred gameplay effects.
+  // Source addresses remain available only in the research collection.
+  const names: Record<string, string> = {
+    'jin_hayabusa.action_0c6e': 'Jin · Cyclone slash string',
+    'jin_hayabusa.action_0c6f': 'Jin · Second cyclone slash',
+    'jin_hayabusa.action_0bbf': 'Jin · Five-strike sword string',
+    'oda_nobunaga.action_0c6e': 'Oda · Final two slashes',
+    'oda_nobunaga.action_0c6f': 'Oda · Final slash',
+    'sanada_yukimura.action_0c6a': 'Sanada · Handgun shot',
+    'tachibana_muneshige.action_0d8d': 'Tachibana · Omnislice',
+    'toyotomi_hideyori.action_0d30': 'Hideyori · Four-hit string',
+    'toyotomi_hideyori.action_0d31': 'Hideyori · Second strike',
+    'toyotomi_hideyori.action_0d32': 'Hideyori · Third strike',
+    'toyotomi_hideyori.action_0d33': 'Hideyori · Final strike'
+  };
+  const boss = move.id.startsWith('jin_hayabusa.') ? 'Jin' : move.id.startsWith('okatsu.') ? 'Okatsu' : '';
+  return names[move.id] || (boss ? `${boss} · ${move.name}` : move.name);
+}
+
+function assignment(parent: HTMLElement, label: string, key: string, role: MoveRole, value: string | null, update: (value: string) => void) {
+  // Each overview row edits the same preset field as the detailed controls.
+  // Native/disabled choices clear only their own assignment.
+  // Worker preview still validates interactions across every row and page.
+  const control = select(moveOptions(role, 'No replacement'), value, update);
+  control.dataset.assignment = key;
+  control.setAttribute('aria-label', label);
+  field(label, control, parent).className = 'assignment';
+}
+
+function renderOverview() {
+  // Group actual assignments by stance, keeping shared inputs separate.
+  // Display existing native rows directly rather than reconstructing a second preset model.
+  // Editing a choice remains a draft until the single Save changes action succeeds.
+  const p = state.preset;
+  const heading = element('div', undefined, 'overview-heading');
+  heading.append(element('h2', 'Move assignments'), element('p', 'Choose a move for each input.'));
+  content.append(heading);
+  const cards = element('div', undefined, 'stance-grid'); content.append(cards);
+  const labels: Record<string, string> = { light_attack: 'Quick attack', heavy_attack: 'Heavy attack',
+    dodge_attack: 'Dodge + heavy', guard_light: 'Guard + quick attack', high_heavy_followup: 'After heavy · guard + quick' };
+  const nativeRow = (parent: HTMLElement, binding: Binding) => {
+    // Keep custom source names readable while preserving Engine's exact route identity.
+    // Removing an assignment restores that source through the ordinary validator.
+    // A structural removal rebuilds the overview without touching unrelated routes.
+    const label = labels[binding.source] || state.capabilities.native_sources.find(source => source.id === binding.source)?.label || binding.source;
+    assignment(parent, label, `native:${binding.stance}:${binding.source}`, 'native', binding.move, value => {
+      if (value) binding.move = value;
+      else { p.skill_bindings.splice(p.skill_bindings.indexOf(binding), 1); render(); }
+    });
+  };
+  for (const stance of state.capabilities.stances) {
+    const card = element('section', undefined, 'stance-card'); card.dataset.stance = stance;
+    card.append(element('h3', `${stance[0].toUpperCase() + stance.slice(1)} stance`)); cards.append(card);
+    if (stance === 'low') assignment(card, 'Heavy attack string', 'low-heavy', 'heavy_string', p.low_heavy, value => { p.low_heavy = value || null; });
+    for (const binding of p.skill_bindings.filter(row => row.stance === stance)) nativeRow(card, binding);
+    if (p.stance_holds[stance]) assignment(card, 'Hold heavy attack', `hold:${stance}`, 'graph', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; if (!value) render(); });
+    assignment(card, 'Frost Moon · stance switch', `frost:${stance}`, 'chord', p.frost_moon[stance], value => { p.frost_moon[stance] = value || null; });
+  }
+  const shared = element('section', undefined, 'shared-routes');
+  const description = element('div');
+  const buttonName = (mask: number) => Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
+  description.append(element('h3', `${buttonName(p.modifier_mask)} + ${buttonName(p.trigger_mask)}`), element('p', p.chord_stance === 'any' ? 'Custom input · all stances' : `Custom input · ${p.chord_stance} stance`));
+  const setup = element('button', 'Edit buttons →', 'inline-button'); setup.onclick = () => navigate('controls'); description.append(setup); shared.append(description);
+  assignment(shared, 'Tap / release', 'chord:tap', 'chord', p.tap_move, value => { p.tap_move = value || null; });
+  assignment(shared, `Hold · ${p.hold_seconds}s`, 'chord:hold', 'chord', p.hold_move, value => { p.hold_move = value || null; });
+  const globalBindings = p.skill_bindings.filter(row => row.stance === 'any');
+  shared.classList.toggle('has-global-bindings', globalBindings.length > 0);
+  for (const binding of globalBindings) nativeRow(shared, binding);
+  content.append(shared);
+  const extras = [p.okatsu_grapple && 'Okatsu grapple', p.mid_light_ender && 'mid quick finisher', p.string_enabled && 'quick-attack string'].filter(Boolean);
+  const extra = element('details', undefined, 'overview-extra'); extra.append(element('summary', extras.length ? 'Extra moves · ' + extras.join(', ') : 'Held attacks & extra moves'));
+  const fields = element('div', undefined, 'fields'); extra.append(fields);
+  for (const stance of state.capabilities.stances) if (!p.stance_holds[stance]) field(`${stance.toUpperCase()} · hold heavy`, select(moveOptions('graph'), null, value => { p.stance_holds[stance] = value || null; render(); }), fields);
+  for (const [key, label] of [['okatsu_grapple', 'Okatsu grapple'], ['mid_light_ender', 'Mid quick-attack finisher'], ['string_enabled', 'Imported quick-attack string']] as const) {
+    const check = element('input'); check.type = 'checkbox'; check.checked = p[key];
+    check.onchange = () => { p[key] = check.checked; extra.querySelector('summary')!.textContent = 'Held attacks & extra moves'; changed(); };
+    field(label, check, fields).classList.add('toggle');
+  }
+  const more = element('button', 'Edit other inputs →', 'inline-button'); more.onclick = () => navigate('native'); fields.append(more);
+  content.append(extra);
+}
+
 function renderMoves() {
   // Present the existing sword preset's custom chord and native hold choices.
   // Each move menu uses its own capability flag rather than a universal catalogue list.
   // Weapon selection stays sword-only until Engine implements reviewed weapon routing.
-  const p = state.preset, grid = section('Custom binding', 'Choose two buttons, then assign a tap or hold action. The current Engine supports one custom chord; choose its stance below.');
+  const p = state.preset, grid = section('Custom input', 'Choose two buttons and assign a tap or hold move.');
   field('Moveset name', input(p.name, value => {
     // Preserve a readable profile name apart from its stable move IDs.
     // Engine enforces its length and nonempty value during Apply.
     // Renaming a preset does not change weapon support.
     p.name = value;
   }), grid);
-  field('Custom chord stance', select((state.capabilities.chord_stances || state.capabilities.stances).map(stance => {
+  field('Custom input stance', select((state.capabilities.chord_stances || state.capabilities.stances).map(stance => {
     // Each stance maps directly to the Engine's canonical value.
     // No priority label from a recording enters this selector.
     // Titles remain cosmetic.
@@ -305,7 +393,7 @@ function renderFrost() {
   // Let users choose only the destination action for each Frost Moon route.
   // Activation windows, startup speed, Ki Pulse and physics remain Engine-owned.
   // This separates configurable move selection from adaptation internals.
-  const grid = section('Frost Moon destinations', 'R1 / RB + the destination stance button twice. Engine owns activation and startup timing.');
+  const grid = section('Stance-switch moves', 'Frost Moon: hold R1 / RB and press the destination stance button twice.');
   for (const stance of state.capabilities.stances) field(stance.toUpperCase(), select(moveOptions('chord', 'Disabled'), state.preset.frost_moon[stance], value => {
     // Change this destination stance's reviewed move.
     // Clearing disables its replacement without changing other routes.
@@ -341,7 +429,7 @@ function renderSpeed() {
       else state.preset.move_settings[move.id] = { speed: control.valueAsNumber };
       changed();
     };
-    field(move.name, control, row);
+    field(moveName(move), control, row);
     const reset = element('button', 'Inherit'); reset.title = 'Remove this speed override';
     reset.onclick = () => {
       // Restore inheritance for this phase without resetting any other setting.
@@ -467,17 +555,17 @@ function renderCollection() {
   // The layout and exact notes explain which recorded sequences still need adaptation.
   // Filtering only hides cards; it never edits the pending moveset or loses keyboard focus.
   content.append(element('h2', 'Sword Rebuild 1', 'section-title'));
-  content.append(element('p', 'Load the trial to edit experimental routes, or the subset for its smaller selection. Apply saves the draft; Enable requests attachment. Gameplay remains unverified.', 'hint'));
-  const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge attack',
-    mid_heavy: 'Mid · heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
+  content.append(element('p', 'The subset contains Jin moves. The full trial adds four bosses. Save changes stores the draft; Enable mod activates it. See the README for gameplay checks.', 'hint'));
+  const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge + heavy',
+    mid_heavy: 'Mid · heavy', mid_dodge_attack: 'Mid · dodge + heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
     frost_high: 'High Frost Moon', frost_mid: 'Mid Frost Moon', frost_low: 'Low Frost Moon' };
-  const actions: Record<string, string> = { low_dodge_attack: 'Jin · second heavy', mid_heavy: 'Jin · five-hit quick string B',
+  const actions: Record<string, string> = { low_dodge_attack: 'Jin · second heavy', mid_heavy: 'Jin · five-hit quick string B', mid_dodge_attack: 'Jin · five-hit quick string B',
     frost_mid: 'Oda · final two slashes', frost_low: 'Jin · Flying Swallow', high_heavy_omnislice: 'Tachibana · Omnislice attack immediately' };
   const routes = element('dl', undefined, 'route-list');
   for (const route of collection.design.routes) {
     const move = collection.moves.find(move => move.id === route.dataset_id);
     routes.append(element('dt', labels[route.id] || route.id));
-    const value = element('dd', `${actions[route.id] || move?.name || route.dataset_id} · ${route.status.replaceAll('_', ' ')} · gameplay unverified`);
+    const value = element('dd', `${actions[route.id] || move?.name || route.dataset_id} · ${route.status.replaceAll('_', ' ')}`);
     if (route.blockers.length) value.append(element('p', route.blockers.join(' '), 'hint'));
     routes.append(value);
   }
@@ -548,17 +636,18 @@ function render() {
   // Ordinary input edits stay in place; tab changes and structural edits request a rebuild.
   // All text supplied by data remains escaped by DOM construction.
   content.replaceChildren(); content.setAttribute('aria-busy', 'false');
-  if (['moves', 'native', 'frost'].includes(tab)) renderBindingModules();
+  if (['native', 'frost'].includes(tab)) renderBindingModules();
   for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.classList.toggle('selected', button.dataset.tab === tab);
-  if (tab === 'collection') renderCollection();
-  else if (tab === 'moves') { renderMoves(); renderControls(); }
+  if (tab === 'overview') renderOverview();
+  else if (tab === 'collection') renderCollection();
+  else if (tab === 'controls') { renderMoves(); renderControls(); renderBindingModules(); }
   else if (tab === 'native') { renderOverrides(); renderNative(); }
   else if (tab === 'frost') renderFrost();
   else if (tab === 'speed') renderSpeed();
   else {
     const guide = element('article', undefined, 'guide');
-    guide.append(element('h2', 'A moveset, one deliberate change at a time.'));
-    for (const text of ['Choose your buttons and tap/hold actions in Bindings, then set native action replacements in Overrides and playback in Tuning. These menus describe implemented adapters; incoming recordings need review before they can appear here.', 'Select your controller and bind its modifier and trigger. Blank speed fields inherit their string speed; an explicit 1 preserves native speed for that phase. Tap and hold can choose different moves. The Engine checks the whole preset when you Apply, including conflicting sources and incompatible stances.', 'Enable applies your choices and requests Engine attachment. Disable requests normal recovery and detachment. Closing this window leaves enabled gameplay running.', 'Save as exports your pending, validated moveset without enabling it. Load and Baseline edit the pending form; Apply makes them active. Reload discards pending edits. Ki Pulse, physics and private Frost Moon timing remain developer-controlled.', 'Current support is single katana. Physical PS4, PS5 and Xbox acceptance and updated gameplay checks remain separate. Raw captures are evidence, not automatic move installers.']) guide.append(element('p', text));
+    guide.append(element('h2', 'Edit, save, enable.'));
+    for (const text of ['1. Choose moves for your inputs, then Save changes.', '2. Open Controller to set your device and custom buttons if needed.', '3. Enable mod and test your moves. Check its status above; use Disable mod when finished.']) guide.append(element('p', text));
     content.append(guide);
   }
   schedulePreview();
@@ -569,9 +658,8 @@ async function reload() {
   // Keep periodic runtime status reads separate so they never overwrite form choices.
   // Display actual process-backed Engine status alongside the loaded configuration.
   await cancelCapture(); state = await window.mwm.request<Snapshot>('snapshot'); controllerChoice = 'saved'; dirty = Boolean(state.load_warning); render();
-  document.querySelector('#runtime')!.textContent = state.status.replaceAll('_', ' ');
-  document.querySelector('#runtime-detail')!.textContent = state.detail;
-  message(state.load_warning || 'Ready. Changes stay pending until Apply.', Boolean(state.load_warning));
+  showRuntime(state);
+  message(state.load_warning || '', Boolean(state.load_warning));
 }
 
 async function perform(name: string) {
@@ -582,47 +670,60 @@ async function perform(name: string) {
   if (name === 'reload') { await reload(); return; }
   if (name === 'baseline' || name === 'starter' || name === 'trial' || name === 'load') {
     const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : name, params());
-    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Experimental trial loaded as a draft. Gameplay unverified. Apply to save, then Enable to request attachment.' : name === 'starter' ? 'Subset loaded as a draft. Apply to save.' : 'Moveset loaded into the form. Apply to save.'); } return;
+    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Trial loaded into draft · gameplay unverified.' : name === 'starter' ? 'Subset loaded into draft.' : 'Moveset loaded into draft.'); } return;
   }
   if (name === 'save') { if (await window.mwm.request('export', params())) message('Moveset exported. Runtime settings were not changed.'); return; }
-  if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); message(state.running ? 'Preset saved. Engine will recover and reattach when required; check its status.' : 'Preset saved. Enable to request attachment.'); return; }
-  if (name === 'enable') { await window.mwm.request('enable', params()); dirty = false; render(); message('Attachment requested. Engine reports readiness after it verifies gameplay resources.'); return; }
-  if (name === 'disable') { await window.mwm.request('disable'); message('Disable requested. Engine completes owned recovery before detaching.'); }
+  if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); showRuntime(state); message(''); return; }
+  if (name === 'enable') { if (dirty) throw new Error('Save changes before enabling the mod.'); await window.mwm.request('enable', params()); showRuntime(await window.mwm.request<Snapshot>('snapshot')); message(''); return; }
+  if (name === 'disable') { await window.mwm.request('disable'); showRuntime(await window.mwm.request<Snapshot>('snapshot')); message(''); }
 }
 
-for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.onclick = () => {
-  // Navigate without losing unsaved values stored in the shared pending model.
-  // Cancel press-to-bind when its controlling form is no longer visible.
-  // Render only the requested tab.
-  void action(async () => {
-    // Await listener cancellation before presenting another tab's controls.
-    // Tab selection has no persistent settings side effect.
-    // Existing unsaved values remain available when returning.
-    await cancelCapture(); tab = button.dataset.tab!; render();
-  });
-};
-for (const button of document.querySelectorAll<HTMLButtonElement>('footer button, .runtime button')) button.onclick = () => {
-  // Serialize each explicit Apply, import/export or lifecycle operation.
-  // The command is chosen from this static button set rather than arbitrary page text.
-  // Errors retain the pending form so the player can correct it.
-  void action(async () => {
-    // Run the command after the action wrapper locks conflicting edits.
-    // Await completion before the wrapper restores keyboard interaction.
-    // Engine errors propagate to the shared notice area.
-    await perform(button.id);
-  });
+function navigate(name: string) {
+  // Navigation retains the pending model while cancelling any physical binding listener.
+  // Closing More keeps its secondary commands out of the workspace.
+  // A page change never saves or starts gameplay.
+  void action(async () => { await cancelCapture(); tab = name; document.querySelector<HTMLDetailsElement>('#tools')!.open = false; render(); });
+}
+
+for (const button of document.querySelectorAll<HTMLButtonElement>('nav [data-tab]')) button.onclick = () => navigate(button.dataset.tab!);
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-action]')) button.onclick = () => {
+  // Keep all explicit mutations on the serialized worker path.
+  // The only primary button saves; file and lifecycle operations stay distinct.
+  // Closing the menu also prevents it covering the result of an action.
+  document.querySelector<HTMLDetailsElement>('#tools')!.open = false;
+  void action(() => perform(button.dataset.action!));
 };
 
+function showRuntime(snapshot: Snapshot) {
+  // Runtime facts come from a fresh worker snapshot, independently of the draft.
+  // Show only the lifecycle action relevant to the reported process state.
+  // Preserve terminal failure details after Engine exits instead of claiming readiness.
+  state.running = snapshot.running; state.status = snapshot.status; state.detail = snapshot.detail;
+  const runtime = document.querySelector<HTMLElement>('.runtime')!;
+  runtime.dataset.running = String(snapshot.running);
+  const failed = /error|fail|blocked|fatal|attention|missing/.test(snapshot.status);
+  runtime.dataset.error = String(failed);
+  if (failed && !notice.classList.contains('error')) message('');
+  const labels: Record<string, string> = { disabled: 'Mod off', preparation_failed: 'Mod could not start', start_failed: 'Mod could not start', cleanup_needs_attention: 'Recovery needs attention', runtime_missing: 'Runtime unavailable' };
+  document.querySelector('#runtime')!.textContent = labels[snapshot.status] || snapshot.status.replaceAll('_', ' ');
+  const detail = document.querySelector<HTMLElement>('#runtime-detail')!; detail.textContent = snapshot.detail; detail.title = snapshot.detail;
+  document.querySelector<HTMLButtonElement>('#enable')!.hidden = snapshot.running;
+  document.querySelector<HTMLButtonElement>('#disable')!.hidden = !snapshot.running;
+}
+
 async function pollStatus() {
-  // Refresh only the Engine status label, never pending configuration.
-  // Avoid overlapping reads while a form action or binding capture is active.
-  // Schedule after completion to keep the request queue bounded.
+  // Adopt external saved changes only while the editor is still clean and idle.
+  // Recheck after awaiting the worker so an in-flight read cannot overwrite a new draft.
+  // Unchanged snapshots update runtime status without rebuilding controls or moving focus.
   if (state && !busy && !capture) {
     try {
       const snapshot = await window.mwm.request<Snapshot>('snapshot');
-      document.querySelector('#runtime')!.textContent = snapshot.status.replaceAll('_', ' ') + (dirty ? ' · unsaved edits' : '');
-      document.querySelector('#runtime-detail')!.textContent = snapshot.detail;
-    } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; }
+      if (!dirty && !busy && !capture && JSON.stringify(params(snapshot)) !== JSON.stringify(params())) {
+        state = snapshot; controllerChoice = 'saved'; dirty = Boolean(snapshot.load_warning);
+        render(); message(snapshot.load_warning || '', Boolean(snapshot.load_warning));
+      }
+      showRuntime(snapshot);
+    } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; document.querySelector('#runtime-detail')!.textContent = String(error); }
   }
   setTimeout(pollStatus, 1800);
 }

@@ -26,6 +26,11 @@
       "source": "heavy_attack",
       "stance": "mid",
       "move": "jin_hayabusa.action_0bbf"
+    },
+    {
+      "source": "dodge_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0bbf"
     }
   ],
   "frost_moon": {

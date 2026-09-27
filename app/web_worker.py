@@ -50,7 +50,9 @@ class Desktop:
             preset = trainer.remap_preset(DEFAULT_PRESET, source_calibration, calibration)
             warning = 'Saved moveset could not be loaded. Showing a baseline draft; the saved file is unchanged. ' + str(error)
         alive = process_matches(read_json(runtime/'play-process.json'))
-        state = read_json(runtime/'play-status.json', {}) if alive else {}
+        state = read_json(runtime/'play-status.json', {})
+        if not alive and state.get('state') not in ('preparation_failed', 'cleanup_needs_attention', 'start_failed', 'runtime_missing'):
+            state = {}
         return dict(runtime=str(runtime), preset=preset, calibration=calibration,
                     buttons=binding_buttons(calibration['device'], calibration.get('button_map')),
                     capabilities=self.capabilities, running=alive,

@@ -1,12 +1,12 @@
 # Sword Rebuild 1
 
-**Gameplay trial currently blocked:** reported drift and a missing death screen on 2026-09-27 caused source activation to be stopped. Hideyori resource loading also remained pending. Keep the definitions for diagnosis; no gameplay acceptance is claimed. See the root README for evidence and ID interpretation.
+**Source status:** the user confirmed all six Jin inputs, including Mid dodge-heavy starting and continuing the Mid string. The isolated Low-heavy check also passed normal movement and death/retry. The full multi-boss trial remains unverified after its earlier drift, death-screen and resource-loading failures. See the root README for evidence and ID interpretation.
 
-**Source gameplay trial:** `data/presets/sword-rebuild-1.json` now enables the complete requested layout. Use **Rebuild trial**, Apply, then Enable. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded action bytes and installed archive resources. Their animation, hit ownership, gun projectile and recovery behavior require in-game feedback; the older supported subset remains available for comparison.
+`data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Rebuild trial** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
 
 Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatically continues Oda C6E into C6F at the source's frame-40 branch. Omnislice accepts one fresh LB+Square press during native High-heavy recovery; idle, damage, dodge or stance change closes the opportunity. LB+LT starts one Sanada C6A execution in any stance. Its missing recorded counter is not silently invented as another shot.
 
-Open Collection to read the full layout and research notes. Use **Sword Rebuild 1 · subset** to load the five implemented routes into the form, then Apply to save. Left-stick movement and L3 are independent of the Frost Moon stance-button edges; movement does not extend the recovery deadline. Damage, conflicting actions and controller reconnects still cancel the opportunity.
+**More → Recorded moves** shows the layout and research notes. **Load Rebuild subset** selects six Jin inputs, including both standing and dodging Mid heavies. Left-stick movement and L3 are independent of Frost Moon's stance-button edges; movement does not extend recovery. Damage, conflicting actions and controller reconnects still cancel the opportunity.
 
 `sword-rebuild-1.json` records the design and dataset references. Runtime presets live under `../data/presets/`: the full trial and the older supported subset. Both buttons remap logical inputs for the selected controller. Source activation does not establish gameplay acceptance.
 
@@ -14,8 +14,9 @@ Open Collection to read the full layout and research notes. Use **Sword Rebuild 
 | --- | --- | --- |
 | LB + LT, any stance | Sanada handgun | C6A source trial; firing/projectile behavior unverified |
 | Low heavy | Jin three-heavy string, C6E  ->  C6F  ->  C70 | Included |
-| Low dodge attack | Jin second heavy, C6F | Included; existing heavy continuation rules retained |
+| Low dodge-heavy | Jin second heavy, C6F | Included; existing heavy continuation rules retained |
 | Mid heavy | Jin quick string B, BBF  ->  C63  ->  C64  ->  C65  ->  C66 | Included; trailing Flying Swallow excluded |
+| Mid dodge-heavy | Same Jin quick string B | Shares the Mid-heavy graph through native BC8/BC9 dodge entry |
 | Low quick | Hideyori four-hit string, D30  ->  D31  ->  D32  ->  D33 | Source trial with Square continuations |
 | After High heavy, LB + Square | Omnislice attack, D8D | Source trial with one-shot recovery gate |
 | High Frost Moon | Jin downward slash, C75  ->  C77  ->  C78, 1x | Included |
@@ -26,4 +27,4 @@ Action numbers above are shorthand, scoped to their boss and source bank. The de
 
 `../data/move-policy.json` gives all eight selected graph roots 40% recoverable Ki, 30 fill frames and 36 hold frames, inherited by their continuations. Airborne phases retain pending Ki until landing. Frost Moon follows the native Ki window, so extending hold provides more input leeway. Newly inferred recovery frames need gameplay tuning; native unmodified attacks retain their game windows.
 
-Both presets disable the old Okatsu replacements, held-heavy launcher, Mid dodge override and Mid light ender. The subset leaves the four new trial routes unassigned. High Frost uses 1x playback across all three phases and has no startup acceleration rule. Live input, contact and recovery acceptance remain pending.
+Both presets disable the old Okatsu replacements, held-heavy launcher and Mid light ender. The subset leaves the four new boss routes unassigned. High Frost uses 1x playback across all three phases without startup acceleration. Broader contact and recovery acceptance remains pending.

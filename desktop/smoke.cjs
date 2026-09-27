@@ -8,10 +8,10 @@ async function runSmoke(window, call, report) {
   const screen = await window.webContents.executeJavaScript(`(async () => {
     const wait = () => new Promise(resolve => setTimeout(resolve, 50));
     for (let i=0;i<200;i++) {
-      if (!document.body.inert && !document.querySelector('#apply').disabled) break;
+      if (!document.body.inert && document.querySelector('#validation').dataset.state==='valid') break;
       await wait();
     }
-    if (document.querySelector('#apply').disabled) throw new Error(document.querySelector('#notice').textContent);
+    if (document.querySelector('#validation').dataset.state!=='valid') throw new Error(document.querySelector('#notice').textContent);
     const artwork=new Image(); artwork.src=new URL('assets/background.png',location.href).href; await artwork.decode();
     const collection=await window.mwm.request('collection');
     if (!collection.moves.length) throw new Error('Packaged move collection missing');

@@ -56,21 +56,67 @@ ipcMain.handle('mwm:request', async (_event, method, params={}) => {
   return call(method,params);
 });
 app.whenReady().then(async () => {
-  const window = new BrowserWindow({show:false,width:1120,height:840,webPreferences:{preload:path.join(root,'desktop/preload.cjs'),contextIsolation:true,sandbox:false,backgroundThrottling:false}});
+  const window = new BrowserWindow({show:false,width:1120,height:800,webPreferences:{preload:path.join(root,'desktop/preload.cjs'),contextIsolation:true,sandbox:false,backgroundThrottling:false}});
   try {
     await window.loadFile(path.join(root,'desktop-dist/index.html'));
     const result = await window.webContents.executeJavaScript(`(async () => {
       const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
       const assert=(value,message)=>{if(!value)throw new Error(message);};
-      const ready=async()=>{for(let n=0;n<100;n++){if(!document.body.inert && !document.querySelector('#apply').disabled)return;await wait(30);}throw new Error(document.querySelector('#validation').textContent);};
+      const ready=async()=>{for(let n=0;n<100;n++){if(!document.body.inert && document.querySelector('#validation').dataset.state==='valid')return;await wait(30);}throw new Error(document.querySelector('#validation').textContent);};
       const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input'));};
       const tab=async name=>{document.querySelector('[data-tab="'+name+'"]').click();await ready();};
-      await ready(); document.querySelector('#baseline').click();await ready();
+      await ready();
+      assert(document.querySelectorAll('.stance-card').length===3,'Default view is not grouped by stance');
+      assert(document.querySelector('#disable').hidden && !document.querySelector('#enable').hidden,'Disabled runtime shows both actions');
+      assert(document.querySelector('#apply').disabled,'Saved moveset still offers redundant save');
+      // An independent tool can save while this window is open; use only fixture settings.
+      // Clean views should follow that saved model, while real draft edits and focus survive polling.
+      // Both saves execute production Python Apply rather than replacing renderer state directly.
+      const external=await window.mwm.request('snapshot');
+      external.preset={...external.preset,name:'External saved moveset',low_heavy:null,skill_bindings:external.preset.skill_bindings.filter(row=>row.source!=='dodge_attack'||row.stance!=='low')};
+      await window.mwm.request('apply',external);
+      await wait(2300);await ready();
+      assert(document.querySelector('#profile-name').textContent==='External saved moveset','External saved preset did not reach the clean UI');
+      assert(document.querySelector('[data-assignment="low-heavy"]').value==='','External saved assignment stayed stale');
+      await tab('controls');
+      const externalName=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Moveset name').querySelector('input');
+      externalName.focus();await wait(2000);
+      assert(document.activeElement===externalName && externalName.isConnected,'Routine polling reset clean field focus');
+      change(externalName,'Pending local name');await ready();
+      external.preset={...external.preset,name:'Second external moveset',hold_seconds:.4};
+      await window.mwm.request('apply',external);await wait(2300);
+      assert(externalName.value==='Pending local name' && externalName.isConnected && document.activeElement===externalName,'External save overwrote or rebuilt a dirty editor');
+      assert(document.querySelector('#profile-name').textContent.startsWith('Pending local name'),'External snapshot replaced the draft header');
+      document.querySelector('#reload').click();await ready();
+      assert(document.querySelector('#profile-name').textContent==='Second external moveset','Discard did not load latest saved model');
+      await tab('overview');
+      document.querySelector('#trial').click();await ready();
+      assert(document.querySelector('#enable').disabled,'Enable bypasses unsaved draft');
+      assert(![...document.querySelectorAll('main option')].some(x=>/\\b(?:0x)?[0-9A-F]{4}\\b/.test(x.textContent)),'Overview exposes source hex IDs');
+      document.querySelector('.overview-extra').open=true;
+      const lowHold=[...document.querySelectorAll('.overview-extra label')].find(x=>x.querySelector('span')?.textContent==='LOW · hold heavy').querySelector('select');
+      change(lowHold,'jin_hayabusa.action_0c79');await ready();
+      assert(document.querySelector('[data-assignment="hold:low"]').value==='jin_hayabusa.action_0c79','Held assignment did not appear in its stance');
+      change(document.querySelector('[data-assignment="hold:low"]'),'');await ready();
+      assert(!document.querySelector('[data-assignment="hold:low"]'),'Cleared held assignment stayed active');
+      const lowQuick=document.querySelector('[data-assignment="native:low:light_attack"]');
+      assert(lowQuick && lowQuick.value==='toyotomi_hideyori.action_0d30','Trial route is missing');
+      change(lowQuick,'');await ready();
+      const frostHigh=document.querySelector('[data-assignment="frost:high"]');
+      change(frostHigh,'jin_hayabusa.action_0c71');await wait(300);
+      assert(document.querySelector('#apply').disabled,'Overview ignored a conflicting route');
+      change(frostHigh,'okatsu.leaping_slash');await ready();
+      document.querySelector('#apply').click();await ready();
+      const savedOverview=await window.mwm.request('snapshot');
+      assert(!savedOverview.preset.skill_bindings.some(x=>x.source==='light_attack'),'Overview disable was not persisted');
+      assert(savedOverview.preset.frost_moon.high==='okatsu.leaping_slash','Overview move edit did not reach Python');
+      assert(!document.querySelector('#notice').textContent,'Saved settings left stale success text');
+      document.querySelector('#baseline').click();await ready();
       await tab('native');
       const originalRows=document.querySelectorAll('.binding').length;
       [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add replacement').click();await ready();
       assert(document.querySelectorAll('.binding').length===originalRows+1,'Add override failed to choose a free slot');
-      document.querySelector('#starter').click();await ready();await tab('moves');
+      document.querySelector('#starter').click();await ready();await tab('controls');
       const profileName='Sword – テスト';
       const profile=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Moveset name').querySelector('input');
       change(profile,profileName);await ready();
@@ -104,7 +150,7 @@ app.whenReady().then(async () => {
       change(source,'dodge_attack');change(stance,'low');await wait(300);
       assert(document.querySelector('#apply').disabled,'Overlapping overrides were accepted');
       change(source,'heavy_attack');change(stance,'mid');await ready();
-      await tab('moves');
+      await tab('controls');
       const devices=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Controller mapping').querySelector('select');
       change(devices,'1');await ready();
       const label=text=>[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent===text);
@@ -125,22 +171,39 @@ app.whenReady().then(async () => {
       await tab('frost');
       const frost=[...document.querySelectorAll('main .fields select')].map(x=>x.value);
       assert(frost[0]==='jin_hayabusa.action_0c71' && frost[2]==='jin_hayabusa.action_0c75','Binding edits changed Frost routes');
-      await tab('moves');
-      return {bindingGroups:true,freeOverrideSlots:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true};
+      await tab('controls');
+      return {externalSaveSynced:true,dirtyDraftProtected:true,pollingFocusPreserved:true,overviewEditsPersisted:true,singleSaveAction:true,runtimeSeparated:true,humanMoveNames:true,bindingGroups:true,freeOverrideSlots:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true};
     })()`);
     await window.webContents.executeJavaScript(`(async()=>{
-      document.querySelector('#starter').click();
+      document.querySelector('[data-tab="overview"]').click();
+      await new Promise(resolve=>setTimeout(resolve,250));
+      document.querySelector('#trial').click();
       await new Promise(resolve=>setTimeout(resolve,300));
-      for(let i=0;i<50 && document.querySelector('#apply').disabled;i++) await new Promise(resolve=>setTimeout(resolve,30));
-      if(!document.querySelector('#profile-name').textContent.startsWith('Sword Rebuild 1'))throw new Error('Starter did not restore its profile name');
+      for(let i=0;i<50 && document.querySelector('#validation').dataset.state!=='valid';i++) await new Promise(resolve=>setTimeout(resolve,30));
+      if(!document.querySelector('#profile-name').textContent.startsWith('Sword Rebuild 1'))throw new Error('Trial did not restore its profile name');
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     })()`);
-    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'bindings-1120.png'),image.toPNG()));
+    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'moves-1120.png'),image.toPNG()));
     window.setSize(860,640); await new Promise(resolve=>setTimeout(resolve,150));
-    const fit=await window.webContents.executeJavaScript(`({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,mainHeight:document.querySelector('main').clientHeight,footerBottom:document.querySelector('footer').getBoundingClientRect().bottom,height:innerHeight})`);
-    if(fit.overflow || fit.mainHeight<120 || fit.footerBottom>fit.height)throw new Error('Minimum window does not fit: '+JSON.stringify(fit));
-    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'bindings-860.png'),image.toPNG()));
-    fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({...result,fit,methods}));
+    const fit=await window.webContents.executeJavaScript(`({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,mainHeight:document.querySelector('main').clientHeight,mainOverflow:document.querySelector('main').scrollHeight>document.querySelector('main').clientHeight,footerBottom:document.querySelector('footer').getBoundingClientRect().bottom,height:innerHeight,labelSize:parseFloat(getComputedStyle(document.querySelector('.assignment>span')).fontSize),valueSize:parseFloat(getComputedStyle(document.querySelector('.assignment select')).fontSize)})`);
+    if(fit.labelSize<12 || fit.valueSize<13 || fit.overflow || fit.mainHeight<300 || fit.footerBottom>fit.height)throw new Error('Minimum window does not fit: '+JSON.stringify(fit));
+    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'moves-860.png'),image.toPNG()));
+    // Retain a terminal failure through the real Python snapshot, without starting Engine.
+    // Saving a preset must not replace this independent runtime diagnosis with success copy.
+    // The owned screenshot documents the UI's failure state rather than any game surface.
+    fs.writeFileSync(path.join(folder,'play-status.json'),JSON.stringify({state:'preparation_failed',detail:'Fixture: resource preparation failed. The mod is off.'}));
+    await window.webContents.executeJavaScript(`(async()=>{
+      for(let i=0;i<80;i++){
+        if(document.querySelector('#runtime-detail').textContent.includes('Fixture:'))break;
+        await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      if(!document.querySelector('#runtime-detail').textContent.includes('Fixture:'))throw new Error('Terminal failure was lost after Engine exited');
+      if(!document.querySelector('#disable').hidden || document.querySelector('#enable').hidden)throw new Error('Runtime buttons contradict stopped Engine');
+      if(document.querySelector('#notice').textContent)throw new Error('Stale action success hides runtime failure');
+    })()`);
+    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'runtime-failure-860.png'),image.toPNG()));
+    if(methods.some(method=>method==='enable'||method==='disable'))throw new Error('UI fixture attempted gameplay lifecycle');
+    fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({...result,terminalFailureVisible:true,noLifecycleCalls:true,fit,methods}));
     // Process exit closes the pipe after Chromium stops issuing status reads.
     app.exit(0);
   } catch(error) {
