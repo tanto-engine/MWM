@@ -23,13 +23,13 @@ def empty_preset():
 
 
 class CapabilityTests(unittest.TestCase):
-    def test_first_collection_subset_compiles_with_pulse_and_native_speed(self):
+    def test_sword_rebuild_subset_compiles_with_pulse_and_native_speed(self):
         # Compile the new product preset through real dependency selection and the native encoder.
         # Check Pulse inheritance on every selected Jin phase, including dodge and landing continuations.
         # Unimplemented boss routes stay absent instead of silently substituting a different boss move.
         import json
         from project_paths import DATA
-        preset = config.validate_preset(json.loads((DATA/'presets/first-collection-supported.json').read_text(encoding='utf8')))
+        preset = config.validate_preset(json.loads((DATA/'presets/sword-rebuild-1-supported.json').read_text(encoding='utf8')))
         fixture, encoded = self.fixture(preset)
         self.assertIsNone(preset['tap_move'])
         self.assertIsNone(preset['frost_moon']['mid'])
