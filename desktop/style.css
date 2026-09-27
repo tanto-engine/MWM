@@ -17,7 +17,7 @@ h1 { font-size: clamp(28px, 3vw, 39px); letter-spacing: -.035em; font-weight: 50
 .subtitle span { padding-left: 16px; color: var(--accent); }
 .runtime { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 #runtime { flex-basis: 100%; text-align: right; font-size: 12px; color: var(--muted); padding-right: 12px; margin-bottom: 8px; }
-nav { display: flex; gap: 6px; border-bottom: 1px solid #ffffff12; padding-bottom: 12px; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid #ffffff12; padding-bottom: 12px; }
 nav button { color: var(--muted); padding-inline: 18px; }
 nav .selected { color: var(--accent); box-shadow: 0 2px var(--accent); border-radius: 0; }
 /* Scroll the form, keeping Apply and runtime controls visible on smaller desktops. */
@@ -46,7 +46,17 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 footer { border-top: 1px solid #ffffff12; padding-top: 12px; }
 #notice { font-size: 13px; line-height: 1.5; min-height: 20px; margin: 0 0 12px; color: var(--muted); overflow-wrap: anywhere; }
 #notice.error { color: #ffb4a6; }
-.actions { display: flex; justify-content: flex-end; gap: 6px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.route-list { display: grid; grid-template-columns: minmax(140px, 1fr) 3fr; gap: 14px 24px; margin: 24px 0 36px; }
+.route-list dt { color: var(--accent); }
+.route-list dd { margin: 0; }
+.route-list .hint { margin: 6px 0 0; }
+.research-move { padding-block: 18px; }
+.research-move summary { cursor: pointer; line-height: 1.5; }
+.research-move .hint { margin: 12px 0; }
+.recorded-note { white-space: pre-wrap; line-height: 1.7; }
+.source-ids { font-family: monospace; overflow-wrap: anywhere; line-height: 1.7; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @keyframes enter { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 920px) { .app { padding: 25px; gap: 20px; } nav { gap: 0; } nav button { padding-inline: 12px; } header { gap: 10px; } .binding { grid-template-columns: 1fr .7fr 1.5fr auto; gap: 8px; } }

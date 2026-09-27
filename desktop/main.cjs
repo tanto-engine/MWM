@@ -6,7 +6,7 @@ const { createInterface } = require('node:readline');
 const path = require('node:path');
 const fs = require('node:fs');
 const root = path.resolve(__dirname, '..');
-const methods = new Set(['snapshot', 'validate', 'apply', 'baseline', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
+const methods = new Set(['snapshot', 'validate', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
 const pending = new Map();
 let window, worker, nextId = 0;
 
@@ -102,6 +102,7 @@ async function request(event, method, params = {}) {
     if (selected.canceled) return null;
     return method === 'game_path' ? selected.filePaths[0] : call('import', { ...params, path: selected.filePaths[0] });
   }
+  if (method === 'collection') return JSON.parse(fs.readFileSync(path.join(__dirname, 'collection.json'), 'utf8'));
   if (!methods.has(method)) throw new Error('Unsupported desktop operation');
   return call(method, params);
 }

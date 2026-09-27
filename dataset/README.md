@@ -6,7 +6,7 @@ This is the fresh research collection. Each JSON file describes one move or orde
 
 `review_status` is `candidate`, `reviewed` or `rejected`; `mapping_status: partial` flags incomplete phase coverage. `priority` is `low`, `mid`, `high` or `null` when unset. Exact original notes remain in evidence references and `intake.json`; review notes explain selections and omissions. No speed, physics, Ki Pulse or binding settings are inferred.
 
-Evidence archives retain the original `encounter.json` and `events.jsonl` byte-for-byte. They live outside Git, named by SHA256. Each reference identifies its session, take, annotation and exact journal lines; native pointers stay in the original recording rather than becoming permanent move identities. Keep these archives even when deleting working Recorder sessions.
+Evidence archives retain the original `encounter.json` and `events.jsonl` byte-for-byte. They are included under `evidence/` in this private repository, named by SHA256. Consumer UI builds include the readable collection, not the raw ZIPs. Each reference identifies its session, take, annotation and exact journal lines; native pointers stay in the original recording rather than becoming permanent move identities. Keep these archives even when deleting working Recorder sessions.
 
 `intake.json` accounts for all 15 source folders and maps every saved annotation to a record. Thirteen descriptions produced 12 sword strings and one handgun candidate. Two manifest-only folders lack notes and raw events. The spelling `Totoyomi` is preserved in source notes but indexed as `toyotomi_hideyori`. See [REVIEW.md](REVIEW.md) for the selected sequences and gaps.
 

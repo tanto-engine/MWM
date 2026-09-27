@@ -18,9 +18,16 @@ type Snapshot = {
   running: boolean; status: string; detail: string;
   capabilities: { moves: Move[]; native_sources: { id: string; label: string }[]; stances: Stance[]; speed: { min: number; max: number } };
 };
+type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
+  priority: string | null; review_notes: string[]; steps: { source: { action_id: string; motion_id: number } }[];
+  evidence: { annotation_text: string }[] };
+type Collection = { manifest: { weapons: Record<string, { name: string }>; bosses: Record<string, { name: string }> };
+  moves: ResearchMove[]; intake: { sessions: { status: string }[] };
+  design: { routes: { id: string; dataset_id: string; status: string; blockers: string[] }[] } };
 declare global { interface Window { mwm: { request<T>(method: string, params?: unknown): Promise<T> } } }
 
 let state: Snapshot;
+let collection: Collection;
 let tab = 'moves', dirty = false, busy = false, capture: 'modifier_mask' | 'trigger_mask' | null = null;
 let controllerChoice = 'saved';
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -340,13 +347,62 @@ function renderControls() {
   }; field('Game executable', path, grid);
 }
 
+function renderCollection() {
+  // Show the full research collection without exposing candidate moves as playable choices.
+  // The layout and exact notes explain which recorded sequences still need adaptation.
+  // Filtering only hides cards; it never edits the pending moveset or loses keyboard focus.
+  content.append(element('h2', 'Sword Rebuild 1', 'section-title'));
+  content.append(element('p', 'Five routes are available in the subset. Four need integration. Use the subset button below to load a draft, then Apply when ready.', 'hint'));
+  const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge attack',
+    mid_heavy: 'Mid · heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
+    frost_high: 'High Frost Moon', frost_mid: 'Mid Frost Moon', frost_low: 'Low Frost Moon' };
+  const actions: Record<string, string> = { low_dodge_attack: 'Jin · second heavy', mid_heavy: 'Jin · five-hit quick string B',
+    frost_mid: 'Oda · final two slashes', frost_low: 'Jin · Flying Swallow', high_heavy_omnislice: 'Tachibana · Omnislice attack immediately' };
+  const routes = element('dl', undefined, 'route-list');
+  for (const route of collection.design.routes) {
+    const move = collection.moves.find(move => move.id === route.dataset_id)!;
+    routes.append(element('dt', labels[route.id] || route.id));
+    const value = element('dd', `${actions[route.id] || move.name} · ${route.status === 'blocked' ? 'Needs integration' : 'In subset'}`);
+    if (route.blockers.length) value.append(element('p', route.blockers.join(' '), 'hint'));
+    routes.append(value);
+  }
+  content.append(routes, element('h2', 'Recorded moves', 'section-title'));
+  const missing = collection.intake.sessions.filter(session => session.status !== 'curated_candidate').length;
+  content.append(element('p', `${collection.moves.length} candidate strings · ${collection.intake.sessions.length} source sessions · ${missing} incomplete sessions. Names follow your notes; action matching still needs review.`, 'hint'));
+  const search = element('input'); search.type = 'search'; search.placeholder = 'Find a boss, move or description'; search.setAttribute('aria-label', 'Search recorded moves');
+  content.append(search);
+  const cards: { node: HTMLElement; text: string }[] = [];
+  for (const move of collection.moves) {
+    const card = element('details', undefined, 'research-move');
+    const weapon = collection.manifest.weapons[move.weapon_id].name, boss = collection.manifest.bosses[move.boss_id].name;
+    const title = `${weapon} / ${boss} · ${move.name}`;
+    card.append(element('summary', title));
+    card.append(element('p', `${move.mapping_status === 'partial' ? 'Partial mapping' : 'Candidate mapping'} · Priority: ${move.priority || 'unset'}`, 'hint'));
+    for (const evidence of move.evidence) card.append(element('p', evidence.annotation_text, 'recorded-note'));
+    card.append(element('p', move.steps.map(step => `${step.source.action_id} (${step.source.motion_id})`).join(' → '), 'source-ids'));
+    for (const note of move.review_notes) card.append(element('p', note, 'hint'));
+    cards.push({ node: card, text: [title, ...move.evidence.map(evidence => evidence.annotation_text)].join(' ').toLowerCase() });
+    content.append(card);
+  }
+  const empty = element('p', 'No recorded moves match.', 'hint'); empty.hidden = true; content.append(empty);
+  search.oninput = () => {
+    // Match boss, weapon, title and original notes as plain text.
+    // Keep this browsing action separate from configuration dirty state.
+    // The empty result message stays inside the collection rather than overwriting Apply status.
+    const query = search.value.trim().toLowerCase();
+    for (const card of cards) card.node.hidden = !card.text.includes(query);
+    empty.hidden = cards.some(card => !card.node.hidden);
+  };
+}
+
 function render() {
   // Rebuild only the selected tab from the pending model.
   // Ordinary input edits stay in place; tab changes and structural edits request a rebuild.
   // All text supplied by data remains escaped by DOM construction.
   content.replaceChildren(); content.setAttribute('aria-busy', 'false');
   for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.classList.toggle('selected', button.dataset.tab === tab);
-  if (tab === 'moves') renderMoves();
+  if (tab === 'collection') renderCollection();
+  else if (tab === 'moves') renderMoves();
   else if (tab === 'native') renderNative();
   else if (tab === 'frost') renderFrost();
   else if (tab === 'speed') renderSpeed();
@@ -374,9 +430,9 @@ async function perform(name: string) {
   // No UI path bypasses Engine's preset validator.
   await cancelCapture();
   if (name === 'reload') { await reload(); return; }
-  if (name === 'baseline' || name === 'load') {
-    const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : 'baseline', params());
-    if (preset) { state.preset = preset; dirty = true; render(); message('Moveset loaded into the form. Apply to save.'); } return;
+  if (name === 'baseline' || name === 'starter' || name === 'load') {
+    const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : name, params());
+    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'starter' ? 'Five supported routes loaded. Four remain unavailable; see Collection. Apply to save.' : 'Moveset loaded into the form. Apply to save.'); } return;
   }
   if (name === 'save') { if (await window.mwm.request('export', params())) message('Moveset exported. Runtime settings were not changed.'); return; }
   if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); message('Preset saved. Active Engine will recover and reattach when required.'); return; }
@@ -425,7 +481,7 @@ async function start() {
   // Startup failure stays visible instead of presenting an empty ready form.
   // Status polling is read-only and does not attach to Nioh.
   document.body.inert = true;
-  try { await reload(); void pollStatus(); } catch (error) { message(String(error), true); }
+  try { collection = await window.mwm.request<Collection>('collection'); await reload(); void pollStatus(); } catch (error) { message(String(error), true); }
   finally { document.body.inert = false; }
 }
 void start();
