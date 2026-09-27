@@ -22,6 +22,16 @@ from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_desktop_context_hotkey_and_portable_runtime_boundaries(self):
+        # Reuse actual TypeScript handlers with fake Electron and process boundaries.
+        # Keep fixture settings and recordings isolated from the user's currently running EXE.
+        # This remains part of the existing offline entrypoint, with no game or OS key interaction.
+        import subprocess
+        with tempfile.TemporaryDirectory() as folder:
+            result = subprocess.run(['node', str(ROOT/'tests/desktop/recorder_workflow.cjs'), folder],
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_reused_actor_counter_reset_refreshes_its_cached_metadata(self):
         # Replay the observed retry pattern: same node, owner and descriptor, but counter restarts.
         # Optional payload bytes can change at reused addresses and must be read again after reset.
