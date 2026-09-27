@@ -1,6 +1,7 @@
 # Persistent supervisor for the maintained runtime. Never compiles a session DLL.
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -72,7 +73,15 @@ def supervise(args):
                                   capture_output=True, text=True, cwd=HERE,
                                   creationflags=subprocess.CREATE_NO_WINDOW, env=env)
         if prepared.returncode:
-            status('waiting_for_resources', detail=prepared.stderr.strip()[-1200:] or prepared.stdout.strip()[-1200:],
+            detail = prepared.stderr.strip()[-1200:] or prepared.stdout.strip()[-1200:]
+            try:
+                failure = json.loads(detail)
+            except ValueError:
+                failure = {}
+            if failure.get('retryable') is False:
+                status('preparation_failed', detail=failure['message'])
+                return 1
+            status('waiting_for_resources', detail=failure.get('message', detail),
                    limitation='Waiting for a supported player; source assets load independently.')
             sleep_until(4, stop)
             continue

@@ -111,7 +111,16 @@ int main(int argc,char**) {
     assert(state->version==4 && !memcmp(state->profile_identity,incoming.profile_identity,32));
     submitting=1;submit_resources();
     assert(submitting==0 && state->phase==1 && !state->error && !state->objects[0]);
-    state->objects[0]=0x123000;state->phase=3;
+    // An unfinished archive decode no longer needs the temporary player-frame hook.
+    // Detach must release that hook while retaining pending objects and their callbacks.
+    // A second loader must not overwrite an enabled hook left by a timed-out first loader.
+    state->objects[0]=0x123000;state->phase=2;
+    assert(NiohResourcesDetach(nullptr)==0 && state->objects[0]==0x123000 && state->phase==2);
+    callbacks=1;
+    assert(NiohResourcesDetach(nullptr)==ERROR_BUSY);
+    callbacks=0;
+    assert(NiohResourcesDetach(nullptr)==0);
+    state->phase=3;
     assert(NiohResourcesStart(&incoming)==0 && state->objects[0]==0x123000);
     auto changed=incoming;changed.names[0][0]='Z';
     assert(NiohResourcesStart(&changed)==ERROR_ALREADY_EXISTS && state->objects[0]==0x123000);

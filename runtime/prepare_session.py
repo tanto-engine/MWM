@@ -20,7 +20,7 @@ from boss_probe import LiveGame, U64, U32, I32, kernel
 from nioh_memory import modules, current_pid
 from project_paths import DATA
 from profile_resources import StableReads, inspect_candidate, resources, inspect_motion, inspect_timing
-from load_resources import load_resources
+from load_resources import load_resources, ResourceLoadError
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
@@ -524,5 +524,6 @@ if __name__ == '__main__':
     try:
         main()
     except (OSError, ValueError, KeyError, TypeError, StopIteration, struct.error) as error:
-        print(json.dumps(dict(status='error', stage='read_only_preparation', message=str(error))), file=sys.stderr)
+        print(json.dumps(dict(status='error', stage='session_preparation', message=str(error),
+                              retryable=not isinstance(error, ResourceLoadError))), file=sys.stderr)
         raise SystemExit(1)

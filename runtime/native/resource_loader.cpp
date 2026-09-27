@@ -289,7 +289,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     const uint8_t expected[] = {0x40,0x53,0x48,0x83,0xec,0x20,0xf3,0x0f,0x11,0x89,0xa4,0x06,0,0};
     if (memcmp(frame_target, expected, sizeof(expected))) return ERROR_REVISION_MISMATCH;
     wchar_t name[128];
-    const int prefix = wsprintfW(name, L"Local\\NiohResources_v6_%lu_", GetCurrentProcessId());
+    const int prefix = wsprintfW(name, L"Local\\NiohResources_v7_%lu_", GetCurrentProcessId());
     const wchar_t digits[] = L"0123456789abcdef";
     for (unsigned i = 0; i != 32; ++i) {
         name[prefix + i * 2] = digits[incoming.profile_identity[i] >> 4];
@@ -319,12 +319,11 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
 
 extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesDetach(void*) {
     // Remove the temporary loader frame hook without releasing retained assets.
-    // Require submission to finish and entered frame callbacks to return.
+    // Disable new frame entries even when archive I/O is still pending.
     // Native I/O and runtime imports can still reference this module after hook removal.
     // Detach only removes the temporary frame hook. The module, trampoline and
     // owned resources remain loaded, including outstanding I/O after a failure.
     if (!hooked) return 0;
-    if (InterlockedCompareExchange(&state->phase, 0, 0) < 3) return ERROR_BUSY;
     const auto result = MH_DisableHook(frame_target);
     if (result != MH_OK && result != MH_ERROR_DISABLED) return 100 + result;
     return InterlockedCompareExchange(&callbacks, 0, 0) ? ERROR_BUSY : 0;

@@ -120,17 +120,18 @@ class ResourceCrashTests(unittest.TestCase):
             build = root / 'native/build'
             build.mkdir(parents=True)
             (build / 'nioh_resources.dll').write_bytes(b'owned test DLL; never loaded')
-            game = SimpleNamespace(identity=dict(pid=123, creation_filetime='456', build_sha256='build'))
+            game = SimpleNamespace(identity=dict(pid=123, creation_filetime='456', build_sha256='build'), alive=lambda: True)
             assets = {kind: dict(archive='archive_00.lnk', entry_id=index, source_name='/'+kind,
                                 size=100+index, sha256=str(index)*64)
                       for index,kind in enumerate(('actions','timing','motion','camera'))}
-            first = dict(resource_profile_id='first.resources.v1', build_sha256='build', assets=assets)
+            first = dict(resource_profile_id='first.resources.v1', boss_id='first', build_sha256='build', assets=assets)
             second = dict(first, resource_profile_id='second.resources.v1')
             paths = [root/'first.json', root/'second.json']
             for path, profile in zip(paths, (first, second)):
                 path.write_text(json.dumps(profile))
             loaded, mappings, requests = [], [], []
             corrupt_identity = False
+            phase, detaches = 3, []
             def module_at_path(pid, dll):
                 # Resolve only the fake modules already loaded through this fixture.
                 # Match their complete immutable path without opening a process.
@@ -147,6 +148,7 @@ class ResourceCrashTests(unittest.TestCase):
                 # Preserve the request bytes for the mapping fixture and identity assertions.
                 # Resource ownership is verified at the caller boundary without remote writes.
                 if payload is not None: requests.append(payload)
+                else: detaches.append(True)
                 return 0
             def status_mapping(fileno, length, tagname, access):
                 # Publish completed owned resources for the most recent Start request.
@@ -156,8 +158,8 @@ class ResourceCrashTests(unittest.TestCase):
                 self.assertEqual(length, 112)
                 self.assertEqual(len(requests[-1]), 544)
                 identity = bytes(32) if corrupt_identity else requests[-1][24:56]
-                return StatusView(resources.STATE.pack(0x3152504e, 4, 3, 0, 456, identity,
-                                                       1, 2, 3, 4, 15, 1, 5, 6))
+                return StatusView(resources.STATE.pack(0x3152504e, 4, phase, 0, 456, identity,
+                                                       1, 2, 3, 4, 15 if phase == 3 else 1, 1, 5, 6))
             class StatusView(io.BytesIO):
                 def __getitem__(self, key):
                     # Expose the slice-reading interface used by a read-only mmap.
@@ -179,6 +181,12 @@ class ResourceCrashTests(unittest.TestCase):
                 corrupt_identity = True
                 with self.assertRaisesRegex(ValueError, 'Resource owner identity mismatch'):
                     resources.load_resources(game, paths[0])
+                self.assertEqual(len(detaches), 4, 'Identity errors must also release the temporary hook')
+                corrupt_identity, phase = False, 2
+                with patch.object(resources.time, 'monotonic', side_effect=[0, 0, 31]):
+                    with self.assertRaisesRegex(resources.ResourceLoadError, 'waiting for timing, motion, camera'):
+                        resources.load_resources(game, paths[0])
+                self.assertEqual(len(detaches), 5, 'Pending I/O must release the frame hook once before timeout')
             self.assertEqual(len(loaded), 2, 'Different profiles reused one native DLL owner')
             self.assertNotEqual(mappings[0], mappings[1])
             self.assertEqual(mappings[0], mappings[2])

@@ -14,6 +14,10 @@ Keep `tanto-engine`, `MWM` and `tanto-recorder` as sibling checkouts. `runtime/n
 
 The 2026-09-27 MWM source trial is blocked by reported drift and a missing death screen; activation was stopped. Its trace recorded no intended substitutions, and Hideyori resource loading remained pending. Re-establish normal attachment, Disable and death/retry behavior with no replacements before comparing one boss adapter at a time. The MWM README preserves the detailed ID evidence and current uncertainties.
 
+An offline reproduction found that pending archive I/O prevented the temporary loader frame hook from detaching. Cleanup now disables that hook after submission, retains objects needed by I/O callbacks, and also runs on error or timeout. A stalled native load stops activation instead of retrying indefinitely. This corrects a proven lifecycle defect; the reported gameplay symptoms still require a fresh manual check.
+
+The subsequent Jin Low-heavy-only source check passed the user's string, neutral movement and death/retry checks, with matching native substitution traces. The full multi-boss setup remains unverified; this result is scoped to that one configuration.
+
 `build_product.py` stages each product's selected code and data, then builds its EXE. Recorder receives two read-only memory/discovery modules and no gameplay hooks. Electron products bundle a separate worker and web interface into one portable EXE. Builds record source pins, dependencies, file hashes and version tags.
 
 [CODE_GUIDE.md](CODE_GUIDE.md) explains the implementation. [NATIVE-WALKTHROUGH.md](runtime/native/NATIVE-WALKTHROUGH.md) follows the hooks, and [RELEASES.md](RELEASES.md) defines packaging and publication.

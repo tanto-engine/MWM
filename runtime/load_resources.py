@@ -22,6 +22,25 @@ loader.K.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
 loader.K.OpenFileMappingW.restype = W.HANDLE
 
 
+class ResourceLoadError(OSError):
+    """A native load failed or stayed pending; stop this activation instead of stacking retries."""
+
+
+def detach_resources(handle, args, module):
+    # A queued archive read no longer needs the temporary player-frame hook.
+    # Stop new entries, then allow already-entered frame callbacks a bounded drain.
+    # Keep the DLL and resource callbacks alive; their pending I/O still owns them.
+    detach = loader.remote_export(handle, module, 'NiohResourcesDetach')
+    deadline = time.monotonic() + 2
+    while True:
+        code = loader.call_export(handle, args, detach)
+        if not code:
+            return
+        if code != 170 or time.monotonic() >= deadline:
+            raise ResourceLoadError(f'Resource frame hook did not finish detaching: {code}. Restart Nioh before another activation.')
+        time.sleep(.01)
+
+
 def resource_identity(profile, motion_keys=()):
     # Bind one retained native owner to the profile, archive assets and selected motion keys.
     # Hash stable source identities and content fingerprints while excluding editorial notes.
@@ -53,7 +72,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
     code = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).parent))
     owner_file = state / 'resource-owners' / f'{tag}.json'
     owner = read_json(owner_file)
-    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 6
+    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 7
             and owner['resource_identity'] == tag):
         dll = Path(owner['dll'])
     else:
@@ -75,35 +94,42 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
         payload += name.ljust(80, b'\0')
     payload += struct.pack('<34I',len(motion_keys),*motion_keys,*([0]*(32-len(motion_keys))),0)
     handle = loader.checked(loader.K.OpenProcess(0x143A, False, pid), 'OpenProcess(resource_loader)')
+    started = detached = False
     try:
         loader.validate_target(handle, args)
         module = loader.module_at_path(pid, dll) or loader.load_dll(handle, args, dll)
-        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=6,
+        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=7,
                                     resource_identity=tag, resource_profile_id=profile['resource_profile_id'], motion_keys=motion_keys))
         start = loader.remote_export(handle, module, 'NiohResourcesStart')
+        started = True
         code = loader.call_export(handle, args, start, payload)
         if code:
-            raise OSError(f'Resource request rejected: {code}')
-        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v6_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
+            raise ResourceLoadError(f'Resource request rejected: {code}')
+        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v7_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
             deadline = time.monotonic() + 30
             while True:
                 magic, version, phase, error, observed_birth, observed_identity, actions, timing, motion, camera, completed, thread, player, owner = STATE.unpack(status[:])
                 if (magic, version, observed_birth, observed_identity) != (0x3152504e, 4, birth, identity):
                     raise ValueError('Resource owner identity mismatch')
+                if not detached and phase >= 2 and (player or error):
+                    detach_resources(handle, args, module)
+                    detached = True
                 if phase >= 3 and (player or error):
-                    detach = loader.remote_export(handle, module, 'NiohResourcesDetach')
-                    code = loader.call_export(handle, args, detach)
-                    if code == 170:
-                        time.sleep(.01)
-                        continue
-                    if code:
-                        raise OSError(f'Resource frame hook did not detach: {code}')
                     if error or phase != 3 or completed != 15:
                         detail=f'clip index {error&0x1fffffff}' if error&0x20000000 else f'error {error}'
-                        raise OSError(f"{profile['boss_id']}: native resource decode failed ({detail}, completed={completed}, motions={motion_keys})")
+                        raise ResourceLoadError(f"{profile['boss_id']}: native resource decode failed ({detail}, completed={completed}, motions={motion_keys})")
                     return actions, timing, motion, camera, player, owner
-                if not game.alive() or time.monotonic() >= deadline:
-                    raise TimeoutError(f'Resource loading pending (phase={phase}, completed={completed}); retained request for retry')
+                if not game.alive():
+                    raise TimeoutError('Nioh exited during resource loading')
+                if time.monotonic() >= deadline:
+                    if phase == 2:
+                        pending = ', '.join(kind for index, kind in enumerate(('actions', 'timing', 'motion', 'camera')) if not completed & (1 << index))
+                        raise ResourceLoadError(f"{profile['boss_id'].replace('_', ' ').title()}: archive loading stalled; waiting for {pending}. Activation stopped; restart Nioh before retrying.")
+                    raise TimeoutError(f'Waiting for the current player (phase={phase}, completed={completed})')
                 time.sleep(.05)
     finally:
-        loader.K.CloseHandle(handle)
+        try:
+            if started and not detached:
+                detach_resources(handle, args, module)
+        finally:
+            loader.K.CloseHandle(handle)

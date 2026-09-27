@@ -24,3 +24,5 @@ runtime/stop.flag
 runtime/sessions/
 runtime/trainer-settings.json
 runtime/recordings/
+local-artifacts/
+.build/
