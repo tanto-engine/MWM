@@ -1,6 +1,6 @@
-# Read SKM as a Nioh player
+# Read MWM as a Nioh player
 
-SKM means **single-katana moveset mod**. This repository owns your selectable sword moves, their default bindings and the trainer. The sibling `tanto-engine` repository owns memory integration and the rules for adapting reviewed boss moves to William. Read its `CODE_GUIDE.md` for terms such as action bank, adapter, hook, ownership and ABI.
+MWM means **Multi-Weapon Moveset Mod**. This repository is the shared weapon application, starting with the existing single-katana moveset. It owns selectable moves, defaults and the consumer interface; `tanto-engine` owns native integration and reviewed adaptations. Recorder remains separate, and incoming captures stay outside these source repositories.
 
 Keep 3–5 direct opening comments per function/callback: player-facing purpose, mechanism and the important constraint. Use additional inline comments for ownership, conversion or persistence rules that are easy to get wrong.
 
@@ -17,7 +17,7 @@ Keep 3–5 direct opening comments per function/callback: player-facing purpose,
 | File | What it describes | Important boundary |
 |---|---|---|
 | `product.json` | EXE name, backend kind, version and exact Engine commit | A release version is different from a preset schema version; an Engine pin identifies source, not gameplay acceptance. |
-| `data/mod.json` | Stable product identity and readable SKM name | Renaming the display/repository does not require changing the legacy settings namespace. |
+| `data/mod.json` | Stable product identity and readable MWM name | Renaming the display/repository does not require changing the legacy settings namespace. |
 | `data/preset.json` | Default stance, native/custom bindings and reviewed speeds | Schema v8 settings are validated; private physics/Pulse/timing policy is not an unrestricted user field. |
 | `data/controller-calibration.json` | Saved controller layout and raw/logical button meaning | A bitmask represents button states; a source-device bit may differ from its game-facing equivalent. |
 | `data/moves.json` | Readable names, source identities and review/implementation status | A catalogue entry may be research only. It does not automatically become a menu choice. |
@@ -28,8 +28,10 @@ An import's `source_voices` can retain events that preparation must verify; `voi
 
 `review_import.py` compares an authored import with catalogue/resource definitions and optional reconstruction evidence. Its `reviewed` flag records developer review only. The helper writes a report; it never installs a recording or marks a move executable/gameplay-accepted.
 
+Match each description against the last few boss-action executions before recording Stop, using its saved take/time window when available. Merge repeated polling samples only within the same execution; preserve genuine repeated actions, their order and timing, and the complete raw take. Recovery or idle IDs can follow the described move, so inspect farther back when the ending is unclear. Compare full source-bank/action identities, keep player events separate from boss candidates, and treat priority labels as review order rather than proof of a match.
+
 ## Builds and repository hygiene
 
 `Build.ps1` delegates every EXE compilation to Engine's shared release gate. `CHANGELOG.md` describes version changes; Engine's `RELEASES.md` explains the required clean commits, exact pin, offline checks, immutable artifacts and tags. `.gitignore` excludes builds and local runtime state. `.gitattributes` preserves appropriate text/binary treatment.
 
-Tests live in Engine and run through `Test-Offline.ps1`; do not create a second product-specific test workflow. A source comment change does not modify an already released EXE, and this review does not claim new SKM gameplay acceptance.
+Tests live in Engine and run through `Test-Offline.ps1`; do not create a second product-specific test workflow. A source comment change does not modify an already released EXE, and this review does not claim new MWM gameplay acceptance.

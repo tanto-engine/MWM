@@ -1,6 +1,6 @@
-# SKM — Single-Katana Moveset Mod
+# MWM — Multi-Weapon Moveset Mod
 
-SKM adapts reviewed boss moves for William's single katana in Nioh. Its EXE packages the configuration UI, selected Tanto runtime and required native libraries. Players do not need either source repository.
+MWM (Multi-Weapon Moveset Mod) is the shared application for all ten planned Nioh weapon movesets, starting with the single katana, while Tanto Engine stays separate, Recorder remains read-only, and raw captures stay outside the source repositories.
 
 The UI chooses reviewed moves, stance/source overrides, bounded speeds and controller bindings. Preset v8 stores those choices. The engine controls Ki Pulse, physics and Frost Moon timing; a new recording must be reviewed and adapted before it becomes selectable.
 

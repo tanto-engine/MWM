@@ -1,5 +1,9 @@
 # Release notes
 
+## Unreleased
+
+Renamed SKM to MWM (Multi-Weapon Moveset Mod), the shared application for the ten planned weapon movesets. The current backend and data remain sword-specific; saved presets and the legacy settings namespace stay compatible. No new EXE or multi-weapon runtime is included.
+
 ## 0.2.0-alpha.1
 
 Renamed Tanto Sword Mod to SKM (single-katana moveset mod). Existing settings remain compatible. No new SKM executable or gameplay acceptance is included.

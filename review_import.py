@@ -15,7 +15,7 @@ from move_imports import read_import_manifest
 
 
 def review_import(path, catalogue_path=ROOT/'data/moves.json', resources=ROOT/'data/resources', evidence=None, reviewed=False):
-    # Explain what is missing before a recorded boss move can become an SKM import.
+    # Explain what is missing before a recorded boss move can become an MWM import.
     # Compare authored import, catalogue, resource and optional reconstruction identities without loading game memory.
     # The report stays a developer review artifact; marking reviewed never installs a move or proves gameplay.
     """Check authored definitions against maintained adapters and retained evidence."""

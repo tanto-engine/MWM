@@ -1,4 +1,4 @@
-# Launch SKM from source, or explicitly request its Enable/Disable lifecycle command.
+# Launch MWM from source, or explicitly request its Enable/Disable lifecycle command.
 # Enable and Disable are mutually exclusive; launch.py selects source or packaged worker paths.
 # This development launcher does not compile an EXE or bypass Build.ps1 release controls.
 param(

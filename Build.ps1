@@ -1,4 +1,4 @@
-# Build a distributable SKM EXE through the shared Engine release gate.
+# Build a distributable MWM EXE through the shared Engine release gate.
 # The gate owns version/pin checks, tests, packaging, checksums and the immutable version tag.
 # OneDir changes packaging layout only; it does not bypass release validation.
 param([string]$EngineRoot = (Join-Path $PSScriptRoot '..\tanto-engine'), [string]$PythonRuntime = 'python', [switch]$OneDir)
