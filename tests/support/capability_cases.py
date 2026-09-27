@@ -23,6 +23,27 @@ def empty_preset():
 
 
 class CapabilityTests(unittest.TestCase):
+    def test_first_collection_subset_compiles_with_pulse_and_native_speed(self):
+        # Compile the new product preset through real dependency selection and the native encoder.
+        # Check Pulse inheritance on every selected Jin phase, including dodge and landing continuations.
+        # Unimplemented boss routes stay absent instead of silently substituting a different boss move.
+        import json
+        from project_paths import DATA
+        preset = config.validate_preset(json.loads((DATA/'presets/first-collection-supported.json').read_text(encoding='utf8')))
+        fixture, encoded = self.fixture(preset)
+        self.assertIsNone(preset['tap_move'])
+        self.assertIsNone(preset['frost_moon']['mid'])
+        self.assertEqual(len(preset['skill_bindings']), 2)
+        self.assertEqual(preset['low_heavy'], 'jin_hayabusa.action_0c6e')
+        self.assertEqual(preset['skill_bindings'][0]['move'], 'jin_hayabusa.action_0c6f')
+        self.assertEqual(preset['skill_bindings'][1]['move'], 'jin_hayabusa.action_0bbf')
+        self.assertEqual(preset['frost_moon'], dict(low='jin_hayabusa.action_0c71',mid=None,high='jin_hayabusa.action_0c75'))
+        jin = [move for move in fixture.config['imports'] if move['id'].startswith('jin_hayabusa.')]
+        self.assertEqual(len(jin), 15)  # Three heavy, five quick, four Swallow, three downward-slash phases.
+        for index, move in enumerate(fixture.config['imports']):
+            if move in jin:
+                self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,5752+index*MOVE_SETTINGS.size), (1.,40,30,36,0))
+
     def fixture(self,preset):
         # Create a native-shaped session for an edited preset without attaching to Nioh.
         # Reuse the maintained session fixture and serialize it through the production ABI encoder.
