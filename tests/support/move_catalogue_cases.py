@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'SKM'
+MOD_ROOT = ROOT.parent/'MWM'
 sys.path.insert(0,str(ROOT))
 from catalogue import iter_moves, load_catalogue, save_catalogue, validate_catalogue, merge_reconstruction, merge_recording, rename_move
 

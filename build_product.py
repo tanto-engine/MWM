@@ -41,9 +41,9 @@ def release_inputs(project):
         raise ValueError('Set a release version such as 0.2.0-alpha.1 in product.json')
     if f'## {version}\n' not in (project/'CHANGELOG.md').read_text(encoding='utf8'):
         raise ValueError('Add release notes for this version to CHANGELOG.md')
-    sources={p.name:source_state(p) for p in (ROOT,ROOT.parent/'SKM',ROOT.parent/'tanto-recorder')}
+    sources={p.name:source_state(p) for p in (ROOT,ROOT.parent/'MWM',ROOT.parent/'tanto-recorder')}
     if any(state['dirty'] for state in sources.values()):
-        raise ValueError('Commit all Engine, SKM and Recorder changes before compiling an EXE')
+        raise ValueError('Commit all Engine, MWM and Recorder changes before compiling an EXE')
     if spec.get('engine_commit')!=sources[ROOT.name]['commit']:
         raise ValueError('Review and pin this Engine revision in product.json before packaging')
     used=(project/'dist'/version).exists()

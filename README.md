@@ -1,6 +1,6 @@
 # Tanto Engine
 
-Private Nioh framework for move adaptation, controller input, timing, Ki Pulse, physics and native hooks. SKM and Recorder package only the runtime components they need; players do not need this repository.
+Private Nioh framework for move adaptation, controller input, timing, Ki Pulse, physics and native hooks. MWM and Recorder package only the runtime components they need; players do not need this repository.
 
 Session preparation matches the game build, actor, source bank and full action signature before copying move data into owned memory. Lifecycle checks reject stale objects and release only state the runtime still owns.
 
@@ -8,7 +8,7 @@ Native hooks adapt input, transitions, recovery, resources and voice events for 
 
 Preset v8 exposes reviewed bindings and bounded move speeds. Physics, Ki Pulse authoring and Frost Moon timing remain developer-controlled. The current backend is sword-specific; ten weapon mods are not yet implemented.
 
-Keep `tanto-engine`, `SKM` and `tanto-recorder` as sibling checkouts. `runtime/native/Build.ps1` builds native libraries; `Test-Offline.ps1` runs the two maintained suites. Offline results do not establish gameplay or hardware acceptance.
+Keep `tanto-engine`, `MWM` and `tanto-recorder` as sibling checkouts. `runtime/native/Build.ps1` builds native libraries; `Test-Offline.ps1` runs the two maintained suites. Offline results do not establish gameplay or hardware acceptance.
 
 `build_product.py` stages each product's selected code and data, then builds its EXE. Recorder receives four read-only modules and no gameplay hooks. Builds record source pins, dependencies, file hashes and version tags; exceptions remain explicit in release receipts.
 

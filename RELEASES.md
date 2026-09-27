@@ -1,10 +1,10 @@
 # EXE release contract
 
-Applies to Recorder, SKM and any future Tanto application. Native test fixtures and `--stage-only` do not produce distributable EXEs. Engine currently ships as a pinned component, with no standalone EXE.
+Applies to Recorder, MWM and any future Tanto application. Native test fixtures and `--stage-only` do not produce distributable EXEs. Engine currently ships as a pinned component, with no standalone EXE.
 
 1. Update `product.json` with a new SemVer version and exact reviewed Engine SHA. Add that version’s changes and outstanding acceptance to `CHANGELOG.md`. Use alpha/beta/rc while application acceptance is pending.
-2. Commit Engine, SKM and Recorder. The shared builder rejects dirty source, mismatched pins, missing notes, dependency version mismatches, existing local or remote release tags and existing version directories. Both one-file and one-directory builds use these gates.
-3. Run the product’s `Build.ps1` with the pinned Python build environment. SKM rebuilds native libraries. Every build runs Engine’s two entrypoints through `Test-Offline.ps1`; Recorder also runs the resulting EXE’s isolated `--ui-smoke` check. No step controls or screenshots the game.
+2. Commit Engine, MWM and Recorder. The shared builder rejects dirty source, mismatched pins, missing notes, dependency version mismatches, existing local or remote release tags and existing version directories. Both one-file and one-directory builds use these gates.
+3. Run the product’s `Build.ps1` with the pinned Python build environment. MWM rebuilds native libraries. Every build runs Engine’s two entrypoints through `Test-Offline.ps1`; Recorder also runs the resulting EXE’s isolated `--ui-smoke` check. No step controls or screenshots the game.
 4. Review `dist/<version>/`: EXE, staged-file hashes, complete test log, package smoke receipt (Recorder), release notes, source/dependency receipt and `SHA256SUMS.txt`. The directory is published only after all gates pass and source is rechecked. The builder creates an annotated local version tag containing the checksum-list hash. A failed candidate stays under `.build/` and is not a release.
 5. Push the exact commits and the builder's annotated tag `v<version>` at the product commit recorded in `release.json`, then publish those exact files to a private GitHub prerelease. Compare uploaded asset hashes with the local checksums. Never move a published tag, overwrite an asset or silently rebuild a version. A fix receives a new version; keep previous packages for rollback. A Downloads convenience copy must have the same SHA-256 as the versioned EXE.
 

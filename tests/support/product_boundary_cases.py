@@ -156,7 +156,7 @@ class ProductBoundaryTests(unittest.TestCase):
         # Only traceable clean inputs with an unused version may reach packaging.
         with tempfile.TemporaryDirectory() as td:
             base=Path(td);engine=base/'tanto-engine';engine.mkdir()
-            product=base/'tanto-recorder';product.mkdir();(base/'SKM').mkdir()
+            product=base/'tanto-recorder';product.mkdir();(base/'MWM').mkdir()
             spec=dict(kind='recorder',name='TantoRecorder',version='0.2.0-alpha.1',engine_commit='a'*40)
             (product/'CHANGELOG.md').write_text('## 0.2.0-alpha.1\n\nOffline only.\n')
             def write():
@@ -585,7 +585,7 @@ class ProductBoundaryTests(unittest.TestCase):
         # Product resources and runtime libraries must be self-contained.
         with tempfile.TemporaryDirectory() as folder:
             destination=Path(folder)/'stage'
-            stage_product(ROOT.parent/'SKM',destination)
+            stage_product(ROOT.parent/'MWM',destination)
             self.assertNotIn('def record(', (destination/'runtime/boss_probe.py').read_text())
             self.assertNotIn('def save_catalogue(', (destination/'runtime/catalogue.py').read_text())
             self.assertTrue((destination/'runtime/native/build/nioh_skill_runtime.dll').is_file())

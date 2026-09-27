@@ -1,6 +1,6 @@
 # Read the Engine as a Nioh player
 
-Tanto Engine is the private workshop. SKM supplies the sword moveset and its menu; Recorder collects observations. A recording is evidence of what a boss did, not code that William can immediately execute. The Engine checks source identities, adapts reviewed moves, interprets your controls and manages the resources needed while those moves run.
+Tanto Engine is the private workshop. MWM supplies the sword moveset and its menu; Recorder collects observations. A recording is evidence of what a boss did, not code that William can immediately execute. The Engine checks source identities, adapts reviewed moves, interprets your controls and manages the resources needed while those moves run.
 
 Start with `runtime/engine_config.py` for selectable moves and settings, then `runtime/prepare_session.py` for the checks required before enabling them. `build_product.py` decides what reaches each EXE. Each named function and small callback has a short explanation; comments inside larger functions explain ordering, ownership or byte-layout constraints.
 
@@ -56,4 +56,4 @@ A move's timing table can request a boss vocal at a particular frame. Preparatio
 
 For the planned weapon mods, one consumer application can share hooks, controller interpretation and resource ownership while choosing a reviewed adapter/configuration for the equipped weapon. Keep reusable source resources separate from weapon-specific bindings; load/share packages according to their active owners. Keep raw capture history out of EXEs. Repository merging is optional and has not been performed.
 
-Engine remains private, Recorder remains a separate read-only product, and SKM is the first weapon product. See `RELEASES.md` for version, pin, test, checksum and immutable-tag rules. Source comments do not update an existing EXE; any new distributable build must receive an unused release version.
+Engine remains private, Recorder remains a separate read-only product, and MWM is the shared weapon application beginning with the single katana. See `RELEASES.md` for version, pin, test, checksum and immutable-tag rules. Source comments do not update an existing EXE; any new distributable build must receive an unused release version.

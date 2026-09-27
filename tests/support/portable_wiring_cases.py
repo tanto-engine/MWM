@@ -28,7 +28,7 @@ class Portability(unittest.TestCase):
         policy=dict(schema_version=1,moves={'okatsu.charged_rush':dict(ki_pulse=dict(percent=65,fill_frames=18,hold_frames=35))})
         with tempfile.TemporaryDirectory() as temporary:
             folder=Path(temporary);project=folder/'sword';stage=folder/'stage'
-            shutil.copytree(ROOT.parent/'SKM',project,ignore=shutil.ignore_patterns('.git','.build','dist','runtime','__pycache__'))
+            shutil.copytree(ROOT.parent/'MWM',project,ignore=shutil.ignore_patterns('.git','.build','dist','runtime','__pycache__'))
             (project/'data/move-policy.json').write_text(json.dumps(policy),encoding='utf8')
             stage_product(project,stage)
             staged=stage/'data/move-policy.json'
