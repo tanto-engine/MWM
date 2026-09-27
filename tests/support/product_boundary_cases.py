@@ -28,32 +28,45 @@ from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
     def test_multi_session_export_and_intake_preserve_bosses_takes_and_revisions(self):
-        # Export two same-boss sessions and another boss, including repeated folder names.
-        # Check inner ZIP histories, collection intake, deduplication and conflicting boss attribution.
-        # The collection must preserve all session identities without rewriting original labels or raw evidence.
+        # Export two takes each from two same-boss sessions and another boss, with repeated folder names.
+        # Check ZIP integrity, every take's exact bytes, saved revisions, intake and evidence deduplication.
+        # Keep session identities separate and preserve original files, even when raw captures match across bosses.
         with tempfile.TemporaryDirectory() as td:
             base=Path(td);folders=[];originals={}
             for index,boss in enumerate(('okatsu','okatsu','maria')):
-                folder=base/str(index)/'same-name';take=folder/'take-0001';take.mkdir(parents=True);folders.append(folder)
+                folder=base/str(index)/'same-name';folder.mkdir(parents=True);folders.append(folder)
                 (folder/'encounter.json').write_text(json.dumps(dict(boss_id=boss,boss_name=boss.title(),recording_id=str(index),created_at=1)))
-                (take/'events.jsonl').write_text(json.dumps(state(2)))
-                label=save_annotation(folder,'First description',take.name,0,2)
-                save_annotation(folder,'Revised description',take.name,0,2,label_id=label['label_id'])
-                originals[folder]=(folder/'labels.jsonl').read_bytes()
+                for number in (1,2):
+                    take=folder/f'take-{number:04d}';take.mkdir()
+                    (take/'events.jsonl').write_text(json.dumps(state(number+1)))
+                    label=save_annotation(folder,'First description',take.name,0,number+1)
+                    save_annotation(folder,f'Revised description {number}',take.name,0,number+1,label_id=label['label_id'])
+                originals[folder]={p.relative_to(folder).as_posix():p.read_bytes()
+                                   for p in folder.rglob('*') if p.is_file()}
             path=export_sessions(folders,base/'tanto-zips/share.zip')
             report=intake_bundle(path,base/'intake')
             self.assertEqual([item['boss_id'] for item in report['sessions']],['okatsu','okatsu','maria'])
-            self.assertTrue(all(item['annotations'][0]['revision']==2 for item in report['sessions']))
+            for index,(folder,item) in enumerate(zip(folders,report['sessions'])):
+                self.assertEqual(item['recording_id'],str(index))
+                self.assertEqual([take['take'] for take in item['takes']],['take-0001','take-0002'])
+                for take in item['takes']:
+                    self.assertEqual((base/'intake/captures'/f'{take["sha256"]}.jsonl').read_bytes(),
+                                     originals[folder][take['take']+'/events.jsonl'])
+                self.assertEqual([(label['take'],label['label'],label['revision']) for label in item['annotations']],
+                                 [(f'take-{number:04d}',f'Revised description {number}',2) for number in (1,2)])
             self.assertEqual(intake_bundle(path,base/'intake'),report)
-            self.assertEqual(len(list((base/'intake/captures').glob('*.jsonl'))),1)
+            self.assertEqual(len(list((base/'intake/captures').glob('*.jsonl'))),2)
             self.assertIn('boss_identity',{c['kind'] for c in report['sessions'][2]['conflicts']})
             with zipfile.ZipFile(path) as outer:
+                self.assertIsNone(outer.testzip())
                 self.assertEqual(len(outer.namelist()),4)
                 import io
                 for index,folder in enumerate(folders,1):
                     with zipfile.ZipFile(io.BytesIO(outer.read(f'session-{index:04d}.zip'))) as inner:
-                        self.assertEqual(inner.read('labels.jsonl'),originals[folder])
-                    self.assertEqual((folder/'labels.jsonl').read_bytes(),originals[folder])
+                        self.assertIsNone(inner.testzip())
+                        for name,data in originals[folder].items():
+                            if name!='encounter.json':self.assertEqual(inner.read(name),data)
+                            self.assertEqual((folder/name).read_bytes(),data)
 
     def test_collection_rejects_a_bad_later_session_before_saving_any_evidence(self):
         # Put a valid session before a malformed one in a collection.
