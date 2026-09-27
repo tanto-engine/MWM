@@ -3,6 +3,8 @@
 #include <stddef.h>
 
 // Runtime addresses are session data, never compiled move identities.
+// These uint64_t values are addresses inside this Nioh process, not portable asset IDs.
+// The loader retains source packages; this record identifies player components that must be revalidated after reload.
 struct BossSession {
     uint64_t player;
     uint64_t player_owner;
@@ -26,11 +28,16 @@ struct BossSession {
     uint64_t source_camera_bank;
     uint64_t player_camera_slot;
     uint64_t camera_original;
+    // Saved values correspond to motion +8/+0x28, then timing +0x10/+0x28 (see boss_slot).
+    // Restoration requires the slot still to contain either its saved value or this runtime's borrowed value.
     uint64_t originals[4];
 };
 static_assert(sizeof(BossSession) == 208, "Session ABI size");
 
+// Voice entries identify a source timing event by frame, sound-row index and exact sound hash.
 struct MoveVoice { uint32_t frame, index, hash; };
+// One import joins an action descriptor/payload to its motion clip and timed-event record.
+// next_variant uses a zero-based import index or -1; it describes an allowed follow-up, not a forced input.
 struct MoveImport {
     uint64_t descriptor, payload, clip, timing_record, flags;
     uint32_t key;
@@ -55,6 +62,8 @@ struct MoveAdapter {
 };
 static_assert(sizeof(MoveAdapter) == 64, "Adapter ABI size");
 
+// Binding variants are 1-based (zero means unset); stance bits use the runtime's low/mid/high order.
+// Native-signature bindings also retain key/motion/flags to avoid replacing an unrelated attack.
 struct SkillBinding {
     uint32_t kind, stances, variant, key;
     int32_t motion;
@@ -63,10 +72,15 @@ struct SkillBinding {
 };
 static_assert(sizeof(SkillBinding)==32,"Skill binding ABI size");
 
+// Thresholds choose a launch policy by resistance; weight_scale and vertical_impulse affect separate native fields.
 struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };
+// Playback speed is a multiplier; pulse_percent controls recoverable Ki and fill/hold use native frame units.
 struct MoveSettings { float speed; uint16_t pulse_percent, pulse_fill, pulse_hold, reserved; };
 static_assert(sizeof(MoveSettings)==12,"Move settings ABI size");
 
+// This fixed Windows x64 layout is copied from the launcher, not read as a C++ object from another process.
+// PID plus creation_filetime rejects a reused PID; config_tag separates sessions sharing the same process.
+// Keep reserved fields zero and update both producers and consumers when changing version, size or offsets.
 struct RuntimeSessionConfig {
     uint32_t magic, version, size, pid;
     uint64_t creation_filetime, config_tag;

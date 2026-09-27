@@ -3,8 +3,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// Magic identifies the shared-memory format; capacity is a bounded history, so slow readers can miss overwritten records.
 enum { TRACE_MAGIC = 0x3152494e, TRACE_VERSION = 1, TRACE_CAPACITY = 512 };
 
+// A committed record has matching positive sequence_begin/sequence_end values; zero marks an in-progress slot.
+// Address fields describe observations, not owned allocations; QPC timestamps use the header frequency.
 struct TraceRecord {
     volatile LONG64 sequence_begin;
     int64_t qpc;
@@ -17,6 +20,8 @@ struct TraceRecord {
     volatile LONG64 sequence_end;
 };
 
+// written is the latest committed sequence; dropped counts contention losses before a slot is published.
+// The reserved 64 bytes hold GameInput, whose independent odd/even sequence protects controller snapshots.
 struct TraceHeader {
     uint32_t magic, version, capacity, record_size;
     int64_t qpc_frequency;

@@ -1,3 +1,6 @@
+# Offline regression cases for sample reconstruction, gaps and versioned sequence descriptions.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import json
 from pathlib import Path
 import struct
@@ -54,7 +57,9 @@ class ReconstructionTests(unittest.TestCase):
             self.assertEqual(len((folder/'labels.jsonl').read_text().splitlines()),2)
 
     def test_entries_distinguish_repeats_from_state_samples_and_gaps(self):
-        # A counter change alone cannot prove that an unchanged action restarted.
+        # Distinguish a newly entered action from repeated observations of the same action.
+        # Feed counter changes and recording gaps into reconstruction using owned fixture data.
+        # Counts must retain uncertainty instead of treating every poll or counter change as a proven move entry.
         result = self.run_capture([state(.1,counter=1), metadata(), state(.2,counter=1),
             state(.3,counter=2), {'kind':'sampling_gap'}, state(.4,counter=9), metadata()])
         row = result['actions'][0]
@@ -65,6 +70,9 @@ class ReconstructionTests(unittest.TestCase):
         self.assertEqual(result['observed_successors'],[])
 
     def test_identity_changes_prove_entries_but_gaps_do_not_prove_edges(self):
+        # Check that changed action identity supports an entry but a missing interval breaks continuity.
+        # Reconstruct known fixture identities separated by a gap.
+        # The report must not invent a transition connecting samples that were never observed together.
         result=self.run_capture([state(.1),metadata(),state(.2,0xC66),metadata(0xC66,1230,t=.21),
             state(.3),metadata(t=.31),{'kind':'sampling_gap'},state(.4,0xC66),metadata(0xC66,1230,t=.41)])
         rows={row['source']['action_id']:row for row in result['actions']}
@@ -73,6 +81,9 @@ class ReconstructionTests(unittest.TestCase):
         self.assertEqual(sum(edge['count'] for edge in result['observed_successors']),2)
 
     def test_interval_annotation_revisions_keep_raw_capture_and_prior_labels(self):
+        # Check that correcting a description preserves its original evidence and history.
+        # Save successive interval annotations and read the latest revision back.
+        # Raw capture bytes and previous label revisions must remain available for review.
         with tempfile.TemporaryDirectory() as td:
             folder=Path(td);take=folder/'take-0001';take.mkdir()
             (folder/'encounter.json').write_text(json.dumps({'boss_id':'jin_hayabusa'}))

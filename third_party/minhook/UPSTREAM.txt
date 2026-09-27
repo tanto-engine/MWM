@@ -1,5 +1,15 @@
 MinHook v1.3.4
 Source: https://github.com/TsudaKageyu/minhook
 Commit: c3fcafdc10146beb5919319d0683e44e3c30d537
-Included: unmodified src/, include/ and LICENSE.txt.
+Included: upstream src/, include/ and LICENSE.txt, with the local changes below.
 This is a third-party dependency, separate from the project's original code.
+
+Local Tanto changes:
+- Explanatory comments are marked "Local Tanto note"; upstream licenses and decoder tables are retained.
+- hook.c EnableHook passes ACTION_DISABLE when disabling a single target.
+  The upstream path always passed ACTION_ENABLE, so ProcessThreadIPs skipped enabled hooks
+  instead of translating suspended trampoline instruction pointers back to the original function.
+- tests/native/minhook_disable_cases.c reproduces the pre-fix failure with owned executable memory
+  and mocked thread APIs, then checks single-target and batch disable through the real hook lifecycle.
+  The fixture runs through the existing offline test entrypoints; it creates no game or peer thread.
+  This demonstrates a context-translation defect, not a live-game crash.

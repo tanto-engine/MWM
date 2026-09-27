@@ -5,6 +5,8 @@
  *
  */
 
+// Local Tanto note: C_* classify operand encoding, PRE_* classify prefixes, and DELTA_* locate sub-tables.
+// The table bytes are upstream decoder data indexed by hde32_disasm; they are not Nioh addresses or action IDs.
 #define C_NONE    0x00
 #define C_MODRM   0x01
 #define C_IMM8    0x02

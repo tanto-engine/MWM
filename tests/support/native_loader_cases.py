@@ -1,7 +1,13 @@
+# Offline regression cases for native loader lifetime, error reporting and hook-disable thread-context translation.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import importlib.util
+import ctypes as C
 import hashlib
 from pathlib import Path
 import struct
+import subprocess
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -73,6 +79,28 @@ class FakeKernel:
 
 
 class LoaderTests(unittest.TestCase):
+    def test_minhook_single_disable_restores_suspended_instruction_pointer(self):
+        # Check the real hook library's enable/disable mapping using code memory owned by this test.
+        # Mock peer-thread APIs inside the fixture so no real thread or game is suspended or redirected.
+        # Single-target disable must map a saved trampoline instruction pointer back to original code.
+        root=Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as td:
+            dll=Path(td)/'minhook-disable.dll'
+            result=subprocess.run(['gcc','-std=c11','-O0','-Wall','-Wextra','-shared','-static-libgcc',
+                str(root/'tests/native/minhook_disable_cases.c'),str(root/'third_party/minhook/src/buffer.c'),
+                str(root/'third_party/minhook/src/trampoline.c'),str(root/'third_party/minhook/src/hde/hde64.c'),
+                '-I',str(root/'third_party/minhook/include'),'-o',str(dll)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            library=C.CDLL(str(dll))
+            try:
+                library.minhook_disable_regression.argtypes=[]
+                library.minhook_disable_regression.restype=C.c_int
+                self.assertEqual(library.minhook_disable_regression(),0)
+            finally:
+                kernel=C.WinDLL('kernel32')
+                kernel.FreeLibrary.argtypes=[C.c_void_p];kernel.FreeLibrary.restype=C.c_int
+                kernel.FreeLibrary(library._handle)
+
     def setUp(self):
         # Reset the loader's mutation-progress report before each case.
         # Discard state from prior simulated export attempts.

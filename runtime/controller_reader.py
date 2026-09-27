@@ -18,7 +18,9 @@ LEFT_TRIGGER, RIGHT_TRIGGER = 0x0400, 0x0800
 
 
 def logical_buttons(buttons, lt=0, rt=0):
-    # Reserved XInput bits carry thresholded triggers only in our logical masks.
+    # Represent trigger pulls alongside ordinary controller buttons.
+    # Compare analog trigger values with the shared press threshold and add their logical bits.
+    # Using the same threshold here and in capture prevents a trigger from changing meaning between screens.
     return ((buttons & 0xF3FF) | (LEFT_TRIGGER if lt >= TRIGGER_THRESHOLD else 0)
             | (RIGHT_TRIGGER if rt >= TRIGGER_THRESHOLD else 0))
 

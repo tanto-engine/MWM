@@ -1,3 +1,6 @@
+# Offline regression cases for coherent shared-memory trace reads and stale record rejection.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import importlib.util
 from pathlib import Path
 import struct

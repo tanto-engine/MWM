@@ -1,3 +1,6 @@
+# Offline regression cases for worker reacquisition and recovery after actor/process replacement.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import argparse
 import contextlib
 import io

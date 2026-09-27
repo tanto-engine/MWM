@@ -19,12 +19,21 @@ READ_ONLY = ('nioh_memory','boss_probe','action_banks','controller_reader')
 
 
 def source_state(project):
+    # Identify the exact saved source behind an EXE, like a build's fingerprint.
+    # Git HEAD names the commit; porcelain status also detects staged and untracked changes.
+    # Ignored compiler outputs are not source changes and do not make the checkout dirty.
     def git(*args):
+        # Run a read-only Git query inside the requested repository.
+        # Argument lists preserve spaces in Windows paths without invoking another shell.
+        # A failed query raises instead of inventing a clean revision for the release receipt.
         return subprocess.check_output(['git','-C',str(project),*args],text=True).strip()
     return dict(commit=git('rev-parse','HEAD'),dirty=bool(git('status','--porcelain')))
 
 
 def release_inputs(project):
+    # Reject a release whose version, notes, source or dependencies cannot be traced.
+    # Check both local and remote tags so another checkout cannot silently reuse a published version.
+    # All three checkouts participate in integration tests; their exact clean commits enter the receipt.
     spec=json.loads((project/'product.json').read_text(encoding='utf8'))
     version=spec.get('version','')
     if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?',version):

@@ -22,8 +22,7 @@ static bool boss_suppress_voice(void* state, void* timing_record, void* event) {
     // Check action ownership, timing record, event bounds and the exact source sound hash.
     // The boss's own audio and unrelated combat sounds must retain their original handler path.
     // TODO: verify the replacement William attack vocal audibly during play.
-    // Exact event routing and retained native probability are covered offline;
-    // those checks cannot establish that a particular playback was heard.
+    // Offline checks cover event routing and native probability, but cannot establish audible playback.
     if (!InterlockedCompareExchange(&boss_active, 0, 0)
         || boss_active_player != boss_session.player
         || boss_active_owner != boss_session.player_owner || !boss_player_valid()) return false;

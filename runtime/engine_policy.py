@@ -9,7 +9,9 @@ KI_PULSE = dict(percent=40, fill_frames=25, hold_frames=24)
 
 
 def validate_move_policy(value, identifiers):
-    # Developer authoring data is never a public preset field or raw payload patch.
+    # Check developer-authored Ki Pulse settings before they reach imported moves.
+    # Accept only implemented move IDs and the bounded percent, fill-frame and hold-frame fields.
+    # Reject extra fields and booleans posing as integers; public presets cannot author this policy.
     if not isinstance(value,dict) or set(value)!={'schema_version','moves'} or type(value['schema_version']) is not int or value['schema_version']!=1 or not isinstance(value['moves'],dict):
         raise ValueError('Move policy requires schema_version 1 and moves')
     for identifier, policy in value['moves'].items():

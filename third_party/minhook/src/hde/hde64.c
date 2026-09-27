@@ -13,6 +13,9 @@
 
 unsigned int hde64_disasm(const void *code, hde64s *hs)
 {
+    // Local Tanto note: Decode one x64 instruction, including REX prefixes, into caller-owned relocation metadata.
+    // The caller supplies readable bytes; opcode tables classify operands without executing code.
+    // Return decoded length with F_ERROR flags for invalid encodings that MinHook rejects before patching.
     uint8_t x, c, *p = (uint8_t *)code, cflags, opcode, pref = 0;
     uint8_t *ht = hde64_table, m_mod, m_reg, m_rm, disp_size = 0;
     uint8_t op64 = 0;

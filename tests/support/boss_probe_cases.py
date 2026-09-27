@@ -1,3 +1,6 @@
+# Offline regression cases for read-only discovery, sampling and memory-read boundaries.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import contextlib
 import csv
 import io

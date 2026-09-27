@@ -60,6 +60,9 @@
 //-------------------------------------------------------------------------
 static BOOL IsCodePadding(LPBYTE pInst, UINT size)
 {
+    // Local Tanto note: Accept a uniform run of zero, NOP or INT3 bytes in the proposed patch area.
+    // Reject mixed runs even when each byte individually resembles padding.
+    // The caller supplies readable bytes and a nonzero length while checking room for a jump.
     UINT i;
 
     if (pInst[0] != 0x00 && pInst[0] != 0x90 && pInst[0] != 0xCC)
@@ -76,6 +79,9 @@ static BOOL IsCodePadding(LPBYTE pInst, UINT size)
 //-------------------------------------------------------------------------
 BOOL CreateTrampolineFunction(PTRAMPOLINE ct)
 {
+    // Local Tanto note: Decode whole prologue instructions and relocate relative addresses into the supplied slot.
+    // Record old/new instruction boundaries so suspended threads can move between original and copied code.
+    // Reject unsupported branches or insufficient space; append a return jump and an x64 detour relay.
 #if defined(_M_X64) || defined(__x86_64__)
     CALL_ABS call = {
         0xFF, 0x15, 0x00000002, // FF15 00000002: CALL [RIP+8]

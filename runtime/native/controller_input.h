@@ -16,6 +16,8 @@ static_assert(sizeof(GameInput) == 64, "Trace input area size");
 using InputStateFn = DWORD (WINAPI*)(DWORD, XINPUT_STATE*);
 static InputStateFn game_input_state;
 static int64_t input_rescan;
+// A fresh press requires a prior neutral sample; reconnecting while holding Triangle must not invent a new press.
+// pressed/released/sampled share the trace QPC clock, and slot binds that history to one controller.
 struct TriangleInput {
     int64_t pressed, released, sampled;
     unsigned slot;
@@ -24,6 +26,9 @@ struct TriangleInput {
 static TriangleInput triangle_input{};
 
 static bool selected_game_controller(const GameInput& sample, unsigned& slot) {
+    // Controller selection is 1-based in settings; XInput slots are 0-based.
+    // An explicit slot must report success (code zero); automatic mode requires exactly one connected pad.
+    // Ambiguous or disconnected input cannot choose which player gesture to dispatch.
     if (boss_controller_selection) {
         slot=boss_controller_selection-1;
         return slot<4 && !sample.codes[slot];

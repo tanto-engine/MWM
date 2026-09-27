@@ -99,9 +99,8 @@ static bool repeat_current_allowed(uint64_t descriptor, uint32_t key) {
     // Limit new gesture entry to researched William sword control states.
     // Match exact action, motion and stance triples while excluding attacks and damage.
     // Unknown locomotion or aiming states need evidence before gaining entry eligibility.
-    // Saved player-triangle-movement evidence identifies the free/lock-on movement
-    // states that resume while a native-approved Triangle hold is pending. Exclude
-    // dodge9, damage3E8 and concrete running attacks; all remain interruptible.
+    // Saved player-triangle-movement evidence permits free/lock-on movement during an approved Triangle hold.
+    // Dodge9, damage3E8 and concrete running attacks stay excluded; pending holds remain interruptible.
     struct Neutral { uint32_t key; int32_t motion; int8_t stance; };
     static constexpr Neutral allowed[] = {
         {0,0,3}, {1,1,3}, {2,2,3}, {3,3,3}, {4,8,3},

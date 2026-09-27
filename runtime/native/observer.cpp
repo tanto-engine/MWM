@@ -231,9 +231,8 @@ static float observed_frame(void* actor, float delta) {
     // Schedule imports and recover resources on the player's existing game-thread frame.
     // Run native work first, then restoration, shared-clock windup adjustment and context gating.
     // Recovery must continue through frozen frames while new input waits for valid gameplay.
-    // TODO: verify shrine, menus, cutscenes, death/retry and mission changes in
-    // normal play. Context bank changes identify suspension, not its cause.
-    // Owned-memory checks do not establish the complete live lifecycle matrix.
+    // TODO: verify shrine, menus, cutscenes, death/retry and mission changes in normal play.
+    // Context banks show suspension, not its cause; owned-memory checks do not establish live lifecycle coverage.
     const DWORD incoming_error = GetLastError();
     BossCallScope scope; // Stop retains callbacks while one is in progress.
     const bool player_frame=reinterpret_cast<uint64_t>(actor)==boss_session.player;

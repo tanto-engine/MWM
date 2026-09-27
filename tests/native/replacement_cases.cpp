@@ -513,7 +513,12 @@ static void airborne_cases() {
     put(skill,0x20,address(high_payload));
     high_payload[0x0B]=0;put(player.data(),0x470,uint32_t(0));
     put(player.data(),0x58,address(guard));put(player.data(),0x90,address(guard_row));
-    original_lookup=[](void*,uint32_t,uint32_t* bank) { *bank=0;return address(skill); };
+    original_lookup=[](void*,uint32_t,uint32_t* bank) {
+        // Supply the original guard skill descriptor before the production lookup adapts it.
+        // Report bank zero so the test can observe the private import changing bank ownership.
+        // Return only static fixture memory; no live action bank participates in this call.
+        *bank=0;return address(skill);
+    };
     boss_native_bindings=0;boss_skill_bindings[0]={2,4,15,0,0,0,0};publish();
     {
         DispatchReason reason=Disabled;DispatchCommand request{};ReplacementScope scope(player.data(),request,reason);
@@ -599,8 +604,16 @@ static void tracking_cases() {
     static uint8_t controller[0xA0]{},movement[0x100]{},target[0xF00]{},target_actor[0x800]{},component[0x10]{},profile[0x10]{},target_current[0xD0]{},target_payload[0xB0]{};
     static uint64_t registry=0x123456,handle=0x1234000000012345ULL,result=0,camera=0x987654;
     static unsigned calls=0,scenario=0;
-    native_set_yaw=[](void* node,float angle) {assert(node==movement);put(node,0x54,angle);++calls;SetLastError(990);};
+    native_set_yaw=[](void* node,float angle) {
+        // Accept yaw writes only on the owned movement component, never the target or camera.
+        // Count each committed turn and write the same field used by the native setter.
+        // Deliberately change LastError so the outer hook must preserve its promised error state.
+        assert(node==movement);put(node,0x54,angle);++calls;SetLastError(990);
+    };
     native_locked_target=[](const uint64_t* value) {
+        // Resolve the fixture handle while injecting lifecycle changes inside the lookup callback.
+        // Clear ownership, movement or action fields to test the production post-lookup revalidation.
+        // Return the controlled target and alter LastError to exercise callback error preservation.
         assert(scenario<24 && *value==handle);
         if (scenario==13) put(player.data(),8,uint64_t(0));
         if (scenario==14) put(controller,0x40,handle+1);
@@ -747,10 +760,10 @@ static void slam_cases() {
 }
 
 static void frost_cases() {
-    boss_frost_milliseconds=750; // Explicit historical engine-policy fixture; production now fixes the native window.
     // Exercise same-stance rejection, genuine double edges and the exact750ms expiry.
     // Keep sampling continuous while testing controller/lifecycle resets and conflicting inputs.
     // Then pass the native Ki Pulse fields through the actual frame dispatcher and import adapter.
+    boss_frost_milliseconds=750; // Explicit historical engine-policy fixture; production now fixes the native window.
     static uint8_t walk[0xD0]{},walk_payload[0xB0]{};
     put(walk,0x20,address(walk_payload));walk[0x40]=1;walk_payload[0x0B]=4;
     for (const auto& movement : {std::array<uint32_t,2>{0xC61,2030},{0xC9E,3030},{0xCDB,4030},

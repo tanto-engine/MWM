@@ -1,3 +1,6 @@
+# Offline regression cases for compiled move dispatch and its owned-memory native fixtures.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import contextlib
 import copy
 import io

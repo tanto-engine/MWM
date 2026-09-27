@@ -25,6 +25,9 @@ GAME_DEVICE = dict(backend='xinput', slot=0, name='Nioh game controller')
 
 
 def controller_selection(calibration):
+    # Convert the selected controller into the native session's numbering scheme.
+    # Python uses slots 0–3; the native value reserves 0 for automatic selection and uses 1–4 for explicit slots.
+    # Reject unsupported slot values before a different player's controller could be selected.
     slot = calibration.get('controller_slot')
     if slot is not None and (type(slot) is not int or not 0 <= slot < 4):
         raise ValueError('Choose automatic selection or XInput controller 1 to 4')
@@ -32,7 +35,9 @@ def controller_selection(calibration):
 
 
 def _button_map(device, button_map=None):
-    # A supplied calibration is evidence of labels; a generic device name is not.
+    # Translate a controller's saved button bits into Nioh-facing logical buttons.
+    # XInput is already logical; WinMM needs a reviewed DS4 layout or an explicit one-to-one calibration.
+    # Distinct power-of-two bits prevent two controls from silently becoming the same binding.
     if device['backend'] == 'xinput':
         return {bit:bit for bit in BUTTON_LABELS}
     if device['backend'] != 'winmm':
@@ -55,6 +60,9 @@ def _button_map(device, button_map=None):
 
 
 def game_button_mask(device, mask, button_map=None):
+    # Translate one saved button choice into the game's button namespace.
+    # Require the exact single-button entry in the selected controller's mapping.
+    # An unsupported raw bit raises instead of being guessed from the controller's name.
     mapping = _button_map(device, button_map)
     if type(mask) is not int or mask not in mapping:
         raise ValueError('Saved binding has no standard gamepad equivalent')
@@ -96,16 +104,25 @@ def saved_buttons(device, buttons, lt, rt, button_map=None):
 class BindingCapture:
     """Consume selected controller observations; return one saved/logical button."""
     def __init__(self, calibration):
+        # Prepare a temporary listener for one controller's next binding input.
+        # Keep its identity and raw-to-logical map together so device changes cannot change button meaning.
+        # Reset capture to require a released controller before accepting any press.
         self.device = calibration['device']
         self.mapping = _button_map(self.device, calibration.get('button_map'))
         self.matches = True
         self.reset()
 
     def reset(self):
+        # Start binding again from a neutral controller state.
+        # Clear both the release observation and completed-result latch.
+        # This prevents held buttons or reconnects from being mistaken for a new deliberate choice.
         self.neutral = self.complete = False
         self.status = 'Release all buttons, then press one input'
 
     def process(self, event):
+        # Accept one deliberate press from the selected controller after all buttons are released.
+        # Reject other devices, reconnect gaps, mixed chords and inputs absent from the calibrated map.
+        # Return both saved and logical masks; the trainer edits its form without immediately saving a preset.
         if (event.get('backend'), event.get('slot')) != (self.device['backend'], self.device['slot']):
             return None
         if event['kind'] in ('input_device', 'input_unavailable'):

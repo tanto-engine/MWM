@@ -14,9 +14,8 @@ static DWORD WINAPI fake_input(DWORD slot, XINPUT_STATE* state) {
     // Provide deterministic per-slot XInput responses to the native sampler.
     // Expose controlled packets and connection errors while checking seqlock publication.
     // Reconnect and multiple-controller cases must not fabricate input from uninitialized state.
-    // Device calls can take longer than the external poll interval. Keep the
-    // last complete snapshot readable while collecting the next one; marking
-    // it unavailable here caused false disconnects on otherwise connected pads.
+    // Device calls can exceed the external poll interval; keep the last complete snapshot readable meanwhile.
+    // Marking collection as unavailable previously caused false disconnects on connected pads.
     assert(!(published->sequence & 1));
     ++calls[slot];
     if (!codes[slot]) {

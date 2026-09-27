@@ -104,6 +104,9 @@ struct
 // Returns INVALID_HOOK_POS if not found.
 static UINT FindHookEntry(LPVOID pTarget)
 {
+    // Local Tanto note: Use the original function address as the registry key, not the detour or trampoline.
+    // Search initialized entries and return an index sentinel when no address matches.
+    // The caller holds the library lock so registry growth or removal cannot race the lookup.
     UINT i;
     for (i = 0; i < g_hooks.size; ++i)
     {
@@ -117,6 +120,9 @@ static UINT FindHookEntry(LPVOID pTarget)
 //-------------------------------------------------------------------------
 static PHOOK_ENTRY AddHookEntry()
 {
+    // Local Tanto note: Allocate the registry lazily and double its capacity when full.
+    // Return an uninitialized entry for MH_CreateHook to populate after trampoline construction.
+    // Reallocation can invalidate prior entry pointers; the caller holds the library lock.
     if (g_hooks.pItems == NULL)
     {
         g_hooks.capacity = INITIAL_HOOK_CAPACITY;
@@ -142,6 +148,9 @@ static PHOOK_ENTRY AddHookEntry()
 //-------------------------------------------------------------------------
 static VOID DeleteHookEntry(UINT pos)
 {
+    // Local Tanto note: Fill the removed position with the last entry, so hook indices are intentionally unstable.
+    // Try shrinking oversized storage; a failed shrink leaves removal successful.
+    // The caller releases the removed trampoline separately before deleting its entry.
     if (pos < g_hooks.size - 1)
         g_hooks.pItems[pos] = g_hooks.pItems[g_hooks.size - 1];
 
@@ -162,6 +171,9 @@ static VOID DeleteHookEntry(UINT pos)
 //-------------------------------------------------------------------------
 static DWORD_PTR FindOldIP(PHOOK_ENTRY pHook, DWORD_PTR ip)
 {
+    // Local Tanto note: Map a suspended instruction boundary in relocated code back to the original function.
+    // Handle the above-entry hot patch and x64 relay as well as copied prologue instructions.
+    // Zero means no recognized boundary; ProcessThreadIPs then leaves that context unchanged.
     UINT i;
 
     if (pHook->patchAbove && ip == ((DWORD_PTR)pHook->pTarget - sizeof(JMP_REL)))
@@ -185,6 +197,9 @@ static DWORD_PTR FindOldIP(PHOOK_ENTRY pHook, DWORD_PTR ip)
 //-------------------------------------------------------------------------
 static DWORD_PTR FindNewIP(PHOOK_ENTRY pHook, DWORD_PTR ip)
 {
+    // Local Tanto note: Map an original prologue instruction boundary to its copied instruction in the trampoline.
+    // Paired old/new offsets account for rewritten calls and jumps changing instruction lengths.
+    // Return zero outside known boundaries rather than guessing an instruction position.
     UINT i;
     for (i = 0; i < pHook->nIP; ++i)
     {
@@ -198,6 +213,9 @@ static DWORD_PTR FindNewIP(PHOOK_ENTRY pHook, DWORD_PTR ip)
 //-------------------------------------------------------------------------
 static VOID ProcessThreadIPs(HANDLE hThread, UINT pos, UINT action)
 {
+    // Local Tanto note: Inspect only control registers of an already suspended thread.
+    // Select original-to-trampoline or reverse translation from the enable/disable action.
+    // Queued application selects direction per hook; only recognized boundaries update the context.
     // If the thread suspended in the overwritten area,
     // move IP to the proper address.
 
@@ -262,6 +280,9 @@ static VOID ProcessThreadIPs(HANDLE hThread, UINT pos, UINT action)
 //-------------------------------------------------------------------------
 static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 {
+    // Local Tanto note: Collect peer threads of this process; suspending the calling patch thread would deadlock.
+    // Grow a heap-owned ID array and check Toolhelp record size before reading ownership fields.
+    // Release the array on failure; otherwise Freeze and Unfreeze own its remaining lifetime.
     BOOL succeeded = FALSE;
 
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
@@ -327,6 +348,9 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 //-------------------------------------------------------------------------
 static MH_STATUS Freeze(PFROZEN_THREADS pThreads, UINT pos, UINT action)
 {
+    // Local Tanto note: Initialize a thread snapshot and suspend accessible peers before patching code.
+    // Translate each suspended instruction pointer for the requested hook transition.
+    // Mark failed suspensions with zero so Unfreeze never resumes threads this call did not suspend.
     MH_STATUS status = MH_OK;
 
     pThreads->pItems   = NULL;
@@ -368,6 +392,9 @@ static MH_STATUS Freeze(PFROZEN_THREADS pThreads, UINT pos, UINT action)
 //-------------------------------------------------------------------------
 static VOID Unfreeze(PFROZEN_THREADS pThreads)
 {
+    // Local Tanto note: Resume only nonzero IDs retained by Freeze, using temporary handles for each.
+    // Close each handle and free the snapshot array after visiting all IDs.
+    // The caller must reach this path after patching even when an individual patch fails.
     if (pThreads->pItems != NULL)
     {
         UINT i;
@@ -392,6 +419,9 @@ static VOID Unfreeze(PFROZEN_THREADS pThreads)
 //-------------------------------------------------------------------------
 static MH_STATUS EnableHookLL(UINT pos, BOOL enable)
 {
+    // Local Tanto note: Write the relative entry jump or restore saved bytes under temporary writable protection.
+    // A hot-patch entry uses five bytes above the function plus a two-byte jump at its start.
+    // Flush the instruction cache and synchronize enabled/queued flags after the patch succeeds.
     PHOOK_ENTRY pHook = &g_hooks.pItems[pos];
     DWORD  oldProtect;
     SIZE_T patchSize    = sizeof(JMP_REL);
@@ -441,6 +471,9 @@ static MH_STATUS EnableHookLL(UINT pos, BOOL enable)
 //-------------------------------------------------------------------------
 static MH_STATUS EnableAllHooksLL(BOOL enable)
 {
+    // Local Tanto note: Skip suspension when every hook already has the requested state.
+    // Freeze once for the batch and patch only entries whose enabled flags differ.
+    // Stop at the first failure and resume peers; successful earlier patches are not rolled back.
     MH_STATUS status = MH_OK;
     UINT i, first = INVALID_HOOK_POS;
 
@@ -479,6 +512,9 @@ static MH_STATUS EnableAllHooksLL(BOOL enable)
 //-------------------------------------------------------------------------
 static VOID EnterSpinLock(VOID)
 {
+    // Local Tanto note: Serialize registry, heap and patch lifecycle operations with one interlocked flag.
+    // Contention yields a time slice initially, then sleeps one millisecond after 32 retries.
+    // Interlocked acquisition also orders access to the protected global state.
     SIZE_T spinCount = 0;
 
     // Wait until the flag is FALSE.
@@ -500,6 +536,9 @@ static VOID EnterSpinLock(VOID)
 //-------------------------------------------------------------------------
 static VOID LeaveSpinLock(VOID)
 {
+    // Local Tanto note: Publish protected registry changes before another caller acquires the flag.
+    // The interlocked exchange supplies the release barrier without another instruction.
+    // Public operations must reach this path on both success and failure.
     // No need to generate a memory barrier here, since InterlockedExchange()
     // generates a full memory barrier itself.
 
@@ -509,6 +548,9 @@ static VOID LeaveSpinLock(VOID)
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_Initialize(VOID)
 {
+    // Local Tanto note: Create the private metadata heap under the lock; executable slots stay lazily allocated.
+    // A non-null heap is the initialization marker used by the other public entrypoints.
+    // A second call reports ALREADY_INITIALIZED without discarding existing hooks.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -539,6 +581,9 @@ MH_STATUS WINAPI MH_Initialize(VOID)
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_Uninitialize(VOID)
 {
+    // Local Tanto note: Disable every registered hook before freeing executable slots or metadata.
+    // A disable failure retains initialization and allocations so the caller can recover.
+    // Successful teardown clears the registry and heap for a later fresh initialization.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -578,6 +623,9 @@ MH_STATUS WINAPI MH_Uninitialize(VOID)
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOriginal)
 {
+    // Local Tanto note: Prepare a disabled hook by relocating the prologue into a library-owned trampoline.
+    // Save original patch bytes and instruction-boundary mappings before registering it.
+    // ppOriginal receives callable relocated code; failed construction frees its slot without enabling a patch.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -676,6 +724,9 @@ MH_STATUS WINAPI MH_CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID *ppOrigina
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_RemoveHook(LPVOID pTarget)
 {
+    // Local Tanto note: Disable an enabled target under suspended peers before releasing its trampoline.
+    // Only a successful disable permits removal; a patch failure retains the entry.
+    // Cached original-function pointers become invalid when their trampoline is released.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -721,6 +772,9 @@ MH_STATUS WINAPI MH_RemoveHook(LPVOID pTarget)
 //-------------------------------------------------------------------------
 static MH_STATUS EnableHook(LPVOID pTarget, BOOL enable)
 {
+    // Local Tanto note: Resolve a target or MH_ALL_HOOKS under the library lock.
+    // For one target, reject redundant changes before suspending peers and patching bytes.
+    // Pass the requested direction to Freeze so disabling maps suspended IPs back out of the trampoline.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -739,7 +793,7 @@ static MH_STATUS EnableHook(LPVOID pTarget, BOOL enable)
                 if (g_hooks.pItems[pos].isEnabled != enable)
                 {
                     FROZEN_THREADS threads;
-                    status = Freeze(&threads, pos, ACTION_ENABLE);
+                    status = Freeze(&threads, pos, enable ? ACTION_ENABLE : ACTION_DISABLE);
                     if (status == MH_OK)
                     {
                         status = EnableHookLL(pos, enable);
@@ -771,18 +825,27 @@ static MH_STATUS EnableHook(LPVOID pTarget, BOOL enable)
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_EnableHook(LPVOID pTarget)
 {
+    // Local Tanto note: Enable a created target, or every target when given MH_ALL_HOOKS.
+    // Delegate locking, state checks and suspension to the shared EnableHook path.
+    // The trampoline still provides the original implementation while the entrypoint is detoured.
     return EnableHook(pTarget, TRUE);
 }
 
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_DisableHook(LPVOID pTarget)
 {
+    // Local Tanto note: Restore entry bytes while retaining the registry entry and trampoline.
+    // Accept MH_ALL_HOOKS for batch disable; removal and uninitialization are separate operations.
+    // Forward errors so callers can retain resources when restoration did not succeed.
     return EnableHook(pTarget, FALSE);
 }
 
 //-------------------------------------------------------------------------
 static MH_STATUS QueueHook(LPVOID pTarget, BOOL queueEnable)
 {
+    // Local Tanto note: Change desired hook state in metadata without patching code or suspending threads.
+    // A target selects one entry; MH_ALL_HOOKS selects all registered entries.
+    // The latest request wins until MH_ApplyQueued compares it with the installed state.
     MH_STATUS status = MH_OK;
 
     EnterSpinLock();
@@ -821,18 +884,27 @@ static MH_STATUS QueueHook(LPVOID pTarget, BOOL queueEnable)
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_QueueEnableHook(LPVOID pTarget)
 {
+    // Local Tanto note: Record an enable request for one created hook or all hooks.
+    // Only queued metadata changes, so calls still follow the currently installed patch.
+    // MH_ApplyQueued must run before the queued detour becomes active.
     return QueueHook(pTarget, TRUE);
 }
 
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_QueueDisableHook(LPVOID pTarget)
 {
+    // Local Tanto note: Record a disable request without restoring target bytes yet.
+    // A later queue operation can replace this request before it is applied.
+    // MH_ApplyQueued performs suspension and restoration for the pending set.
     return QueueHook(pTarget, FALSE);
 }
 
 //-------------------------------------------------------------------------
 MH_STATUS WINAPI MH_ApplyQueued(VOID)
 {
+    // Local Tanto note: Check whether any desired state differs before paying for a thread freeze.
+    // Use one suspension interval and per-hook IP translation for the pending changes.
+    // Stop on the first patch failure; earlier applied entries retain their new states.
     MH_STATUS status = MH_OK;
     UINT i, first = INVALID_HOOK_POS;
 
@@ -885,6 +957,9 @@ MH_STATUS WINAPI MH_CreateHookApiEx(
     LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour,
     LPVOID *ppOriginal, LPVOID *ppTarget)
 {
+    // Local Tanto note: Resolve a named export from a module already loaded in this process.
+    // Optionally return its address and delegate trampoline creation to MH_CreateHook.
+    // Distinguish lookup failures from creation failures; this does not load a missing DLL.
     HMODULE hModule;
     LPVOID  pTarget;
 
@@ -906,12 +981,18 @@ MH_STATUS WINAPI MH_CreateHookApiEx(
 MH_STATUS WINAPI MH_CreateHookApi(
     LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour, LPVOID *ppOriginal)
 {
+    // Local Tanto note: Use named-export creation when the caller does not need the resolved target address.
+    // The original-function output still receives the trampoline from MH_CreateHook.
+    // Creation leaves the hook disabled until the caller chooses to enable it.
     return MH_CreateHookApiEx(pszModule, pszProcName, pDetour, ppOriginal, NULL);
 }
 
 //-------------------------------------------------------------------------
 const char *WINAPI MH_StatusToString(MH_STATUS status)
 {
+    // Local Tanto note: Map known status enums to their literal symbolic names using the local case macro.
+    // Return static storage with no allocation or initialization requirement.
+    // Unknown numeric values share a fallback rather than indexing beyond a table.
 #define MH_ST2STR(x)    \
     case x:             \
         return #x;

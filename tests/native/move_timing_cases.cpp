@@ -4,6 +4,9 @@
 #include "../../runtime/native/move_timing.h"
 
 int main() {
+    // Exercise startup acceleration, exact boundaries and a native tick already crossing startup end.
+    // Feed invalid recovery, speed and non-finite frames to verify the original delta is preserved.
+    // Combine whole-playback speed with startup speed to check their order without live animation state.
     const MoveTiming timing{54,12,8};
     assert(move_timing_valid(timing));
     for (const auto invalid : {MoveTiming{0,12,8}, MoveTiming{10,12,8}, MoveTiming{54,-1,8},

@@ -2,9 +2,11 @@
 
 using WeightFn = void (*)(void*,float);
 static WeightFn native_set_weight;
+// Each temporary override remembers both original and applied weight, plus actor identity, for conditional restoration.
 struct LaunchWeight { uint64_t actor,owner,collision,descriptor; float original,applied; };
 static LaunchWeight launch_weights[8]{};
 static volatile LONG launch_weight_count;
+// Snapshot hit evidence before the native setter, then compare after it returns to scope one reaction.
 struct LaunchHit { uint64_t owner,component; uint32_t counter; float vertical_impulse,grounded,airborne,boost; bool launcher; };
 
 static void restore_launch_weights(uint64_t actor, bool force, bool all=false) {

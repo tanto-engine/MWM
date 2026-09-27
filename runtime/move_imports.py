@@ -1,3 +1,6 @@
+# Validate authored boss-move definitions before they become native session imports.
+# Product definitions supply identities; source bytes and ownership checks remain authoritative.
+# See CODE_GUIDE.md for the player-readable flow and terminology.
 import json
 import sys
 from pathlib import Path

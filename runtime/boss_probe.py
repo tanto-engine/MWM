@@ -182,12 +182,9 @@ class LiveGame:
         return bool(kernel.GetExitCodeProcess(self.handle, C.byref(code)) and code.value == 259)
 
     def begin_sample(self):
-        # Discard memory-region classifications from the previous sample.
-        # Reuse region queries only within the next sampling pass.
-        # Avoid treating permissions from an earlier frame as current.
-        # A VirtualQueryEx result covers its entire homogeneous region. Reuse it
-        # only within this pass. RPM still validates/counts every actual copy.
-        # Permission queries and reads are inherently non-atomic either way.
+        # Forget memory-permission observations from the previous sample of the fight.
+        # VirtualQueryEx describes a whole memory region; reuse that result only within this pass.
+        # ReadProcessMemory still checks every copy because permissions can change between query and read.
         self._sample_regions = []
 
     def region(self, address):

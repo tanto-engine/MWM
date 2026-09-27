@@ -75,9 +75,15 @@ static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
 }
 static int boss_native_successor(unsigned slot, uint32_t key);
 static MoveSettings boss_settings(unsigned slot) {
+    // A zero speed marks an unset row; the fallback supplies 1x playback and baseline Ki Pulse settings.
+    // The remaining defaults are 40 percent Pulse, 25 fill frames and 24 hold frames.
+    // Return a value copy so private payload adaptation does not change the session table.
     return boss_move_settings[slot].speed ? boss_move_settings[slot] : MoveSettings{1,40,25,24,0};
 }
 static MoveTiming boss_move_timing(unsigned slot) {
+    // Match the full recorded move signature before changing startup or recovery frames.
+    // Table order resolves C79 variants; Frost bindings and an available successor select their special rows.
+    // Unlisted moves keep source recovery and 1x startup rather than inheriting another attack's timing.
     const auto& move=boss_imports[slot];
     bool frost_bound=false;
     for (auto frost : boss_frost_variants) frost_bound=frost_bound || frost==slot+1;
@@ -147,8 +153,7 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
     // Stable copies disable unowned combo inputs and append verified William pulse rows.
     // Native condition checks must retain control of recovery and paired contact.
     // TODO: confirm player-owned damage, Ki damage and R1 recovery in live combat.
-    // Appended native pulse rows and preserved cost prove the adapter contract,
-    // not the resulting hit ownership or live input acceptance.
+    // Native pulse rows and preserved cost verify adaptation, but not live hit ownership or input acceptance.
     uint64_t source_table = 0; uint16_t source_start = 0, source_count = 0;
     memcpy(&source_table, descriptor + 0x78, 8); memcpy(&source_start, descriptor + 0x80, 2);
     memcpy(&source_count, descriptor + 0x82, 2);
@@ -581,9 +586,8 @@ static bool boss_set_camera(bool borrow, unsigned slot = boss_active_slot) {
     // Borrow or restore the retained paired-action camera package.
     // Use ownership checks and compare-exchange on the recorded component slot.
     // Restoration remains valid after camera selection changes but cannot overwrite a replacement.
-    // Two imported361/victim362 pairs and restoration were observed; the user
-    // confirmed string/grab playback. Wider enemy compatibility and interrupted
-    // paired recovery still need gameplay acceptance.
+    // Two imported361/victim362 pairs restored correctly; the user confirmed string/grab playback.
+    // Wider enemy compatibility and interrupted paired recovery still need gameplay acceptance.
     uint64_t camera = 0, current = 0;
     if (!boss_player_valid() || !copy_field(boss_session.player_owner+0x48,camera)
         || boss_session.player_camera_slot < camera+8 || boss_session.player_camera_slot > camera+24

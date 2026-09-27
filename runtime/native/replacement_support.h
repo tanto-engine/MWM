@@ -4,8 +4,11 @@ using LookupFn = uint64_t (*)(void*, uint32_t, uint32_t*);
 static LookupFn original_lookup;
 static void* lookup_target;
 static bool lookup_hook_created;
+// Pointers below borrow stack-owned command/reason values only during one action callback.
+// Thread-local storage and ReplacementScope restore the previous context when callbacks nest.
 struct ReplacementCall { void* actor; DispatchCommand* command; DispatchReason* reason; };
 static thread_local ReplacementCall replacement_call{};
+// Retain a pending tap/hold decision only for its originating descriptor, controller and player-context epoch.
 struct PendingHeavy {
     int64_t started;
     uint64_t origin;

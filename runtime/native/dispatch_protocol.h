@@ -2,6 +2,7 @@
 #include "trace_protocol.h"
 
 enum { DISPATCH_MAGIC = 0x3144494e, DISPATCH_VERSION = 1 };
+// These numeric rejection/acceptance codes are consumed by external trace readers; ordering is part of the ABI.
 enum DispatchReason : uint32_t {
     Disabled = 0, IneligibleRequest, NonNullContext, UnstableCommand, NotArmed,
     WrongGeneration, StaleHeartbeat, Released, Expired, SequenceConsumed,
@@ -26,6 +27,8 @@ static inline bool player_context_ready(uint32_t context) {
 }
 
 // External publisher writes this region only. Matching positive markers commit it.
+// Times are QPC ticks, not milliseconds; generation identifies the runtime and chord_sequence identifies one gesture.
+// The DLL checks both sequence markers around its copy before trusting any publisher-supplied pointer or timing.
 struct DispatchCommand {
     volatile LONG64 sequence_begin;
     int64_t heartbeat_qpc, edge_qpc, expires_qpc;
@@ -38,6 +41,7 @@ struct DispatchCommand {
     volatile LONG64 sequence_end;
 };
 // DLL writes this region only. A new generation requires a fresh explicit publish.
+// Keep publisher command writes separate from runtime acknowledgements to avoid competing writers on the same fields.
 struct DispatchControl {
     uint32_t magic, version, command_size, reserved0; // Low 16 bits: context flags; high 16: epoch.
     int64_t qpc_frequency;

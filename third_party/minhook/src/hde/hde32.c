@@ -13,6 +13,9 @@
 
 unsigned int hde32_disasm(const void *code, hde32s *hs)
 {
+    // Local Tanto note: Decode one x86 instruction into caller-owned metadata by reading the supplied code bytes directly.
+    // Prefix/opcode tables identify ModR/M, SIB, displacement and immediate fields needed for relocation.
+    // Return the consumed length and flag malformed encodings; callers must also check F_ERROR.
     uint8_t x, c, *p = (uint8_t *)code, cflags, opcode, pref = 0;
     uint8_t *ht = hde32_table, m_mod, m_reg, m_rm, disp_size = 0;
 

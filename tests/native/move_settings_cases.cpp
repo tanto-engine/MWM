@@ -3,6 +3,9 @@
 #undef main
 
 int main() {
+    // Run the frame dispatcher at 0.5x and 1.5x against owned player and payload fixtures.
+    // Check private Ki Pulse fields and playback deltas while shared payload and frame cursor stay unchanged.
+    // Paired actions, Frost playback and a neutral player must retain the native delta despite configured speed.
     LARGE_INTEGER f;QueryPerformanceFrequency(&f);frequency=f.QuadPart;
     for (float rate : {.5f,1.5f}) {
         reset();boss_move_settings[0]={rate,65,18,35,0};

@@ -1,3 +1,6 @@
+# Resolve and retain the installed game resources needed by reviewed imported moves.
+# Product definitions supply identities; source bytes and ownership checks remain authoritative.
+# See CODE_GUIDE.md for the player-readable flow and terminology.
 import hashlib
 import json
 import mmap

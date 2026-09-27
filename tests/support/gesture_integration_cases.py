@@ -1,3 +1,6 @@
+# Offline regression cases for the path from controller samples through gesture recognition to dispatch.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import copy
 import ctypes as C
 from pathlib import Path

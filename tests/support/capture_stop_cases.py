@@ -1,3 +1,6 @@
+# Offline regression cases for cooperative recording stop and unverified encounter evidence.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import contextlib
 import io
 import json
@@ -104,6 +107,9 @@ class FakeGame:
 
 class CaptureStopTests(unittest.TestCase):
     def test_scout_keeps_enemy_transition_metadata_without_assigning_boss(self):
+        # Keep useful enemy transition evidence when the encounter identity is unknown.
+        # Exercise scouting with bounded transition metadata instead of guessing a boss from the chosen name.
+        # Player context remains separate and unassigned enemies do not become verified bosses.
         with patch.object(probe,'metadata',wraps=probe.metadata) as read:
             _,events=self.run_capture(FakeGame(),boss=None)
         self.assertTrue(any(event.get('role')=='unassigned' for event in events))

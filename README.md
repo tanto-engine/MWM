@@ -1,5 +1,7 @@
 # Tanto Engine
 
+New to the code? Start with [CODE_GUIDE.md](CODE_GUIDE.md), which explains the Nioh concepts, file roles and implementation flow.
+
 Private developer tooling and native runtime implementation for building game mods. This repository has no user-facing GUI. Products select a backend, data and capabilities, then build independent executables. Users never need the development checkout.
 
 | Repository | Owns | Consumer distribution |
@@ -132,6 +134,6 @@ Offline validation covers signature rejection, timing boundaries, retained priva
 | Latency | Correlate input sample, recognized gesture, dispatch and first changed animation frame on one clock; record sampling uncertainty before altering polling or startup. |
 | Native semantics | Capture damage, Ki damage, hitbox/contact and unknown record fields against controlled baselines; matching bytes alone do not establish their meaning. |
 
-Further executable builds/releases and live gameplay verification are deferred. No readiness receipt is implied by the offline checks.
+Recorder 0.2.0-alpha.1 is a published private prerelease. Later source documentation and native hook maintenance do not replace that immutable package. New EXEs must follow RELEASES.md; live gameplay acceptance remains separate.
 
-The contributor UI now lives entirely in Recorder: dark resizable widgets, a registered global hotkey, required encounter names, descriptions, and background export. Engine's read-only scout path retains at most 32 transition rows for unassigned enemies (none for the identified player); this preserves candidate string evidence without inventing boss attribution. Known boss captures keep their existing requested limit. The existing test entrypoints cover the recorder's UI lifecycle and data boundaries alongside Sword. No game control or new EXE release is part of this review.
+The contributor UI now lives entirely in Recorder: dark resizable widgets, a registered global hotkey, required encounter names, descriptions, and background export. Engine's read-only scout path retains at most 32 transition rows for unassigned enemies (none for the identified player); this preserves candidate string evidence without inventing boss attribution. Known boss captures keep their existing requested limit. The existing test entrypoints cover the recorder's UI lifecycle and data boundaries alongside Sword. Offline review does not control the game or establish live acceptance.

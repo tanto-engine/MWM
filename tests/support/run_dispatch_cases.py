@@ -1,3 +1,6 @@
+# Offline regression cases for controller/session ownership and cooperative dispatcher shutdown.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import contextlib
 import ctypes as C
 import io
@@ -159,6 +162,9 @@ class DispatchTests(unittest.TestCase):
                     '--seconds', '.4', '--outdir', str(folder/'result')]
             changed=False
             def poll(self):
+                # Supply the next test-controlled controller sample to the dispatcher.
+                # Keep the observation stream deterministic while the production dispatch loop runs.
+                # This fixture feeds data directly and does not read a physical controller or send game input.
                 nonlocal changed
                 if calibration_change and not changed:
                     value=json.loads(calibration.read_text())
@@ -191,6 +197,9 @@ class DispatchTests(unittest.TestCase):
         return calls, status, instances[0] if instances else None
 
     def test_calibration_edits_require_reacquisition_but_identical_rewrite_does_not(self):
+        # Check whether controller-calibration changes invalidate an active dispatch session.
+        # Compare a meaningful configuration change with rewriting identical content.
+        # Only changed binding identity should force reacquisition; filesystem timestamps alone are insufficient.
         for change in ('slot','map','touch'):
             calls,status,command=self.exercise_main(calibration_change=change)
             self.assertEqual(calls,['start','stop'])
@@ -198,6 +207,9 @@ class DispatchTests(unittest.TestCase):
             self.assertEqual(any('Controller calibration changed' in error for error in status['errors']),change!='touch')
 
     def test_prepared_controller_selection_must_match_before_start(self):
+        # Reject dispatch when the prepared session used a different controller selection.
+        # Compare the current calibration with the selection embedded in session data.
+        # This prevents a valid-looking preset from starting against the wrong controller's native observations.
         calls,_,_=self.exercise_main(prepared_selection=2)
         self.assertEqual(calls,[])
 

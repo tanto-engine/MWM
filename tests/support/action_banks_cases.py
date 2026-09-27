@@ -1,3 +1,6 @@
+# Offline regression cases for bank-scoped native action lookup and invalid record rejection.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 from pathlib import Path
 import struct
 import sys

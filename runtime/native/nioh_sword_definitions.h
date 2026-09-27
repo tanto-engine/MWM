@@ -13,10 +13,14 @@ struct SwordMoveSignature {
 };
 
 static constexpr bool sword_move_matches(const SwordMoveSignature& source, const MoveImport& move, const MoveAdapter& adapter) {
+    // An action key alone is ambiguous across source banks and recorded motions.
+    // Require motion, flags, adapter kind, transition count and recovery to identify the exact layout.
+    // Only this complete match permits a recorded sword timing or airborne rule to apply.
     return source.key==move.key && source.motion==move.motion && source.flags==move.flags
         && source.kind==adapter.kind && source.transition_count==move.transition_count && source.recovery==move.recovery_frame;
 }
 
+// Rows are recorded signatures, not a contiguous key range: duplicate keys distinguish adapter kinds.
 static constexpr SwordMoveSignature sword_airborne_sources[]={
     {0xC71,1050,0,2,18,-1}, {0xC71,1050,0,5,18,-1}, {0xC72,5000,0,4,17,-1},
     {0xC73,5001,0,4,18,-1}, {0xC74,5002,0x1BCE0000,4,75,20},
@@ -24,12 +28,18 @@ static constexpr SwordMoveSignature sword_airborne_sources[]={
 };
 
 static bool airborne_sword(const MoveImport& move, const MoveAdapter& adapter) {
+    // Exclude entries with an explicit next_variant link before consulting airborne signatures.
+    // Accepted rows describe recorded airborne phases, including the isolated-jump adapter kind.
+    // Moves reusing an action key cannot inherit airborne adaptation without the other signature fields.
     if (move.next_variant!=-1) return false;
     for (const auto& source : sword_airborne_sources) if (sword_move_matches(source,move,adapter)) return true;
     return false;
 }
 
 static bool sword_player_template(const MoveAdapter& adapter) {
+    // Validate the William attack that supplies player input, stance and recovery transitions.
+    // Compare key, motion, transition count and recovery with the five recorded templates.
+    // Replacement kind 1 is restricted to CF5..CF7; skill entries may use the other stance templates.
     struct Template { uint32_t key; int32_t motion; uint16_t count; int16_t recovery; };
     constexpr Template entries[]={
         {0xCF5,4300,46,38}, {0xCF6,4310,46,29}, {0xCF7,4320,44,33},
@@ -42,6 +52,7 @@ static bool sword_player_template(const MoveAdapter& adapter) {
     return false;
 }
 
+// Recovery and startup belong to one matched row; optional gates distinguish identical source bytes used by different skills.
 struct SwordTimingDefinition {
     SwordMoveSignature source;
     MoveTiming timing;
@@ -50,6 +61,8 @@ struct SwordTimingDefinition {
 };
 
 static inline int sword_string_successor(const MoveImport& move) {
+    // Positive results name the next action key; zero ends a recognized string and -1 means unrecognized.
+    // Require recorded flags, motion progression and row count before reusing a next-press transition.
     // These reviewed strings reuse William's next-press rows, never an automatic recording edge.
     struct String { uint32_t keys[5]; int32_t motion; unsigned count; };
     constexpr String strings[]={{{0xBBF,0xC63,0xC64,0xC65,0xC66},2100,5},
@@ -63,6 +76,7 @@ static inline int sword_string_successor(const MoveImport& move) {
 }
 
 // First applicable row owns recovery and startup together. All unlisted phases keep source timing.
+// Numeric action keys are hexadecimal while motion IDs and frame counts are decimal; they are different namespaces.
 static constexpr SwordTimingDefinition sword_timing_definitions[]={
     {{0xC64,1220,0x184C0000,0,28,65},{54,30,2}},
     {{0xC66,1230,0x184C0000,0,22,90},{78,0,1}},
@@ -75,6 +89,9 @@ static constexpr SwordTimingDefinition sword_timing_definitions[]={
     {{0xC79,5014,0x194C0000,2,75,-1},{21,8,2}}
 };
 static_assert([]() constexpr {
+    // Check every constant timing row, including rows gated by Frost bindings or successor availability.
+    // Invalid recovery/startup combinations fail compilation before they can become runtime policy.
+    // The separate session validator checks imported resources; this assertion checks definitions only.
     for (const auto& definition : sword_timing_definitions)
         if (!move_timing_valid(definition.timing)) return false;
     return true;

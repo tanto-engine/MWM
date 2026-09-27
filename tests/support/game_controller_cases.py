@@ -1,3 +1,6 @@
+# Offline regression cases for native controller observations, logical mappings and press-to-bind.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import ctypes as C
 from pathlib import Path
 import sys
@@ -162,12 +165,18 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(self.backend.read(0),(1167,None))
 
     def test_triggers_compile_in_both_saved_namespaces(self):
+        # Keep trigger bindings equivalent in XInput and saved DS4 layouts.
+        # Translate both saved representations through the production logical-button mapping.
+        # A hardware namespace difference must not change which Nioh control the binding means.
         self.assertEqual(controller.game_button_mask(DEVICE,64),0x400)
         self.assertEqual(controller.game_button_mask(DEVICE,128),0x800)
         self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,128,127),0x400)
         self.assertEqual(controller.saved_buttons(controller.GAME_DEVICE,0,127,128),0x800)
 
     def test_explicit_slot_never_falls_back_to_another_pad(self):
+        # Ensure selecting a particular controller does not silently accept another connected pad.
+        # Present observations for the available slots while the selected slot is unavailable.
+        # Explicit selection must remain explicit across connection changes.
         backend=controller.GameController(self.trace,{'device':DEVICE,'controller_slot':1})
         self.sample(slot=1,buttons=0x2100,connected=[0,1])
         self.assertEqual(backend.read(0)[1]['buttons'],20)
@@ -175,8 +184,14 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(backend.read(0),(1167,None))
 
     def test_capture_requires_release_single_press_and_reconnect_release(self):
+        # Require release followed by one deliberate input during press-to-bind.
+        # Feed held buttons, chords and reconnect events through the same capture state machine used by the trainer.
+        # Only a clean single press may complete capture, and reconnecting must require release again.
         capture=controller.BindingCapture({'device':controller.GAME_DEVICE})
         def event(buttons,edge='previous_observation',kind='input'):
+            # Build one synthetic input observation for the capture state-machine test.
+            # Keep device identity fixed while the caller varies buttons and event kind.
+            # This supplies data directly and never sends a controller press to Windows or Nioh.
             return dict(kind=kind,backend='xinput',slot=0,buttons=buttons,
                         axes={'lt':0,'rt':0},edge_basis=edge)
         self.assertIsNone(capture.process(event(0x100,'unknown')))
@@ -195,6 +210,9 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(capture.process(event(0x100))['logical_mask'],0x100)
 
     def test_calibrated_winmm_layout_and_unknown_modes(self):
+        # Accept an explicit valid WinMM calibration while rejecting unsupported layouts.
+        # Exercise malformed mappings and controller backend identities.
+        # A controller's name alone must not authorize an assumed button layout.
         device=dict(DEVICE,product=1)
         mapping={'16':0x100,'4':0x2000}
         self.assertEqual(controller.game_button_mask(device,4,mapping),0x2000)
@@ -206,6 +224,9 @@ class GameInputTests(unittest.TestCase):
         with self.assertRaises(ValueError): controller.binding_buttons({'backend':'hid'})
 
     def test_selection_and_capture_preserve_logical_masks(self):
+        # Check the conversion between saved controller selection and logical binding results.
+        # Exercise selection bounds and the capture result's saved/logical masks.
+        # The same physical choice must remain recognizable after crossing the native observation interface.
         for value in (-1,4,True,'0'):
             with self.assertRaises(ValueError): controller.controller_selection({'controller_slot':value})
         calibration={'device':DEVICE,'lb_mask':16,'controller_slot':2}
@@ -218,8 +239,16 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(capture.process(dict(base,axes={'lt':128,'rt':0}))['logical_mask'],0x400)
 
     def test_capture_uses_saved_mask_from_the_native_observer(self):
+        # Translate game-facing controller observations back into the saved calibration namespace.
+        # Feed a native-observer input and inspect the captured raw and logical identities.
+        # Saving the game's bit directly would corrupt bindings for layouts such as DS4/WinMM.
         capture=controller.BindingCapture({'device':DEVICE})
-        reader=ControllerReader(backends=[self.backend],clock=lambda:1.0,rescan_seconds=.1)
+        reader=ControllerReader(backends=[self.backend],clock=lambda: (
+            # Give the controller fixture a fixed monotonic time.
+            # Deterministic timestamps keep connection and edge assertions independent of test execution speed.
+            # This fake clock does not change Windows or game time.
+            1.0
+        ),rescan_seconds=.1)
         results=[]
         for sequence,buttons in ((2,0x2000),(4,0),(6,0x2000)):
             self.sample(sequence,buttons=buttons)
@@ -229,10 +258,18 @@ class GameInputTests(unittest.TestCase):
         self.assertEqual(results,[dict(mask=4,logical_mask=0x2000,label='Circle / B')])
 
     def test_capture_rejects_an_unmapped_game_button_in_a_chord(self):
+        # Reject a chord containing a game button missing from a partial calibration.
+        # Do not let translation erase the unknown extra button and leave an apparently valid single press.
+        # A complete release and supported single input remain necessary for binding.
         calibration={'device':dict(DEVICE,product=1),'button_map':{'4':0x2000}}
         backend=controller.GameController(self.trace,calibration)
         capture=controller.BindingCapture(calibration)
-        reader=ControllerReader(backends=[backend],clock=lambda:1.0)
+        reader=ControllerReader(backends=[backend],clock=lambda: (
+            # Give the controller fixture a fixed monotonic time.
+            # Deterministic timestamps keep connection and edge assertions independent of test execution speed.
+            # This fake clock does not change Windows or game time.
+            1.0
+        ))
         for sequence,buttons in ((2,0),(4,0xA000)):
             self.sample(sequence,buttons=buttons)
             for event in reader.poll():

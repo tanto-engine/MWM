@@ -1,3 +1,6 @@
+# Offline regression cases for OS controller observations, connection changes and trigger edges.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import sys
 from pathlib import Path
 import unittest
@@ -122,6 +125,9 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.reader.status()["unexpected_error_events"], 0)
 
     def test_trigger_threshold_crossing_survives_axis_bucketing(self):
+        # Check that a trigger crossing its press threshold still emits a meaningful input change.
+        # Use nearby analog values that would otherwise fall in the same reporting bucket.
+        # The logical trigger edge must survive noise reduction so press-to-bind and gestures do not miss it.
         self.setup_reader('xinput')
         self.backend.value = 0, dict(buttons=0, pov=None, axes={'lt':127, 'rt':0})
         self.inputs()

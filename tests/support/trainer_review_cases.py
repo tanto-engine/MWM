@@ -1,3 +1,6 @@
+# Offline regression cases for preset editing, migration and cancel/save behavior.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import copy
 import json
 import os
@@ -19,6 +22,9 @@ from gestures import ControllerGesture
 
 class PresetTests(unittest.TestCase):
     def test_cancel_save_does_not_apply_pending_edits(self):
+        # Cancel the trainer's Save dialog while the form contains unsaved changes.
+        # Compare configuration and application calls with the state before the dialog.
+        # Cancellation must not apply the pending moveset merely because Save was opened.
         app=SimpleNamespace(root=None,apply=Mock(return_value=True))
         with tempfile.TemporaryDirectory() as td, patch.object(trainer,'RUNTIME',Path(td)), \
              patch('tkinter.filedialog.asksaveasfilename',return_value=''):
@@ -190,7 +196,12 @@ class RuntimeRegistryTests(unittest.TestCase):
             messages = []
             app = SimpleNamespace(adopt_running=True, runtime_registration=None, catalogue_path=catalogue,
                 calibration=calibration, binding=binding, preset=dict(config.DEFAULT_PRESET),
-                cancel_capture=Mock(), button_selectors=[], slot_choice=SimpleNamespace(get=lambda:'Auto'),
+                cancel_capture=Mock(), button_selectors=[], slot_choice=SimpleNamespace(get=lambda: (
+                    # Supply the trainer fixture's automatic controller-selection label.
+                    # Match the UI accessor interface without creating another control widget.
+                    # The case exercises Save cancellation, not discovery of real connected controllers.
+                    'Auto'
+                )),
                 refresh_table=lambda: (
                     # Skip visual table refresh in the handle-free trainer fixture.
                     # Return without constructing any widget or touching display state.

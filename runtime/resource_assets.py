@@ -1,3 +1,6 @@
+# Read supported game archive entries and compare their structure and file fingerprints.
+# Product definitions supply identities; source bytes and ownership checks remain authoritative.
+# See CODE_GUIDE.md for the player-readable flow and terminology.
 import hashlib
 import struct
 

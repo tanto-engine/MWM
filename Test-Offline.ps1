@@ -1,3 +1,6 @@
+# Run both maintained offline suites from the repository root, regardless of the calling directory.
+# Pass the selected C++ compiler through CXX so native fixtures use the same toolchain as the Python checks.
+# Always restore the caller's directory and CXX value, including when a suite reports a nonzero exit.
 param(
     [string]$PythonRuntime = 'python',
     [string]$Cxx = 'g++'

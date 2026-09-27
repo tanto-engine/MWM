@@ -1,3 +1,6 @@
+# Discover current actors and verify exact move/resource identities before enabling a moveset.
+# Product definitions supply identities; source bytes and ownership checks remain authoritative.
+# See CODE_GUIDE.md for the player-readable flow and terminology.
 import argparse
 import ctypes as C
 from ctypes import wintypes as W
@@ -268,6 +271,9 @@ def compiled_skill_bindings(configuration, imports):
 
 
 def compiled_move_settings(configuration, imports, policy=None):
+    # Build playback speed and Ki Pulse settings for each imported action phase.
+    # A phase inherits its string's root settings unless it has its own reviewed override.
+    # Paired animation flags force native speed and baseline Pulse settings so synchronized roles stay aligned.
     configuration=validate_preset(configuration)
     policy=validate_move_policy(policy if policy is not None else
         read_json(DATA/'move-policy.json',dict(schema_version=1,moves={})), SPEED_MOVES)

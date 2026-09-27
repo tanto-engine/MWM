@@ -37,6 +37,9 @@ PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifie
 
 
 def move_capabilities():
+    # Tell the trainer which reviewed moves can actually be configured.
+    # Join readable catalogue names to implemented imports and their supported binding/speed roles.
+    # A raw recording or catalogue entry alone never becomes a playable menu choice.
     from catalogue import load_catalogue, iter_moves
     names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
     ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + _sword['moves'])

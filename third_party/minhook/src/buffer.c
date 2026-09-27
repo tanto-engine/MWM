@@ -67,12 +67,18 @@ PMEMORY_BLOCK g_pMemoryBlocks;
 //-------------------------------------------------------------------------
 VOID InitializeBuffer(VOID)
 {
+    // Local Tanto note: The global block list starts zero-initialized; allocation remains lazy until a hook needs a slot.
+    // This lifecycle entrypoint intentionally allocates nothing and does not reset existing buffers.
+    // MH_Initialize calls it while holding the library lock.
     // Nothing to do for now.
 }
 
 //-------------------------------------------------------------------------
 VOID UninitializeBuffer(VOID)
 {
+    // Local Tanto note: Detach the complete executable-block list before releasing its pages.
+    // Each VirtualFree releases block metadata and every trampoline slot stored in that page.
+    // The caller must disable hooks first so patched entries no longer target these pages.
     PMEMORY_BLOCK pBlock = g_pMemoryBlocks;
     g_pMemoryBlocks = NULL;
 
@@ -88,6 +94,9 @@ VOID UninitializeBuffer(VOID)
 #if defined(_M_X64) || defined(__x86_64__)
 static LPVOID FindPrevFreeRegion(LPVOID pAddress, LPVOID pMinAddr, DWORD dwAllocationGranularity)
 {
+    // Local Tanto note: Search lower addresses on allocation-granularity boundaries near the hooked function.
+    // Skip occupied allocations and stop at the supplied minimum or a failed query.
+    // Return a candidate only; GetMemoryBlock still has to reserve it with VirtualAlloc.
     ULONG_PTR tryAddr = (ULONG_PTR)pAddress;
 
     // Round down to the allocation granularity.
@@ -119,6 +128,9 @@ static LPVOID FindPrevFreeRegion(LPVOID pAddress, LPVOID pMinAddr, DWORD dwAlloc
 #if defined(_M_X64) || defined(__x86_64__)
 static LPVOID FindNextFreeRegion(LPVOID pAddress, LPVOID pMaxAddr, DWORD dwAllocationGranularity)
 {
+    // Local Tanto note: Search higher addresses on allocation-granularity boundaries within the permitted jump range.
+    // Advance past each occupied region and round upward to align the next allocation candidate.
+    // A free query result is not a reservation; another thread could allocate there before VirtualAlloc.
     ULONG_PTR tryAddr = (ULONG_PTR)pAddress;
 
     // Round down to the allocation granularity.
@@ -150,6 +162,9 @@ static LPVOID FindNextFreeRegion(LPVOID pAddress, LPVOID pMaxAddr, DWORD dwAlloc
 //-------------------------------------------------------------------------
 static PMEMORY_BLOCK GetMemoryBlock(LPVOID pOrigin)
 {
+    // Local Tanto note: Reuse a page with a free slot, otherwise allocate an executable page and build its slot free list.
+    // On x64, restrict pages to pOrigin +/- 1 GiB so the entry jump can reach a nearby relay.
+    // The first slot-sized region holds block bookkeeping; subsequent slots hold trampolines.
     PMEMORY_BLOCK pBlock;
 #if defined(_M_X64) || defined(__x86_64__)
     ULONG_PTR minAddr;
@@ -246,6 +261,9 @@ static PMEMORY_BLOCK GetMemoryBlock(LPVOID pOrigin)
 //-------------------------------------------------------------------------
 LPVOID AllocateBuffer(LPVOID pOrigin)
 {
+    // Local Tanto note: Take one fixed-size trampoline slot from a reachable executable block.
+    // Unlink it and increase the page count while the caller owns the library lock.
+    // Return library-owned memory that must later go through FreeBuffer, not HeapFree.
     PMEMORY_SLOT  pSlot;
     PMEMORY_BLOCK pBlock = GetMemoryBlock(pOrigin);
     if (pBlock == NULL)
@@ -265,6 +283,9 @@ LPVOID AllocateBuffer(LPVOID pOrigin)
 //-------------------------------------------------------------------------
 VOID FreeBuffer(LPVOID pBuffer)
 {
+    // Local Tanto note: Find the owning 4 KiB page by rounding down the allocated slot address.
+    // Return the slot to that page and release the page only when its used count reaches zero.
+    // The caller must ensure no hook still needs this trampoline before releasing it.
     PMEMORY_BLOCK pBlock = g_pMemoryBlocks;
     PMEMORY_BLOCK pPrev = NULL;
     ULONG_PTR pTargetBlock = ((ULONG_PTR)pBuffer / MEMORY_BLOCK_SIZE) * MEMORY_BLOCK_SIZE;
@@ -305,6 +326,9 @@ VOID FreeBuffer(LPVOID pBuffer)
 //-------------------------------------------------------------------------
 BOOL IsExecutableAddress(LPVOID pAddress)
 {
+    // Local Tanto note: Inspect page metadata rather than calling or decoding the proposed hook address.
+    // Accept committed memory with one of the executable protection bits.
+    // This page-level filter does not prove that a function prologue can be relocated.
     MEMORY_BASIC_INFORMATION mi;
     VirtualQuery(pAddress, &mi, sizeof(mi));
 

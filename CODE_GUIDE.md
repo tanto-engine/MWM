@@ -1,0 +1,59 @@
+# Read the Engine as a Nioh player
+
+Tanto Engine is the private workshop. SKM supplies the sword moveset and its menu; Recorder collects observations. A recording is evidence of what a boss did, not code that William can immediately execute. The Engine checks source identities, adapts reviewed moves, interprets your controls and manages the resources needed while those moves run.
+
+Start with `runtime/engine_config.py` for selectable moves and settings, then `runtime/prepare_session.py` for the checks required before enabling them. `build_product.py` decides what reaches each EXE. Each named function and small callback has a short explanation; comments inside larger functions explain ordering, ownership or byte-layout constraints.
+
+Maintain 3–5 direct opening comments per function/callback: explain its player-facing purpose, how it works and the important constraint. Add inline comments for non-obvious mechanisms; avoid guessing meanings for unknown game fields or repeating the function name as filler.
+
+## Vocabulary used in the comments
+
+| Code word | Meaning in a fight | Why the implementation distinguishes it |
+|---|---|---|
+| actor / owner | William or another character, and the object owning its behavior | Addresses can change after death or a mission load; the new object must be rediscovered. |
+| action / motion / timing | The move's behavior, animation clip and timed events | A matching animation number alone does not identify the complete move. |
+| bank / package | A character's collection of move records or game resources | The same action number can mean different moves in different banks. |
+| descriptor / payload | The move's index card and its detailed behavior data | The Engine checks their identity before making private adapted copies. |
+| transition / graph | A rule allowing one move phase to lead into another, and the connected phases | Recording two consecutive attacks does not prove that one has a native link to the other. |
+| adapter | The rules that make a reviewed source move usable by William | Recovery, stance, effects, paired roles and voice routing can need different treatment. |
+| hook / trampoline | A detour through our code, and a preserved route through the original game instructions | The original instructions must remain reachable while callbacks or suspended threads may still use them. |
+| pointer / RVA / offset | A current memory address, a location relative to the executable, or a position inside a record | They are different kinds of number; an old address is not a permanent move identity. |
+| mask / bit | Several yes/no buttons or stance flags stored in one integer | A saved DS4 bit can differ from the game's XInput bit for the same physical control. |
+| ABI / struct | The exact binary form Python and native code agree to exchange | Field order, byte size, signedness and padding must match, even if readable names look right. |
+| ownership / generation | Which session owns a resource, or which incarnation of a device/session produced an event | Stale input and resources must not cross a death, reload or remapping boundary. |
+| hash / fingerprint | A comparison value for exact source or file identity | Matching identities support validation; they do not prove enjoyable or correct gameplay. |
+| atomic write / snapshot | Publishing a complete replacement file, or examining one consistent copy of data | Readers must not combine half of an old configuration with half of a new one. |
+
+Unknown source words and raw byte arrays are retained as opaque evidence unless their meaning is established. A comment must not turn a suspected interpretation into a game rule.
+
+## Follow the control flow
+
+1. `engine_config.py`, `engine_policy.py` and `move_imports.py` validate public presets, private policy and reviewed imports. Public speeds are bounded; Ki Pulse authoring, physics and Frost timing remain developer policy.
+2. `prepare_session.py` finds the current player/source records and checks the exact supported game build, action signatures, transitions and resources. `runtime_session.py` writes the fixed binary session layout used by `native/boss_session_schema.h`.
+3. `supervisor.py`, `native_loader.py` and `process_support.py` manage worker/process lifetime. Process ID plus creation time distinguishes the current game from a reused Windows PID. Remote-thread completion matters separately from closing its handle.
+4. `controller_reader.py` reads supported OS controllers. `game_controller.py` reads the native observer's selected controller. `gestures.py` turns coherent observations into taps, holds and chords; `run_dispatch.py` publishes bounded requests. Neither a reconnect nor stale observation creates a fresh press.
+5. `native/observer.cpp` connects native callbacks. `boss_support.h` owns imported action adaptation; related headers handle replacements, continuations, Frost Moon, tracking, launch policy and voices. The original source records and privately owned replacements have different lifetimes.
+6. `load_resources.py`, `resource_assets.py`, `profile_resources.py`, `motion_resources.py` and `timing_resources.py` resolve the game's existing archive entries. `native/resource_loader.cpp` keeps the required action/motion/timing/camera resources alive. Shared package records cannot be pruned without proving their dependencies.
+7. `trace_reader.py` reads bounded observations for diagnostics and controller interpretation. `nioh_memory.py`, `action_banks.py` and `boss_probe.py` provide read/discovery primitives. Recorder receives only these read-only capabilities plus `controller_reader.py`.
+
+`nioh_sword.py` and `native/nioh_sword_definitions.h` retain researched identities and recipes for this specific backend. `catalogue.py` maintains readable move definitions and validation. `project_paths.py` separates Engine code from product-owned data and writable runtime state. These source families do not yet implement ten arbitrary weapons.
+
+For the C/C++ details, continue with [the native walkthrough](runtime/native/NATIVE-WALKTHROUGH.md): hook entry/exit, private copies, shared layouts and thread/resource lifetime.
+
+## Voice substitution
+
+A move's timing table can request a boss vocal at a particular frame. Preparation verifies the configured event index, frame and sound hash. `native/voice_support.h` recognizes only reviewed events belonging to William's active private imported action. `observer.cpp` then calls the original sound handler with the retained William attack row (`AV_WILLIAM_ATTACK_MIDDLE`, hash `0x97933946`). The imported move supplies the cue moment; the native William row retains its playback probability/variation and owner routing. Other actors and unmatched sounds use the original handler unchanged. This reuses game audio, and still needs an audible gameplay check.
+
+## Data, dependencies and tests
+
+- `tests/support/*.py` supplies cases to the two entrypoints. `tests/native/*` uses owned memory, fake records and controlled native calls; it must never treat offline success as gameplay acceptance. `tests/native/fixtures/*.json` and the stub header are serialized fixtures, not live addresses to inject.
+- Run only `Test-Offline.ps1` for the maintained validation workflow. Its resource suite also checks the supported game archives on disk. Runtime resource files and generated harnesses under ignored build folders are outputs, not source to annotate manually.
+- `third_party/minhook` provides instruction detours; HDE64 decodes instruction lengths so patches do not split an instruction. Keep its upstream license/provenance and document local changes. Header byte tables are decoder data, not lists of Nioh moves.
+- `requirements-build.txt` pins the packaging tool. `.gitignore` keeps generated native files and session state out of commits; `.gitattributes` controls text/binary treatment.
+- JSON has no comment syntax. Fixture schemas, field names and the adjacent source validators explain those records; inserting comments into raw JSON/JSONL would change evidence or break parsing. Captures, images, audio and fonts belong to their product repositories and remain unmodified by this documentation pass.
+
+## Product direction and releases
+
+For the planned weapon mods, one consumer application can share hooks, controller interpretation and resource ownership while choosing a reviewed adapter/configuration for the equipped weapon. Keep reusable source resources separate from weapon-specific bindings; load/share packages according to their active owners. Keep raw capture history out of EXEs. Repository merging is optional and has not been performed.
+
+Engine remains private, Recorder remains a separate read-only product, and SKM is the first weapon product. See `RELEASES.md` for version, pin, test, checksum and immutable-tag rules. Source comments do not update an existing EXE; any new distributable build must receive an unused release version.

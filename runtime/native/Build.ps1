@@ -1,3 +1,6 @@
+# Compile bundled MinHook as C, then link the production runtime and resource loader as separate x64 DLLs.
+# The runtime translation unit includes observer.cpp with production feature switches; do not compile it twice.
+# Outputs stay under native/build; building performs no injection, controller sampling or game-process lookup.
 param([string]$MinHook = (Join-Path $PSScriptRoot '..\..\third_party\minhook'))
 $ErrorActionPreference = 'Stop'
 $source = $PSScriptRoot

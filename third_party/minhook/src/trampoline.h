@@ -28,6 +28,8 @@
 
 #pragma once
 
+// Local Tanto note: these packed structs are machine-code bytes, so compiler padding would corrupt jump encodings.
+// Relative operands are measured from the end of the emitted instruction; absolute forms embed an address.
 #pragma pack(push, 1)
 
 // Structs for writing x86/x64 instructions.
@@ -87,6 +89,8 @@ typedef struct _JCC_ABS
 
 #pragma pack(pop)
 
+// Local Tanto note: this construction record borrows a caller-allocated executable slot; it does not allocate one.
+// oldIPs/newIPs pair instruction starts before/after relocation for suspended-thread context translation.
 typedef struct _TRAMPOLINE
 {
     LPVOID pTarget;         // [In] Address of the target function.

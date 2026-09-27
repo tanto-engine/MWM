@@ -7,6 +7,8 @@
 // The game constructs file resources on its update thread, then queues native
 // archive I/O and decoding. Keep the constructor's reference until process exit:
 // a mission's actor lifetime must never own an imported animation package.
+// The fixed request ABI carries up to four package names/sizes and a 32-byte profile identity.
+// birth is the process creation time, preventing a stale request from matching a reused PID.
 struct ResourceRequest {
     uint32_t magic, version, pid, count;
     uint64_t birth;
@@ -14,6 +16,8 @@ struct ResourceRequest {
     uint64_t sizes[4];
     char names[4][80];
 };
+// Phase/error and completion fields publish progress from native callbacks to the external launcher.
+// Published object addresses remain backed by retained resources, even after the temporary frame hook is disabled.
 struct ResourceState {
     uint32_t magic, version;
     volatile LONG phase, error;
@@ -188,9 +192,8 @@ static void submit_resources() {
     // Queue retained action, timing, motion and camera resources on the game thread.
     // Use the researched native constructors and archive callbacks after dependencies exist.
     // Mission actors must never own the imported packages or determine their lifetime.
-    // TODO: verify retained package and combat-effect dependencies across the
-    // mission matrix. Cold-mission playback is confirmed for the baseline moves;
-    // retaining these four resources does not prove every later effect dependency.
+    // TODO: verify retained package and combat-effect dependencies across the mission matrix.
+    // Baseline cold-mission playback is confirmed; retaining four packages does not prove every later effect dependency.
     state->thread = GetCurrentThreadId();
     auto allocator = game_function<void* (*)()>(0xFA7080)();
     // FA7080 is the 24 MB file-object pool, not a motion-data allocator. The

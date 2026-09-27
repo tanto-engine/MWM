@@ -1,3 +1,6 @@
+# Offline regression cases for reviewed move choices, public/private settings and native session encoding.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import copy
 import struct
 import unittest
@@ -11,6 +14,9 @@ import runtime_session_cases as sessions
 
 
 def empty_preset():
+    # Start capability checks with every optional move replacement disabled.
+    # Deep-copy the baseline so one test cannot mutate the default used by another.
+    # Individual cases enable only the binding or graph whose behavior they are proving.
     return dict(copy.deepcopy(config.DEFAULT_PRESET),tap_move=None,hold_move=None,low_heavy=None,
         stance_holds=dict(low=None,mid=None,high=None),frost_moon=dict(low=None,mid=None,high=None),
         skill_bindings=[],okatsu_grapple=False,mid_light_ender=False,string_enabled=False,move_settings={})
@@ -18,10 +24,16 @@ def empty_preset():
 
 class CapabilityTests(unittest.TestCase):
     def fixture(self,preset):
+        # Create a native-shaped session for an edited preset without attaching to Nioh.
+        # Reuse the maintained session fixture and serialize it through the production ABI encoder.
+        # Returning both objects lets cases compare readable settings with their exact native bytes.
         fixture=sessions.RuntimeSessionTests();fixture.setUp();fixture.configured_fixture(preset)
         return fixture,encode_session(fixture.config,fixture.pid,fixture.born)
 
     def test_reviewed_graphs_compile_for_every_chord_stance_and_frost_destination(self):
+        # Check each reviewed graph in every supported stance and Frost destination.
+        # Enable one move at a time and verify its compiled import index reaches the correct binding.
+        # This proves configuration wiring, not whether that move feels correct in a live fight.
         for move in config.CHORD_MOVES:
             for stance in ('low','mid','high'):
                 with self.subTest(move=move,stance=stance):
@@ -35,6 +47,9 @@ class CapabilityTests(unittest.TestCase):
                     self.assertGreater(fixture.config['frost_variants'][('low','mid','high').index(stance)],0)
 
     def test_speed_and_developer_pulse_reach_graph_phases_and_abi(self):
+        # Check that graph phases inherit their root's speed and developer Ki Pulse policy.
+        # Decode the actual session bytes at the move-settings offsets and compare every imported phase.
+        # Also check the trailing controller/reserved fields so layout drift cannot pass unnoticed.
         preset=empty_preset();preset['tap_move']='jin_hayabusa.action_0c71'
         preset['move_settings']={preset['tap_move']:dict(speed=.5)}
         fixture,_=self.fixture(preset)
@@ -47,6 +62,9 @@ class CapabilityTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from('<II',encoded,6136),(0,0))
 
     def test_public_settings_reject_private_fields_and_frame_cuts(self):
+        # Keep public presets limited to supported playback choices.
+        # Try private policy fields, clip-boundary cuts, invalid numbers and out-of-range speeds.
+        # Also reject malformed developer Pulse policy rather than allowing invalid values into native session data.
         preset=empty_preset();move='okatsu.charged_rush'
         for fields in (dict(ki_pulse=KI_PULSE),dict(speed=1,start_frame=2),dict(speed=1,end_frame=30),
                        dict(speed=float('nan')),dict(speed=float('inf')),dict(speed=True),dict(speed=.24),dict(speed=2.01)):
@@ -61,6 +79,9 @@ class CapabilityTests(unittest.TestCase):
                 prepare.compiled_move_settings(preset,[],dict(schema_version=1,moves={move:dict(ki_pulse=pulse)}))
 
     def test_native_heavy_sources_follow_stance_and_controller_slot_is_bounded(self):
+        # Check that an all-stance heavy replacement resolves to the three native stance sources.
+        # Encode all supported controller selections and inspect the stored selection field.
+        # Reject negative, oversized and boolean slots before they can select unintended hardware.
         preset=empty_preset();preset['skill_bindings']=[dict(source='heavy_attack',stance='any',move='okatsu.charged_rush')]
         fixture,encoded=self.fixture(preset)
         self.assertEqual([(b['key'],b['stances']) for b in fixture.config['skill_bindings']],[(0xCF5,1),(0xC7A,2),(0xCB7,4)])
@@ -73,6 +94,9 @@ class CapabilityTests(unittest.TestCase):
                 encode_session(dict(fixture.config,controller_selection=selection),fixture.pid,fixture.born)
 
     def test_capabilities_exclude_unreviewed_recordings_and_migration_keeps_bindings(self):
+        # Keep unimplemented catalogue entries out of the trainer's playable choices.
+        # Check supported role flags and migrate an older preset with obsolete public Frost tuning.
+        # Migration must reproduce the baseline without modifying the caller's original dictionary.
         caps=config.move_capabilities();moves={m['id']:m for m in caps['moves']}
         self.assertEqual({m['id'] for m in caps['moves'] if m['chord']},set(config.CHORD_MOVES))
         self.assertFalse(moves['jin_hayabusa.action_03b2']['speed'])
@@ -84,6 +108,9 @@ class CapabilityTests(unittest.TestCase):
         self.assertEqual(old['frost_startup_speed'],2)
 
     def test_frost_shared_import_retains_one_stance_owner(self):
+        # Reject two bindings that would give the same imported graph contradictory stance ownership.
+        # Check both public preset validation and the lower-level session encoder.
+        # A matching single stance is allowed; widening its encoded mask afterward must still be rejected.
         preset=empty_preset();move='okatsu.charged_rush'
         preset['frost_moon']['high']=move
         preset['skill_bindings']=[dict(source='tiger_sprint',stance='any',move=move)]
@@ -95,6 +122,9 @@ class CapabilityTests(unittest.TestCase):
             encode_session(fixture.config,fixture.pid,fixture.born)
 
     def test_recording_metadata_cannot_promote_native_sources_or_moves(self):
+        # Prove that adding a promising-looking recording does not make it executable.
+        # Inject catalogue metadata and compare the capabilities/source menu with the reviewed baseline.
+        # Unknown source or move IDs must still fail preset validation.
         from catalogue import load_catalogue
         catalogue=load_catalogue();before=config.move_capabilities()
         catalogue['moves'].append(dict(id='unreviewed.captured_action',name='New recording',

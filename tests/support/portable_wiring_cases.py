@@ -1,3 +1,6 @@
+# Offline regression cases for product staging, portable paths and retained developer policy.
+# Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
+# Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
 import hashlib
 import importlib.util
 import json
@@ -18,6 +21,9 @@ from process_support import worker_command
 
 class Portability(unittest.TestCase):
     def test_authored_developer_pulse_policy_survives_product_staging(self):
+        # Verify that a reviewed developer Ki Pulse policy reaches the packaged Sword data.
+        # Stage a copied product tree and inspect the retained policy without creating an EXE.
+        # This protects the packaging boundary while keeping private policy out of public preset controls.
         from build_product import stage_product
         policy=dict(schema_version=1,moves={'okatsu.charged_rush':dict(ki_pulse=dict(percent=65,fill_frames=18,hold_frames=35))})
         with tempfile.TemporaryDirectory() as temporary:

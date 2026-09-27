@@ -28,6 +28,8 @@
 
 #pragma once
 
+// Local Tanto note: an x64 slot includes relocated instructions and a relay to the detour.
+// The allocator reserves a whole page, subdivides it into slots, and tracks free slots in-place.
 // Size of each memory slot.
 #if defined(_M_X64) || defined(__x86_64__)
     #define MEMORY_SLOT_SIZE 64

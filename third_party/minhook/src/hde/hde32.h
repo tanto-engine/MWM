@@ -21,6 +21,8 @@
  */
 #include "pstdint.h"
 
+// Local Tanto note: F_* report decoded fields and errors; callers must inspect F_ERROR as well as length.
+// Immediate/displacement widths select union members in the packed result below.
 #define F_MODRM         0x00000001
 #define F_SIB           0x00000002
 #define F_IMM8          0x00000004
@@ -57,6 +59,8 @@
 #define PREFIX_OPERAND_SIZE 0x66
 #define PREFIX_ADDRESS_SIZE 0x67
 
+// Local Tanto note: the result stores a decoded instruction, not pointers into the source buffer.
+// Packing preserves the upstream C ABI; MinHook uses these widths and flags to rewrite relative operands.
 #pragma pack(push,1)
 
 typedef struct {
