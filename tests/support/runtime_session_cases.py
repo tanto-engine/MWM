@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 MOD_ROOT = ROOT.parent/'MWM'
+ORIGINAL_PRESET = json.loads((MOD_ROOT/'data/presets/sword-original.json').read_text())
 sys.path.insert(0, str(ROOT / 'runtime'))
 import native_loader as loader
 from runtime_session import encode_session, POINTER_FIELDS, SESSION_CONFIG, MOVE_IMPORT, MOVE_ADAPTER, MAGIC, VERSION
@@ -199,8 +200,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Verify the revised Mid somersault and High guard Izuna graphs and native-source bindings.
         # Reject incompatible graph ownership rather than letting one binding steal another's stance.
         import prepare_session as prepare
-        from engine_config import DEFAULT_PRESET
-        settings=copy.deepcopy(DEFAULT_PRESET);compiled=self.configured_fixture(settings)
+        settings=copy.deepcopy(ORIGINAL_PRESET);compiled=self.configured_fixture(settings)
         self.assertEqual([move['key'] for move in compiled['moves']],
             [0xC6E,0xC6F,0xC70,0xC79,0xC71,0xC72,0xC73,0xC74,0xC81,0xC82,0xC83,0xC75,0xC77,0xC78,0xC79,0xC7A,0x3B2,0x3B4,0x3B6,0xBBF,0xC63,0xC64,0xC65,0xC66])
         self.assertEqual((compiled['hold_stances'],compiled['frost_variants']), (1,[5,9,12]))
@@ -240,8 +240,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Low standalone C79 and high Izuna share source bytes but own distinct graphs.
         # Corrupt alias identity, native paired links, airborne phase metadata and stance ownership.
         # Neither source duplication nor configuration can force a paired action without contact.
-        from engine_config import DEFAULT_PRESET
-        compiled=self.configured_fixture(copy.deepcopy(DEFAULT_PRESET))
+        compiled=self.configured_fixture(copy.deepcopy(ORIGINAL_PRESET))
         moves=compiled['moves'];low,izuna=moves[3],moves[14]
         check_import_topology(moves,None)
         self.assertEqual((low['replacement']['player_key'],izuna['replacement']['player_key']),(0xCF5,0xCB7))

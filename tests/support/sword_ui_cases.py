@@ -64,7 +64,7 @@ class SwordConfigurationTests(unittest.TestCase):
         legacy=dict(DEFAULT_PRESET,schema_version=7,frost_window_seconds=.5,frost_startup_speed=3)
         legacy.pop('move_settings');legacy.pop('chord_stance')
         self.app.load_fields(validate_preset(legacy))
-        self.assertEqual(self.app.form(),DEFAULT_PRESET)
+        self.assertEqual(self.app.form(),dict(DEFAULT_PRESET,move_settings={},chord_stance='low'))
 
     def test_catalogue_research_rows_never_enter_playable_choices(self):
         # Compare trainer choices with the reviewed implementation capability list.
@@ -96,11 +96,16 @@ class SwordConfigurationTests(unittest.TestCase):
         # Compare the pending/saved state with the last valid configuration.
         # Validation failure must be visible and must not persist an out-of-range or malformed speed.
         label=next(iter(self.app.speed_choices));identifier=self.app.speed_choices[label]
+        before=self.app.speed_fields[identifier].get()
         self.app.speed_choice.set(label);self.app.select_speed();self.app.speed_value.set('nan')
         self.app.set_speed()
-        self.assertEqual(float(self.app.speed_fields[identifier].get()),1)
+        self.assertEqual(self.app.speed_fields[identifier].get(),before)
         self.app.speed_value.set('1.5');self.app.set_speed()
         self.assertEqual(self.app.form()['move_settings'][identifier],{'speed':1.5})
+        self.app.speed_value.set('1');self.app.set_speed()
+        self.assertEqual(self.app.form()['move_settings'][identifier],{'speed':1})
+        self.app.speed_value.set('');self.app.set_speed()
+        self.assertNotIn(identifier,self.app.form()['move_settings'])
         self.assertEqual(json.loads((self.folder/'controller-binding.json').read_text()),DEFAULT_PRESET)
 
     def test_switch_to_xinput_preserves_logical_controls_and_baseline(self):
@@ -108,7 +113,7 @@ class SwordConfigurationTests(unittest.TestCase):
         # Compare logical button meaning before and after the change and after baseline restoration.
         # Different device bit numbers must not turn the player's chosen chord into another physical input.
         self.app.device_choice.set('XInput controller 3');self.app.choose_controller()
-        self.assertEqual((self.app.form()['modifier_mask'],self.app.form()['trigger_mask']),(0x100,0x2000))
+        self.assertEqual((self.app.form()['modifier_mask'],self.app.form()['trigger_mask']),(0x100,0x400))
         self.assertEqual(self.app.calibration['controller_slot'],2)
         self.assertTrue(self.app.apply())
         self.assertEqual(json.loads((self.folder/'controller-calibration.json').read_text())['controller_slot'],2)
@@ -127,7 +132,7 @@ class SwordConfigurationTests(unittest.TestCase):
         self.app.device_choice.set('XInput controller 2');self.app.choose_controller()
         with patch('tkinter.filedialog.askopenfilename',return_value=str(path)):
             self.app.load()
-        self.assertEqual((self.app.form()['modifier_mask'],self.app.form()['trigger_mask']),(0x100,0x2000))
+        self.assertEqual((self.app.form()['modifier_mask'],self.app.form()['trigger_mask']),(0x100,0x400))
         self.assertEqual(self.app.calibration['controller_slot'],1)
         self.assertEqual(self.app.form()['skill_bindings'],DEFAULT_PRESET['skill_bindings'])
 

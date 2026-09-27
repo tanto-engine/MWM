@@ -1,7 +1,6 @@
 # Offline regression cases for preset editing, migration and cancel/save behavior.
 # Fixtures isolate game/process effects; these checks do not establish gameplay acceptance.
 # Loaded by the existing Engine test entrypoints through Test-Offline.ps1; see CODE_GUIDE.md.
-import copy
 import json
 import os
 from pathlib import Path
@@ -77,7 +76,7 @@ class PresetTests(unittest.TestCase):
         # Enable Flying Swallow, somersault and the recorded downward sword slash.
         # Reject malformed windows, unsupported skills and one import assigned to different stances.
         # Shared hold and Frost bindings may reuse a skill only within the same native stance.
-        preset=copy.deepcopy(config.DEFAULT_PRESET)
+        preset=json.loads((MOD_ROOT/'data/presets/sword-original.json').read_text())
         self.assertEqual(config.validate_preset(preset)['frost_moon'],
                          dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high='jin_hayabusa.action_0c75'))
         for field in ('frost_startup_speed','frost_window_seconds','ki_pulse'):
@@ -102,20 +101,22 @@ class PresetTests(unittest.TestCase):
         # Reload the saved calibration and reconnect with the bound controls held.
         # Persisted mappings remove recalibration work but do not authorize synthetic presses.
         calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
-        binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
+        binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET,
+                                           [dict(id=config.DEFAULT_PRESET['tap_move'])])
+        modifier=binding['modifier_mask'];chord=modifier|binding['trigger_mask']
         gate = ControllerGesture(calibration, binding, 1000)
         device = calibration['device']
         common = {k: device[k] for k in ('backend', 'slot')}
         gate.process(dict(kind='input_device', **device), 100)
-        gate.process(dict(kind='input', buttons=20, edge_basis='unknown', **common), 110)
+        gate.process(dict(kind='input', buttons=chord, edge_basis='unknown', **common), 110)
         self.assertFalse(gate.fields(1000)['armed'])
         gate.process(dict(kind='input_unavailable', **common), 1100)
         gate.process(dict(kind='input_device', **device), 1200)
-        gate.process(dict(kind='input', buttons=20, edge_basis='unknown', **common), 1210)
+        gate.process(dict(kind='input', buttons=chord, edge_basis='unknown', **common), 1210)
         self.assertFalse(gate.fields(2000)['armed'])
         gate.process(dict(kind='input', buttons=0, **common), 2100)
-        gate.process(dict(kind='input', buttons=20, **common), 2200)
-        gate.process(dict(kind='input', buttons=16, **common), 2250)
+        gate.process(dict(kind='input', buttons=chord, **common), 2200)
+        gate.process(dict(kind='input', buttons=modifier, **common), 2250)
         self.assertTrue(gate.fields(2251)['armed'])
         self.assertEqual(gate.fields(2251)['variant'], 0)
 

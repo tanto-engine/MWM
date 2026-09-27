@@ -26,7 +26,7 @@ SUPPORT = ROOT/'tests/support'
 sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime'), str(ROOT.parent/'tanto-recorder/src')]
 from catalogue import load_catalogue, save_catalogue, merge_recording
 from encounter_recording import reconstruct_capture
-from engine_config import DEFAULT_PRESET, binding_for_preset
+from engine_config import binding_for_preset
 from gestures import ControllerGesture
 from run_dispatch import CommandMap
 from runtime_session import encode_session, SESSION_CONFIG
@@ -116,7 +116,7 @@ class MoveWorkflow(unittest.TestCase):
                 for key in ('default_binding','adaptation','implementation'):
                     self.assertEqual(move[key],baseline[move['id']][key])
         calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
-        preset=dict(DEFAULT_PRESET,hold_move='okatsu.leaping_slash')
+        preset=dict(json.loads((MOD_ROOT/'data/presets/sword-original.json').read_text()),hold_move='okatsu.leaping_slash')
         binding = binding_for_preset(calibration,preset)
         session = copy.deepcopy(BOSS)
         session['config_tag'] = '123456789abcdef0'
