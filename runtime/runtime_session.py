@@ -2,7 +2,7 @@
 import re
 import struct
 from engine_policy import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, KI_PULSE, FROST_MILLISECONDS, FROST_STARTUP_SPEED, validate_launch_profiles, validate_tracking_rates
-from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
+from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, is_recorded_grounded, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
     'player', 'player_owner', 'source_action_resource', 'source_timing_resource', 'vtable',
@@ -63,7 +63,7 @@ def encode_session(config, pid, creation_filetime):
                         *voices, *([0] * (9-len(voices)))])
         adapter = adapters[index]
         if adapter is None:
-            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move):
+            if move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) or is_recorded_grounded(move):
                 raise ValueError('Player replacement is missing its native adapter')
             encoded_adapters.extend([0] * 11)
             continue
@@ -84,7 +84,7 @@ def encode_session(config, pid, creation_filetime):
             encoded_adapters.extend([*replacement_pointers, *fields, kind])
             continue
         expected = PLAYER_TEMPLATES
-        if (move['flags'] != PLAYER_REPLACEMENT_FLAGS and not (is_izuna_bridge(move) or is_airborne_sword(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
+        if (move['flags'] != PLAYER_REPLACEMENT_FLAGS and not (is_izuna_bridge(move) or is_airborne_sword(move) or is_recorded_grounded(move)) or any(type(value) is not int for value in fields) or fields[0] not in expected
                 or tuple(fields[1:]) != expected[fields[0]] or kind == 1 and fields[0] in player_keys
                 or kind == 1 and fields[0] not in (0xCF5, 0xCF6, 0xCF7)
                 or kind in (2, 4) and fields[0] not in STANCE_OPENERS.values()):
@@ -134,7 +134,7 @@ def encode_session(config, pid, creation_filetime):
     for binding in bindings:
         fields=[binding[field] for field in ('kind','stances','variant','key','motion','transition_count','flags')]
         kind,stances,variant,key,motion,rows,flags=fields
-        if any(type(value) is not int for value in fields) or kind not in (1,2,3) or not 0<stances<8 or not 0<variant<=len(moves):
+        if any(type(value) is not int for value in fields) or kind not in (1,2,3,4,5) or not 0<stances<8 or not 0<variant<=len(moves):
             raise ValueError('Invalid compiled skill binding')
         adapter=adapters[variant-1]
         if adapter is None and (kind==3 or moves[variant-1]['flags']!=0x184C0000):
@@ -144,6 +144,8 @@ def encode_session(config, pid, creation_filetime):
         signatures=(*NATIVE_SKILLS.values(),*((key,*PLAYER_TEMPLATES[key][:2],0x8000000594C0000) for key in STANCE_OPENERS.values()))
         if kind==1 and (key,motion,rows,flags) not in signatures or kind>=2 and any((key,motion,rows,flags)):
             raise ValueError('Unverified native skill signature')
+        if kind==4 and stances!=4 or kind==5 and stances!=1:
+            raise ValueError('Trial native source differs from its reviewed stance')
         if kind==1 and key in STANCE_OPENERS.values() and stances!=1<<list(STANCE_OPENERS.values()).index(key):
             raise ValueError('Native heavy source differs from its stance')
         for stance in range(3):

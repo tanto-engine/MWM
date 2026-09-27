@@ -49,7 +49,7 @@ static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
     // Native704E50 schedules these source effects;709002 applies their equipment command.
     // Jin rows46/47 select weapon slots by stance, so remove only those exact pure commands.
     // Preserve every other event and all shared source data; reject changed effect identities.
-    if (!boss_adapters[slot].kind) return true;
+    if (!boss_adapters[slot].kind || recorded_grounded(boss_imports[slot],boss_adapters[slot])) return true;
     static const uint8_t expected[0x80]={
         0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,
         0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,
@@ -131,6 +131,7 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
+        || (recorded_auto_successor(source)>0 && uint32_t(recorded_auto_successor(source))==key)
         || (sword_string_successor(source)>0 && uint32_t(sword_string_successor(source))==key)
         || (source.key==0xC79 && key==0xC7A)
         || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
@@ -292,6 +293,8 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             // The final strike disables this continuation instead of restarting the string.
             target=boss_native_successor(slot,next)>=0 ? int16_t(next) : int16_t(-1);
             memcpy(bodies[i]+0x14,&target,2);
+            if (boss_imports[slot].flags==0x184C0000 && boss_imports[slot].key>=0xD30 && boss_imports[slot].key<=0xD33)
+                bodies[i][0x0B]=0; // This recorded string advances with Square, not William's template Triangle.
             continue;
         }
         if (target == 0xD5F) memcpy(bodies[i]+0x20,&adapted_recovery,2);
@@ -314,6 +317,16 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         if (!copy_bytes(slice,rows,source_count*8)) return false;
         uint8_t automatic[64][0x30]{}; unsigned added=0;
         bool contact_found=boss_imports[slot].next_variant<0;
+        const int automatic_key=recorded_auto_successor(boss_imports[slot]);
+        if (automatic_key>0 && boss_native_successor(slot,uint32_t(automatic_key))>=0) {
+            auto* body=automatic[added++]; memset(body,0xff,0x30);
+            body[0x0A]=0; body[0x0F]=0;
+            const int16_t key=int16_t(automatic_key), start=40, end=INT16_MAX;
+            const uint32_t zero=0;
+            memcpy(body+0x10,&zero,4);memcpy(body+0x14,&key,2);body[0x16]=0;body[0x17]=0;
+            body[0x18]=0xff;body[0x19]=0x80;body[0x1A]=100;body[0x1B]=100;
+            memcpy(body+0x1C,&zero,4);memcpy(body+0x20,&start,2);memcpy(body+0x22,&end,2);
+        }
         bool source_end=false;
         for (unsigned i=0;i<source_count;++i) {
             uint8_t body[0x30], check_body[0x30]; int16_t target=0; uint16_t condition=0;
@@ -760,7 +773,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
     const unsigned private_slot = unsigned(command.reserved[1]);
     if (reason == Accepted) {
         const bool izuna=boss_imports[private_slot].key==0xC79 && boss_native_successor(private_slot,0xC7A)>=0;
-        if ((boss_imports[private_slot].flags == 0x594C0000 || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0))
+        if (((boss_imports[private_slot].flags == 0x594C0000 && !boss_adapters[private_slot].kind) || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0))
             && !boss_camera_available()) reason = BossBindingMismatch;
         int slot = int(private_slot);
         // Finish every reachable clone before starting the first attack. A

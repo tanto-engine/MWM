@@ -45,14 +45,32 @@ static bool motion_package_bounds(const uint8_t* bytes, size_t size) {
 
 using CreateMotionClip = void* (*)(const uint8_t*, uint32_t, void*);
 static bool decode_motion_clips(const uint8_t* bytes, size_t size, void* allocator,
-        CreateMotionClip create, uintptr_t* clips, uint32_t capacity, uint32_t& failed) {
+        CreateMotionClip create, uintptr_t* clips, uint32_t capacity, uint32_t& failed,
+        const uint32_t* keys=nullptr, uint32_t key_count=0) {
     // Construct validated clips while preserving the first allocation failure.
     // Walk bounded package offsets and publish only successfully created clip pointers.
     // The caller can release completed clips without touching a null factory result.
     failed = 0;
     if (!motion_package_bounds(bytes, size) || capacity != package_u32(bytes, 20)) return false;
+    if (key_count>32 || (key_count && !keys)) return false;
+    uint32_t selected[1024]{}, found=0;
+    if (key_count) {
+        // A bitset selects original clip indices without changing the package's lookup table.
+        // Resolve requested keys once; unrelated boss animations consume no native allocations.
+        // Missing dependencies reject the request before the first clip factory call.
+        const uint32_t hash=package_u32(bytes,40), slots=package_u32(bytes,hash);
+        for (uint32_t row=0;row<slots;++row) {
+            const uint32_t key=package_u32(bytes,hash+8+row*8), index=package_u32(bytes,hash+12+row*8);
+            if (index==UINT32_MAX) continue;
+            for (uint32_t request=0;request<key_count;++request) if (key==keys[request]) {
+                selected[index/32]|=1u<<(index%32);found|=1u<<request;
+            }
+        }
+        if (found!=(key_count==32 ? UINT32_MAX : (1u<<key_count)-1)) return false;
+    }
     const uint32_t offsets = package_u32(bytes, 32), sizes = package_u32(bytes, 36);
     for (uint32_t i = 0; i != capacity; ++i) {
+        if (key_count && !(selected[i/32]&(1u<<(i%32)))) continue;
         failed = i;
         const uint32_t at = package_u32(bytes, offsets + i * 4);
         if (!at) continue;

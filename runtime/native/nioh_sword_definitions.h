@@ -20,6 +20,27 @@ static constexpr bool sword_move_matches(const SwordMoveSignature& source, const
         && source.kind==adapter.kind && source.transition_count==move.transition_count && source.recovery==move.recovery_frame;
 }
 
+static bool recorded_grounded(const MoveImport& move, const MoveAdapter& adapter) {
+    // Admit only complete signatures matched against the new recording/archive evidence.
+    // The normal player-transition adapter owns input and exits; source resources own animation/contact.
+    // This excludes paired grabs and prevents a reused numeric ID from choosing another boss's rule.
+    constexpr SwordMoveSignature sources[]={
+        {0xD30,2000,0x184C0000,2,46,45},{0xD31,2010,0x184C0000,4,46,30},
+        {0xD32,2020,0x184C0000,4,46,35},{0xD33,2030,0x184C0000,4,42,-1},
+        {0xC6E,1010,0x19400000,2,10,-1},{0xC6F,1011,0x19400000,4,6,-1},
+        {0xD8D,5011,0x594C0000,2,27,120},{0xC6A,1130,0x40019480000ULL,2,9,-1}
+    };
+    for (const auto& source : sources) if (sword_move_matches(source,move,adapter)) return true;
+    return false;
+}
+
+static inline int recorded_auto_successor(const MoveImport& move) {
+    // Oda's selected two-hit Frost route continues at its recorded frame-40 branch.
+    // This explicit trial policy replaces the boss's input condition with one automatic second slash.
+    // Other recorded branches remain absent until separately reviewed.
+    return move.key==0xC6E && move.motion==1010 && move.flags==0x19400000 && move.transition_count==10 ? 0xC6F : -1;
+}
+
 // Rows are recorded signatures, not a contiguous key range: duplicate keys distinguish adapter kinds.
 static constexpr SwordMoveSignature sword_airborne_sources[]={
     {0xC71,1050,0,2,18,-1}, {0xC71,1050,0,5,18,-1}, {0xC72,5000,0,4,17,-1},
@@ -67,6 +88,9 @@ static inline int sword_string_successor(const MoveImport& move) {
     struct String { uint32_t keys[5]; int32_t motion; unsigned count; };
     constexpr String strings[]={{{0xBBF,0xC63,0xC64,0xC65,0xC66},2100,5},
         {{0xBC0,0xC6C,0xC6D,0,0},2300,3},{{0xC6E,0xC6F,0xC70,0,0},2400,3}};
+    if (move.flags==0x184C0000 && move.key>=0xD30 && move.key<=0xD33
+        && move.motion==2000+int32_t(move.key-0xD30)*10 && move.transition_count==(move.key==0xD33 ? 42 : 46))
+        return move.key==0xD33 ? 0 : int(move.key+1);
     if (move.flags!=0x194C0000ULL) return -1;
     for (const auto& string : strings) for (unsigned i=0;i<string.count;++i)
         if (move.key==string.keys[i] && move.motion==string.motion+int32_t(i)*10
@@ -86,7 +110,13 @@ static constexpr SwordTimingDefinition sword_timing_definitions[]={
     {{0xC83,5051,0x1BCE0000,4,75,-1},{30,0,1}},
     {{0xC78,5013,0x194C0000,4,74,-1},{29,0,1}},
     {{0xC79,5014,0x194C0000,2,75,-1},{54,12,1},0xC7A,false,true},
-    {{0xC79,5014,0x194C0000,2,75,-1},{21,8,2}}
+    {{0xC79,5014,0x194C0000,2,75,-1},{21,8,2}},
+    // Hideyori's final cancel boundary is95; Oda uses its frame40 follow-up then a trial recovery60.
+    // Sanada recovery128 follows the retained firing/reholster timeline; all three need gameplay tuning.
+    {{0xD33,2030,0x184C0000,4,42,-1},{95,0,1}},
+    {{0xC6E,1010,0x19400000,2,10,-1},{40,0,1}},
+    {{0xC6F,1011,0x19400000,4,6,-1},{60,0,1}},
+    {{0xC6A,1130,0x40019480000ULL,2,9,-1},{128,0,1}}
 };
 static_assert([]() constexpr {
     // Check every constant timing row, including rows gated by Frost bindings or successor availability.

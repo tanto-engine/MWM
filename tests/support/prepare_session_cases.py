@@ -232,7 +232,7 @@ class PreparationTests(unittest.TestCase):
              patch('boss_probe.discover') as discover:
             with self.assertRaisesRegex(ValueError, 'player candidate changed'):
                 prepare.fresh_profile(game)
-        resources.assert_called_once_with(game)
+            resources.assert_called_once_with(game, motion_keys=[1220, 1230])
         self.assertEqual(inspect.call_args.args[2], {'object':hex(handles[4]),'owner_like':hex(handles[5])})
         discover.assert_not_called()
 

@@ -231,5 +231,23 @@ int main() {
     boss_skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};assert(replacements_configured());
     boss_skill_bindings[0]={2,4,2,0,0,0,0};assert(replacements_configured());
     boss_skill_bindings[0]={};assert(!replacements_configured());
-    std::puts("native sword bindings passed: three mid-light enders, scoped Tiger Sprint, native running and disabled rejection");
+    // The trial follow-up reads the native high-heavy window, not a wall-clock delay or stick state.
+    // Test exact recovery onset and immediate invalidation by stance/action/signature changes.
+    // The memory is fixture-owned; this does not execute an attack in Nioh.
+    sword_reset(0);put(player.data(),0x470,uint32_t(0));put(player.data(),0x58,address(light.data()));
+    put(light.data(),0,uint32_t(0xCB7));put(light_payload.data(),0x20,int32_t(3300));
+    put(light_payload.data(),0x24,int16_t(58));put(player.data(),0x28,float(57));
+    assert(!high_heavy_recovery(address(player.data())));
+    put(player.data(),0x28,float(58));assert(high_heavy_recovery(address(player.data())));
+    put(player.data(),0x470,uint32_t(1));assert(!high_heavy_recovery(address(player.data())));
+    put(player.data(),0x470,uint32_t(0));put(light.data(),0,uint32_t(0xBB8));assert(!high_heavy_recovery(address(player.data())));
+    put(light.data(),0,uint32_t(0xCB7));put(light_payload.data(),0x20,int32_t(5011));assert(!high_heavy_recovery(address(player.data())));
+    MoveImport trial{};MoveAdapter adapter{};adapter.kind=2;
+    trial.key=0xD30;trial.motion=2000;trial.flags=0x184C0000;trial.transition_count=46;trial.recovery_frame=45;
+    assert(recorded_grounded(trial,adapter) && sword_string_successor(trial)==0xD31);
+    trial.motion=2001;assert(!recorded_grounded(trial,adapter) && sword_string_successor(trial)==-1);
+    trial.key=0xC6E;trial.motion=1010;trial.flags=0x19400000;trial.transition_count=10;trial.recovery_frame=-1;
+    assert(recorded_grounded(trial,adapter) && recorded_auto_successor(trial)==0xC6F);
+    trial.flags=0x194C0000;assert(!recorded_grounded(trial,adapter) && recorded_auto_successor(trial)==-1);
+    std::puts("native sword bindings passed: input ownership, recorded trial signatures and high-heavy recovery gate");
 }

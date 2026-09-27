@@ -132,7 +132,7 @@ class CapabilityTests(unittest.TestCase):
         with patch('catalogue.load_catalogue',return_value=catalogue):
             self.assertEqual(config.move_capabilities(),before)
         self.assertEqual({source['id'] for source in before['native_sources']},
-            {'tiger_sprint','dodge_attack','heavy_attack','guard_light'})
+            {'tiger_sprint','dodge_attack','heavy_attack','guard_light','light_attack','high_heavy_followup'})
         for source,move in (('captured_native_skill','okatsu.charged_rush'),('tiger_sprint','unreviewed.captured_action')):
             preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance='mid',move=move)]
             with self.assertRaisesRegex(ValueError,'Unsupported skill binding'):

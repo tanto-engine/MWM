@@ -65,7 +65,16 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
         || !copy_field(descriptor+0x20,payload)) return -1;
     const unsigned mask=1u<<(2-stance);
     for (const auto& binding : boss_skill_bindings) {
-        if (!binding.kind || binding.kind==3 || !(binding.stances&mask)) continue;
+        if (!binding.kind || binding.kind==3 || binding.kind==4 || !(binding.stances&mask)) continue;
+        if (binding.kind==5) {
+            // Match the native low-Square opener after the game has selected it.
+            // The graph borrows the verified low-heavy exit template but remaps continuation to Square.
+            // Running, dodging and stance-switch actions retain their original priorities.
+            if (key!=0xCF0 || !grapple_field(payload,0x20,int32_t(4100))
+                || !grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))) continue;
+            if (native_binding_context(command)) return int(binding.variant-1);
+            continue;
+        }
         if (binding.kind==1) {
             const bool dodge=binding.key==0xBC8 && (key==0xBC8 || key==0xBC9);
             const bool exact=(key==binding.key || dodge) && grapple_field(payload,0x20,binding.motion)

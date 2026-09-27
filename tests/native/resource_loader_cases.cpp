@@ -94,7 +94,7 @@ int main(int argc,char**) {
         return 0;
     }
     ResourceRequest incoming{};
-    incoming.magic=0x3152504e;incoming.version=3;incoming.pid=GetCurrentProcessId();incoming.count=4;
+    incoming.magic=0x3152504e;incoming.version=4;incoming.pid=GetCurrentProcessId();incoming.count=4;
     FILETIME born{},ended{},kernel{},user{};
     assert(GetProcessTimes(GetCurrentProcess(),&born,&ended,&kernel,&user));
     incoming.birth=(uint64_t(born.dwHighDateTime)<<32)|born.dwLowDateTime;
@@ -108,7 +108,7 @@ int main(int argc,char**) {
     assert(!GetHandleInformation(rejected_handle,&flags) && GetLastError()==ERROR_INVALID_HANDLE);
     reject_mapping=false;
     assert(NiohResourcesStart(&incoming)==0 && state && mapping && state->phase==1);
-    assert(state->version==3 && !memcmp(state->profile_identity,incoming.profile_identity,32));
+    assert(state->version==4 && !memcmp(state->profile_identity,incoming.profile_identity,32));
     submitting=1;submit_resources();
     assert(submitting==0 && state->phase==1 && !state->error && !state->objects[0]);
     state->objects[0]=0x123000;state->phase=3;

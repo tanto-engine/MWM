@@ -48,7 +48,7 @@ template<class T> static bool copy_field(uint64_t address, T& value) {
 #include "launcher_weight.h"
 #endif
 
-enum class ActionRequest { Native, Gesture, Chain, Heavy, Frost };
+enum class ActionRequest { Native, Gesture, Chain, Heavy, Frost, Followup };
 static bool observed_action_impl(void* actor, uint32_t key, void* context, ActionRequest request=ActionRequest::Native) {
     // Run the shared action hook with scoped gesture, chain and research policies.
     // Preserve native arguments and errors except for a fully validated imported substitution.
@@ -76,6 +76,7 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && reinterpret_cast<uint64_t>(actor)==boss_session.player)
         latch_native_frost();
     if (record_this && request==ActionRequest::Frost) reason=choose_frost_moon(command);
+    else if (record_this && request==ActionRequest::Followup) reason=choose_high_followup(command);
     else if (record_this && request==ActionRequest::Heavy) reason=choose_heavy(command);
     else if (record_this && request==ActionRequest::Chain) reason = choose_chain(actor, command);
     else
@@ -276,6 +277,13 @@ static float observed_frame(void* actor, float delta) {
         if (ready && pending_heavy.active) {
             SetLastError(native_error);
             observed_action_impl(actor,0,nullptr,ActionRequest::Heavy);
+        }
+    }
+    if (player_frame) {
+        if (!ready) high_followup_input={};
+        else {
+            SetLastError(native_error);
+            observed_action_impl(actor,0,nullptr,ActionRequest::Followup);
         }
     }
     if (InterlockedCompareExchange(&boss_active,0,0)

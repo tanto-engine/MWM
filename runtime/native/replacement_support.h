@@ -104,6 +104,57 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
     return reason;
 }
 
+struct HighFollowupInput {
+    int64_t sampled;
+    unsigned slot, epoch, spent_counter;
+    WORD buttons;
+    bool spent;
+};
+static HighFollowupInput high_followup_input{};
+
+static bool high_heavy_recovery(uint64_t player) {
+    // Permit the follow-up only while a native High heavy has reached its own recovery frame.
+    // A dodge, damage state, completed idle or stance change closes the opportunity immediately.
+    // Match the player family and motion as well as its action number before reading the window.
+    uint64_t current=0,payload=0,flags=0;uint32_t key=0,stance=0;
+    int32_t motion=-1;int16_t recovery=-1;float frame=0;
+    return copy_field(player+0x470,stance) && stance==0 && copy_field(player+0x58,current)
+        && copy_field(current,key) && key>=0xCB7 && key<=0xCB9 && copy_field(current+0x20,payload)
+        && copy_field(payload+0x18,flags) && flags==0x8000000594C0000ULL
+        && copy_field(payload+0x20,motion) && motion==3300+int32_t(key-0xCB7)*10
+        && copy_field(payload+0x24,recovery) && recovery>0 && copy_field(player+0x28,frame)
+        && frame>=float(recovery);
+}
+
+static DispatchReason choose_high_followup(DispatchCommand& command) {
+    // Accept one fresh Square press with LB held during the native High-heavy recovery window.
+    // Controller/epoch discontinuities require a new input edge; stick movement has no bearing on this gate.
+    // Reuse normal source validation and the action setter instead of skipping into an animation.
+    unsigned variant=0;
+    for (const auto& binding : boss_skill_bindings) if (binding.kind==4) variant=binding.variant;
+    if (!variant || !trace || !native_binding_context(command)) {high_followup_input={};return IneligibleRequest;}
+    GameInput sample{};unsigned slot=0;
+    if (!read_game_input(trace->header,sample) || !selected_game_controller(sample,slot)) {high_followup_input={};return IneligibleRequest;}
+    auto& state=high_followup_input;const WORD buttons=sample.buttons[slot];
+    if (sample.qpc==state.sampled) return IneligibleRequest;
+    const bool reset=!state.sampled || state.slot!=slot || state.epoch!=command.reserved[2]
+        || sample.qpc<state.sampled || sample.qpc-state.sampled>=dispatch->control.qpc_frequency/10;
+    const WORD pressed=buttons&~state.buttons;
+    if (reset) state={};
+    state.sampled=sample.qpc;state.slot=slot;state.epoch=unsigned(command.reserved[2]);state.buttons=buttons;
+    uint32_t counter=0;
+    if (reset || !(pressed&XINPUT_GAMEPAD_X) || !(buttons&XINPUT_GAMEPAD_LEFT_SHOULDER)
+        || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER) || !high_heavy_recovery(boss_session.player)
+        || !copy_field(boss_session.player+0xDC,counter) || (state.spent && state.spent_counter==counter)) return IneligibleRequest;
+    state.spent=true;state.spent_counter=counter;
+    const unsigned index=variant-1;const auto& move=boss_imports[index];
+    command.reserved[1]=index;command.desired_key=move.key;command.expected_motion=move.motion;
+    command.expected_descriptor=move.descriptor;command.expected_payload=move.payload;command.edge_qpc=sample.qpc;
+    const auto reason=validate_boss_source(command);
+    if (reason==Accepted) InterlockedIncrement64(&dispatch->control.dispatch_count);
+    return reason;
+}
+
 struct ReplacementScope {
     ReplacementCall previous;
     ReplacementScope(void* actor, DispatchCommand& command, DispatchReason& reason, DWORD error=GetLastError()) : previous(replacement_call) {
@@ -352,7 +403,7 @@ static bool replacements_configured() {
     // Native skill/chord bindings need lookup even when their destination uses baseline resources.
     // Baseline Okatsu sessions keep their established three-hook path.
     if (boss_native_bindings || boss_native_grapple) return true;
-    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2) return true;
+    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2 || binding.kind==5) return true;
     for (unsigned i=0; i<boss_import_count; ++i) if (boss_adapters[i].kind==1 || boss_adapters[i].kind==2) return true;
     return false;
 }

@@ -82,8 +82,8 @@ def stage_product(project, destination):
     if destination.exists(): raise ValueError('Build destination must be new')
     policy_path=project/'data/move-policy.json';policy=None
     if spec['kind']=='sword' and policy_path.is_file():
-        identifiers={move['id'] for name in ('okatsu','jin_hayabusa')
-            for move in json.loads((project/'data/imports'/f'{name}.json').read_text(encoding='utf8'))['moves']
+        identifiers={move['id'] for path in (project/'data/imports').glob('*.json')
+            for move in json.loads(path.read_text(encoding='utf8'))['moves']
             if move['flags'] not in (0x8078000000,0x8038000000)}
         policy=validate_move_policy(json.loads(policy_path.read_text(encoding='utf-8-sig')),identifiers)
     destination.mkdir(parents=True)

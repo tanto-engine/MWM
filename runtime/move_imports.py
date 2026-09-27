@@ -11,7 +11,7 @@ from catalogue import load_catalogue, iter_moves
 
 from nioh_sword import (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS,
                         PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS,
-                        PLAYER_TEMPLATES, STANCE_OPENERS, is_airborne_sword, is_izuna_bridge)
+                        PLAYER_TEMPLATES, STANCE_OPENERS, is_airborne_sword, is_izuna_bridge, is_recorded_grounded)
 IMPORT_LIMIT = 32
 
 
@@ -37,11 +37,11 @@ def check_import_topology(moves, string_variant):
     # Reject import graphs the native adapter cannot safely execute.
     # Check source families, bounds, voice slots and successor cycles.
     # Only a grab-success edge may enter a paired attacker action.
-    if not isinstance(moves, list) or not 2 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 2 to 32 moves')
+    if not isinstance(moves, list) or not 1 <= len(moves) <= IMPORT_LIMIT:
+        raise ValueError('Import table requires 1 to 32 moves')
     if any(not isinstance(move, dict) for move in moves):
         raise ValueError('Import rows must be objects')
-    replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) for move in moves)
+    replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) or is_recorded_grounded(move) for move in moves)
     if not replacement_only and (type(string_variant) is not int or not 0 <= string_variant < len(moves)):
         raise ValueError('String entry is outside the import table')
     ids, keys = set(), {}
@@ -56,7 +56,8 @@ def check_import_topology(moves, string_variant):
         flags = move['flags']
         bridge=is_izuna_bridge(move)
         airborne=is_airborne_sword(move)
-        replacement = flags == PLAYER_REPLACEMENT_FLAGS or bridge or airborne
+        recorded = is_recorded_grounded(move)
+        replacement = flags == PLAYER_REPLACEMENT_FLAGS or bridge or airborne or recorded
         if replacement and move['adapter_kind'] not in (1, 2, 4, 5):
             raise ValueError('Source action family requires a supported native adapter')
         for field, lower, upper in (('key', 1, 0xfffe), ('motion', 0, 0x7fffffff),
@@ -64,7 +65,7 @@ def check_import_topology(moves, string_variant):
                 ('next_variant', -1, len(moves)-1), ('next_start', 0, 0x7fff), ('next_end', 0, 0x7fff)):
             if type(move[field]) is not int or not lower <= move[field] <= upper:
                 raise ValueError(f'Import {field} is outside supported bounds')
-        if type(flags) is not int or not (bridge or airborne) and flags not in (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS):
+        if type(flags) is not int or not (bridge or airborne or recorded) and flags not in (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS):
             raise ValueError('Unsupported source action family')
         if bridge and (move['recovery_frame'],move['ki_cost'],move['transition_count']) != (-1,0,19):
             raise ValueError('Izuna contact bridge differs from its recorded source')
@@ -72,8 +73,8 @@ def check_import_topology(moves, string_variant):
                 0xC71:(-1,0,18,-1),0xC72:(-1,20,17,-1),0xC73:(-1,0,18,-1),0xC74:(20,0,75,-1),
                 0xC81:(-1,0,18,-1),0xC82:(-1,10,18,-1),0xC83:(-1,0,75,-1)}[move['key']]:
             raise ValueError('Airborne sword move differs from its recorded native graph')
-        if ((flags == SUPPORTED_SOURCE_FLAGS or replacement and move['adapter_kind'] == 1) and move['recovery_frame'] <= 0
-                or flags in (GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_PAIRED_FLAGS) and move['recovery_frame'] != -1):
+        if ((flags == SUPPORTED_SOURCE_FLAGS and not recorded or replacement and move['adapter_kind'] == 1) and move['recovery_frame'] <= 0
+                or flags in (GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_PAIRED_FLAGS) and not recorded and move['recovery_frame'] != -1):
             raise ValueError('Recovery policy differs from the source action family')
         if replacement and move['next_variant'] != -1 and (move['adapter_kind'] != 2 and not bridge or move['next_start'] or move['next_end']):
             raise ValueError('Player replacement follows native player transitions, not a timed source chain')
@@ -126,12 +127,13 @@ def read_import_manifest(path, catalogue_path=None):
     manifest = json.loads(Path(path).read_text(encoding='utf-8-sig'))
     if manifest['schema_version'] != 1 or type(manifest['schema_version']) is not int:
         raise ValueError('Unsupported import manifest version')
-    if (manifest['boss_id'], manifest['resource_profile_id']) not in (
-            ('okatsu', 'okatsu.resources.v1'), ('jin_hayabusa', 'jin_hayabusa.resources.v1')):
+    from project_paths import DATA
+    profile = json.loads((DATA/'resources'/f"{manifest['boss_id']}.json").read_text(encoding='utf8'))
+    if (manifest['boss_id'], manifest['resource_profile_id']) != (profile['boss_id'], profile['resource_profile_id']):
         raise ValueError('Import manifest does not match the owned resource profile')
     moves = manifest['moves']
-    if not isinstance(moves, list) or not 2 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 2 to 32 moves')
+    if not isinstance(moves, list) or not 1 <= len(moves) <= IMPORT_LIMIT:
+        raise ValueError('Import table requires 1 to 32 moves')
     positions = {move['id']: index for index, move in enumerate(moves)}
     if manifest['string_entry'] is not None and manifest['string_entry'] not in positions:
         raise ValueError('Unknown string entry move')
@@ -143,6 +145,8 @@ def read_import_manifest(path, catalogue_path=None):
         move['next_variant'] = -1 if target is None else positions[target]
     manifest['string_variant'] = positions[manifest['string_entry']] if manifest['string_entry'] is not None else None
     check_import_topology(moves, manifest['string_variant'])
+    if manifest.get('trial') and any(not is_recorded_grounded(move) or len(bytes.fromhex(move.get('source_payload_prefix',''))) < 64 for move in moves):
+        raise ValueError('Trial source requires an exact recorded signature and payload prefix')
     if manifest['boss_id'] == 'okatsu' and [(move['key'], move['motion']) for move in moves[:2]] != [(0xC64, 1220), (0xC66, 1230)]:
         raise ValueError('Import slots 0 and 1 must preserve the Okatsu baseline')
     if manifest['boss_id'] == 'jin_hayabusa':

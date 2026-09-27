@@ -8,6 +8,24 @@ PLAYER_TEMPLATES = {0xCF5: (4300, 46, 38), 0xCF6: (4310, 46, 29), 0xCF7: (4320, 
                     0xCB7: (3300, 40, 58), 0xC7A: (2300, 42, 46)}
 STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xC7A, 'high': 0xCB7}
 
+# Grounded trial families matched to full recorded payloads and installed assets.
+# Keep these signatures exact: Tachibana's positive-recovery 594C action is not
+# Okatsu's negative-recovery grab despite sharing the flags word.
+RECORDED_GROUNDED = (
+    (0xD30,2000,0x184C0000,46,45),(0xD31,2010,0x184C0000,46,30),
+    (0xD32,2020,0x184C0000,46,35),(0xD33,2030,0x184C0000,42,-1),
+    (0xC6E,1010,0x19400000,10,-1),(0xC6F,1011,0x19400000,6,-1),
+    (0xD8D,5011,0x594C0000,27,120),(0xC6A,1130,0x40019480000,9,-1),
+)
+
+
+def is_recorded_grounded(move):
+    # Reuse William's input/recovery adapter only for the eight researched trial phases.
+    # Exact motion, family, row count and recovery distinguish reused boss action numbers.
+    # Native preparation additionally checks the complete archived payload prefix.
+    return move.get('adapter_kind') in (2,4) and tuple(move.get(k) for k in
+        ('key','motion','flags','transition_count','recovery_frame')) in RECORDED_GROUNDED
+
 
 def is_airborne_sword(move):
     # Admit the recorded Flying Swallow and somersault graphs.

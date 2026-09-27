@@ -78,7 +78,8 @@ def object_fields(b):
                 previous=hex(U64(b, 0x60)), index=U32(b, 0x68),
                 previous_index=U32(b, 0x6C), transition=hex(U64(b, 0x90)),
                 previous_transition=hex(U64(b, 0x98)), pending=hex(U64(b, 0xB0)),
-                pending_index=I32(b, 0xC0), counter=U32(b, 0xDC))
+                pending_index=I32(b, 0xC0), counter=U32(b, 0xDC),
+                action_banks=[hex(U64(b, offset)) for offset in (0x70, 0x78, 0x80)])
 
 
 def descriptor_fields(b):
@@ -263,11 +264,17 @@ def metadata(game, address, entry_limit=0):
                   **descriptor_fields(raw), unknown_semantics="Damage scaling, hitboxes and unnamed row fields remain unverified")
     payload = int(result["payload"], 0)
     try:
-        prefix = game.bytes(payload, 0x40)  # Include native recovery and Pulse durations through+0x3C.
+        prefix = game.bytes(payload, 0x40)  # Retain a usable prefix if the optional full slot is unreadable.
         result["payload_prefix"] = dict(address=hex(payload), bytes=prefix.hex(),
                                         **payload_fields(prefix))
     except OSError as e:
         result["payload_error"] = str(e)
+    try:
+        body = game.bytes(payload, 0xB0)  # Researched native payload slot size.
+        result['payload_bytes'] = body.hex()
+        result['payload_stable'] = game.bytes(payload, 0xB0) == body and result.get('payload_prefix', {}).get('bytes') == body[:0x40].hex()
+    except OSError as error:
+        result['payload_full_error'] = str(error)
     for name,size,limit in [('transition',0x30,min(entry_limit,128)),('combat',0x80,min(entry_limit,16))]:
         sl=result[name+'_slice']; count=min(sl['count'],limit)
         entries=result[name+'_entries']=[]
@@ -293,6 +300,94 @@ def metadata(game, address, entry_limit=0):
                 except OSError as e:
                     entry["error"] = str(e)
                 entries.append(entry)
+    return result
+
+
+def resource_match(game, address, key, timing=False):
+    # Resolve only the requested researched motion or timing key.
+    # Bound table and event reads before following their pointers.
+    # Recheck every dependency so a replacement cannot masquerade as one coherent record.
+    reads = []
+    def pin(pointer, count):
+        # Retain the bytes used for this lookup's decision.
+        # The caller verifies the same addresses after resolving the record.
+        # These observations never modify the target process.
+        body = game.bytes(pointer, count)
+        reads.append((pointer, body))
+        return body
+    head = pin(address, 16) if timing else pin(address + 0x468, 0x20)
+    data, table = U64(head, 0), U64(head, 8 if timing else 0x18)
+    hashed = pin(table, 24)
+    count, pairs = U32(hashed, 8), U64(hashed, 16)
+    if not 0 < count <= 32768:
+        raise ValueError('Resource lookup count is outside researched bounds')
+    raw = pin(pairs, count * 8)
+    indexes = [I32(raw, offset + 4) for offset in range(0, len(raw), 8) if I32(raw, offset) == key]
+    result = dict(address=hex(address), table=hex(table), key=key, indexes=indexes)
+    if len(indexes) == 1 and 0 <= indexes[0] < 32768:
+        index = indexes[0]
+        if timing:
+            entry = pin(data, 0x24)
+            if index >= U32(entry, 0x14) or not U32(entry, 0x20):
+                raise ValueError('Timing record index is outside researched bounds')
+            relative = U32(pin(data + U32(entry, 0x20) + index * 4, 4), 0)
+            if relative:
+                record = data + relative
+                prefix = pin(record, 16)
+                count, offset = U32(prefix, 4), U32(prefix, 8)
+                if count > 512 or offset > 0x100000:
+                    raise ValueError('Timing event range is outside researched bounds')
+                result.update(record=hex(record), prefix=prefix.hex(), event_count=count,
+                              events=pin(record + offset, count * 12).hex() if count else '')
+        else:
+            clip = U64(pin(data + index * 8, 8), 0)
+            result.update(clip=hex(clip), clip_prefix=pin(clip, 0x40).hex() if clip else '')
+    if any(game.bytes(pointer, len(body)) != body for pointer, body in reads):
+        raise ValueError('Resource lookup identity changed')
+    return result
+
+
+def actor_metadata(game, actor, expected_owner, descriptor):
+    # Inspect resource context once per seen descriptor and actor lifetime.
+    # Keep matching definitions separate from proof that their events executed.
+    # Retain optional errors and recheck the actor's owner and bank pointers.
+    before, state = game.snapshot(actor)
+    if state['owner_like'] != expected_owner:
+        raise ValueError('Actor owner changed')
+    owner = int(expected_owner, 0)
+    result = dict(owner=expected_owner, action_banks=state.get('action_banks', []),
+                  sampled_context=True, atomic_snapshot=False)
+    try:
+        owned = game.bytes(owner, 0x70)
+        motion, timing = U64(owned, 0x38), U64(owned, 0x68)
+        motion_body = game.bytes(motion, 0x108)
+        timing_body = game.bytes(timing, 0x40)
+        result.update(motion_owner=hex(motion), timing_owner=hex(timing),
+                      sampled_motion_key=I32(motion_body, 0xEC), sampled_motion_bank=I32(motion_body, 0x48),
+                      sampled_motion_clip=hex(U64(motion_body, 0x58)), resources=[])
+        payload = descriptor.get('payload_prefix', {})
+        for label, body, offset, slots, key in [('motion', motion_body, 8, 8, payload.get('motion_id')),
+                                                ('timing', timing_body, 0x10, 6, payload.get('timing_id'))]:
+            result[label + '_banks'] = [hex(U64(body, offset + index * 8)) for index in range(slots)]
+            if key is None:
+                continue
+            for index, pointer in enumerate(result[label + '_banks']):
+                if int(pointer, 0):
+                    row = dict(kind=label, slot=index, bank=pointer)
+                    try:
+                        row.update(resource_match(game, int(pointer, 0), key, label == 'timing'))
+                    except (OSError, ValueError, struct.error) as error:
+                        row['error'] = str(error)
+                    result['resources'].append(row)
+        after, final = game.snapshot(actor)
+        if final['owner_like'] != expected_owner or after[0x70:0x88] != before[0x70:0x88] or game.bytes(owner + 0x38, 8) != owned[0x38:0x40] or game.bytes(owner + 0x68, 8) != owned[0x68:0x70]:
+            raise ValueError('Actor resource owner/banks changed')
+        if game.bytes(motion + 8, 64) != motion_body[8:72] or game.bytes(timing + 0x10, 48) != timing_body[0x10:0x40]:
+            raise ValueError('Motion/timing bank identity changed')
+        result['identity_rechecked'] = True
+    except (OSError, ValueError, struct.error) as error:
+        result['identity_rechecked'] = False
+        result['error'] = str(error)
     return result
 
 

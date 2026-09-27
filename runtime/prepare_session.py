@@ -2,6 +2,7 @@
 # Product definitions supply identities; source bytes and ownership checks remain authoritative.
 # See CODE_GUIDE.md for the player-readable flow and terminology.
 import argparse
+from copy import deepcopy
 import ctypes as C
 from ctypes import wintypes as W
 import json
@@ -24,7 +25,7 @@ from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
-from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES
+from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
 
 IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -197,7 +198,14 @@ def configured_replacements(configuration=None, baseline=None):
         *configuration['frost_moon'].values(), *(binding['move'] for binding in configuration['skill_bindings']))
     if candidate is None and not hold and not jump:
         return None
-    manifest = read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
+    sources = [read_import_manifest(IMPORT_MANIFEST.with_name(source['boss_id']+'.json')) for source in SOURCE_MANIFESTS]
+    manifest = dict(sources[0], moves=[], hold_chains={})
+    for source in sources:
+        offset = len(manifest['moves'])
+        for move in source['moves']:
+            if move['next_variant'] >= 0: move['next_variant'] += offset
+        manifest['moves'].extend(source['moves'])
+        manifest['hold_chains'].update(source['hold_chains'])
     chains={**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}
     selected = list(manifest['candidates'][candidate]) if candidate else []
     by_id = {move['id']: move for move in manifest['moves']}
@@ -207,7 +215,7 @@ def configured_replacements(configuration=None, baseline=None):
         raise ValueError('Jin candidate must replace the three low-stance heavy descriptors in order')
     if hold:
         for stance, identifier in entries:
-            player_key=STANCE_OPENERS[stance]
+            player_key=STANCE_OPENERS.get(stance, STANCE_OPENERS['low'])
             if (identifier not in by_id or by_id[identifier]['adapter_kind'] not in (1, 2)
                     or identifier not in chains):
                 raise ValueError('Held entry has no supported input adapter')
@@ -230,6 +238,9 @@ def configured_replacements(configuration=None, baseline=None):
         if len(set(selected)) != len(selected) or len(selected) + len(baseline['moves']) > IMPORT_LIMIT:
             raise ValueError('Selected holds duplicate imports or exceed the runtime table')
     if jump: selected.append('jin_hayabusa.flying_swallow_jump')
+    # Group selected dependencies by their resource owner; preserve order inside each graph.
+    # Existing Jin layouts keep their indices; additional bosses never borrow Jin's bank.
+    selected = [identifier for source in sources for identifier in selected if identifier.partition('.')[0]==source['boss_id']]
     if len(selected)+len((baseline or configured_imports(configuration))['moves'])>IMPORT_LIMIT:
         raise ValueError('Selected moves exceed the runtime import limit')
     positions = {identifier:index for index,identifier in enumerate(selected)}
@@ -261,7 +272,7 @@ def compiled_skill_bindings(configuration, imports):
             key,motion,rows,flags=NATIVE_SKILLS.get(source,(0,0,0,0))
             if source=='heavy_attack':
                 key=STANCE_OPENERS[scope]; motion,rows,_=PLAYER_TEMPLATES[key]
-            result.append(dict(kind=2 if source=='guard_light' else 1,
+            result.append(dict(kind={'guard_light':2,'high_heavy_followup':4,'light_attack':5}.get(source,1),
                 stances=7 if scope=='any' else 1<<list(STANCE_OPENERS).index(scope),
                 variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
     for stance,move in configuration['stance_holds'].items():
@@ -277,8 +288,8 @@ def compiled_move_settings(configuration, imports, policy=None):
     configuration=validate_preset(configuration)
     policy=validate_move_policy(policy if policy is not None else
         read_json(DATA/'move-policy.json',dict(schema_version=1,moves={})), SPEED_MOVES)
-    manifest=read_import_manifest(IMPORT_MANIFEST.with_name('jin_hayabusa.json'))
-    chains={**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}
+    chains={root:chain for manifest in SOURCE_MANIFESTS for root,chain in
+            {**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}.items()}
     present={move['id'] for move in imports}
     inherited={child:root for root,chain in chains.items() if root in present for child in chain}
     result=[]
@@ -323,12 +334,15 @@ def fresh_profile(game):
     configuration = validate_preset(read_json(CURRENT_CONFIG))
     manifest = configured_imports(configuration)
     replacement_manifest = configured_replacements(configuration,manifest)
-    action_resource, timing_resource, motion_bank, camera_bank, node, owner = load_resources(game)
-    replacement_handles = None
+    action_resource, timing_resource, motion_bank, camera_bank, node, owner = load_resources(game, motion_keys=[move['motion'] for move in manifest['moves']])
+    replacement_handles = {}
     if replacement_manifest is not None:
-        replacement_handles = load_resources(game, IMPORT_MANIFEST.parent.parent / 'resources/jin_hayabusa.json')
-        if replacement_handles[-2:] != (node, owner):
-            raise ValueError('Player identity changed between resource-profile loads')
+        for boss in dict.fromkeys(move['id'].partition('.')[0] for move in replacement_manifest['moves']):
+            handles = load_resources(game, DATA/'resources'/f'{boss}.json',
+                [move['motion'] for move in replacement_manifest['moves'] if move['id'].partition('.')[0]==boss])
+            if handles[-2:] != (node, owner):
+                raise ValueError('Player identity changed between resource-profile loads')
+            replacement_handles[boss] = handles
     game.begin_sample()
     stable = StableReads(game)
     player = inspect_candidate(game, stable, dict(object=hex(node), owner_like=hex(owner)))
@@ -363,15 +377,24 @@ def fresh_profile(game):
                   action_resolution=moves[0]['resolution'], motion_key=moves[0]['motion'],
                   resources={kind:dict(banks=[dict(slot=0, **moves[0][kind+'_resource'])], present_slots=[0])
                              for kind in ('motion', 'timing')})
-    if replacement_handles is not None:
-        actions, timing, motion, hold_camera, _, _ = replacement_handles
+    replacement_offset = len(imports)
+    for boss, handles in replacement_handles.items():
+        actions, timing, motion, hold_camera, _, _ = handles
+        # Resolve each source bank independently; repeated action keys across bosses are unrelated.
+        # Rebase explicit paired links into this group's local manifest, then into the final table.
+        # Every resource owner remains tied to the same verified William generation.
+        subset = [deepcopy(move) for move in replacement_manifest['moves'] if move['id'].partition('.')[0]==boss]
+        group_offset = len(imports)-replacement_offset
+        for move in subset:
+            if move['next_variant'] >= 0: move['next_variant'] -= group_offset
+        source_manifest = dict(replacement_manifest, moves=subset)
         group = dict(action_resource=actions, timing_resource=timing,
                      bank=U64(stable.pin(actions + 0x468, 8), 0), motion_bank=motion,
                      timing_wrapper=U64(stable.pin(timing + 0x468, 8), 0))
         for resource, expected in ((actions, 0x13C7970), (timing, 0x12C5408), (motion, 0x13C8FA0)):
             if U64(stable.pin(resource, 8), 0) != base + expected:
                 raise ValueError('Replacement resource has an unexpected native type')
-        _, additional = resolve_imports(game, stable, group['bank'], motion, group['timing_wrapper'], replacement_manifest)
+        _, additional = resolve_imports(game, stable, group['bank'], motion, group['timing_wrapper'], source_manifest)
         for move in additional:
             if move['adapter_kind'] in (3,5):
                 adapters.append(dict(group,kind=move['adapter_kind'],player_descriptor=0,player_key=0,player_motion=0,transition_count=0,recovery_frame=0))
@@ -380,10 +403,10 @@ def fresh_profile(game):
             if move['next_variant'] != -1:
                 move['next_variant'] += len(imports)
         if replacement_manifest['hold_variant']:
-            hold_variant = len(imports) + replacement_manifest['hold_variant']
+            hold_variant = replacement_offset + replacement_manifest['hold_variant']
             hold_milliseconds = replacement_manifest['hold_milliseconds']
             hold_stances=replacement_manifest['hold_stances']
-            frost_variants=[slot+len(imports) if slot else 0 for slot in replacement_manifest['frost_variants']]
+            frost_variants=[slot+replacement_offset if slot else 0 for slot in replacement_manifest['frost_variants']]
             frost_milliseconds=replacement_manifest['frost_milliseconds']
             if any(move['adapter_kind']==3 for move in additional):
                 if U64(stable.pin(hold_camera,8),0)!=base+0x13C8FA0 or inspect_motion(game,stable,hold_camera,5020)['presence']!='present':

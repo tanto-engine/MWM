@@ -10,6 +10,7 @@ import tempfile
 import unittest
 import zipfile
 import threading
+from contextlib import nullcontext
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -22,6 +23,233 @@ from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_sampler_ignores_transient_transition_fields_and_recovers_previous(self):
+        from types import SimpleNamespace
+        game = SimpleNamespace(identity=dict(pid=1), tick=-1, reads=0)
+        def alive():
+            game.tick += 1
+            return game.tick < 2
+        def snapshot(address):
+            game.reads += 1
+            return b'', dict(owner_like='0x30000', current=hex(0x40000 + game.tick * 0x1000),
+                             previous='0x60000', counter=(1, 4)[game.tick], pending_index=game.reads)
+        def read(address, size):
+            return struct.pack('<I', address // 0x1000) + bytes(size - 4)
+        game.alive, game.snapshot, game.bytes = alive, snapshot, read
+        with tempfile.TemporaryDirectory() as td:
+            journal = Journal(Path(td)/'events.jsonl', 'one')
+            try:
+                sample(game, journal, threading.Event(), initial=dict(candidates=[dict(object='0x10000', owner_like='0x30000')]), metadata_factory=lambda: nullcontext(game))
+            finally: journal.close()
+            rows = [json.loads(line) for line in (Path(td)/'events.jsonl').read_text().splitlines()]
+            actions = [row for row in rows if row['kind'] == 'action_state']
+            self.assertEqual(len(actions), 2)
+            self.assertEqual(actions[-1]['descriptor']['action_key_u32'], 0x41)
+            gaps = [row for row in rows if row['kind'] == 'counter_gap']
+            self.assertEqual(gaps[0]['unobserved_increments'], 2)
+            previous = [row for row in rows if row['kind'] == 'previous_action']
+            self.assertEqual(previous[-1]['descriptor']['action_key_u32'], 0x60)
+            self.assertEqual(previous[-1]['provenance'], 'inferred_previous_pointer')
+            self.assertNotIn('execution_t', previous[-1])
+
+    def test_optional_metadata_cannot_block_other_actor_ids(self):
+        import time
+        from types import SimpleNamespace
+        entered, release = threading.Event(), threading.Event()
+        game = SimpleNamespace(identity=dict(pid=1), tick=0)
+        def alive():
+            game.tick += 1
+            if game.tick == 2:
+                self.assertTrue(entered.wait(1))
+            return game.tick <= 3
+        def snapshot(address):
+            return b'', dict(owner_like='0x30000', current='0x40000', counter=game.tick)
+        raw = struct.pack('<I', 0x12345678) + bytes(0xD0-4)
+        game.alive, game.snapshot, game.bytes = alive, snapshot, lambda address,size: raw[:size]
+        reader = SimpleNamespace(identity=game.identity, snapshot=snapshot, bytes=game.bytes)
+        def slow_metadata(*args):
+            entered.set()
+            release.wait(2)
+            return dict(descriptor_bytes=raw.hex())
+        with tempfile.TemporaryDirectory() as td, patch('boss_probe.metadata', side_effect=slow_metadata):
+            journal = Journal(Path(td)/'events.jsonl', 'one')
+            started = time.monotonic()
+            try:
+                sample(game, journal, threading.Event(), initial=dict(candidates=[
+                    dict(object=hex(actor), owner_like='0x30000') for actor in (0x10000,0x20000)]),
+                    metadata_factory=lambda: nullcontext(reader))
+                self.assertEqual(journal.actions, 6)
+                self.assertGreater(journal.quality['dropped_events'], 0)
+                self.assertLess(time.monotonic()-started, 1)
+            finally:
+                release.set(); journal.close()
+
+    def test_metadata_process_identity_mismatch_is_not_accepted(self):
+        from action_capture import MetadataReader
+        from types import SimpleNamespace
+        reader = MetadataReader(lambda: nullcontext(SimpleNamespace(identity=dict(pid=2))), dict(pid=1))
+        try:
+            task, detail, error = reader.results.get(timeout=1)
+            self.assertIsNone(task)
+            self.assertIsNone(detail)
+            self.assertIn('process changed', error)
+        finally: reader.close()
+
+    def test_read_only_metadata_keeps_full_payload_and_matching_timing_events(self):
+        from boss_probe import metadata as capture_metadata, resource_match
+        from boss_probe_cases import FakeBytes
+        descriptor, body = bytearray(0xD0), bytearray(0xB0)
+        struct.pack_into('<Q', descriptor, 0x20, 0x20000)
+        struct.pack_into('<i', body, 0x20, 1220)
+        struct.pack_into('<i', body, 0x34, -1)
+        body[-1] = 93
+        wrapper = struct.pack('<QQ', 0x40000, 0x50000)
+        hashed = struct.pack('<IIQQ', 0,0,1,0x60000)
+        data = bytearray(0x24); struct.pack_into('<I', data, 0x14, 1); struct.pack_into('<I', data, 0x20, 0x30)
+        prefix = struct.pack('<4I', 0,1,16,0)
+        events = bytes(range(12))
+        game = FakeBytes({0x10000:descriptor,0x20000:body,0x30000:wrapper,0x40000:data,
+                          0x40030:struct.pack('<I',0x100),0x40100:prefix+events,
+                          0x50000:hashed,0x60000:struct.pack('<ii',1220,0)})
+        result = capture_metadata(game,0x10000)
+        self.assertEqual(bytes.fromhex(result['payload_bytes']),body)
+        self.assertTrue(result['payload_stable'])
+        timing = resource_match(game,0x30000,1220,True)
+        self.assertEqual(timing['events'],events.hex())
+        self.assertEqual(timing['indexes'],[0])
+
+    def test_saved_health_carries_measured_quality(self):
+        with tempfile.TemporaryDirectory() as td, patch('builtins.print') as output:
+            journal = Journal(Path(td)/'events.jsonl', 'one')
+            try:
+                journal.quality.update(counter_gaps=5, recovered_previous=1, discovery_complete=True)
+                publish(journal, 'stopped', 'Saved')
+                report = json.loads(output.call_args.args[0])
+                self.assertEqual(report['quality']['counter_gaps'], 5)
+                self.assertEqual(report['quality']['recovered_previous'], 1)
+                self.assertTrue(report['quality']['discovery_complete'])
+            finally: journal.close()
+
+    def test_optional_metadata_rejects_changed_lifetime_or_descriptor(self):
+        from action_capture import MetadataReader
+        from types import SimpleNamespace
+        raw = struct.pack('<I', 0x12345678) + bytes(0xD0-4)
+        for mutation in ('owner', 'reset', 'descriptor'):
+            state = dict(owner_like='0x30000', current='0x40000', counter=5)
+            memory = [raw]
+            reader = SimpleNamespace(identity=dict(pid=1), snapshot=lambda address: (b'',dict(state)),
+                                     bytes=lambda address,size: memory[0][:size])
+            def mutate(*args):
+                if mutation == 'owner': state['owner_like'] = '0x50000'
+                elif mutation == 'reset': state['counter'] = 0
+                else: memory[0] = bytes(0xD0)
+                return dict(descriptor_bytes=raw.hex())
+            with patch('boss_probe.metadata', side_effect=mutate), patch('boss_probe.actor_metadata', return_value={}):
+                worker = MetadataReader(lambda: nullcontext(reader), reader.identity)
+                try:
+                    worker.tasks.put(dict(actor=0x10000,owner='0x30000',descriptor=0x40000,counter=5,prefix=raw[:0x28]))
+                    task, detail, error = worker.results.get(timeout=1)
+                    self.assertIsNone(detail, mutation)
+                    self.assertIn('changed', error, mutation)
+                finally: worker.close()
+
+    def test_async_metadata_matches_original_generation_after_newer_action(self):
+        from encounter_recording import reconstruct_capture
+        first = state(.1, generation=1, counter=1, take='one')
+        second = state(.2, 0xC66, generation=1, counter=2, take='one', current='0x50000')
+        detail = metadata(t=.3, generation=1, take='one', observation_t=.1, observation_counter=1)
+        prefix = detail['descriptor_bytes'][:0x28*2]
+        first['descriptor_prefix'] = prefix
+        detail['observation_signature'] = prefix
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td)/'events.jsonl'
+            repeat = dict(first, t=.15, counter=2)
+            source.write_text('\n'.join(json.dumps(row) for row in [first,repeat,second,detail]))
+            result = reconstruct_capture(source,'okatsu')
+            rows = {row['source']['action_id']:row for row in result['actions']}
+            self.assertEqual(rows[0xC64]['source']['motion_id'],1220)
+            self.assertEqual(rows[0xC64]['observations'],2)
+            self.assertIsNone(rows[None]['source']['motion_id'])
+            detail['generation'] = 2
+            source.write_text('\n'.join(json.dumps(row) for row in [first,second,detail]))
+            result = reconstruct_capture(source,'okatsu')
+            self.assertTrue(all(row['source']['motion_id'] is None for row in result['actions']))
+
+    def test_capture_gaps_and_actor_generations_do_not_form_invented_combos(self):
+        from encounter_recording import reconstruct_capture
+        rows = [state(.1, generation=1), metadata(),
+                dict(kind='counter_gap',object='0x10000',unobserved_increments=2,t=.2),
+                dict(kind='previous_action',object='0x10000',descriptor=dict(action_key_u32=999),t=.2),
+                state(.3,0xC66,generation=1),metadata(0xC66,1230,t=.31),
+                dict(kind='actor_generation',object='0x10000',generation=2,t=.4),
+                state(.5,generation=2),metadata(t=.51)]
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td)/'events.jsonl'
+            source.write_text('\n'.join(json.dumps(row) for row in rows))
+            result = reconstruct_capture(source,'okatsu')
+            self.assertEqual(result['observed_successors'],[])
+            self.assertEqual(len({row['actor_label'] for row in result['actions']}),2)
+            self.assertNotIn(999,{row['source']['action_id'] for row in result['actions']})
+
+    def test_recorder_source_stamps_cover_capture_and_metadata_code(self):
+        from action_capture import source_stamp
+        stamp = source_stamp()
+        self.assertEqual(stamp['protocol'], 2)
+        self.assertIn('sample', stamp['runtime_sha256'])
+        self.assertIn('MetadataReader.run', stamp['runtime_sha256'])
+        self.assertIn('actor_metadata', stamp['runtime_sha256'])
+        self.assertTrue(all(len(value) == 64 for value in stamp['runtime_sha256'].values()))
+        self.assertEqual(stamp, source_stamp())
+
+    def test_failed_optional_metadata_retries_on_later_observed_execution(self):
+        from types import SimpleNamespace
+        raw = struct.pack('<I', 0x12345678) + bytes(0xD0-4)
+        game = SimpleNamespace(identity=dict(pid=1), tick=0)
+        def alive():
+            game.tick += 1
+            return game.tick <= 8
+        def snapshot(address):
+            return b'', dict(owner_like='0x30000',current='0x40000',counter=game.tick)
+        game.alive, game.snapshot, game.bytes = alive, snapshot, lambda address,size: raw[:size]
+        reader = SimpleNamespace(identity=game.identity,snapshot=snapshot,bytes=game.bytes)
+        with tempfile.TemporaryDirectory() as td, \
+             patch('boss_probe.metadata', side_effect=[OSError('Temporary metadata loss'),dict(descriptor_bytes=raw.hex())]) as capture, \
+             patch('boss_probe.actor_metadata', return_value={}):
+            journal = Journal(Path(td)/'events.jsonl','one')
+            try:
+                sample(game,journal,threading.Event(),initial=dict(candidates=[dict(object='0x10000',owner_like='0x30000')]),
+                       metadata_factory=lambda: nullcontext(reader))
+                self.assertEqual(capture.call_count,2)
+                self.assertEqual(journal.actions,8)
+                self.assertEqual(journal.quality['metadata_failures'],1)
+            finally: journal.close()
+            rows = [json.loads(line) for line in (Path(td)/'events.jsonl').read_text().splitlines()]
+            self.assertEqual(sum(row['kind']=='metadata' for row in rows),1)
+
+    def test_optional_reader_failure_is_visible_without_losing_ids(self):
+        from types import SimpleNamespace
+        game = SimpleNamespace(identity=dict(pid=1),tick=0)
+        def alive():
+            game.tick += 1
+            return game.tick <= 3
+        game.alive = alive
+        game.snapshot = lambda address: (b'',dict(owner_like='0x30000',current='0x40000',counter=game.tick))
+        game.bytes = lambda address,size: struct.pack('<I',0x12345678)+bytes(size-4)
+        with tempfile.TemporaryDirectory() as td:
+            journal = Journal(Path(td)/'events.jsonl','one')
+            try:
+                sample(game,journal,threading.Event(),initial=dict(candidates=[dict(object='0x10000',owner_like='0x30000')]),
+                       metadata_factory=lambda: nullcontext(SimpleNamespace(identity=dict(pid=2))))
+                self.assertEqual(journal.actions,3)
+                self.assertEqual(journal.quality['metadata_failures'],1)
+            finally: journal.close()
+
+    def test_recorder_capture_feedback(self):
+        import subprocess
+        result = subprocess.run(['node', str(ROOT.parent/'tanto-recorder/desktop/capture-state.test.cjs')],
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_desktop_context_hotkey_and_portable_runtime_boundaries(self):
         # Reuse actual TypeScript handlers with fake Electron and process boundaries.
         # Keep fixture settings and recordings isolated from the user's currently running EXE.
@@ -58,13 +286,15 @@ class ProductBoundaryTests(unittest.TestCase):
         game.alive, game.snapshot, game.bytes = alive, snapshot, Mock(return_value=raw)
         with tempfile.TemporaryDirectory() as td, patch('boss_probe.metadata', return_value=dict(descriptor_bytes=raw.hex())) as metadata_read:
             path = Path(td) / 'events.jsonl'; journal = Journal(path, 'one')
-            try: sample(game, journal, threading.Event(), initial=dict(candidates=[dict(object='0x10000', owner_like='0x30000')]))
+            try: sample(game, journal, threading.Event(), initial=dict(candidates=[dict(object='0x10000', owner_like='0x30000')]), metadata_factory=lambda: nullcontext(game))
             finally: journal.close()
             rows = [json.loads(line) for line in path.read_text().splitlines()]
             self.assertEqual(metadata_read.call_count, 2)
             resets = [row for row in rows if row['kind'] == 'actor_reset']
             self.assertEqual([(row['previous_counter'], row['counter'], row['cause']) for row in resets], [(25, 0, 'unverified')])
             self.assertEqual(sum(row['kind'] == 'action_state' for row in rows), 2)
+            self.assertEqual(len({row['generation'] for row in rows if row['kind'] == 'action_state'}), 2)
+            self.assertEqual(journal.quality['counter_gaps'], 0)
 
     def test_rebuilt_actor_resumes_while_the_full_heap_scan_is_still_running(self):
         # Model death/retry moving the actor into a nearby slot during a long full scan.
@@ -214,7 +444,7 @@ class ProductBoundaryTests(unittest.TestCase):
             actions = [row for row in rows if row['kind'] == 'action_state']
             self.assertEqual(len(actions), 3)
             self.assertTrue(all(row['descriptor']['action_key_u32'] == 0x12345678 and row['role'] == 'unassigned' for row in actions))
-            self.assertEqual(sum(row['kind'] == 'metadata_unreadable' for row in rows), 3)
+            self.assertEqual(sum(row['kind'] == 'metadata_unreadable' for row in rows), 0)  # No optional reader was supplied.
             self.assertEqual(sum(row['kind'] == 'object_unreadable' for row in rows), 1)
 
     def test_saved_health_is_not_published_after_a_failed_disk_sync(self):

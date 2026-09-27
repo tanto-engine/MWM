@@ -69,6 +69,23 @@ int main(int argc, char** argv) {
     fail_at=UINT32_MAX; calls=0;
     assert(decode_motion_clips(pack.data(),pack.size(),nullptr,make_clip,output.data()+1,count,failed));
     assert(calls==count);
+    // A one-clip request must not exhaust the allocator on unrelated animations.
+    // Keep the full lookup index while leaving unselected clip slots empty.
+    // A missing key rejects before any allocation, rather than yielding a partial package.
+    const uint32_t selection_hash=package_u32(pack.data(),40);
+    uint32_t selected_key=0,selected_index=UINT32_MAX;
+    for(uint32_t row=0;row<package_u32(pack.data(),selection_hash);++row) {
+        const auto index=package_u32(pack.data(),selection_hash+12+row*8);
+        if(index!=UINT32_MAX && package_u32(pack.data(),package_u32(pack.data(),32)+index*4)) {
+            selected_key=package_u32(pack.data(),selection_hash+8+row*8);selected_index=index;break;
+        }
+    }
+    assert(selected_index!=UINT32_MAX);
+    std::fill(output.begin(),output.end(),0);calls=0;fail_at=1;
+    assert(decode_motion_clips(pack.data(),pack.size(),nullptr,make_clip,output.data()+1,count,failed,&selected_key,1));
+    assert(calls==1 && output[selected_index+1]);
+    const uint32_t missing_key=0x7ffffffe;calls=0;
+    assert(!decode_motion_clips(pack.data(),pack.size(),nullptr,make_clip,output.data()+1,count,failed,&missing_key,1) && calls==0);
     // Reject malformed data before *any* native decoder call.
     const auto reject=[&](const std::vector<uint8_t>& bad, size_t size) {
         // Check malformed package rejection before the clip factory is invoked.
@@ -137,9 +154,9 @@ class ResourceCrashTests(unittest.TestCase):
                 # The caller must verify the echoed identity before accepting any pointer values.
                 mappings.append(tagname)
                 self.assertEqual(length, 112)
-                self.assertEqual(len(requests[-1]), 408)
+                self.assertEqual(len(requests[-1]), 544)
                 identity = bytes(32) if corrupt_identity else requests[-1][24:56]
-                return StatusView(resources.STATE.pack(0x3152504e, 3, 3, 0, 456, identity,
+                return StatusView(resources.STATE.pack(0x3152504e, 4, 3, 0, 456, identity,
                                                        1, 2, 3, 4, 15, 1, 5, 6))
             class StatusView(io.BytesIO):
                 def __getitem__(self, key):
@@ -176,6 +193,7 @@ class ResourceCrashTests(unittest.TestCase):
         # Revised assets require a new native owner, but documentation edits must reuse loaded objects.
         profile = json.loads((MOD_ROOT/'data/resources/okatsu.json').read_text())
         identity = resources.resource_identity(profile)
+        self.assertNotEqual(resources.resource_identity(profile, [1220]), identity)
         profile['assets']['actions']['evidence'] = 'Different research wording'
         profile['status'] = 'different editorial status'
         self.assertEqual(resources.resource_identity(profile), identity)

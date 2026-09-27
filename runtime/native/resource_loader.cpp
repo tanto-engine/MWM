@@ -15,6 +15,7 @@ struct ResourceRequest {
     uint8_t profile_identity[32];
     uint64_t sizes[4];
     char names[4][80];
+    uint32_t motion_count, motion_keys[32], reserved;
 };
 // Phase/error and completion fields publish progress from native callbacks to the external launcher.
 // Published object addresses remain backed by retained resources, even after the temporary frame hook is disabled.
@@ -28,7 +29,7 @@ struct ResourceState {
     DWORD thread;
     uint64_t player, owner;
 };
-static_assert(sizeof(ResourceRequest) == 408);
+static_assert(sizeof(ResourceRequest) == 544);
 static_assert(sizeof(ResourceState) == 112);
 static ResourceRequest request;
 static ResourceState* state;
@@ -76,7 +77,7 @@ static void* create_motion_clip(const uint8_t* bytes, uint32_t size, void* alloc
     return result;
 }
 
-static DWORD decode_motion_resource(void* object) {
+static DWORD decode_motion_resource(void* object, bool selected_motion) {
     // Build native motion or camera resource fields from a validated package.
     // Allocate lookup storage, decode clips and clean every completed allocation on failure.
     // The stock decoder assumes success and can crash on allocator exhaustion.
@@ -91,14 +92,16 @@ static DWORD decode_motion_resource(void* object) {
     void* pairs = allocate_data(allocator, slots * 8);
     if (clips) memset(clips, 0, count * 8);
     uint32_t failed = 0;
-    if (!clips || !lookup || !pairs || !decode_motion_clips(bytes, size, allocator, create_motion_clip, clips, count, failed)) {
+    const bool allocated=clips && lookup && pairs;
+    if (!allocated || !decode_motion_clips(bytes, size, allocator, create_motion_clip, clips, count, failed,
+            selected_motion ? request.motion_keys : nullptr, selected_motion ? request.motion_count : 0)) {
         if (clips) for (uint32_t i = 0; i != count; ++i) if (clips[i]) {
             auto clip = reinterpret_cast<uintptr_t*>(clips[i]);
             if (--reinterpret_cast<uint32_t*>(clip)[2] == 0)
                 reinterpret_cast<void (*)(void*)>(reinterpret_cast<uintptr_t*>(clip[0])[2])(clip);
         }
         free_data(allocator, clips); free_data(allocator, lookup); free_data(allocator, pairs);
-        return ERROR_NOT_ENOUGH_MEMORY;
+        return allocated ? 0x20000000u|failed : ERROR_NOT_ENOUGH_MEMORY;
     }
     memcpy(pairs, bytes + hash + 8, slots * 8);
     lookup[0] = reinterpret_cast<uintptr_t>(allocator); lookup[1] = slots;
@@ -159,7 +162,7 @@ static void resource_decoded(void* object) {
             return;
         }
         if (i >= 2) {
-            const DWORD error = decode_motion_resource(object);
+            const DWORD error = decode_motion_resource(object, i==2);
             if (error) {
                 *reinterpret_cast<uintptr_t*>(object) = original_tables[i];
                 InterlockedExchange(&state->error, error);
@@ -265,8 +268,8 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     ResourceRequest incoming{};
     SIZE_T copied = 0;
     if (!ReadProcessMemory(GetCurrentProcess(), parameter, &incoming, sizeof(incoming), &copied)
-        || copied != sizeof(incoming) || incoming.magic != 0x3152504e || incoming.version != 3
-        || incoming.pid != GetCurrentProcessId() || incoming.count != 4) return ERROR_INVALID_DATA;
+        || copied != sizeof(incoming) || incoming.magic != 0x3152504e || incoming.version != 4
+        || incoming.pid != GetCurrentProcessId() || incoming.count != 4 || incoming.motion_count>32 || incoming.reserved) return ERROR_INVALID_DATA;
     FILETIME born{}, exit{}, kernel{}, user{};
     if (!GetProcessTimes(GetCurrentProcess(), &born, &exit, &kernel, &user)) return GetLastError();
     if (incoming.birth != (uint64_t(born.dwHighDateTime) << 32 | born.dwLowDateTime)) return ERROR_INVALID_DATA;
@@ -286,7 +289,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     const uint8_t expected[] = {0x40,0x53,0x48,0x83,0xec,0x20,0xf3,0x0f,0x11,0x89,0xa4,0x06,0,0};
     if (memcmp(frame_target, expected, sizeof(expected))) return ERROR_REVISION_MISMATCH;
     wchar_t name[128];
-    const int prefix = wsprintfW(name, L"Local\\NiohResources_v5_%lu_", GetCurrentProcessId());
+    const int prefix = wsprintfW(name, L"Local\\NiohResources_v6_%lu_", GetCurrentProcessId());
     const wchar_t digits[] = L"0123456789abcdef";
     for (unsigned i = 0; i != 32; ++i) {
         name[prefix + i * 2] = digits[incoming.profile_identity[i] >> 4];
@@ -305,7 +308,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
         return error;
     }
     request = incoming;
-    state->magic = 0x3152504e; state->version = 3; state->birth = request.birth;
+    state->magic = 0x3152504e; state->version = 4; state->birth = request.birth;
     memcpy(state->profile_identity, request.profile_identity, sizeof(request.profile_identity));
     MH_STATUS result = MH_Initialize();
     if (result == MH_OK) result = MH_CreateHook(frame_target, reinterpret_cast<void*>(&resource_frame), reinterpret_cast<void**>(&frame_original));

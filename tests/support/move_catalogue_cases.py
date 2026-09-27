@@ -15,12 +15,12 @@ from catalogue import iter_moves, load_catalogue, save_catalogue, validate_catal
 
 
 class CatalogueTests(unittest.TestCase):
-    def test_sword_strings_keep_distinct_source_identity_and_exclude_trial_choices(self):
+    def test_sword_strings_keep_distinct_source_identity_and_exclude_unadapted_choices(self):
         # Preserve each distinct sword string once while keeping ordered action evidence.
         # Inspect nested constituent identities and the retained sword import topology.
-        # Non-sword trials and constituent heavy attacks cannot remain standalone choices.
+        # Unadapted Jin entries stay absent while eight archive-matched phases support the new trials.
         records = list(iter_moves(self.catalogue))
-        self.assertEqual((len(self.catalogue['moves']), len(records)), (14, 39))
+        self.assertEqual((len(self.catalogue['moves']), len(records)), (22, 47))
         self.assertEqual({move['weapon'] for move in records}, {'sword'})
         groups = {move['id']: move for move in self.catalogue['moves']}
         for key, actions in ((0xBC0, [0xBC0,0xC6C,0xC6D]), (0xC6E, [0xC6E,0xC6F,0xC70]), (0xC75,[0xC75,0xC77,0xC78])):

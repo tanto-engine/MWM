@@ -88,6 +88,34 @@ async function contextCommit() {
   assert.equal(JSON.parse(fs.readFileSync(path.join(old, 'encounter.json'))).boss_name, 'Jin Hayabusa');
 }
 
+async function captureLifecycle() {
+  const { api, children } = fixture('lifecycle');
+  await api.command('toggle', 'Jin');
+  assert.equal(api.view().health.state, 'starting');
+  const folder = api.view().folder;
+  const message = state => children.at(-1).stdout.write(JSON.stringify({ state, actions: 3, last_t: 2, bytes: 40, tail: [], detail: '' }) + '\n');
+  message('recording');
+  assert.equal(api.view().health.state, 'recording');
+  const stopping = api.command('toggle', 'Jin');
+  message('recording');
+  assert.equal(api.view().health.state, 'stopping');
+  message('stopped');
+  assert.equal(api.view().health.state, 'stopping');
+  await stopping; await api.done();
+  assert.equal(api.view().health.state, 'stopped');
+  await api.command('label', { text: 'First move' });
+  await api.command('toggle', 'Jin');
+  await api.command('toggle', 'Jin'); await api.done();
+  assert.equal(api.view().folder, folder);
+  assert.equal(api.view().session.takes.length, 2);
+  assert.equal(api.view().session.annotations.length, 1);
+  assert.equal(api.view().health.state, 'error');
+  assert.equal(api.view().session.takes[1].state, 'interrupted');
+  await api.command('toggle', 'Jin');
+  message('error'); message('stopped');
+  children.at(-1).emit('close', 0); await api.done();
+  assert.equal(api.view().health.state, 'error');
+}
 async function portableIsolation() {
   // Inspect the installed generator's actual option branch before any installer is compiled.
   // Its pinned boolean behavior differs from its documentation, so verify the emitted NSIS definition.
@@ -116,7 +144,7 @@ async function missingWorker() {
 
 (async () => {
   const results = [];
-  for (const check of [changedBoss, contextCommit, hotkey, missingWorker, portableIsolation]) {
+  for (const check of [changedBoss, contextCommit, hotkey, captureLifecycle, missingWorker, portableIsolation]) {
     try { await check(); results.push({ name: check.name, passed: true }); }
     catch (error) { results.push({ name: check.name, passed: false, error: String(error) }); }
   }

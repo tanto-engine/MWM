@@ -26,12 +26,15 @@ from project_paths import DATA
 # Product manifests own the choices; native preparation still verifies every source signature.
 _ordinary = json.loads((DATA/'imports/okatsu.json').read_text(encoding='utf8'))
 _sword = json.loads((DATA/'imports/jin_hayabusa.json').read_text(encoding='utf8'))
+_trials = [json.loads(path.read_text(encoding='utf8')) for path in sorted((DATA/'imports').glob('*.json'))
+           if path.stem not in ('okatsu','jin_hayabusa')]
+SOURCE_MANIFESTS = [_sword, *_trials]
 MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:2] +
     [move for move in _sword['moves'] if move['adapter_kind']==5])}
 HEAVY_STRINGS = {chain[0]: name for name, chain in _sword['candidates'].items()}
-HELD_MOVES = frozenset(_sword['hold_chains']) | frozenset(HEAVY_STRINGS)
+HELD_MOVES = frozenset(root for source in SOURCE_MANIFESTS for root in source['hold_chains']) | frozenset(HEAVY_STRINGS)
 CHORD_MOVES = frozenset(MOVE_VARIANTS) | HELD_MOVES
-SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + _sword['moves']
+SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']]
     if move['flags'] not in (0x8078000000, 0x8038000000))
 PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon chord_stance move_settings'.split())
 
@@ -42,14 +45,14 @@ def move_capabilities():
     # A raw recording or catalogue entry alone never becomes a playable menu choice.
     from catalogue import load_catalogue, iter_moves
     names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
-    ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + _sword['moves'])
+    ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']])
     return dict(moves=[dict(id=identifier, name=names[identifier], chord=identifier in CHORD_MOVES,
         graph=identifier in HELD_MOVES, heavy_string=identifier in HEAVY_STRINGS,
         native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
         speed=identifier in SPEED_MOVES) for identifier in ids],
-        native_sources=[dict(id=source, label=source.replace('_',' ').title())
-                        for source in (*NATIVE_SKILLS,'guard_light')],
-        speed=dict(min=.25,max=2.0), stances=['low','mid','high'])
+        native_sources=[dict(id=source, label=source.replace('_',' ').title(),stances=['high'] if source=='high_heavy_followup' else ['low'] if source=='light_attack' else ['low','mid','high','any'])
+                        for source in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup')],
+        speed=dict(min=.25,max=2.0), stances=['low','mid','high'],chord_stances=['low','mid','high','any'])
 
 
 def atomic_json(path, value):
@@ -143,8 +146,8 @@ def validate_preset(value):
     for key in ('tap_move', 'hold_move'):
         if result[key] is not None and (not isinstance(result[key], str) or result[key] not in CHORD_MOVES):
             raise ValueError('This move has no implemented runtime adapter: ' + str(result[key]))
-    if result['chord_stance'] not in ('low','mid','high'):
-        raise ValueError('Choose a concrete stance for the custom chord')
+    if result['chord_stance'] not in ('low','mid','high','any'):
+        raise ValueError('Choose a stance or Any for the custom chord')
     settings=result['move_settings']
     if not isinstance(settings,dict): raise ValueError('Move settings must map move IDs to speed')
     for identifier, fields in settings.items():
@@ -190,12 +193,16 @@ def validate_preset(value):
         if not isinstance(binding,dict) or set(binding)!={'source','stance','move'}:
             raise ValueError('Skill binding requires source, stance and move')
         source,stance,move=(binding[field] for field in ('source','stance','move'))
-        if source not in (*NATIVE_SKILLS,'guard_light') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
+        if source not in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
             raise ValueError('Unsupported skill binding source, stance or move')
         if move=='jin_hayabusa.action_0c6f' and (source!='dodge_attack' or stance!='low' or result['low_heavy']!='jin_hayabusa.action_0c6e'):
             raise ValueError('Dodge follow-up requires the low Jin D string')
         if move in HELD_MOVES and stance=='any':
             raise ValueError('Choose a concrete stance for a Jin graph')
+        if source=='high_heavy_followup' and stance!='high':
+            raise ValueError('High-heavy follow-up requires High stance')
+        if source=='light_attack' and stance!='low':
+            raise ValueError('The reviewed quick-attack entry currently supports Low stance')
         scopes=list(holds) if stance=='any' else [stance]
         for scope in scopes:
             if (source,scope) in occupied: raise ValueError('Skill binding sources overlap in this stance')

@@ -48,7 +48,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     for (unsigned index=0;index<8;++index) {
         const auto& binding=config.skill_bindings[index];const SkillBinding empty{};
         if (!binding.kind) { if (memcmp(&binding,&empty,sizeof(empty))) return false; continue; }
-        if (binding.kind>3 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
+        if (binding.kind>5 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
+        if ((binding.kind==4 && binding.stances!=4) || (binding.kind==5 && binding.stances!=1)) return false;
         for (unsigned stance=0;stance<3;++stance)
             if (config.frost_variants[stance]==binding.variant && binding.stances!=(1u<<stance)) return false;
         const auto& adapter=config.adapters[binding.variant-1];
@@ -120,7 +121,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             // Recorded stance templates exclude dash/running attacks.
             if (adapter.player_descriptor < 0x10000 || adapter.player_descriptor > 0x7fffffffffffULL
                 || !sword_player_template(adapter)
-                || (!izuna_bridge && !airborne && move.flags != 0x194C0000)
+                || (!izuna_bridge && !airborne && !recorded_grounded(move,adapter) && move.flags != 0x194C0000)
                 || (adapter.kind == 1 && move.next_variant != -1)) return false;
             if (adapter.kind == 1) for (unsigned prior=0; prior<i; ++prior)
                 if (config.adapters[prior].kind == 1 && config.adapters[prior].player_key == adapter.player_key) return false;
