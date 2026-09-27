@@ -37,7 +37,7 @@ struct DispatchCommand {
     uint32_t desired_key;
     int32_t expected_motion;
     uint32_t armed, held;
-    uint64_t reserved[3]; // Latched gesture, move variant, 16-bit player-context epoch.
+    uint64_t reserved[3]; // Bit0 latch, bits16..31 chord buttons, bits32..34 stances; variant; context epoch.
     volatile LONG64 sequence_end;
 };
 // DLL writes this region only. A new generation requires a fresh explicit publish.
@@ -59,6 +59,16 @@ static_assert(offsetof(DispatchCommand, player) == 48 && offsetof(DispatchComman
 static_assert(offsetof(DispatchCommand, desired_key) == 112 && offsetof(DispatchCommand, sequence_end) == 152,
               "Command tail layout");
 
+static inline bool valid_chord_policy(uint64_t policy) {
+    // Reserve only a configured two-button chord in its explicitly selected stances.
+    // Keep bit zero as the existing latched-intent flag and preserve zero-policy publishers.
+    // Unknown bits or partial masks cannot suppress native input.
+    const auto buttons=uint16_t(policy>>16), stances=uint16_t((policy>>32)&7);
+    const unsigned remainder=buttons&(buttons-1);
+    return !(policy&~0x7FFFF0001ULL) && bool(buttons)==bool(stances)
+        && (!buttons || (remainder && !(remainder&(remainder-1))));
+}
+
 static inline DispatchReason command_status(const DispatchCommand& c, int64_t now,
         int64_t frequency, uint64_t generation, uint64_t consumed, bool shot_used) {
     // Reject stale, malformed or already-consumed external gesture commands.
@@ -66,8 +76,8 @@ static inline DispatchReason command_status(const DispatchCommand& c, int64_t no
     // A reconnect or delayed publisher must not replay an old input into valid gameplay.
     if (c.armed != 1) return NotArmed;
     if (c.generation != generation) return WrongGeneration;
-    if (c.reserved[0] > 1 || c.reserved[1] >= 32 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
-    if (c.held != 1 && c.reserved[0] != 1) return Released;
+    if (!valid_chord_policy(c.reserved[0]) || c.reserved[1] >= 32 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
+    if (c.held != 1 && !(c.reserved[0]&1)) return Released;
     if (!c.chord_sequence || c.chord_sequence > INT64_MAX) return InvalidConfig;
     if (c.chord_sequence <= consumed) return SequenceConsumed;
     if (shot_used) return ShotUsed;

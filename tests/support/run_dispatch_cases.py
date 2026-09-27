@@ -54,6 +54,29 @@ class DispatchTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from('<3Q', raw, 64+72), tuple(CONFIG['banks']))
         self.assertEqual(struct.unpack_from('<IiII', raw, 64+112), (0xCF0, 4100, 1, 1))
         self.assertEqual(struct.unpack_from('<q', raw, 64+152)[0], 1)
+        from engine_config import DEFAULT_PRESET, binding_for_preset
+        from game_controller import GAME_DEVICE, game_binding
+        ds4=json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
+        for calibration,triggers in ((ds4,(8,4,64)),(dict(device=GAME_DEVICE,lb_mask=0x100),(0x8000,0x2000,0x400))):
+            for raw_trigger,logical in zip(triggers,(0x8000,0x2000,0x400)):
+                for stance,mask in (('low',1),('high',4),('any',7)):
+                    preset=dict(DEFAULT_PRESET,tap_move='okatsu.charged_rush',hold_move=None,
+                        modifier_mask=calibration['lb_mask'],trigger_mask=raw_trigger,chord_stance=stance)
+                    _,binding=game_binding(calibration,binding_for_preset(calibration,preset))
+                    policy=((0x100|logical)<<16)|(mask<<32)
+                    self.assertEqual(binding['chord_policy'],policy)
+                    command.publish(dict(CONFIG,chord_policy=binding['chord_policy']),heartbeat=1000,edge=900,
+                        expires=2100,chord_sequence=1,armed=True,held=False,latched=1,context_epoch=23)
+                    self.assertEqual(struct.unpack_from('<3Q',buffer.raw,64+128),(policy|1,0,23))
+                    preset.update(tap_move=None,hold_move=None)
+                    _,disabled=game_binding(calibration,binding_for_preset(calibration,preset))
+                    self.assertEqual(disabled['chord_policy'],0)
+            preset=dict(DEFAULT_PRESET,modifier_mask=calibration['lb_mask'],
+                trigger_mask=32 if calibration['device']['backend']=='winmm' else 0x200)
+            with self.assertRaisesRegex(ValueError,'reserved for Ki Pulse and Frost Moon'):
+                game_binding(calibration,binding_for_preset(calibration,preset))
+            preset.update(tap_move=None,hold_move=None)
+            self.assertEqual(game_binding(calibration,binding_for_preset(calibration,preset))[1]['chord_policy'],0)
 
 
     def test_current_profile_prepares_source_and_rejects_missing_resource(self):

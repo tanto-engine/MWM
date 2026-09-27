@@ -392,6 +392,36 @@ static void held_slot_cases() {
     // Frost/guard entries share native heavy templates but do not own held Triangle.
     // Place optional entries before and after a real hold to reproduce both selection orders.
     // Ordinary heavy and empty-Ki grapple must resolve the same configured hold slot.
+    for (WORD trigger : {WORD(XINPUT_GAMEPAD_Y),WORD(XINPUT_GAMEPAD_B)}) for (bool held : {false,true}) {
+        boss_hold_stances=7;hold_reset(2,false);
+        command.reserved[0]=1 | (uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|trigger)<<16) | (uint64_t(1)<<32);
+        pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|trigger;observe_game_input(trace->header);publish();
+        assert(!custom_chord_blocks(0x3E8) && !custom_chord_blocks(0xD5F));
+        const auto before=action_calls;
+        assert(!observed_action(player.data(),trigger==XINPUT_GAMEPAD_Y ? 0xBC0 : 24,nullptr));
+        assert(!pending_heavy.active && !boss_active && action_calls==before);
+        command.armed=1;command.held=held;command.reserved[1]=0;
+        pad_buttons=held ? WORD(XINPUT_GAMEPAD_LEFT_SHOULDER|trigger) : WORD(XINPUT_GAMEPAD_LEFT_SHOULDER);
+        publish();tick();assert(boss_active && boss_active_slot==0 && dispatch->control.dispatch_count==1);
+        put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());bindings(false);
+    }
+    boss_hold_stances=7;hold_reset(2,false);
+    command.reserved[0]=1 | (uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y)<<16) | (uint64_t(1)<<32);
+    publish();assert(!configured_chord_buttons());
+    assert(!observed_action(player.data(),0xBC0,nullptr) && pending_heavy.active);
+    pending_heavy.started-=frequency/4;publish();tick();assert(boss_active && boss_active_slot==5);
+    put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());bindings(false);
+    for (unsigned failure=0;failure<6;++failure) {
+        hold_reset(2,false);command.reserved[0]=(uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y)<<16)|(uint64_t(1)<<32);
+        pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;observe_game_input(trace->header);publish();
+        if (failure==0) dispatch->command.heartbeat_qpc-=frequency;
+        if (failure==1) ++dispatch->command.reserved[2];
+        if (failure==2) put(player.data(),0x470,uint32_t(1));
+        if (failure==3) {pad_buttons=0;observe_game_input(trace->header);}
+        if (failure==4) {pad_buttons|=XINPUT_GAMEPAD_RIGHT_SHOULDER;observe_game_input(trace->header);}
+        if (failure==5) dispatch->command.reserved[0]|=uint64_t(XINPUT_GAMEPAD_A)<<16;
+        assert(!custom_chord_blocks(0xBC0));
+    }
     for (unsigned stance : {2u,1u,0u}) for (bool held : {false,true}) {
         boss_hold_stances=7; hold_reset(stance,false);
         const auto& adapter=boss_adapters[5];
@@ -592,7 +622,7 @@ static void airborne_cases() {
         for (auto& binding : boss_skill_bindings) binding={};
         pending_heavy={};boss_hold_variant=target+1;boss_hold_stances=7;
         put(player.data(),0x470,stance);put(player.data(),0x58,address(neutral.data()));
-        command.armed=0;dispatch->control.dispatch_count=0;dispatch->control.consumed_sequence=0;
+        command.armed=0;command.reserved[0]=0;dispatch->control.dispatch_count=0;dispatch->control.consumed_sequence=0;
         pad_buttons=0;observe_game_input(trace->header);pad_buttons=XINPUT_GAMEPAD_Y;observe_game_input(trace->header);
         publish_player_context(.25f);publish();
         if (route==0) {
@@ -600,6 +630,9 @@ static void airborne_cases() {
             assert(!observed_action(player.data(),keys[stance],nullptr) && pending_heavy.active);
             pending_heavy.started-=frequency/4;publish();tick();
         } else if (route==1) {
+            command.reserved[0]=1|(uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y)<<16)|(uint64_t(1)<<(34-stance));
+            pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;observe_game_input(trace->header);publish();
+            assert(!observed_action(player.data(),keys[stance],nullptr) && !pending_heavy.active);
             const auto& move=boss_imports[target];command.armed=command.held=1;command.reserved[1]=target;
             command.desired_key=move.key;command.expected_motion=move.motion;
             command.expected_descriptor=move.descriptor;command.expected_payload=move.payload;publish();tick();

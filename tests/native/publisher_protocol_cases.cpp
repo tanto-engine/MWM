@@ -26,6 +26,15 @@ int main(int argc, char** argv) {
     command.reserved[2] = uint64_t(UINT16_MAX) + 1;
     assert(command_status(command, 1050, 1000, 7, 0, false) == InvalidConfig);
     command.reserved[2] = 0;
+    command.reserved[0]=(uint64_t(0x8100)<<16)|(uint64_t(1)<<32);
+    assert(command_status(command,1050,1000,7,0,false)==Accepted);
+    command.held=0;
+    assert(command_status(command,1050,1000,7,0,false)==Released);
+    command.reserved[0]|=1;
+    assert(command_status(command,1050,1000,7,0,false)==Accepted);
+    command.reserved[0]|=uint64_t(0x1000)<<16;
+    assert(command_status(command,1050,1000,7,0,false)==InvalidConfig);
+    command.reserved[0]=0;
     command.held = 0;
     assert(command_status(command, 1050, 1000, 7, 0, false) == Released);
     command.armed = 0;

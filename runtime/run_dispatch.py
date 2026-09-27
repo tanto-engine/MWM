@@ -93,7 +93,7 @@ class CommandMap:
         body = COMMAND.pack(self.sequence, heartbeat, edge, expires, chord_sequence,
                             config['generation'], config['player'], config['owner'], config['vtable'],
                             *config['banks'], selected['descriptor'], selected['payload'], selected['key'],
-                            selected['motion'], int(armed), int(held), latched, variant, context_epoch, self.sequence)
+                            selected['motion'], int(armed), int(held), latched | config.get('chord_policy',0), variant, context_epoch, self.sequence)
         address = self.address + CONTROL.size
         # Single publisher, aligned 64-bit stores on Windows x64. Native reads
         # both markers with interlocked barriers and never waits on the writer.
@@ -301,6 +301,7 @@ def main():
         with LiveGame(session['pid']) as game:
             config = prepare(game, profile)
             config['imports'] = boss['imports']
+            config['chord_policy']=runtime_binding['chord_policy']
             validate_boss_profile(config, profile, boss)
             boss_snapshot(game, boss, require_originals=True)
             start_attempted = True

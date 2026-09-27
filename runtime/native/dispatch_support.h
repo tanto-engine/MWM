@@ -226,7 +226,7 @@ static DispatchReason choose_chain(void* actor, DispatchCommand& c) {
     LARGE_INTEGER now; QueryPerformanceCounter(&now);
     const int64_t frequency = dispatch->control.qpc_frequency;
     if (!InterlockedCompareExchange(&dispatch->control.enabled,0,0) || !snapshot_command(intent)
-        || intent.held != 1 || intent.reserved[0] != 0 || intent.chord_sequence != boss_chain_sequence
+        || intent.held != 1 || (intent.reserved[0]&1) || intent.chord_sequence != boss_chain_sequence
         || intent.reserved[2] != boss_chain_epoch || intent.reserved[1] != boss_string_variant
         || intent.generation != uint64_t(dispatch->control.generation)
         || frequency <= 0 || intent.heartbeat_qpc > now.QuadPart

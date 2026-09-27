@@ -137,8 +137,6 @@ def package_desktop(project, build, worker, package):
     # The npm lock and installed versions are release inputs; the original source tree stays intact.
     # Builder intermediates remain under .build, and only the finished portable EXE enters the release.
     npm=shutil.which('npm.cmd') or shutil.which('npm')
-    subprocess.run([npm,'ci','--no-fund','--no-audit'],cwd=project,check=True)
-    subprocess.run(['node','node_modules/electron/install.js'],cwd=project,check=True)
     scripts=json.loads((project/'package.json').read_text(encoding='utf8'))['scripts']
     subprocess.run([npm,'run','build:ui' if 'build:ui' in scripts else 'build'],cwd=project,check=True)
     javascript="""const {build,Platform}=require('electron-builder');
@@ -175,6 +173,11 @@ def main():
     if skip_reason is not None and (not skip_reason or '-' not in spec['version']):
         raise ValueError('Skipping tests requires a stated reason and a prerelease version')
     build.mkdir(parents=True)
+    if desktop:
+        # Tests and packaging must use the same clean dependencies, including Electron's separate binary install.
+        npm=shutil.which('npm.cmd') or shutil.which('npm')
+        subprocess.run([npm,'ci','--no-fund','--no-audit'],cwd=project,check=True)
+        subprocess.run(['node','node_modules/electron/install.js'],cwd=project,check=True)
     if spec['kind']=='sword':
         subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'runtime/native/Build.ps1')],check=True)
     # An explicit prerelease exception records unknown results, never recycled passes from an older EXE.

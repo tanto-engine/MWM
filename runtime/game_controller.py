@@ -83,6 +83,13 @@ def game_binding(calibration, binding):
                     modifier_mask=game_button_mask(device, binding.get('modifier_mask', binding['lb_mask']), mapping),
                     trigger_mask=game_button_mask(device, binding.get('trigger_mask', binding['circle_mask']), mapping))
     compiled['circle_mask'] = compiled['trigger_mask']
+    enabled=any(binding.get('moveset',{}).get(field) for field in ('tap_move','hold_move')) or any(
+        variant is not None for variant in binding.get('variants',[0,1]))
+    if enabled and (compiled['modifier_mask']|compiled['trigger_mask'])&0x200:
+        raise ValueError('R1 / RB is reserved for Ki Pulse and Frost Moon; choose another custom-chord input')
+    stance=binding.get('moveset',{}).get('chord_stance','any')
+    stances=7 if stance=='any' else 1<<('low','mid','high').index(stance)
+    compiled['chord_policy']=((compiled['modifier_mask']|compiled['trigger_mask'])<<16)|(stances<<32) if enabled else 0
     return dict(calibration, device=GAME_DEVICE, lb_mask=lb), compiled
 
 

@@ -17,6 +17,7 @@ struct PendingHeavy {
     bool active, spent;
 };
 static PendingHeavy pending_heavy{};
+static WORD configured_chord_buttons();
 
 static bool heavy_button(unsigned& controller, bool& down, bool& interrupted) {
     // Read Triangle from the player frame's timestamped controller snapshot.
@@ -28,7 +29,7 @@ static bool heavy_button(unsigned& controller, bool& down, bool& interrupted) {
     constexpr WORD cancel=XINPUT_GAMEPAD_A|XINPUT_GAMEPAD_B|XINPUT_GAMEPAD_X
         |XINPUT_GAMEPAD_START|XINPUT_GAMEPAD_BACK|XINPUT_GAMEPAD_RIGHT_SHOULDER;
     interrupted=(sample.buttons[controller] & cancel)!=0
-        || sample.left_trigger[controller]>30 || sample.right_trigger[controller]>30;
+        || sample.left_trigger[controller]>30 || sample.right_trigger[controller]>30 || configured_chord_buttons();
     return true;
 }
 
@@ -54,6 +55,23 @@ static bool native_binding_context(DispatchCommand& command) {
         && command.generation==uint64_t(dispatch->control.generation)
         && player_context_status(command)==Accepted && command.player==boss_session.player
         && copy_bytes(command.player+0x70,banks,sizeof(banks)) && !memcmp(banks,command.banks,sizeof(banks));
+}
+
+static WORD configured_chord_buttons() {
+    // Read the prepublished chord before native input can start a competing action.
+    // Require its exact buttons, stance and fresh player/controller ownership; releases remove the reservation.
+    // R1 combinations remain owned by native stance switching and Frost Moon.
+    DispatchCommand command{};GameInput input{};unsigned slot=0;uint32_t stance=0;
+    if (!dispatch || !snapshot_command(command) || !valid_chord_policy(command.reserved[0])) return 0;
+    const uint64_t policy=command.reserved[0];const WORD buttons=WORD(policy>>16);
+    if (!buttons || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER) || !native_binding_context(command)
+        || command.reserved[0]!=policy
+        || !trace || !read_game_input(trace->header,input) || !selected_game_controller(input,slot)
+        || !copy_field(command.player+0x470,stance) || stance>2
+        || !(command.reserved[0]&(uint64_t(1)<<(34-stance)))) return 0;
+    const WORD down=(input.buttons[slot]&0xF3FF) | (input.left_trigger[slot]>=128 ? 0x400 : 0)
+        | (input.right_trigger[slot]>=128 ? 0x800 : 0);
+    return down==buttons ? buttons : 0;
 }
 
 static bool replacement_context(DispatchCommand& command, const MoveAdapter& adapter) {
@@ -318,6 +336,22 @@ static unsigned stance_hold(uint32_t key) {
                 && boss_adapters[binding.variant-1].kind==2 && boss_adapters[binding.variant-1].player_key==key)
                 return binding.variant-1;
     return boss_import_count;
+}
+
+static bool custom_chord_blocks(uint32_t key) {
+    // Reserve guard and verified attack selectors while the configured chord is held in neutral.
+    // Suppress only input-selected actions; damage, death, menus and ongoing attacks keep native handling.
+    // Plain Triangle and other button combinations never match the complete chord reservation.
+    const WORD buttons=configured_chord_buttons();uint64_t current=0;uint32_t current_key=0;
+    if (!buttons || boss_active || !copy_field(boss_session.player+0x58,current)
+        || !copy_field(current,current_key) || !repeat_current_allowed(current,current_key)) return false;
+    if (key==24 || key==25) return true;
+    if ((buttons&XINPUT_GAMEPAD_Y) && (key==0xBC0 || key==0xCF5 || key==0xC7A || key==0xCB7 || key==0xD4A)) return true;
+    uint8_t row[0x30];
+    if (!selected_sword_row(key,row)) return false;
+    const unsigned selector=(buttons&XINPUT_GAMEPAD_Y) ? 1 : (buttons&XINPUT_GAMEPAD_X) ? 0 : 0xff;
+    return selector!=0xff && ((row[0x0B]==selector && row[0x0C]==1)
+        || (row[0x0B]==5 && row[0x0C]==0 && row[0x0D]==selector && row[0x0E]==1));
 }
 
 static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_index) {

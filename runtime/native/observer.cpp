@@ -89,10 +89,11 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
 #ifdef RESEARCH_REPEAT
     if (frame_mode && reason != Accepted && reason != NativeHeavyTap) { SetLastError(incoming_error); return false; }
     uint64_t current = 0;
-    const bool suppress_guard = !frame_mode && !context && (key == 24 || key == 25)
+    const bool suppress_guard = !frame_mode && !context && reinterpret_cast<uint64_t>(actor)==boss_session.player
+        && (custom_chord_blocks(key) || ((key == 24 || key == 25)
         && InterlockedCompareExchange(&boss_active, 0, 0)
         && reinterpret_cast<uint64_t>(actor) == boss_active_player && boss_player_valid()
-        && copy_field(boss_active_player + 0x58, current) && boss_is_preview_descriptor(current);
+        && copy_field(boss_active_player + 0x58, current) && boss_is_preview_descriptor(current)));
     if (suppress_guard) reason = BossGuardSuppressed;
 #endif
     if (record_this) {
