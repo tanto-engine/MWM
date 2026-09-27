@@ -3,5 +3,5 @@
   "kind": "sword",
   "name": "TantoSword",
   "engine_repository": "https://github.com/neuriv/tanto-engine.git",
-  "engine_commit": "040b7572b4741fe90b867a9220578b1f8a751d0c"
+  "engine_commit": "69f34bede93cf576d87944984ee702b26968dc94"
 }
