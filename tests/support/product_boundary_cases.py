@@ -22,6 +22,95 @@ from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_reused_actor_counter_reset_refreshes_its_cached_metadata(self):
+        # Replay the observed retry pattern: same node, owner and descriptor, but counter restarts.
+        # Optional payload bytes can change at reused addresses and must be read again after reset.
+        # Preserve both full IDs and record a reset without inventing a death classification.
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        game = SimpleNamespace(identity=dict(pid=1), tick=-1)
+        raw = struct.pack('<I', 0x12345678) + bytes(0xD0 - 4)
+        states = [dict(owner_like='0x30000', current='0x40000', counter=value) for value in (25, 0)]
+
+        def alive():
+            # Advance through the two recorded lifetimes without using a real game process.
+            # Each sampling pass sees stable before/after bytes at the same virtual address.
+            # End deterministically after the reset has been sampled.
+            game.tick += 1
+            return game.tick < len(states)
+
+        def snapshot(address):
+            # Return the state for this sampling pass, including its restarted counter.
+            # Repeated coherence reads see the same frame of the fixture.
+            # Address and owner deliberately remain unchanged across the reset.
+            return b'', states[game.tick]
+
+        game.alive, game.snapshot, game.bytes = alive, snapshot, Mock(return_value=raw)
+        with tempfile.TemporaryDirectory() as td, patch('boss_probe.metadata', return_value=dict(descriptor_bytes=raw.hex())) as metadata_read:
+            path = Path(td) / 'events.jsonl'; journal = Journal(path, 'one')
+            try: sample(game, journal, threading.Event(), initial=dict(candidates=[dict(object='0x10000', owner_like='0x30000')]))
+            finally: journal.close()
+            rows = [json.loads(line) for line in path.read_text().splitlines()]
+            self.assertEqual(metadata_read.call_count, 2)
+            resets = [row for row in rows if row['kind'] == 'actor_reset']
+            self.assertEqual([(row['previous_counter'], row['counter'], row['cause']) for row in resets], [(25, 0, 'unverified')])
+            self.assertEqual(sum(row['kind'] == 'action_state' for row in rows), 2)
+
+    def test_rebuilt_actor_resumes_while_the_full_heap_scan_is_still_running(self):
+        # Model death/retry moving the actor into a nearby slot during a long full scan.
+        # The first scan's cumulative snapshot stays old; only local rediscovery can find the replacement.
+        # A single take must save both actors without waiting for that full scan to finish.
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import time
+        stop = threading.Event()
+        observed = {0x10000: threading.Event(), 0x11000: threading.Event()}
+        raw = struct.pack('<I', 0x12345678) + bytes(0xD0 - 4)
+        game = SimpleNamespace(identity=dict(pid=1), phase=0, alive=Mock(return_value=True), bytes=Mock(return_value=raw))
+
+        def snapshot(address):
+            # A rebuilt enemy occupies a new slot; the old address is no longer an action node.
+            # Keep its descriptor stable within each phase so the normal coherence check applies.
+            # This changes actor lifetime without changing the game process identity.
+            if address != (0x10000 if game.phase == 0 else 0x11000): raise OSError('retired actor')
+            return b'', dict(owner_like='0x30000', current='0x40000', counter=game.phase)
+
+        def discover(reader, seed=None, stop_requested=None, on_progress=None):
+            # Return fresh nearby candidates when requested, but stall the simulated whole-heap scan.
+            # Release the replacement only through the new local revalidation path.
+            # Bound each wait so a regression fails promptly rather than hanging the suite.
+            old = dict(candidates=[dict(object='0x10000', owner_like='0x30000')])
+            if seed is not None:
+                return dict(candidates=[dict(object='0x11000', owner_like='0x30000')])
+            on_progress(old)
+            observed[0x10000].wait(1)
+            game.phase = 1
+            time.sleep(1.05)
+            on_progress(old)
+            observed[0x11000].wait(.5)
+            stop.set()
+            return old
+
+        game.snapshot = snapshot
+        with tempfile.TemporaryDirectory() as td, patch('boss_probe.discover', side_effect=discover), \
+             patch('boss_probe.metadata', side_effect=OSError('optional metadata')), patch('builtins.print'):
+            path = Path(td) / 'events.jsonl'; journal = Journal(path, 'one')
+            emit = journal.emit
+
+            def record(kind, **fields):
+                # Save real journal rows before acknowledging observation to the scan fixture.
+                # Signal only primary action IDs, never candidate discovery or metadata.
+                # The final assertion therefore requires durable observations from both lifetimes.
+                emit(kind, **fields)
+                if kind == 'action_state': observed[int(fields['object'], 0)].set()
+
+            journal.emit = record
+            try: sample(game, journal, stop, discover_factory=Mock(return_value=nullcontext(game)))
+            finally: journal.close()
+            rows = [json.loads(line) for line in path.read_text().splitlines()]
+            self.assertEqual({row['object'] for row in rows if row['kind'] == 'action_state'}, {'0x10000', '0x11000'})
+
     def test_unexpected_discovery_failure_is_saved_instead_of_silencing_the_thread(self):
         # A programming error in the scan thread must become evidence, not endless zero-ID health.
         # Stop as soon as the sampler journals that error; the two-second guard bounds a broken regression.

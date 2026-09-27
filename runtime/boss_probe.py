@@ -300,6 +300,7 @@ def discover(game, seed=None, stop_requested=None, on_progress=None):
     # Find aligned action-node vtable references in writable private memory.
     # Revalidate candidate snapshots and bind them to process identity.
     # Support cancellation during long scans without arming stale actors.
+    # File caches and in-memory pool hints pass the same process-birth and snapshot checks.
     found = set()
     scanned = failures = 0
     delivered, checked = {}, set()
@@ -329,7 +330,7 @@ def discover(game, seed=None, stop_requested=None, on_progress=None):
                              failed_reads=failures, scan_complete=False))
             last_progress = time.monotonic()
     if seed:
-        old = json.loads(seed.read_text(encoding="utf8"))
+        old = seed if isinstance(seed, dict) else json.loads(seed.read_text(encoding="utf8"))
         if old["pid"] != game.pid or int(old["vtable"], 0) != game.vtable:
             raise ValueError("Seed PID/vtable mismatch; run a fresh scan")
         if "creation_filetime" in old and any(old.get(k) != v for k, v in game.identity.items()):
