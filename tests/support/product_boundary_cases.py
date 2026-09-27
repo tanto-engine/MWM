@@ -31,7 +31,7 @@ class ProductBoundaryTests(unittest.TestCase):
                 app.busy=lambda:True
                 app.backdrop.on_guide()
                 self.assertIsNotNone(app.guide);self.assertTrue(app.guide.winfo_exists())
-                self.assertIsNone(app.dialog)
+                self.assertFalse(app.guide.grab_current())
                 app.toggle();self.assertTrue(app.stop.is_set())
                 canvas=app.guide.winfo_children()[0]
                 next(w for w in canvas.winfo_children() if w.winfo_class()=='TButton').invoke()
@@ -78,10 +78,6 @@ class ProductBoundaryTests(unittest.TestCase):
 
     def test_description_editor_saves_a_span_and_retains_revision_history(self):
         root=tk.Tk();root.withdraw()
-        def descendants(widget):
-            for child in widget.winfo_children():
-                yield child
-                yield from descendants(child)
         try:
             with tempfile.TemporaryDirectory() as td:
                 folder=Path(td);take=folder/'take-0001';take.mkdir()
@@ -90,9 +86,9 @@ class ProductBoundaryTests(unittest.TestCase):
                 app=recorder.Recorder(root,enable_hotkey=False,settings_path=folder/'settings.json');app.folder=folder
                 app.describe()
                 for description in ('Jump then slash','Jump then two slashes'):
-                    widgets=list(descendants(app.dialog));editor=next(w for w in widgets if isinstance(w,tk.Text))
+                    editor=app.description
                     editor.delete('1.0','end');editor.insert('1.0',description)
-                    next(w for w in widgets if w.winfo_class()=='TButton' and w.cget('text')=='Save description').invoke()
+                    self.assertTrue(app.save_description())
                     label=recorder.load_annotations(folder)[0]
                     self.assertEqual((label['start_t'],label['end_t']),(0,3.5))
                     self.assertEqual(label['label'],description)
@@ -102,6 +98,86 @@ class ProductBoundaryTests(unittest.TestCase):
         finally:
             try: root.destroy()
             except tk.TclError: pass
+
+    def test_description_is_editable_before_samples_and_survives_restart(self):
+        with tempfile.TemporaryDirectory() as td:
+            settings=Path(td)/'new/settings.json'
+            for attempt in range(2):
+                root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
+                try:
+                    app.describe()
+                    if not attempt:
+                        app.boss.set('Custom enemy');app.description.insert('1.0','Jump, then two cuts')
+                        self.assertFalse(app.save_description())
+                    else:
+                        self.assertEqual(app.boss.get(),'Custom enemy')
+                        self.assertEqual(app.description.get('1.0','end-1c'),'Jump, then two cuts')
+                finally:app.close()
+
+    def test_last_session_and_unsaved_revision_are_restored(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder=Path(td)/'session';folder.mkdir();settings=Path(td)/'settings.json'
+            take=folder/'take-0001';take.mkdir()
+            (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',boss_name='Okatsu')))
+            (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
+            app.load_session(folder);app.description.insert('1.0','First slash');self.assertTrue(app.save_description())
+            key=app.labels.get_children()[0];app.labels.selection_set(key);app.edit_selected()
+            app.description.insert('end',' and leap');app.close()
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
+            try:
+                self.assertEqual(app.folder,folder)
+                self.assertEqual(app.description.get('1.0','end-1c'),'First slash and leap')
+                self.assertTrue(app.save_description());labels=recorder.load_annotations(folder)
+                self.assertEqual(len(labels),1);self.assertEqual(labels[0]['revision'],2)
+                self.assertEqual(labels[0]['label'],'First slash and leap')
+            finally:app.close()
+
+    def test_disk_failure_keeps_description_and_prevents_close(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
+            app.description.insert('1.0','Keep this note')
+            with patch.object(recorder,'atomic_json',side_effect=OSError('Disk full')):
+                self.assertFalse(app.save_description());app.close()
+                self.assertFalse(app.closing);self.assertIn('Disk full',app.note_status.get())
+                self.assertEqual(app.description.get('1.0','end-1c'),'Keep this note')
+            app.close()
+
+    def test_capture_resume_preserves_takes_and_plays_confirmed_cues(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=tk.Tk();root.withdraw();settings=Path(td)/'settings.json'
+            def capture(boss,folder,**options):
+                index=len(list(folder.glob('take-*')))+1;take=folder/f'take-{index:04d}';take.mkdir()
+                (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
+                options['status_callback'](dict(state='recording',detail='test'))
+                options['stop_event'].wait(2)
+                options['status_callback'](dict(state='stopped',detail='saved'))
+            with patch.object(recorder,'record_encounter',side_effect=capture),patch.object(recorder,'downloads_dir',return_value=Path(td)),patch.object(recorder.Recorder,'cue') as cue:
+                app=recorder.Recorder(root,False,settings);app.boss.set('Onryoki')
+                for index in range(2):
+                    app.toggle();self.assertTrue((app.folder/'encounter.json').exists())
+                    app.toggle();app.thread.join(3)
+                    root.after_cancel(app.after_id);app.poll()
+                    app.description.insert('1.0',f'Sequence {index+1}')
+                    self.assertTrue(app.save_description())
+                self.assertEqual([x['take'] for x in recorder.load_annotations(app.folder)],['take-0001','take-0002'])
+                self.assertEqual([x.args[0] for x in cue.call_args_list],['start','stop','start','stop'])
+                app.close()
+
+    def test_queued_completion_cannot_overwrite_a_new_session(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
+            previous=Path(td)/'old';previous.mkdir();app.folder=previous
+            app.events.put(('capture_status',(previous,dict(state='recording',detail='old')),None))
+            app.events.put(('capture_finished',previous,None))
+            app.new_session();root.after_cancel(app.after_id);app.poll()
+            self.assertEqual(app.headline.get(),'New session');self.assertIsNone(app.folder);app.close()
+
+    def test_boss_menu_names_do_not_invent_detection_signatures(self):
+        self.assertGreaterEqual(len(recorder.BOSSES),40)
+        key,name=recorder.boss_identity('Onryoki')
+        self.assertEqual(name,'Onryoki');self.assertNotIn(key,recorder.DEFAULT_SIGNATURES)
+        self.assertEqual(set(recorder.DEFAULT_SIGNATURES),{'okatsu','jin_hayabusa','maria'})
 
     def test_intake_reports_raw_context_disagreeing_with_submission(self):
         with tempfile.TemporaryDirectory() as td:
@@ -154,7 +230,7 @@ class ProductBoundaryTests(unittest.TestCase):
                         self.assertEqual(app.backdrop.picture.width(),app.backdrop.winfo_width())
                         self.assertEqual(app.backdrop.picture.height(),app.backdrop.winfo_height())
                         self.assertEqual(app.help_label.photo.get(0,0),app.backdrop.crop(app.help_label).getpixel((0,0)))
-                        for widget in (app.selector,app.primary,app.describe_button,app.help_label,app.labels,*app.idle_buttons):
+                        for widget in (app.selector,app.primary,app.help_label,app.labels,app.description,app.save_button,*app.idle_buttons):
                             self.assertGreater(widget.winfo_width(),20)
                             self.assertGreaterEqual(widget.winfo_rootx(),root.winfo_rootx())
                             self.assertLessEqual(widget.winfo_rootx()+widget.winfo_width(),root.winfo_rootx()+root.winfo_width())
