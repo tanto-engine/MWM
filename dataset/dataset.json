@@ -5,11 +5,26 @@
   "weapons": {
     "sword": {
       "name": "Single katana"
+    },
+    "handgun": {
+      "name": "Handgun"
     }
   },
   "bosses": {
     "tachibana_muneshige": {
       "name": "Tachibana Muneshige"
+    },
+    "jin_hayabusa": {
+      "name": "Jin Hayabusa"
+    },
+    "oda_nobunaga": {
+      "name": "Oda Nobunaga"
+    },
+    "sanada_yukimura": {
+      "name": "Sanada Yukimura"
+    },
+    "toyotomi_hideyori": {
+      "name": "Toyotomi Hideyori"
     }
   },
   "evidence_archive_layout": "<archive_sha256>.zip",

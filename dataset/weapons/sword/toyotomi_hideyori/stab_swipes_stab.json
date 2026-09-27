@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.stab_swipes_stab",
+  "name": "Stab, two swipes, then stab",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "stab, two swipes, stab, half-onmyo summon, then paused and stopped recording.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D34",
+        "motion_id": 2100,
+        "timing_id": 2100
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D38",
+        "motion_id": 2200,
+        "timing_id": 2200
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D36",
+        "motion_id": 2120,
+        "timing_id": 2120
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D37",
+        "motion_id": 2200,
+        "timing_id": 2200
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "The selected attack candidates follow the annotated order; idle/movement states separate the first stab from the later three states. The following 0x000005DF at 12.219s is retained as the reported partial onmyo context, not merged into the sword string.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "b3e1d15bb47ea1f0a24dc279c022ce4be99305eb3eeaa34aa326634ddd0f0fd4",
+      "files": {
+        "encounter.json": "262dca5a1ea6ae89f345e9207b29801a0aa3bb8f887bab7140d9fbad1333670a",
+        "events.jsonl": "ccb98694bd856196122afbd9be3638587c36fff08a100d3408453943445374cb"
+      },
+      "recording_id": "193a56f5-7a8c-4da9-8e2c-eaade7749a7c",
+      "take_id": "8cd00c26-de25-40af-adfa-aaef0379ee89",
+      "annotation_id": "376ae9e3-8b45-4332-a6fc-21447a690c17",
+      "annotation_text": "stab, two swipes, stab, half-onmyo summon, then paused and stopped recording.",
+      "annotation_end_seconds": 17.203,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 107,
+          "metadata_line": 108,
+          "first_observed_seconds": 7.641,
+          "counter": 195
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 125,
+          "metadata_line": 62,
+          "first_observed_seconds": 9.828,
+          "counter": 199
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 130,
+          "metadata_line": 131,
+          "first_observed_seconds": 10.188,
+          "counter": 200
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 136,
+          "metadata_line": 137,
+          "first_observed_seconds": 10.922,
+          "counter": 201
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 6
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 38
+        }
+      ]
+    }
+  ]
+}

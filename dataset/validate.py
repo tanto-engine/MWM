@@ -35,6 +35,7 @@ def load_dataset(root):
         require(move['kind'] == 'move_string' and bool(move['name'].strip()), f'{identifier}: unnamed move string')
         require(move['review_status'] in ('candidate', 'reviewed', 'rejected'), f'{identifier}: invalid review status')
         require(move['priority'] in (None, 'low', 'mid', 'high'), f'{identifier}: invalid priority')
+        require(move.get('mapping_status', 'candidate') in ('candidate', 'partial'), f'{identifier}: invalid mapping status')
         steps = move['steps']
         require(bool(steps) and len({step['id'] for step in steps}) == len(steps), f'{identifier}: missing/duplicate steps')
         for step in steps:
@@ -106,6 +107,8 @@ def verify_evidence(records, evidence_root):
                 require(action['take'] == metadata['take'] == ref['take_id'], f"{move['id']}: take mismatch")
                 require(action['object'] == metadata['object'] and action['current'] == metadata['address'] and
                         metadata['matches_preceding_state'], f"{move['id']}: incoherent metadata")
+                require(all(action['descriptor'][key] == metadata[key] for key in ('payload', 'combat_slice', 'transition_slice')),
+                        f"{move['id']}: metadata belongs to a different descriptor")
                 require(action['descriptor']['action_key_hex'] == metadata['action_key_hex'] == step['source']['action_id'], f"{move['id']}: action mismatch")
                 require(all(metadata['payload_prefix'][key] == step['source'][key] for key in ('motion_id', 'timing_id')), f"{move['id']}: motion/timing mismatch")
                 require(action['t'] == location['first_observed_seconds'] and action['counter'] == location['counter'], f"{move['id']}: observation mismatch")
@@ -123,6 +126,43 @@ def verify_evidence(records, evidence_root):
     return len(jobs)
 
 
+def verify_intake(root, records, evidence_root):
+    # Account for every saved note, including sessions that lost their raw journal.
+    # Compare the inventory with immutable original bytes so omissions cannot look complete.
+    # Require every curated record to be reachable from its actual source annotation.
+    inventory = json.loads((Path(root) / 'intake.json').read_text(encoding='utf8'))
+    require(inventory['schema_version'] == 1, 'Unsupported intake version')
+    sessions, covered = set(), set()
+    for session in inventory['sessions']:
+        digest = session['archive_sha256']
+        require(re.fullmatch(r'[0-9a-f]{64}', digest), 'Invalid intake archive hash')
+        raw = (Path(evidence_root) / (digest + '.zip')).read_bytes()
+        require(hashlib.sha256(raw).hexdigest() == digest, 'Intake archive hash mismatch')
+        with zipfile.ZipFile(Path(evidence_root) / (digest + '.zip')) as archive:
+            require(set(archive.namelist()) == set(session['files']), 'Intake archive members mismatch')
+            require(all(hashlib.sha256(archive.read(name)).hexdigest() == sha for name, sha in session['files'].items()),
+                    'Intake member hash mismatch')
+            original = json.loads(archive.read('encounter.json'))
+        sid = session['recording_id']
+        require(sid == original['recording_id'] and sid not in sessions, 'Missing or duplicate intake session')
+        sessions.add(sid)
+        require(session['source_boss_name'] == original['boss_name'] and session['draft'] == original['draft'], 'Intake context mismatch')
+        require(len(session['annotations']) == len(original['annotations']), 'Intake omitted an annotation')
+        for saved, note in zip(session['annotations'], original['annotations']):
+            require((saved['id'], saved['text'], saved['take_id'], saved['end_seconds']) ==
+                    (note['id'], note['text'], note['take'], note['end_t']), 'Intake changed an annotation')
+            require(bool(saved['move_ids']), 'Annotation has no dataset destination')
+            for identifier in saved['move_ids']:
+                require(identifier in records, 'Intake references an unknown move')
+                move = records[identifier]
+                require((move['weapon_id'], move['boss_id']) == (session['weapon_id'], session['boss_id']), 'Intake classification mismatch')
+                require(any(ref['recording_id'] == sid and ref['annotation_id'] == note['id'] and ref['archive_sha256'] == digest
+                            for ref in move['evidence']), 'Move does not cite the indexed annotation')
+                covered.add(identifier)
+    require(covered == set(records), 'Dataset contains records absent from intake')
+    return len(sessions)
+
+
 def main():
     # Validate structure by default, with optional full provenance checks against an external archive store.
     # Print a compact index grouped by weapon and boss for humans and future tools.
@@ -134,10 +174,11 @@ def main():
     records = load_dataset(args.root)
     store = args.evidence_root or args.root / 'evidence'
     verified = verify_evidence(records, store) if args.evidence_root is not None or store.is_dir() else None
+    intake_count = verify_intake(args.root, records, store) if verified is not None and (args.root / 'intake.json').exists() else None
     groups = {}
     for move in records.values():
         groups.setdefault(move['weapon_id'], {}).setdefault(move['boss_id'], []).append({'id': move['id'], 'name': move['name'], 'status': move['review_status']})
-    print(json.dumps({'moves': len(records), 'evidence_archives_verified': verified, 'weapons': groups}, indent=2))
+    print(json.dumps({'moves': len(records), 'evidence_archives_verified': verified, 'intake_sessions_verified': intake_count, 'weapons': groups}, indent=2))
 
 
 if __name__ == '__main__':

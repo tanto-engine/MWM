@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "id": "sword.jin_hayabusa.quick_string_a",
+  "name": "Quick attack string A",
+  "weapon_id": "sword",
+  "boss_id": "jin_hayabusa",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "quick attack string A, ending with a low swipe. He followed up with half an aerial attack, but then I paused and ended recording. I died somewhere in the middle of the recording, but that shouldnt be relevant.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C67",
+        "motion_id": 2200,
+        "timing_id": 2200
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C68",
+        "motion_id": 2210,
+        "timing_id": 2210
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C69",
+        "motion_id": 2220,
+        "timing_id": 2220
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6A",
+        "motion_id": 2230,
+        "timing_id": 2230
+      }
+    },
+    {
+      "id": "stage_5",
+      "description": "Observed stage 5; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6B",
+        "motion_id": 2240,
+        "timing_id": 2240
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_4",
+      "to": "stage_5",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Five consecutive late executions precede the partial aerial follow-up at lines 366/368. Earlier actors died and were replaced; this string uses the post-death actor only.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "1d7e4cf845783390f95e15d6b2bd25d45479600292ef1f3f698fcfe4d740e877",
+      "files": {
+        "encounter.json": "f457552b7d255776556c5b7156becf19eaee4e060c176b977027fc7d19feb7c4",
+        "events.jsonl": "1e46f1a120cd23abc3d4c9775c5158008d5f6ef916477f6965474801ba687bd3"
+      },
+      "recording_id": "2ea67e4b-44a2-46e1-8e0d-8d19c7117399",
+      "take_id": "7daf81f6-ea8e-4726-8354-be9fbe032f99",
+      "annotation_id": "805aa660-a91f-4cd6-8c58-e14e538b64e5",
+      "annotation_text": "quick attack string A, ending with a low swipe. He followed up with half an aerial attack, but then I paused and ended recording. I died somewhere in the middle of the recording, but that shouldnt be relevant.",
+      "annotation_end_seconds": 41.843,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 339,
+          "metadata_line": 340,
+          "first_observed_seconds": 36.296,
+          "counter": 26
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 343,
+          "metadata_line": 344,
+          "first_observed_seconds": 36.531,
+          "counter": 27
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 346,
+          "metadata_line": 347,
+          "first_observed_seconds": 36.984,
+          "counter": 28
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 354,
+          "metadata_line": 355,
+          "first_observed_seconds": 37.296,
+          "counter": 29
+        },
+        {
+          "step_id": "stage_5",
+          "action_line": 359,
+          "metadata_line": 360,
+          "first_observed_seconds": 37.64,
+          "counter": 30
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_4",
+          "to": "stage_5",
+          "transition_entry_index": 1
+        }
+      ]
+    }
+  ]
+}

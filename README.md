@@ -4,7 +4,7 @@ MWM is the shared application for ten planned Nioh weapon movesets, starting wit
 
 `desktop/` is the Electron, TypeScript and CSS interface; `app/web_worker.py` connects it to Engine's reviewed configuration and lifecycle APIs. After `npm ci`, use `Trainer.ps1` or `npm start` with the pinned sibling Engine and Python. `Trainer.ps1 -LegacyUI` retains the previous trainer for comparison.
 
-`dataset/` is the fresh move collection: one JSON move string per weapon/boss, with ordered action IDs, review status and hashed recording references. `dataset/validate.py` checks structure and archived evidence. Raw recordings stay outside Git; new data begins with Tachibana's unconfirmed Omnislice preparation → attack.
+`dataset/` holds 12 sword strings and one handgun candidate under weapon/boss folders, with exact notes, ordered IDs and hashed evidence. `intake.json` tracks every source session; `validate.py` checks records and archived evidence. Raw recordings stay outside Git, and uncertain or incomplete mappings remain explicit.
 
 `data/` is legacy runtime integration input: the old catalogue, reviewed import graphs, resource fingerprints and preset v8 defaults. It is not merged into the new dataset. Move choices, bindings and bounded speeds remain editable; Ki Pulse, physics and Frost Moon timing stay Engine-owned.
 

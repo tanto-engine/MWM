@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.normals_swipe_slash",
+  "name": "Normal string into swipe and slash",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "normals, into two final swipe + slash. The swipe slash was followed by recording stop but not pause and i think he mightve done a last extra frame.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C69",
+        "motion_id": 1000,
+        "timing_id": 1000
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6A",
+        "motion_id": 1001,
+        "timing_id": 1001
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6B",
+        "motion_id": 1002,
+        "timing_id": 1002
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6E",
+        "motion_id": 1010,
+        "timing_id": 1010
+      }
+    },
+    {
+      "id": "stage_5",
+      "description": "Observed stage 5; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6F",
+        "motion_id": 1011,
+        "timing_id": 1011
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order"
+      ]
+    },
+    {
+      "from": "stage_4",
+      "to": "stage_5",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Three late normal-string states precede the final two states. An intervening 0x00000000 separates the groups. Discovery begins at 4.297s; the final slash completion is not established by stopping at 13.359s.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "65c68e80193ae61bda931588107479c0486e22f49ecea6a578661c8739a6e167",
+      "files": {
+        "encounter.json": "156b0b06f191a2c434875b5981fda6686e04d7d98a370714106c68a6bf7182a1",
+        "events.jsonl": "44ed3d681d01ee116daaf8353ffd02c8f57b973d6292410be2965f8a05977704"
+      },
+      "recording_id": "fc6cb52a-e651-42a5-9d29-deb7e712ec20",
+      "take_id": "ed2aff78-8807-4af0-83f5-aeaee5f24c51",
+      "annotation_id": "f554b07a-4c28-4564-bcd4-f86fb0b3143e",
+      "annotation_text": "normals, into two final swipe + slash. The swipe slash was followed by recording stop but not pause and i think he mightve done a last extra frame.",
+      "annotation_end_seconds": 13.359,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 45,
+          "metadata_line": 46,
+          "first_observed_seconds": 9.281,
+          "counter": 409
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 48,
+          "metadata_line": 49,
+          "first_observed_seconds": 9.969,
+          "counter": 410
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 51,
+          "metadata_line": 52,
+          "first_observed_seconds": 10.562,
+          "counter": 411
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 56,
+          "metadata_line": 57,
+          "first_observed_seconds": 11.844,
+          "counter": 413
+        },
+        {
+          "step_id": "stage_5",
+          "action_line": 60,
+          "metadata_line": 61,
+          "first_observed_seconds": 12.516,
+          "counter": 414
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_4",
+          "to": "stage_5",
+          "transition_entry_index": 1
+        }
+      ]
+    }
+  ]
+}

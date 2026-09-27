@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "id": "sword.jin_hayabusa.launcher_izuna_drop",
+  "name": "Launcher into Izuna Drop",
+  "weapon_id": "sword",
+  "boss_id": "jin_hayabusa",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "launch + izuna drop into my death.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C85",
+        "motion_id": 5010,
+        "timing_id": 5010
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C87",
+        "motion_id": 5012,
+        "timing_id": 5012
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C79",
+        "motion_id": 5014,
+        "timing_id": 5014
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C7A",
+        "motion_id": 1050,
+        "timing_id": 1050
+      }
+    },
+    {
+      "id": "stage_5",
+      "description": "Observed stage 5; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x000003B2",
+        "motion_id": 5020,
+        "timing_id": 5020
+      }
+    },
+    {
+      "id": "stage_6",
+      "description": "Observed stage 6; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x000003B6",
+        "motion_id": 5022,
+        "timing_id": 5022
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_4",
+      "to": "stage_5",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_5",
+      "to": "stage_6",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Six consecutive executions cover the candidate approach/launch/grab/drop sequence. The other actor enters paired victim IDs 0x000003B3 and 0x000003B7 at the same times as 0x000003B2 and 0x000003B6. Exact launch phase boundaries still require review.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "e4c606b872c0a6183eac39e8ea6d38ecf41b3173a18bcaffe9989eb9be4d0840",
+      "files": {
+        "encounter.json": "e028b9bd93eecd1904c290f2c5aeca3d88a8a9578a88de0d07735bf300e9e010",
+        "events.jsonl": "ef9ff879c26e522801b1fad9945ce1cd35ef58f75382198b5b73f5b6fb904fd6"
+      },
+      "recording_id": "475fefab-6f85-462f-9cfc-1941100fba83",
+      "take_id": "c0ae78c9-6a85-49f5-847d-3703534c3aac",
+      "annotation_id": "792a70c3-2de7-4003-be92-b1936ad72456",
+      "annotation_text": "launch + izuna drop into my death.",
+      "annotation_end_seconds": 23.047,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 232,
+          "metadata_line": 233,
+          "first_observed_seconds": 18.016,
+          "counter": 43
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 236,
+          "metadata_line": 237,
+          "first_observed_seconds": 18.437,
+          "counter": 44
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 239,
+          "metadata_line": 240,
+          "first_observed_seconds": 18.781,
+          "counter": 45
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 243,
+          "metadata_line": 244,
+          "first_observed_seconds": 19.219,
+          "counter": 46
+        },
+        {
+          "step_id": "stage_5",
+          "action_line": 245,
+          "metadata_line": 246,
+          "first_observed_seconds": 19.359,
+          "counter": 47
+        },
+        {
+          "step_id": "stage_6",
+          "action_line": 251,
+          "metadata_line": 252,
+          "first_observed_seconds": 20.406,
+          "counter": 48
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 0
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 0
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_4",
+          "to": "stage_5",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_5",
+          "to": "stage_6",
+          "transition_entry_index": 1
+        }
+      ]
+    }
+  ]
+}
