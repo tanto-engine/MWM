@@ -48,8 +48,11 @@
     "mid": "oda_nobunaga.action_0c6e",
     "high": "jin_hayabusa.action_0c75"
   },
-  "chord_stance": "any",
+  "chord_stance": "low",
   "move_settings": {
+    "sanada_yukimura.action_0c6a": {
+      "speed": 1.15
+    },
     "jin_hayabusa.action_0c75": {
       "speed": 1
     },

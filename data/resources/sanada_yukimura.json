@@ -5,6 +5,7 @@
   "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
   "status": "archive_matched_gameplay_trial",
   "cold_launch_supported": false,
+  "object_keys": [3257, 3258],
   "assets": {
     "actions": {
       "archive": "archive_00.lnk",

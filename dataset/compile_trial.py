@@ -95,6 +95,9 @@ def compile_sources(folder):
         profile = dict(schema_version=1, resource_profile_id=f'{boss}.resources.v1', boss_id=boss,
                        build_sha256=catalogue['supported_build_sha256'], status='archive_matched_gameplay_trial',
                        cold_launch_supported=False, assets=dict(actions=action_asset, timing=timing_asset, motion=motion_asset, camera=camera_asset), moves={})
+        # C6A's frame-13/78 effects spawn objects 229757/944393. Native F90B40 maps
+        # those IDs to asset factories 3257/3258; animation packages do not load them.
+        if boss == 'sanada_yukimura': profile['object_keys'] = [3257, 3258]
         imports = []
         for key in keys:
             row = observed[key]; prefix = bytes.fromhex(row['payload_prefix']['bytes'])

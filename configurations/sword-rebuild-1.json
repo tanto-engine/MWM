@@ -15,7 +15,7 @@
           "LB",
           "LT"
         ],
-        "stance": "any"
+        "stance": "low"
       },
       "dataset_id": "handgun.sanada_yukimura.handgun_sequence",
       "step_ids": [
@@ -37,7 +37,7 @@
         }
       ],
       "status": "gameplay_trial",
-      "speed": 1.0
+      "speed": 1.15
     },
     {
       "id": "low_heavy",
