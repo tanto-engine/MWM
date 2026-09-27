@@ -10,6 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_desktop_edit_validate_save_and_bind_roundtrip(self):
+        # Run the real renderer against a UTF-8 worker with temporary settings only.
+        # Simulate physical binding and reject lifecycle calls so this cannot touch Nioh.
+        # Exercise inheritance, Unicode, overlap rejection, controller remapping and stale replies together.
+        import os
+        import subprocess
+        import sys
+        for command in (['node', '--check', str(ROOT/'tests/desktop_ui.cjs')],
+                        ['node', str(ROOT/'desktop/build.mjs')]):
+            result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        with tempfile.TemporaryDirectory(prefix='mwm-ui-') as folder:
+            result = subprocess.run([str(ROOT/'node_modules/electron/dist/electron.exe'),
+                                     str(ROOT/'tests/desktop_ui.cjs'), folder, sys.executable],
+                                    cwd=ROOT, capture_output=True, text=True, timeout=45,
+                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+            report = Path(folder)/'ui-result.json'
+            details = report.read_text(encoding='utf8') if report.exists() else result.stdout+result.stderr
+            self.assertEqual(result.returncode, 0, details)
+            outcome = json.loads(details)
+            self.assertTrue(outcome['explicitNativeSpeed'] and outcome['staleCaptureRejected'] and outcome['frostPreserved'])
+
     def test_full_dataset_and_design_references(self):
         # Verify the evidence shipped in this private repository, not a Downloads dependency.
         # Match each requested route to exact dataset phases before presenting its label in the app.

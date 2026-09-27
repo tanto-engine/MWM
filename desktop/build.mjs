@@ -4,6 +4,8 @@
 import { build } from 'esbuild';
 import { mkdir, copyFile, readFile, writeFile, readdir } from 'node:fs/promises';
 await mkdir('desktop-dist', { recursive: true });
+await mkdir('desktop-dist/assets', { recursive: true });
+await copyFile('desktop/assets/background.png', 'desktop-dist/assets/background.png');
 for (const file of ['main.cjs', 'preload.cjs', 'index.html', 'style.css']) await copyFile('desktop/' + file, 'desktop-dist/' + file);
 await build({ entryPoints: ['desktop/renderer.ts'], bundle: true, outfile: 'desktop-dist/renderer.js', target: 'chrome140' });
 // Bundle the complete readable collection; raw evidence ZIPs stay in the private repository.

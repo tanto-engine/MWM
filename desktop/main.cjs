@@ -6,7 +6,7 @@ const { createInterface } = require('node:readline');
 const path = require('node:path');
 const fs = require('node:fs');
 const root = path.resolve(__dirname, '..');
-const methods = new Set(['snapshot', 'validate', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
+const methods = new Set(['snapshot', 'validate', 'preview', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
 const pending = new Map();
 let window, worker, nextId = 0;
 

@@ -11,6 +11,7 @@ from game_controller import BindingCapture, GameController, binding_buttons
 from controller_reader import ControllerReader
 from process_support import active_runtime, process_matches
 from trace_reader import Trace
+from prepare_session import configured_imports, configured_replacements, compiled_move_settings, compiled_skill_bindings
 
 
 class Desktop:
@@ -59,6 +60,24 @@ class Desktop:
         binding_for_preset(calibration, preset)
         return preset
 
+    def preview(self, params):
+        # Compile pending choices without attaching to Nioh or writing settings.
+        # Use the same graph expansion and inherited speeds as live preparation.
+        # Report effective per-phase values so a child override is distinct from inheritance.
+        preset = self.validate(params)
+        baseline = configured_imports(preset)
+        replacements = configured_replacements(preset, baseline)
+        imports = baseline['moves'] + (replacements['moves'] if replacements else [])
+        compiled_skill_bindings(preset, imports)
+        settings = compiled_move_settings(preset, imports)
+        used = {move['id'] for move in replacements['moves']} if replacements else set()
+        used.update([preset['tap_move'], preset['hold_move'], *preset['frost_moon'].values()])
+        used.update(binding['move'] for binding in preset['skill_bindings'])
+        if preset['string_enabled']:
+            used.update(move['id'] for move in baseline['moves'])
+        return dict(preset=preset, used=sorted(identifier for identifier in used if identifier),
+                    moves={move['id']: value for move, value in zip(imports, settings)})
+
     def apply(self, params):
         # Save a validated configuration only to the runtime this window originally displayed.
         # Engine readers receive complete JSON files through the maintained atomic writer.
@@ -66,7 +85,7 @@ class Desktop:
         runtime = self.location()
         if str(runtime) != params['runtime']:
             raise ValueError('Active Engine changed. Reload settings before applying.')
-        preset = self.validate(params)
+        preset = self.preview(params)['preset']
         previous = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
         if previous != params['calibration'] and process_matches(read_json(runtime/'play-process.json')):
             raise ValueError('Disable the Engine before changing controller mapping or slot')
@@ -124,6 +143,8 @@ class Desktop:
             return self.snapshot()
         if method == 'validate':
             return self.validate(params)
+        if method == 'preview':
+            return self.preview(params)
         if method == 'apply':
             return self.apply(params)
         if method == 'baseline':
@@ -142,7 +163,7 @@ class Desktop:
             return dict(calibration=calibration, preset=trainer.remap_preset(params['preset'], params['calibration'], calibration),
                         buttons=binding_buttons(calibration['device'], calibration.get('button_map')))
         if method == 'export':
-            preset = self.validate(params)
+            preset = self.preview(params)['preset']
             atomic_json(params['path'], dict(schema_version=1, kind='sword_moveset', preset=preset,
                         controller={key:params['calibration'][key] for key in ('device', 'button_map') if key in params['calibration']}))
             return True
@@ -184,6 +205,10 @@ def main():
     # Keep stdin/stdout as one-request/one-reply JSON lines for Electron's private pipe.
     # Recoverable request failures report an error without killing the next configuration operation.
     # Closing the UI closes only this worker, preserving Engine's established explicit Disable lifecycle.
+    # Electron writes UTF-8 bytes even when Windows' local code page is different.
+    # Keep names and exported notes unchanged on both sides of the private pipe.
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
     desktop = Desktop()
     try:
         for line in sys.stdin:

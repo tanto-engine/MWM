@@ -6,6 +6,8 @@ MWM is the shared application for ten planned Nioh weapon movesets, starting wit
 
 Collection shows the recorded moves, original notes and integration gaps. The Sword Rebuild 1 button loads its supported subset into the form; Apply saves it. Browsing the collection does not enable candidate moves. Product checks live in `tests/` and run through Engine's existing `Test-Offline.ps1`.
 
+Bindings edits the custom chord and controller mapping; Overrides edits stance and native-action replacements; Tuning shows effective per-phase speeds. Blank speed fields inherit, while explicit `1` forces native playback. Live compilation flags conflicts before Apply, and Save as/Load preserve the complete draft. Recorder's artwork is bundled locally with a darker CSS overlay.
+
 `dataset/` holds 12 sword strings and one handgun candidate under weapon/boss folders, with exact notes, ordered IDs and hashed evidence. `intake.json` tracks every source session; `validate.py` checks records and archived evidence. Hashed original recordings are included in this private repository under `dataset/evidence/`, and uncertain or incomplete mappings remain explicit.
 
 `data/` is legacy runtime integration input: the old catalogue, reviewed import graphs, resource fingerprints and preset v8 defaults. It is not merged into the new dataset. Move choices, bindings and bounded speeds remain editable; Ki Pulse, physics and Frost Moon timing stay Engine-owned.

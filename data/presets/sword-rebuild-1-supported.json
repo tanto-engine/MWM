@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "name": "Sword Rebuild 1 — supported subset (incomplete)",
+  "name": "Sword Rebuild 1 - supported subset",
   "weapon": "sword",
   "tap_move": null,
   "hold_move": null,
