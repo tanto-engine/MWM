@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import time
+import tempfile
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent
@@ -117,6 +118,7 @@ def main():
     parser.add_argument('project',type=Path);parser.add_argument('--stage-only',action='store_true')
     parser.add_argument('--onedir',action='store_true')
     parser.add_argument('--skip-tests-reason',help='Explicit user-authorized exception for an untested prerelease')
+    parser.add_argument('--startup-check',action='store_true',help='Run the packaged Recorder startup check even when offline suites are skipped')
     args=parser.parse_args()
     project=args.project.resolve();build=project/'.build'/str(time.time_ns());stage=build/'stage'
     if args.stage_only: stage_product(project,stage);print(stage);return
@@ -164,10 +166,21 @@ def main():
     if spec['kind']=='recorder':
         exe=package/spec['name']/f'{spec["name"]}.exe' if args.onedir else package/f'{spec["name"]}.exe'
         smoke=package/'ui-smoke.json'
-        if skip_reason:
+        if skip_reason and not args.startup_check:
             smoke.write_text(json.dumps(dict(passed=None,status='not_run',reason=skip_reason))+'\n',encoding='utf8')
         else:
-            subprocess.run([str(exe),'--ui-smoke',str(smoke)],check=True,timeout=60)
+            # Check a copy in an empty directory so source checkouts or adjacent assets cannot hide missing bundles.
+            # Remove Python/Engine path overrides; the one-file EXE must load its own embedded runtime and assets.
+            with tempfile.TemporaryDirectory(prefix='tanto-package-check-') as temporary:
+                isolated=Path(temporary)
+                if args.onedir:
+                    shutil.copytree(exe.parent,isolated/spec['name']);isolated_exe=isolated/spec['name']/exe.name
+                else:
+                    isolated_exe=isolated/exe.name;shutil.copyfile(exe,isolated_exe)
+                import os
+                environment={key:value for key,value in os.environ.items()
+                             if key.upper() not in ('PYTHONHOME','PYTHONPATH','TANTO_ENGINE_ROOT','TANTO_PRODUCT_ROOT')}
+                subprocess.run([str(isolated_exe),'--ui-smoke',str(smoke)],cwd=isolated,env=environment,check=True,timeout=60)
             if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
         (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
     if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
@@ -177,7 +190,7 @@ def main():
     receipt=dict(schema_version=1,product=spec['name'],version=spec['version'],prerelease='-' in spec['version'],
         built_at=datetime.now(timezone.utc).isoformat(),sources=sources,python=sys.version,dependencies=dependencies,
         packaging='onedir' if args.onedir else 'onefile',workflow_tests=counts[0],resource_tests=counts[1],
-        automated_validation=dict(status='not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
+        automated_validation=dict(status='partial' if args.startup_check and spec['kind']=='recorder' else 'not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
         gameplay_acceptance=False,other_pc_acceptance=False)
     (package/'release.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf8')
     hashes={p.relative_to(package).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
