@@ -1,15 +1,9 @@
 # MWM — Multi-Weapon Moveset Mod
 
-MWM (Multi-Weapon Moveset Mod) is the shared application for all ten planned Nioh weapon movesets, starting with the single katana, while Tanto Engine stays separate, Recorder remains read-only, and raw captures stay outside the source repositories.
+MWM is the shared application for ten planned Nioh weapon movesets, starting with single katana; Engine owns gameplay integration and Recorder supplies evidence for developer review.
 
-The UI chooses reviewed moves, stance/source overrides, bounded speeds and controller bindings. Preset v8 stores those choices. The engine controls Ki Pulse, physics and Frost Moon timing; a new recording must be reviewed and adapted before it becomes selectable.
+`desktop/` is the Electron, TypeScript and CSS interface; `app/web_worker.py` connects it to Engine's reviewed configuration and lifecycle APIs. After `npm ci`, use `Trainer.ps1` or `npm start` with the pinned sibling Engine and Python. `Trainer.ps1 -LegacyUI` retains the previous trainer for comparison.
 
-Move names live in `data/moves.json`, action graphs in `data/imports/`, resource identities in `data/resources/`, and default bindings in `data/preset.json`. These definitions identify installed-game resources rather than distribute game archives.
+`data/` contains move identities, reviewed import graphs, resource fingerprints and preset v8 defaults. Raw recordings stay outside Git. Move choices, bindings and bounded speeds are editable; Ki Pulse, physics and Frost Moon timing remain Engine-owned.
 
-Enable / attach starts the configured runtime; Disable restores owned state. Closing the UI leaves an enabled session running. Settings remain in `%LOCALAPPDATA%/Tanto/Sword/runtime`.
-
-Controller support uses saved mappings, the retained DS4 mapping or a selected XInput slot. Press-to-bind reads supported controller observations. PS4, PS5 and Xbox physical acceptance remains pending; arbitrary hardware support is not established.
-
-Develop with the pinned sibling `tanto-engine` checkout. `Trainer.ps1` opens the source UI, `review_import.py` checks authored imports, and `Build.ps1` packages a versioned EXE. Run Engine's `Test-Offline.ps1` for offline checks; gameplay needs separate verification.
-
-See [CODE_GUIDE.md](CODE_GUIDE.md) for implementation details and Engine's [release contract](../tanto-engine/RELEASES.md) for source pins, hashes and immutable releases.
+`review_import.py` reports definition/evidence gaps. `Build.ps1` uses Engine's release gate to package a portable EXE with its own worker and data. This desktop version awaits its first package and acceptance. See [CODE_GUIDE.md](CODE_GUIDE.md) for module boundaries and migration TODOs; offline checks do not establish gameplay acceptance.

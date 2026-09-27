@@ -1,0 +1,200 @@
+"""Line-delimited desktop requests; configuration uses the existing Engine validators."""
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+
+import trainer
+from engine_config import DEFAULT_PRESET, atomic_json, binding_for_preset, move_capabilities, read_json, validate_preset
+from game_controller import BindingCapture, GameController, binding_buttons
+from controller_reader import ControllerReader
+from process_support import active_runtime, process_matches
+from trace_reader import Trace
+
+
+class Desktop:
+    def __init__(self):
+        # Keep one temporary controller listener for this window's binding flow.
+        # The worker reuses Engine configuration and lifecycle code without constructing Tk widgets.
+        # Opening the UI does not attach to the game or write a default preset.
+        self.capture = self.reader = self.trace = None
+        self.child = None
+        self.capabilities = move_capabilities()
+
+    def location(self):
+        # Aim settings at the registered Engine when it is already running.
+        # An expected path on writes prevents a stale window from editing another active runtime.
+        # Otherwise retain the existing Sword settings namespace for backwards compatibility.
+        registration = active_runtime()
+        runtime = Path(registration['runtime_path']) if registration else trainer.RUNTIME
+        return runtime
+
+    def snapshot(self):
+        # Read the current reviewed choices and saved settings for display.
+        # Missing local settings display shipped defaults without creating files.
+        # A surviving status file is only live when its process identity still matches.
+        runtime = self.location()
+        calibration = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
+        preset = validate_preset(read_json(runtime/'controller-binding.json', DEFAULT_PRESET))
+        alive = process_matches(read_json(runtime/'play-process.json'))
+        state = read_json(runtime/'play-status.json', {}) if alive else {}
+        return dict(runtime=str(runtime), preset=preset, calibration=calibration,
+                    buttons=binding_buttons(calibration['device'], calibration.get('button_map')),
+                    capabilities=self.capabilities, running=alive,
+                    status=state.get('state', 'disabled'), detail=state.get('detail', ''),
+                    nioh_exe=read_json(runtime/'trainer-settings.json', {}).get('nioh_exe', ''))
+
+    def validate(self, params):
+        # Validate the entire pending preset, including source/stance conflicts and bounded speeds.
+        # Button masks must belong to the selected controller's reviewed mapping.
+        # Returning the normalized value does not apply settings or enable gameplay.
+        preset = validate_preset(params['preset'])
+        calibration = params['calibration']
+        buttons = binding_buttons(calibration['device'], calibration.get('button_map'))
+        if any(preset[key] not in buttons.values() for key in ('modifier_mask', 'trigger_mask')):
+            raise ValueError('Choose buttons supported by the selected controller mapping')
+        if calibration.get('controller_slot') not in (None, 0, 1, 2, 3):
+            raise ValueError('Controller slot must be automatic or 1–4')
+        binding_for_preset(calibration, preset)
+        return preset
+
+    def apply(self, params):
+        # Save a validated configuration only to the runtime this window originally displayed.
+        # Engine readers receive complete JSON files through the maintained atomic writer.
+        # Changing a controller requires a stopped Engine so two settings files cannot mix live layouts.
+        runtime = self.location()
+        if str(runtime) != params['runtime']:
+            raise ValueError('Active Engine changed. Reload settings before applying.')
+        preset = self.validate(params)
+        previous = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
+        if previous != params['calibration'] and process_matches(read_json(runtime/'play-process.json')):
+            raise ValueError('Disable the Engine before changing controller mapping or slot')
+        self.cancel_capture()
+        atomic_json(runtime/'controller-calibration.json', params['calibration'])
+        atomic_json(runtime/'controller-binding.json', preset)
+        return self.snapshot()
+
+    def cancel_capture(self):
+        # Cancel a pending press without changing either preset button.
+        # Release the optional native observation mapping held by this listener.
+        # Re-arming always requires a new neutral state before accepting input.
+        self.capture = self.reader = None
+        if self.trace:
+            self.trace.close()
+        self.trace = None
+
+    def start_capture(self, calibration):
+        # Listen for one supported controller input after the user releases all controls.
+        # Use Engine's published observation when attached; otherwise poll supported OS controllers.
+        # This reads input only and never enables Engine or changes game memory.
+        self.cancel_capture()
+        try:
+            self.capture = BindingCapture(calibration)
+            runtime = self.location()
+            if process_matches(read_json(runtime/'play-process.json')):
+                session = read_json(runtime/'boss-session.json')
+                self.trace = Trace(session['session']['pid'], 'NiohBossRepeatTrace_v2', tag=session['config_tag'])
+                self.reader = ControllerReader(backends=[GameController(self.trace, calibration)])
+            else:
+                self.reader = ControllerReader()
+            return dict(status=self.capture.status)
+        except Exception:
+            self.cancel_capture()
+            raise
+
+    def poll_capture(self):
+        # Consume only the temporary listener's newest observations.
+        # Engine's capture state rejects held inputs, reconnects and unsupported combinations.
+        # Completion returns a pending form value; Apply remains the persistence boundary.
+        if not self.capture:
+            return dict(status='Binding cancelled')
+        for event in self.reader.poll():
+            result = self.capture.process(event)
+            if result:
+                self.cancel_capture()
+                return result
+        return dict(status=self.capture.status)
+
+    def dispatch(self, method, params):
+        # Dispatch a fixed set of configuration operations instead of evaluating renderer code.
+        # File paths reach this worker only through main-process open/save dialogs.
+        # TODO(pack-registry): replace sword-only capability discovery after Engine exposes reviewed weapon manifests.
+        if method == 'snapshot':
+            return self.snapshot()
+        if method == 'validate':
+            return self.validate(params)
+        if method == 'apply':
+            return self.apply(params)
+        if method == 'baseline':
+            return trainer.remap_preset(DEFAULT_PRESET, read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
+        if method == 'controller':
+            choice = params['choice']
+            if choice not in ('saved', 'ds4', '1', '2', '3', '4'):
+                raise ValueError('Choose a saved mapping, DS4 or XInput controller 1–4')
+            calibration = (self.snapshot()['calibration'] if choice == 'saved' else
+                           read_json(trainer.ROOT/'data/controller-calibration.json') if choice == 'ds4' else
+                           dict(schema=1, device=dict(backend='xinput', slot=int(choice)-1), lb_mask=0x100,
+                                lt=dict(axis='lt', neutral=0, full=255), controller_slot=int(choice)-1))
+            return dict(calibration=calibration, preset=trainer.remap_preset(params['preset'], params['calibration'], calibration),
+                        buttons=binding_buttons(calibration['device'], calibration.get('button_map')))
+        if method == 'export':
+            preset = self.validate(params)
+            atomic_json(params['path'], dict(schema_version=1, kind='sword_moveset', preset=preset,
+                        controller={key:params['calibration'][key] for key in ('device', 'button_map') if key in params['calibration']}))
+            return True
+        if method == 'import':
+            return trainer.saved_moveset(read_json(params['path']), params['calibration'])
+        if method == 'capture_start':
+            return self.start_capture(params['calibration'])
+        if method == 'capture_poll':
+            return self.poll_capture()
+        if method == 'capture_cancel':
+            self.cancel_capture()
+            return True
+        if method == 'disable':
+            trainer.disable_engine()
+            return True
+        if method == 'enable':
+            self.apply(params)
+            runtime = self.location()
+            trainer.RUNTIME = runtime
+            os.environ['NIOH_RUNTIME_HOME'] = str(runtime)
+            if params.get('nioh_exe'):
+                os.environ['NIOH_EXE'] = params['nioh_exe']
+            else:
+                os.environ.pop('NIOH_EXE', None)
+            atomic_json(runtime/'trainer-settings.json', dict(nioh_exe=params.get('nioh_exe', '')))
+            # An already-running Engine owns its loaded libraries; repeated Enable only reuses that owner.
+            if not process_matches(read_json(runtime/'play-process.json')):
+                native = runtime/'native/build'
+                native.mkdir(parents=True, exist_ok=True)
+                for source in (trainer.CODE/'native/build').glob('*.dll'):
+                    if source.resolve() != (native/source.name).resolve():
+                        shutil.copyfile(source, native/source.name)
+            self.child = trainer.launch_engine()
+            return True
+        raise ValueError('Unsupported desktop operation')
+
+
+def main():
+    # Keep stdin/stdout as one-request/one-reply JSON lines for Electron's private pipe.
+    # Recoverable request failures report an error without killing the next configuration operation.
+    # Closing the UI closes only this worker, preserving Engine's established explicit Disable lifecycle.
+    desktop = Desktop()
+    try:
+        for line in sys.stdin:
+            request = {}
+            try:
+                request = json.loads(line)
+                result = desktop.dispatch(request['method'], request.get('params', {}))
+                reply = dict(id=request['id'], result=result)
+            except (ValueError, KeyError, TypeError, OSError, RuntimeError) as error:
+                reply = dict(id=request.get('id'), error=str(error))
+            print(json.dumps(reply, allow_nan=False), flush=True)
+    finally:
+        desktop.cancel_capture()
+
+
+if __name__ == '__main__':
+    main()

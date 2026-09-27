@@ -137,6 +137,8 @@ class Trainer:
         play = ttk.Frame(notebook, padding=12)
         notebook.add(play, text='Moveset')
         self.capabilities = move_capabilities()
+        # TODO(weapon-packs): obtain capabilities from a reviewed Engine pack registry before adding weapon tabs.
+        # Product names are not resource identities; a newly labelled capture cannot populate this menu by itself.
         def choices(flag, empty='Disabled'):
             # Build readable selector entries from reviewed capability rows.
             # Apply the caller's role predicate before exposing any move in that selector.

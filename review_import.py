@@ -62,6 +62,9 @@ def review_import(path, catalogue_path=ROOT/'data/moves.json', resources=ROOT/'d
         report['moves'].append(dict(id=identifier, missing=missing))
         requirements.extend(identifier+': '+item for item in missing)
     if evidence is not None:
+        # TODO(evidence-intake): attach reviewed tail time windows and full source-bank identities to each action.
+        # Recorder must retain every actor's IDs; a boss_candidate role alone is not identification proof.
+        # Keep this older reconstruction check until the new intake format can express that stronger match.
         evidence = Path(evidence)
         reconstruction = read_json(evidence)
         report['evidence'] = dict(path=str(evidence.resolve()),sha256=hashlib.sha256(evidence.read_bytes()).hexdigest(),reviewed=reviewed)

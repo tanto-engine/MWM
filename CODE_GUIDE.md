@@ -6,6 +6,8 @@ Keep 3–5 direct opening comments per function/callback: player-facing purpose,
 
 ## Follow a settings change
 
+The source UI uses `desktop/renderer.ts` for a pending preset, `desktop/preload.cjs` for one restricted IPC method, and `desktop/main.cjs` for dialogs and a private JSON-line pipe. `app/web_worker.py` reuses Engine validation and the existing trainer lifecycle without constructing Tk. Apply saves; Load and Baseline only edit the form; Save as exports without applying. Engine owns attachment, recovery and native timing. `Trainer.ps1` and `npm start` open Electron; `Trainer.ps1 -LegacyUI` retains the comparison UI.
+
 1. `Trainer.ps1` launches `launch.py`, or explicitly asks it to enable/disable the runtime. `launch.py` selects packaged code or the sibling Engine, sets product/state paths, and dispatches only its allowed worker modules. Existing packaged preferences remain under `Tanto/Sword/runtime` despite the product rename.
 2. `app/trainer.py` obtains reviewed capabilities from Engine. A displayed name is mapped to a stable move ID; controller labels map to saved button bits. The form distinguishes pending edits from Apply, and Save cancellation does not apply a pending moveset.
 3. The Engine validator checks the complete preset, not just the last edited box. Native skill overrides are scoped by source and stance. Speed changes affect reviewed playback, while paired phases, Frost startup, Ki Pulse authoring and physics remain controlled by Engine.
@@ -28,7 +30,15 @@ An import's `source_voices` can retain events that preparation must verify; `voi
 
 `review_import.py` compares an authored import with catalogue/resource definitions and optional reconstruction evidence. Its `reviewed` flag records developer review only. The helper writes a report; it never installs a recording or marks a move executable/gameplay-accepted.
 
-Match each description against the last few boss-action executions before recording Stop, using its saved take/time window when available. Merge repeated polling samples only within the same execution; preserve genuine repeated actions, their order and timing, and the complete raw take. Recovery or idle IDs can follow the described move, so inspect farther back when the ending is unclear. Compare full source-bank/action identities, keep player events separate from boss candidates, and treat priority labels as review order rather than proof of a match.
+Match each description against the last few action executions before recording Stop, using its saved take/time window when available. Capture and inspect IDs from every observed actor; actor roles are context, not a reason to discard evidence. Merge polling duplicates only within the same execution; preserve genuine repeated actions, order, timing and the complete raw take. Recovery or idle IDs can follow the described move, so inspect farther back when needed. Verify full source-bank/action identities before authoring an import, and keep review priority separate from stance.
+
+## Concrete migration boundaries
+
+- **Evidence intake:** retain immutable raw JSONL and original descriptions outside Git. Index by file hash, session, take and time; review the tail across all actor candidates. Missing takes remain missing evidence, never synthetic move definitions.
+- **Catalogue normalization:** extract shared source actions, then reference them from move graphs and weapon adaptations. Use stable IDs and JSON Schema; generate the existing catalogue/import format first so the current 39-ID baseline can be compared without a simultaneous runtime rewrite.
+- **Weapon support:** Engine currently discovers specific sword imports. A reviewed weapon manifest and equipped-weapon routing must exist before exposing another weapon tab. `move_capabilities()` remains the UI authority; new data cannot bypass an unimplemented adapter.
+- **Packaging:** Engine's gate compiles `launch.py` as the console `MWMWorker.exe` with bundled `app/`, `runtime/` and `data/`, then copies its onedir output into `desktop-worker/`. Electron Builder includes that directory as `resources/worker/` and launches `MWMWorker.exe --desktop-worker`; `--worker` remains the allowlisted gameplay subprocess route. The UI itself needs only `desktop-dist/`, product metadata and release notes inside ASAR. UI compilation alone is not an EXE release; standalone lifecycle acceptance remains required.
+- **Acceptance:** confirm physical controller binding, current sword routes, native recovery and a second reviewed weapon before claiming multi-weapon readiness. Closing either UI leaves explicitly enabled Engine gameplay running.
 
 ## Builds and repository hygiene
 

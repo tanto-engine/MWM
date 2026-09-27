@@ -1,6 +1,10 @@
 # Release notes
 
-## Unreleased
+## 0.3.0-alpha.1
+
+Added an Electron/TypeScript/CSS interface with reviewed move choices, native overrides, Frost Moon destinations, bounded speeds and controller binding. A restricted worker reuses Engine validation and lifecycle; Load and Baseline edit the form, Apply saves, and Save as exports without enabling gameplay.
+
+Prepared the shared release gate for a portable `MWM.exe` containing its own Engine worker and product data. `Trainer.ps1` now opens Electron; `-LegacyUI` retains the previous trainer. This source version has not yet produced a desktop EXE or new gameplay acceptance.
 
 Renamed SKM to MWM (Multi-Weapon Moveset Mod), the shared application for the ten planned weapon movesets. The current backend and data remain sword-specific; saved presets and the legacy settings namespace stay compatible. No new EXE or multi-weapon runtime is included.
 
