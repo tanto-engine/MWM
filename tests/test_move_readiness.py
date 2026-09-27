@@ -105,7 +105,7 @@ class MoveWorkflow(unittest.TestCase):
             capture.write_text('\n'.join(map(json.dumps,events)))
             summary = folder/'reconstruction.json'
             reconstruct_capture(capture,'okatsu',summary)
-            target = folder/'moves.xlsx'
+            target = folder/'moves.json'
             save_catalogue(target, catalogue)
             merged = merge_recording(target,summary)
         for move in merged['moves']:

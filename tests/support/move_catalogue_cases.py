@@ -193,7 +193,7 @@ class CatalogueTests(unittest.TestCase):
         # Editorial naming must retain implementation status and evidence rather than resetting progress.
         with tempfile.TemporaryDirectory() as directory:
             folder=Path(directory)
-            target=folder/'moves.xlsx'; save_catalogue(target, self.catalogue)
+            target=folder/'moves.json'; save_catalogue(target, self.catalogue)
             take=folder/'take-0001';take.mkdir()
             (take/'reconstruction.json').write_text(json.dumps(self.reconstruction(0xC64,0xC64)),encoding='utf8')
             index=folder/'reconstruction.json';index.write_text(json.dumps({'schema_version':1,'kind':'encounter_index','segments':[{'path':'take-0001/reconstruction.json'}]}),encoding='utf8')

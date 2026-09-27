@@ -22,6 +22,30 @@ from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_research_dataset_rejects_misclassification_truncated_ids_and_reversed_strings(self):
+        # The fresh collection uses stable weapon/boss paths instead of the legacy runtime catalogue.
+        # Copy only curated files, then introduce three realistic authoring mistakes independently.
+        # This regression needs no external recording archive, game, UI or spreadsheet library.
+        import importlib.util
+        import shutil
+        dataset = ROOT.parent/'MWM/dataset'
+        spec = importlib.util.spec_from_file_location('research_dataset', dataset/'validate.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        self.assertTrue(module.load_dataset(dataset))
+        with tempfile.TemporaryDirectory() as temporary:
+            copy = Path(temporary)/'dataset'; shutil.copytree(dataset, copy)
+            file = next(path for path in (copy/'weapons').glob('*/*/*.json')
+                        if len(json.loads(path.read_text(encoding='utf8'))['steps']) > 1)
+            original = file.read_text(encoding='utf8')
+            for mistake in ('weapon', 'action_id', 'order'):
+                with self.subTest(mistake=mistake):
+                    record = json.loads(original)
+                    if mistake == 'weapon': record['weapon_id'] = 'misfiled'
+                    elif mistake == 'action_id': record['steps'][0]['source']['action_id'] = 'D8C'
+                    else: record['steps'].reverse()
+                    file.write_text(json.dumps(record), encoding='utf8')
+                    with self.assertRaises(ValueError): module.load_dataset(copy)
+
     def test_desktop_context_hotkey_and_portable_runtime_boundaries(self):
         # Reuse actual TypeScript handlers with fake Electron and process boundaries.
         # Keep fixture settings and recordings isolated from the user's currently running EXE.
