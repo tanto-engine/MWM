@@ -2,6 +2,8 @@
 
 Applies to Recorder, MWM and any future Tanto application. Native test fixtures and `--stage-only` do not produce distributable EXEs. Engine currently ships as a pinned component, with no standalone EXE.
 
+Electron products set `desktop: electron` and `worker_name` in `product.json`. The gate checks matching npm/product versions, exact installed dependency versions and the committed lockfile, builds a console worker, then embeds it with Chromium and the web interface in one portable EXE. Worker and unpacked desktop intermediates stay under `.build`; `--onedir` is unavailable for this product format. Recipients need only the final EXE.
+
 1. Update `product.json` with a new SemVer version and exact reviewed Engine SHA. Add that version’s changes and outstanding acceptance to `CHANGELOG.md`. Use alpha/beta/rc while application acceptance is pending.
 2. Commit Engine, MWM and Recorder. The shared builder rejects dirty source, mismatched pins, missing notes, dependency version mismatches, existing local or remote release tags and existing version directories. Both one-file and one-directory builds use these gates.
 3. Run the product’s `Build.ps1` with the pinned Python build environment. MWM rebuilds native libraries. Every build runs Engine’s two entrypoints through `Test-Offline.ps1`; Recorder also runs the resulting EXE’s isolated `--ui-smoke` check. No step controls or screenshots the game.

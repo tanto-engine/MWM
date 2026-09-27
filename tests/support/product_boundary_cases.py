@@ -10,23 +10,134 @@ import tempfile
 import unittest
 import zipfile
 import threading
-import tkinter as tk
 from unittest.mock import patch
-import recorder
-from recording_hotkey import GlobalHotkey
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT),str(ROOT.parent/'tanto-recorder/src')]
 from build_product import READ_ONLY, stage_product
 import build_product
-from recorder import export_capture
-from recording_bundle import intake_bundle, session_summary, export_sessions
-from recording_hotkey import parse_hotkey
-from encounter_recording import save_annotation
+from recording_bundle import intake_bundle, session_summary, export_sessions, export_capture
+from encounter_recording import save_annotation, BOSSES, DEFAULT_SIGNATURES
+from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
-
 class ProductBoundaryTests(unittest.TestCase):
+    def test_action_journal_preserves_crash_tail_and_excludes_second_writer(self):
+        # Resume a journal whose last line was cut short, without erasing any existing bytes.
+        # Reject a second writer, then allow another take after the first releases its lock.
+        # One journal retains both takes; no status, lock or reconstruction sidecar is required.
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / 'events.jsonl'
+            earlier = b'{"kind":"end","take":"older","t":1}\n{"kind":'
+            path.write_bytes(earlier)
+            first = Journal(path, 'first')
+            try:
+                with self.assertRaises(OSError): Journal(path, 'competing')
+                first.emit('action_state', object='0x10000',
+                           descriptor=dict(action_key_u32=0x12345678, action_key_hex='0x12345678'))
+            finally:
+                first.close()
+            second = Journal(path, 'second')
+            try: second.emit('end', actions=0)
+            finally: second.close()
+            raw = path.read_bytes()
+            self.assertTrue(raw.startswith(earlier + b'\n'))
+            rows = [json.loads(line) for line in raw.splitlines() if line != b'{"kind":']
+            self.assertEqual([row['take'] for row in rows], ['older', 'first', 'second'])
+            self.assertEqual(rows[1]['descriptor']['action_key_u32'], 0x12345678)
+            self.assertEqual([p.name for p in Path(td).iterdir()], ['events.jsonl'])
+
+    def test_sampler_keeps_full_ids_when_other_actors_and_metadata_fail(self):
+        # Supply one readable actor and one expired actor without any boss fingerprint.
+        # Make optional metadata fail on every action; primary IDs must still be journaled.
+        # Bounded fake frames exercise the production sampler without opening a game process.
+        import itertools
+        class Game:
+            identity = dict(pid=1, build_sha256='fixture')
+            ticks = 0
+            def alive(self):
+                # End the fake process after three sampling ticks.
+                # Each tick changes the action counter, making a fresh observable state.
+                # This bounds the fixture without sleeping or a real process handle.
+                self.ticks += 1
+                return self.ticks <= 3
+            def snapshot(self, address):
+                # Return stable before/after state for the surviving actor in this tick.
+                # The second candidate behaves like an enemy whose native object disappeared.
+                # Its failure must not prevent collecting the remaining actor's IDs.
+                if address == 0x20000: raise OSError('Actor disappeared')
+                return b'', dict(owner_like='0x30000', current='0x40000', counter=self.ticks)
+            def bytes(self, address, size):
+                # Supply a complete action descriptor with a nonzero upper word in its key.
+                # No native address is dereferenced; this is an ordinary fixture byte array.
+                # The large key detects accidental narrowing to the low 16 bits.
+                raw = bytearray(size)
+                struct.pack_into('<I', raw, 0, 0x12345678)
+                return bytes(raw)
+        with tempfile.TemporaryDirectory() as td, patch('action_capture.time.monotonic', side_effect=itertools.count(0, .2)), \
+             patch('boss_probe.metadata', side_effect=OSError('Optional table disappeared')), patch('builtins.print'):
+            path = Path(td) / 'events.jsonl'; journal = Journal(path, 'one')
+            try:
+                initial = dict(candidates=[dict(object=hex(address), owner_like='0x30000') for address in (0x10000, 0x20000)])
+                sample(Game(), journal, threading.Event(), initial=initial)
+            finally: journal.close()
+            rows = [json.loads(line) for line in path.read_text().splitlines()]
+            actions = [row for row in rows if row['kind'] == 'action_state']
+            self.assertEqual(len(actions), 3)
+            self.assertTrue(all(row['descriptor']['action_key_u32'] == 0x12345678 and row['role'] == 'unassigned' for row in actions))
+            self.assertEqual(sum(row['kind'] == 'metadata_unreadable' for row in rows), 3)
+            self.assertEqual(sum(row['kind'] == 'object_unreadable' for row in rows), 1)
+
+    def test_saved_health_is_not_published_after_a_failed_disk_sync(self):
+        # Simulate a disk-full checkpoint after an action entered the file buffer.
+        # The saved-count health channel must stay silent when durability was not established.
+        # Releasing the fault allows close to retain earlier bytes and release ownership.
+        with tempfile.TemporaryDirectory() as td:
+            journal = Journal(Path(td) / 'events.jsonl', 'one')
+            try:
+                journal.emit('action_state', object='0x10000',
+                             descriptor=dict(action_key_u32=1, action_key_hex='0x00000001'))
+                with patch('action_capture.os.fsync', side_effect=OSError('Disk full')), patch('builtins.print') as output:
+                    with self.assertRaises(OSError): publish(journal, 'recording', 'Saved')
+                    output.assert_not_called()
+            finally: journal.close()
+
+    def test_v2_archive_retains_drafts_empty_sessions_and_all_actor_evidence(self):
+        # Put a two-file capture and a legacy draft-only session in one ordinary ZIP.
+        # Compare every retained byte, count all actor roles and flag missing/truncated evidence.
+        # Hash failure must not publish a submission; accepted notes never update playable definitions.
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            sessions = [dict(path='sessions/0001-jin', recording_id='jin', boss_name='Jin Hayabusa'),
+                        dict(path='sessions/0002-empty', recording_id='empty', boss_name='Maria')]
+            files = {}
+            for entry in sessions:
+                files[entry['path']+'/encounter.json'] = json.dumps(dict(schema_version=2,
+                    recording_id=entry['recording_id'], boss_id=entry['recording_id'], boss_name=entry['boss_name'],
+                    annotations=[], draft=dict(text=''))).encode()
+            raw = b'{"kind":"action_state","role":"unassigned","take":"a","t":1}\n{"kind":"action_state","role":"player_candidate","take":"a","t":2}\n{"kind":'
+            files['sessions/0001-jin/events.jsonl'] = raw
+            files['sessions/0002-empty/draft.json'] = b'{"text":"High priority: three cuts"}'
+            manifest = dict(schema_version=2, kind='tanto_session_archive', sessions=sessions,
+                files=[dict(path=name, size=len(data), sha256=hashlib.sha256(data).hexdigest()) for name, data in files.items()])
+            for tampered in (False, True):
+                archive_path = base / ('bad.zip' if tampered else 'good.zip')
+                with zipfile.ZipFile(archive_path, 'w') as archive:
+                    archive.writestr('manifest.json', json.dumps(manifest))
+                    for name, data in files.items(): archive.writestr(name, data + b' ' if tampered else data)
+                if tampered:
+                    with self.assertRaises(ValueError): intake_bundle(archive_path, base/'rejected')
+                    self.assertFalse(list((base/'rejected/submissions').glob('*/review.json')))
+                    continue
+                report = intake_bundle(archive_path, base/'accepted')
+                self.assertFalse(report['curated_changes'])
+                self.assertEqual([row['action_rows'] for row in report['sessions']], [2, 0])
+                self.assertTrue(report['sessions'][1]['no_raw_evidence'])
+                self.assertTrue(report['sessions'][1]['has_draft'])
+                self.assertEqual(report['sessions'][0]['malformed_event_lines'], 1)
+                stored = base/'accepted/submissions'/report['bundle_sha256']
+                self.assertTrue(all((stored/name).read_bytes() == data for name, data in files.items()))
+
     def test_multi_session_export_and_intake_preserve_bosses_takes_and_revisions(self):
         # Export two takes each from two same-boss sessions and another boss, with repeated folder names.
         # Check ZIP integrity, every take's exact bytes, saved revisions, intake and evidence deduplication.
@@ -91,65 +202,6 @@ class ProductBoundaryTests(unittest.TestCase):
             with self.assertRaises(ValueError):export_sessions([folder,base],base/'failed.zip')
             self.assertFalse((base/'failed.zip').exists())
 
-    def test_existing_recording_library_and_custom_binding_survive_upgrade(self):
-        # Reopen an existing recording library after restarting the UI with saved preferences.
-        # Restore its session and custom shortcut, then create another encounter in the same library.
-        # Compare old raw bytes afterward so compatibility cannot hide accidental replacement of recordings.
-        with tempfile.TemporaryDirectory() as td:
-            base=Path(td);library=base/'Tanto Recordings';session=library/'old';take=session/'take-0001';take.mkdir(parents=True)
-            (session/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',boss_name='Okatsu',recording_id='old',created_at=1)))
-            raw=b'{"kind":"end","t":2}\n';(take/'events.jsonl').write_bytes(raw)
-            settings=base/'settings.json'
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
-            try:
-                self.assertTrue(app.set_recordings(library));app.load_session(session)
-                app.key.set('Ctrl+Alt+K');app.configure_hotkey();app.close()
-                root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
-                self.assertEqual(app.recordings,library);self.assertEqual(app.folder,session)
-                self.assertEqual(app.key.get(),'Ctrl+Alt+K')
-                app.new_session();app.boss.set('Maria')
-                with patch.object(recorder,'record_encounter') as backend:
-                    app.start();app.thread.join(2)
-                self.assertEqual(app.folder.parent,library);self.assertNotEqual(app.folder,session)
-                self.assertEqual((take/'events.jsonl').read_bytes(),raw)
-                self.assertEqual(backend.call_count,1)
-            finally:app.close()
-
-    def test_custom_hotkey_capture_cancel_and_reserved_shortcuts(self):
-        # Check configurable keyboard shortcuts without injecting any physical key presses.
-        # Exercise parsing, reserved combinations, Escape cancellation and an accepted synthetic Tk key event.
-        # Only an accepted binding may replace the saved shortcut.
-        from types import SimpleNamespace
-        self.assertEqual(parse_hotkey('Ctrl+Alt+K'),(3,ord('K')))
-        for key in ('K','F1','F12','Ctrl+S','Alt+F4','Ctrl+Ctrl+K','Ctrl+Shift'):
-            with self.assertRaises(ValueError):parse_hotkey(key)
-        with tempfile.TemporaryDirectory() as td:
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
-            try:
-                app.begin_binding();app.capture_binding(SimpleNamespace(keysym='Escape'))
-                self.assertEqual(app.key.get(),'F8');self.assertIsNone(app.binding)
-                app.begin_binding();app.capture_binding(SimpleNamespace(keysym='k',state=4|8))
-                self.assertEqual(app.key.get(),'Ctrl+Alt+K');self.assertIsNone(app.binding)
-                self.assertEqual(json.loads(app.settings_path.read_text())['hotkey'],'Ctrl+Alt+K')
-            finally:app.close()
-
-    def test_export_picker_cancellation_is_idle_and_can_export_without_open_session(self):
-        # Check export selection independently of whichever session is currently open.
-        # Mock an empty picker result, then selected folders and a redirected Downloads location.
-        # Cancellation stays idle; selected sessions are sent to the collection exporter under tanto-zips.
-        with tempfile.TemporaryDirectory() as td:
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
-            try:
-                with patch.object(recorder,'choose_recording_folders',return_value=[]):app.export()
-                self.assertFalse(app.busy());self.assertIsNone(app.operation)
-                with patch.object(recorder,'choose_recording_folders',return_value=[Path(td)]), \
-                     patch.object(recorder,'downloads_dir',return_value=Path(td)/'Downloads'), \
-                     patch.object(recorder,'export_sessions',return_value=Path(td)/'share.zip') as export:
-                    app.export();app.thread.join(2)
-                    self.assertEqual(export.call_args.args[0],[Path(td)])
-                    self.assertEqual(export.call_args.args[1].parent,Path(td)/'Downloads/tanto-zips')
-            finally:app.close()
-
     def test_exe_release_gate_rejects_unversioned_dirty_unpinned_and_reused_builds(self):
         # Exercise release rejection without invoking a compiler or creating an EXE.
         # Vary version syntax, dirty source, Engine pin and an existing version directory.
@@ -180,222 +232,14 @@ class ProductBoundaryTests(unittest.TestCase):
                 (product/'dist'/spec['version']).mkdir(parents=True)
                 with self.assertRaises(ValueError):build_product.release_inputs(product)
 
-    def test_local_guide_opens_while_busy_and_does_not_block_stop(self):
-        # Check that the tutorial remains an inline page while recording is busy.
-        # Assert it shares the main window, takes no modal grab and leaves Stop operational.
-        # Completing it persists the guide preference, and reopening still selects the Guide tab.
-        root=tk.Tk();root.withdraw()
-        try:
-            with tempfile.TemporaryDirectory() as td:
-                settings=Path(td)/'settings.json'
-                app=recorder.Recorder(root,enable_hotkey=False,settings_path=settings)
-                app.busy=lambda: (
-                    # Pretend a Recorder worker is busy for the inline-guide lifecycle check.
-                    # This tests whether opening help still allows a cooperative Stop request.
-                    # No actual capture thread or game process is needed for this branch.
-                    True
-                )
-                app.backdrop.on_guide()
-                self.assertIsNotNone(app.guide);self.assertTrue(app.guide.winfo_exists())
-                self.assertFalse(app.guide.grab_current())
-                app.toggle();self.assertTrue(app.stop.is_set())
-                self.assertIs(app.guide.winfo_toplevel(),root)
-                self.assertNotIsInstance(app.guide,tk.Toplevel)
-                app.guide.done.invoke()
-                self.assertTrue(json.loads(settings.read_text())['tutorial_seen'])
-                self.assertEqual(app.current_tab,'Record');app.show_guide();self.assertEqual(app.current_tab,'Guide');app.busy=lambda: (
-                    # Return the fixture to an idle state before normal UI cleanup.
-                    # The close path can now destroy the test window without waiting for a nonexistent worker.
-                    # This replaces only the test instance's busy query.
-                    False
-                );app.close()
-        finally:
-            try:root.destroy()
-            except tk.TclError:pass
-
-    def test_windows_hotkey_messages_start_and_stop_capture_without_game_input(self):
-        # Exercise real Windows hotkey-message delivery with a fake capture backend.
-        # Post messages to Recorder's listener thread rather than injecting keys into any application.
-        # Verify one start, one cooperative stop and the resolved Downloads recording location.
-        import ctypes as C
-        from ctypes import wintypes as W
-        import time
-        root=tk.Tk();root.withdraw();entered=threading.Event();stopped=threading.Event()
-        def capture(boss,folder,**options):
-            # Stand in for a running recording worker using synchronization events.
-            # Signal entry, then wait for Recorder's production stop event.
-            # No process memory is opened, so the test can verify lifecycle behavior without Nioh.
-            entered.set()
-            if options['stop_event'].wait(3): stopped.set()
-        def until(predicate):
-            # Pump Tk until the expected asynchronous event occurs or a short deadline expires.
-            # Bound the wait so a broken worker or hotkey path fails the suite instead of hanging.
-            # Assert the condition after pumping rather than mistaking elapsed time for successful delivery.
-            deadline=time.monotonic()+2
-            while not predicate() and time.monotonic()<deadline:
-                root.update();time.sleep(.01)
-            self.assertTrue(predicate())
-        try:
-            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'record_encounter',side_effect=capture) as backend, \
-                 patch.object(recorder,'downloads_dir',return_value=Path(td)/'Redirected Downloads'):
-                settings=Path(td)/'settings.json';settings.write_text('{"hotkey":"Ctrl+Shift+R"}')
-                app=recorder.Recorder(root,settings_path=settings);app.boss.set('Onryoki')
-                until(lambda: (
-                    # Wait for the UI to consume the listener's registration-ready message.
-                    # Inspect the status produced through the real queue and Tk poll path.
-                    # Readiness here concerns Windows registration, not live-game shortcut acceptance.
-                    'starts / stops' in app.hotkey_status.get()
-                ))
-                api=C.WinDLL('user32',use_last_error=True)
-                api.PostThreadMessageW.argtypes=[W.DWORD,W.UINT,W.WPARAM,W.LPARAM];api.PostThreadMessageW.restype=W.BOOL
-                def message():
-                    # Post WM_HOTKEY directly to the registered listener thread.
-                    # Use its current thread ID and the registration's hotkey identifier.
-                    # This tests message routing without pressing keys or affecting the focused game/application.
-                    self.assertTrue(api.PostThreadMessageW(app.hotkey.thread.native_id,0x0312,1,0))
-                message();until(entered.is_set)
-                self.assertEqual(app.folder.parent,Path(td)/'Redirected Downloads/Tanto Recordings')
-                message();until(stopped.is_set);until(lambda: (
-                    # Wait until the test recording worker has actually exited.
-                    # The Stop request alone is insufficient because a worker may still be flushing.
-                    # Only an idle worker allows the test to complete its normal close path.
-                    not app.busy()
-                ))
-                self.assertEqual(backend.call_count,1)
-                app.close();self.assertFalse(app.hotkey)
-        finally:
-            if 'app' in locals():
-                app.stop.set()
-                if app.hotkey: app.hotkey.close()
-            try: root.destroy()
-            except tk.TclError: pass
-
-    def test_description_editor_saves_a_span_and_retains_revision_history(self):
-        # Save a sequence description and then edit it through the same UI path.
-        # Read back its take interval, wording and revision number from disk.
-        # The correction must remain a new revision of the original annotation, not a replacement raw take.
-        root=tk.Tk();root.withdraw()
-        try:
-            with tempfile.TemporaryDirectory() as td:
-                folder=Path(td);take=folder/'take-0001';take.mkdir()
-                (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',recording_id='editor')))
-                (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
-                app=recorder.Recorder(root,enable_hotkey=False,settings_path=folder/'settings.json');app.folder=folder
-                app.describe()
-                for description in ('Jump then slash','Jump then two slashes'):
-                    editor=app.description
-                    editor.delete('1.0','end');editor.insert('1.0',description)
-                    self.assertTrue(app.save_description())
-                    label=recorder.load_annotations(folder)[0]
-                    self.assertEqual((label['start_t'],label['end_t']),(0,3.5))
-                    self.assertEqual(label['label'],description)
-                    if label['revision']==1:
-                        app.labels.selection_set(label['label_id']);app.edit_selected()
-                self.assertEqual(label['revision'],2);app.close()
-        finally:
-            try: root.destroy()
-            except tk.TclError: pass
-
-    def test_description_is_editable_before_samples_and_survives_restart(self):
-        # Allow a contributor to draft notes before a recording exists.
-        # Close and reopen Recorder with the same settings file and compare the unfinished text/name.
-        # Saving a draft must not falsely attach it to a nonexistent sequence.
-        with tempfile.TemporaryDirectory() as td:
-            settings=Path(td)/'new/settings.json'
-            for attempt in range(2):
-                root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
-                try:
-                    app.describe()
-                    if not attempt:
-                        app.boss.set('Custom enemy');app.description.insert('1.0','Jump, then two cuts')
-                        self.assertFalse(app.save_description())
-                    else:
-                        self.assertEqual(app.boss.get(),'Custom enemy')
-                        self.assertEqual(app.description.get('1.0','end-1c'),'Jump, then two cuts')
-                finally:app.close()
-
-    def test_last_session_and_unsaved_revision_are_restored(self):
-        # Restore both the last session and an unfinished edit of one saved description.
-        # Restart the UI, complete the correction and read the annotation history.
-        # The edit must keep its original label identity while increasing its revision once.
-        with tempfile.TemporaryDirectory() as td:
-            folder=Path(td)/'session';folder.mkdir();settings=Path(td)/'settings.json'
-            take=folder/'take-0001';take.mkdir()
-            (folder/'encounter.json').write_text(json.dumps(dict(boss_id='okatsu',boss_name='Okatsu')))
-            (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
-            app.load_session(folder);app.description.insert('1.0','First slash');self.assertTrue(app.save_description())
-            key=app.labels.get_children()[0];app.labels.selection_set(key);app.edit_selected()
-            app.description.insert('end',' and leap');app.close()
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,settings)
-            try:
-                self.assertEqual(app.folder,folder)
-                self.assertEqual(app.description.get('1.0','end-1c'),'First slash and leap')
-                self.assertTrue(app.save_description());labels=recorder.load_annotations(folder)
-                self.assertEqual(len(labels),1);self.assertEqual(labels[0]['revision'],2)
-                self.assertEqual(labels[0]['label'],'First slash and leap')
-            finally:app.close()
-
-    def test_disk_failure_keeps_description_and_prevents_close(self):
-        # Simulate a failed atomic settings write while the editor contains text.
-        # Attempt to save and close, then check that the window remains open with the error visible.
-        # An I/O failure must not silently discard a contributor's unfinished description.
-        with tempfile.TemporaryDirectory() as td:
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
-            app.description.insert('1.0','Keep this note')
-            with patch.object(recorder,'atomic_json',side_effect=OSError('Disk full')):
-                self.assertFalse(app.save_description());app.close()
-                self.assertFalse(app.closing);self.assertIn('Disk full',app.note_status.get())
-                self.assertEqual(app.description.get('1.0','end-1c'),'Keep this note')
-            app.close()
-
-    def test_capture_resume_preserves_takes_and_plays_confirmed_cues(self):
-        # Stop and resume one session while preserving its earlier takes.
-        # Use a fake backend that announces actual sampling, then inspect the start/stop cue sequence.
-        # Discovery alone must not sound like recording has started, and resumed takes must remain separate.
-        with tempfile.TemporaryDirectory() as td:
-            root=tk.Tk();root.withdraw();settings=Path(td)/'settings.json'
-            def capture(boss,folder,**options):
-                # Create one new numbered fixture take for each simulated recording interval.
-                # Publish a recording status and wait for the same stop event used by the real worker.
-                # This isolates resume/cue behavior from game discovery and physical audio acceptance.
-                index=len(list(folder.glob('take-*')))+1;take=folder/f'take-{index:04d}';take.mkdir()
-                (take/'events.jsonl').write_text('{"kind":"end","t":3.5}\n')
-                options['status_callback'](dict(state='recording',detail='test'))
-                options['stop_event'].wait(2)
-                options['status_callback'](dict(state='stopped',detail='saved'))
-            with patch.object(recorder,'record_encounter',side_effect=capture),patch.object(recorder,'downloads_dir',return_value=Path(td)),patch.object(recorder.Recorder,'cue') as cue:
-                app=recorder.Recorder(root,False,settings);app.boss.set('Onryoki')
-                for index in range(2):
-                    app.toggle();self.assertTrue((app.folder/'encounter.json').exists())
-                    app.toggle();app.thread.join(3)
-                    root.after_cancel(app.after_id);app.poll()
-                    app.description.insert('1.0',f'Sequence {index+1}')
-                    self.assertTrue(app.save_description())
-                self.assertEqual([x['take'] for x in recorder.load_annotations(app.folder)],['take-0001','take-0002'])
-                self.assertEqual([x.args[0] for x in cue.call_args_list],['start','stop','start','stop'])
-                app.close()
-
-    def test_queued_completion_cannot_overwrite_a_new_session(self):
-        # Leave old progress/completion messages queued while switching to a new session.
-        # Run the UI poll against those stale folder identities.
-        # The new encounter's status must remain intact rather than inheriting the old worker's completion.
-        with tempfile.TemporaryDirectory() as td:
-            root=tk.Tk();root.withdraw();app=recorder.Recorder(root,False,Path(td)/'settings.json')
-            previous=Path(td)/'old';previous.mkdir();app.folder=previous
-            app.events.put(('capture_status',(previous,dict(state='recording',detail='old')),None))
-            app.events.put(('capture_finished',previous,None))
-            app.new_session();root.after_cancel(app.after_id);app.poll()
-            self.assertEqual(app.headline.get(),'New session');self.assertIsNone(app.folder);app.close()
-
     def test_boss_menu_names_do_not_invent_detection_signatures(self):
         # Check that the broad boss-name menu remains separate from identity verification.
         # Compare named encounters with the small set of configured action/motion fingerprints.
         # A familiar boss label must not make an unverified recording appear identified.
-        self.assertGreaterEqual(len(recorder.BOSSES),40)
-        key,name=recorder.boss_identity('Onryoki')
-        self.assertEqual(name,'Onryoki');self.assertNotIn(key,recorder.DEFAULT_SIGNATURES)
-        self.assertEqual(set(recorder.DEFAULT_SIGNATURES),{'okatsu','jin_hayabusa','maria'})
+        self.assertGreaterEqual(len(BOSSES),40)
+        key,name=next((row['id'],row['name']) for row in BOSSES.values() if row['name']=='Onryoki')
+        self.assertEqual(name,'Onryoki');self.assertNotIn(key,DEFAULT_SIGNATURES)
+        self.assertEqual(set(DEFAULT_SIGNATURES),{'okatsu','jin_hayabusa','maria'})
 
     def test_intake_reports_raw_context_disagreeing_with_submission(self):
         # Submit a session whose outer boss name conflicts with its raw encounter context.
@@ -420,130 +264,11 @@ class ProductBoundaryTests(unittest.TestCase):
                 with self.assertRaises(ValueError): intake_bundle(archive_path,folder/'intake')
                 self.assertFalse((folder/'intake').exists())
 
-    def test_recorder_requires_name_and_serializes_hotkey_stop_and_close(self):
-        # Reject an unnamed start, then exercise repeated Stop requests and closing during capture.
-        # Keep a fake worker alive long enough to inspect its identity and cooperative stop flag.
-        # The UI must not launch a second worker or disappear before the first has finished writing.
-        root=tk.Tk();root.withdraw();entered=threading.Event();finish=threading.Event()
-        def capture(boss,folder,**options):
-            # Simulate a slow worker for an unverified named encounter.
-            # Assert that the typed name reaches the backend, then wait on a test-owned completion event.
-            # This exposes close/start races without opening the game or recording personal data.
-            self.assertTrue(boss.startswith('encounter_'))
-            self.assertEqual(options['boss_name'],'Onryoki')
-            entered.set();finish.wait(3)
-        try:
-            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'record_encounter',side_effect=capture) as backend:
-                app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
-                app.recordings=Path(td)/'Recordings'
-                app.toggle();backend.assert_not_called()
-                app.boss.set('  Onryoki  ');app.toggle();self.assertTrue(entered.wait(1))
-                worker=app.thread;app.toggle();app.toggle()
-                self.assertIs(app.thread,worker);self.assertTrue(app.stop.is_set());self.assertEqual(backend.call_count,1)
-                app.close();self.assertTrue(root.winfo_exists())
-                finish.set();worker.join(2);self.assertFalse(worker.is_alive())
-                app.close()
-        finally:
-            finish.set()
-            try: root.destroy()
-            except tk.TclError: pass
-
-    def test_recorder_layout_resizes_at_multiple_font_scales(self):
-        # Check the Recorder layout at small/large windows and three Windows font scales.
-        # Inspect widget bounds, a visible sequence row and pixel alignment with the composed wallpaper.
-        # Collect Tk callback failures; geometry checks do not claim subjective visual or live-game acceptance.
-        for scaling in (1.33,2.0,2.67):
-            root=tk.Tk();root.attributes('-alpha',0);root.tk.call('tk','scaling',scaling)
-            errors=[];root.report_callback_exception=lambda kind,error,trace: (
-                # Collect a Tk callback failure for the enclosing test or smoke receipt.
-                # A background UI exception must make validation fail instead of being printed and overlooked.
-                # Store readable error text; the callback itself remains on the Tk thread.
-                errors.append(str(error))
-            )
-            try:
-                with tempfile.TemporaryDirectory() as td:
-                    app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json')
-                    for width,height in ((680,650),(960,740),(1400,950)):
-                        root.geometry(f'{width}x{height}');root.update()
-                        self.assertFalse(errors)
-                        self.assertGreaterEqual(app.labels.winfo_height(),round(83*app.scale))
-                        self.assertEqual(app.backdrop.picture.width(),app.backdrop.winfo_width())
-                        self.assertEqual(app.backdrop.picture.height(),app.backdrop.winfo_height())
-                        self.assertEqual(app.help_label.photo.get(0,0),app.backdrop.crop(app.help_label).getpixel((0,0)))
-                        for widget in (app.selector,app.primary,app.help_label,app.labels,app.description,app.save_button,*app.idle_buttons[:3]):
-                            self.assertGreater(widget.winfo_width(),20)
-                            self.assertGreaterEqual(widget.winfo_rootx(),root.winfo_rootx())
-                            self.assertLessEqual(widget.winfo_rootx()+widget.winfo_width(),root.winfo_rootx()+root.winfo_width())
-                            self.assertLessEqual(widget.winfo_rooty()+widget.winfo_height(),root.winfo_rooty()+root.winfo_height())
-                    app.close()
-            finally:
-                try: root.destroy()
-                except tk.TclError: pass
-
-    def test_export_is_background_work_and_close_waits_for_it(self):
-        # Hold an export worker open while exercising UI events and close.
-        # Verify hotkey toggles do not replace the exporter and shutdown waits for it.
-        # A responsive window must not come at the cost of truncating evidence writes.
-        root=tk.Tk();root.withdraw();entered=threading.Event();finish=threading.Event()
-        def export(folder,path):
-            # Provide a controllably slow collection exporter for the lifecycle test.
-            # Signal that background work began and wait until the test permits completion.
-            # Return the requested destination without writing a real archive or accessing user sessions.
-            entered.set();finish.wait(3);return path
-        try:
-            with tempfile.TemporaryDirectory() as td, patch.object(recorder,'export_sessions',side_effect=export):
-                app=recorder.Recorder(root,enable_hotkey=False,settings_path=Path(td)/'settings.json');app.folder=Path(td)
-                app.export([app.folder]);self.assertTrue(entered.wait(1));self.assertEqual(app.operation,'export')
-                worker=app.thread;app.toggle();self.assertIs(app.thread,worker)
-                root.update();app.close();self.assertTrue(root.winfo_exists())
-                finish.set();worker.join(2);app.close()
-        finally:
-            finish.set()
-            try: root.destroy()
-            except tk.TclError: pass
-
-    def test_global_hotkey_registration_conflict_and_release_without_key_input(self):
-        # Register the same custom shortcut on separate Windows threads.
-        # Check that the second registration reports a conflict and a later registration succeeds after release.
-        # The test uses registration APIs only, without generating keys or controlling Nioh.
-        events=[];first=GlobalHotkey('Ctrl+Alt+K',lambda kind,value: (
-            # Collect the first listener's registration events in arrival order.
-            # Retain both event kind and message so the test can distinguish readiness from failure.
-            # This observes the hotkey worker without generating a physical key press.
-            events.append((kind,value))
-        ))
-        # Register on separate threads; no key presses, hooks or game access.
-        try:
-            import time
-            deadline=time.monotonic()+2
-            while not events and time.monotonic()<deadline: time.sleep(.01)
-            self.assertEqual(events[0][0],'hotkey_ready')
-            conflict=[];second=GlobalHotkey('Ctrl+Alt+K',lambda kind,value: (
-                # Collect the second listener's registration outcome.
-                # Its failure message demonstrates a real Windows shortcut conflict with the first listener.
-                # Recording remains fake and no key is delivered to Nioh.
-                conflict.append((kind,value))
-            ))
-            second.thread.join(2);second.close()
-            self.assertEqual(conflict[0][0],'hotkey_error')
-        finally: first.close()
-        released=[];third=GlobalHotkey('Ctrl+Alt+K',lambda kind,value: (
-            # Collect events from the listener started after the old registration is closed.
-            # The readiness result proves the shortcut was actually released for reuse.
-            # No keyboard input is synthesized to establish registration ownership.
-            released.append((kind,value))
-        ))
-        try:
-            deadline=time.monotonic()+2
-            while not released and time.monotonic()<deadline: time.sleep(.01)
-            self.assertEqual(released[0][0],'hotkey_ready')
-        finally: third.close()
-
     def test_unknown_boss_name_survives_export_and_intake_without_verification(self):
         # Round-trip a custom Unicode encounter name through export and intake.
         # Check the readable name and pending identity confidence in the resulting report.
         # Unknown names must remain useful context without becoming unsupported boss fingerprints.
-        boss,name=recorder.boss_identity('大蝦蟇')
+        boss,name='custom_enemy','大蝦蟇'
         with tempfile.TemporaryDirectory() as td:
             folder=Path(td);take=folder/'take-0001';take.mkdir()
             (folder/'encounter.json').write_text(json.dumps(dict(boss_id=boss,boss_name=name,recording_id='unknown',created_at=1)))

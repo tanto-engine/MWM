@@ -10,6 +10,6 @@ Preset v8 exposes reviewed bindings and bounded move speeds. Physics, Ki Pulse a
 
 Keep `tanto-engine`, `MWM` and `tanto-recorder` as sibling checkouts. `runtime/native/Build.ps1` builds native libraries; `Test-Offline.ps1` runs the two maintained suites. Offline results do not establish gameplay or hardware acceptance.
 
-`build_product.py` stages each product's selected code and data, then builds its EXE. Recorder receives four read-only modules and no gameplay hooks. Builds record source pins, dependencies, file hashes and version tags; exceptions remain explicit in release receipts.
+`build_product.py` stages each product's selected code and data, then builds its EXE. Recorder receives two read-only memory/discovery modules and no gameplay hooks. Electron products bundle a separate worker and web interface into one portable EXE. Builds record source pins, dependencies, file hashes and version tags.
 
 [CODE_GUIDE.md](CODE_GUIDE.md) explains the implementation. [NATIVE-WALKTHROUGH.md](runtime/native/NATIVE-WALKTHROUGH.md) follows the hooks, and [RELEASES.md](RELEASES.md) defines packaging and publication.

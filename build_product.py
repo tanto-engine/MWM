@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/'runtime'))
 from engine_policy import validate_move_policy
-READ_ONLY = ('nioh_memory','boss_probe','action_banks','controller_reader')
+READ_ONLY = ('nioh_memory','boss_probe')
 
 
 def source_state(project):
@@ -59,6 +59,16 @@ def release_inputs(project):
             name,expected=line.split('==');actual=importlib.metadata.version(name)
             if actual!=expected:raise ValueError(f'Install {name}=={expected} before building (found {actual})')
             dependencies[name]=actual
+    if spec.get('desktop') == 'electron':
+        package=json.loads((project/'package.json').read_text(encoding='utf8'))
+        if package['version']!=version:raise ValueError('package.json and product.json must use the same release version')
+        lock=project/'package-lock.json'
+        if not lock.is_file():raise ValueError('Commit the npm dependency lockfile before releasing')
+        dependencies['npm_lock_sha256']=hashlib.sha256(lock.read_bytes()).hexdigest()
+        for name,expected in {**package.get('dependencies',{}),**package.get('devDependencies',{})}.items():
+            installed=json.loads((project/'node_modules'/name/'package.json').read_text(encoding='utf8'))['version']
+            if installed!=expected:raise ValueError(f'Install locked {name}=={expected} before building (found {installed})')
+            dependencies['npm:'+name]=installed
     return spec,sources,dependencies
 
 
@@ -80,6 +90,12 @@ def stage_product(project, destination):
     runtime=destination/'runtime';runtime.mkdir()
     modules=READ_ONLY if spec['kind']=='recorder' else tuple(p.stem for p in (ROOT/'runtime').glob('*.py'))
     for name in modules: shutil.copyfile(ROOT/'runtime'/f'{name}.py',runtime/f'{name}.py')
+    if spec['kind']=='recorder':
+        # The new worker needs only discovery/metadata; remove the legacy recorder/controller CLI.
+        # Its window, ZIP streaming, hotkey and audio now belong to Electron.
+        # Stage only the live action worker, excluding offline intake and duplicated artwork.
+        probe=runtime/'boss_probe.py';source=probe.read_text(encoding='utf8')
+        probe.write_text(source[:source.index('def record(')],encoding='utf8')
     if spec['kind']=='sword':
         # Omit recorder/report CLI and catalogue editing from the consumer runtime.
         # Keep the validated read/discovery primitives used by live preparation.
@@ -87,7 +103,11 @@ def stage_product(project, destination):
         for name,boundary in [('boss_probe','def record('),('catalogue','def save_catalogue('),('action_banks','def inspect_pair(')]:
             path=runtime/f'{name}.py';source=path.read_text(encoding='utf8')
             path.write_text(source[:source.index(boundary)],encoding='utf8')
-    shutil.copytree(project/('src' if spec['kind']=='recorder' else 'app'),destination/('src' if spec['kind']=='recorder' else 'app'),ignore=shutil.ignore_patterns('__pycache__'))
+    if spec['kind']=='recorder':
+        (destination/'src').mkdir()
+        shutil.copyfile(project/'src/action_capture.py',destination/'src/action_capture.py')
+    else:
+        shutil.copytree(project/'app',destination/'app',ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copyfile(project/'launch.py',destination/'launch.py')
     data=destination/'data';data.mkdir()
     if spec['kind']=='recorder':
@@ -110,6 +130,30 @@ def stage_product(project, destination):
     return spec
 
 
+def package_desktop(project, build, worker, package):
+    # Bundle the web shell and its self-contained worker into one portable Windows EXE.
+    # The npm lock and installed versions are release inputs; the original source tree stays intact.
+    # Builder intermediates remain under .build, and only the finished portable EXE enters the release.
+    npm=shutil.which('npm.cmd') or shutil.which('npm')
+    subprocess.run([npm,'ci','--no-fund','--no-audit'],cwd=project,check=True)
+    subprocess.run(['node','node_modules/electron/install.js'],cwd=project,check=True)
+    scripts=json.loads((project/'package.json').read_text(encoding='utf8'))['scripts']
+    subprocess.run([npm,'run','build:ui' if 'build:ui' in scripts else 'build'],cwd=project,check=True)
+    javascript="""const {build,Platform}=require('electron-builder');
+build({projectDir:process.argv[1],targets:Platform.WINDOWS.createTarget('portable'),
+config:{directories:{output:process.argv[2]},extraResources:[{from:process.argv[3],to:'worker'}]}})
+.catch(error=>{console.error(error);process.exitCode=1});"""
+    output=build/'electron-package'
+    subprocess.run(['node','-e',javascript,str(project),str(output),str(worker)],cwd=project,check=True)
+    package.mkdir(exist_ok=True)
+    executables=list(output.glob('*.exe'))
+    if len(executables)!=1:raise ValueError('Expected exactly one portable desktop EXE')
+    shutil.copyfile(executables[0],package/executables[0].name)
+    files={p.relative_to(project).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+           for folder in ('desktop-dist','src/assets') for p in (project/folder).rglob('*') if p.is_file()}
+    (package/'desktop-manifest.json').write_text(json.dumps(files,indent=2)+'\n',encoding='utf8')
+
+
 def main():
     # Stage first so dependency and data boundaries can be checked without packaging.
     # PyInstaller is a build-only tool; consumers receive a self-contained application.
@@ -123,6 +167,8 @@ def main():
     project=args.project.resolve();build=project/'.build'/str(time.time_ns());stage=build/'stage'
     if args.stage_only: stage_product(project,stage);print(stage);return
     spec,sources,dependencies=release_inputs(project)
+    desktop=spec.get('desktop')=='electron'
+    if desktop and args.onedir:raise ValueError('Electron products publish one portable EXE; omit --onedir')
     skip_reason=args.skip_tests_reason.strip() if args.skip_tests_reason is not None else None
     if skip_reason is not None and (not skip_reason or '-' not in spec['version']):
         raise ValueError('Skipping tests requires a stated reason and a prerelease version')
@@ -150,8 +196,9 @@ def main():
         for node in ast.walk(ast.parse(p.read_text(encoding='utf8'))):
             if isinstance(node,ast.Import): imports.update(item.name for item in node.names)
             elif isinstance(node,ast.ImportFrom) and node.module: imports.add(node.module)
-    command=[sys.executable,'-m','PyInstaller','--noconfirm','--onedir' if args.onedir else '--onefile','--windowed',
-             '--name',spec['name'],'--distpath',str(build/'package'),'--workpath',str(build/'work'),'--specpath',str(build),
+    worker_name=spec.get('worker_name',spec['name']) if desktop else spec['name']
+    command=[sys.executable,'-m','PyInstaller','--noconfirm','--onedir' if args.onedir or desktop else '--onefile','--console' if desktop else '--windowed',
+             '--name',worker_name,'--distpath',str(build/('worker-package' if desktop else 'package')),'--workpath',str(build/'work'),'--specpath',str(build),
              '--version-file',str(version_file),
              '--paths',str(stage/'runtime'),'--paths',str(stage/'app'),'--paths',str(stage/'src')]
     for name in sorted(imports):
@@ -163,6 +210,7 @@ def main():
     if (stage/'MinHook-LICENSE.txt').exists(): command+=['--add-data',f'{stage/"MinHook-LICENSE.txt"};.']
     subprocess.run(command+[str(stage/'launch.py')],check=True)
     package=build/'package'
+    if desktop:package_desktop(project,build,build/'worker-package'/worker_name,package)
     if spec['kind']=='recorder':
         exe=package/spec['name']/f'{spec["name"]}.exe' if args.onedir else package/f'{spec["name"]}.exe'
         smoke=package/'ui-smoke.json'
@@ -180,7 +228,8 @@ def main():
                 import os
                 environment={key:value for key,value in os.environ.items()
                              if key.upper() not in ('PYTHONHOME','PYTHONPATH','TANTO_ENGINE_ROOT','TANTO_PRODUCT_ROOT')}
-                subprocess.run([str(isolated_exe),'--ui-smoke',str(smoke)],cwd=isolated,env=environment,check=True,timeout=60)
+                environment['TANTO_STATE_ROOT']=str(isolated/'state')
+                subprocess.run([str(isolated_exe),'--ui-smoke',str(smoke)],cwd=isolated,env=environment,check=True,timeout=180)
             if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
         (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
     if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
@@ -189,7 +238,7 @@ def main():
     shutil.copyfile(project/'CHANGELOG.md',package/'CHANGELOG.md')
     receipt=dict(schema_version=1,product=spec['name'],version=spec['version'],prerelease='-' in spec['version'],
         built_at=datetime.now(timezone.utc).isoformat(),sources=sources,python=sys.version,dependencies=dependencies,
-        packaging='onedir' if args.onedir else 'onefile',workflow_tests=counts[0],resource_tests=counts[1],
+        packaging='electron-portable' if desktop else 'onedir' if args.onedir else 'onefile',workflow_tests=counts[0],resource_tests=counts[1],
         automated_validation=dict(status='partial' if args.startup_check and spec['kind']=='recorder' else 'not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
         gameplay_acceptance=False,other_pc_acceptance=False)
     (package/'release.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf8')
