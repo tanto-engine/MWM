@@ -31,6 +31,8 @@ class Portability(unittest.TestCase):
             shutil.copytree(ROOT.parent/'MWM',project,ignore=shutil.ignore_patterns('.git','.build','dist','runtime','__pycache__'))
             (project/'data/move-policy.json').write_text(json.dumps(policy),encoding='utf8')
             stage_product(project,stage)
+            for preset in (project/'data/presets').glob('*.json'):
+                self.assertEqual((stage/'data/presets'/preset.name).read_bytes(), preset.read_bytes())
             staged=stage/'data/move-policy.json'
             self.assertTrue(staged.is_file(),'Sword staging dropped authored developer Pulse policy')
             self.assertEqual(json.loads(staged.read_text()),policy)

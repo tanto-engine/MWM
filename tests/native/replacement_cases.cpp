@@ -795,6 +795,22 @@ static void frost_cases() {
     assert(continued.opened==10001);
     continuous.qpc=30001; frost_edge(continued,continuous,0,0,0,true,0x10000,1000000);
     assert(continued.opened==10001); // Refills cannot slide the window away from first availability.
+    // A second consumer of the same published sample must not erase the first tap.
+    // Stick motion can advance packets without adding a stance-button edge.
+    // Keep the opportunity and its deadline while ignoring duplicate observations.
+    FrostMoonInput duplicate{};GameInput sampled{};sampled.qpc=1;
+    frost_edge(duplicate,sampled,0,0,0,false,0x10000,1000000);
+    sampled.qpc=10001;frost_edge(duplicate,sampled,0,0,0,true,0x10000,1000000);
+    sampled.qpc=20001;sampled.buttons[0]=XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_Y|XINPUT_GAMEPAD_LEFT_THUMB;
+    frost_edge(duplicate,sampled,0,2,0,false,0x10000,1000000);
+    const auto duplicate_deadline=duplicate.closes;
+    assert(duplicate.choice==2);
+    assert(!frost_edge(duplicate,sampled,0,2,0,false,0x10000,1000000));
+    assert(duplicate.choice==2 && duplicate.closes==duplicate_deadline);
+    sampled.qpc+=10000;sampled.packets[0]++;sampled.buttons[0]=XINPUT_GAMEPAD_RIGHT_SHOULDER;
+    frost_edge(duplicate,sampled,0,2,0,false,0x10000,1000000);
+    sampled.qpc+=10000;sampled.buttons[0]|=XINPUT_GAMEPAD_Y;
+    assert(frost_edge(duplicate,sampled,0,2,0,false,0x10000,1000000)==3);
     // Native timers can outlive750ms and freeze; the first RB must not erase their remaining time.
     // Refill after consumption cannot extend the saved opportunity.
     // Verify expiry independently of native target stance changes.
@@ -819,6 +835,7 @@ static void frost_cases() {
     constexpr WORD faces[]={XINPUT_GAMEPAD_A,XINPUT_GAMEPAD_X,XINPUT_GAMEPAD_Y};
     constexpr uint32_t flux_keys[3][3]={{0,0xD77,0xD78},{0xD74,0,0xD73},{0xD76,0xD75,0}};
     constexpr int32_t flux_motions[3][3]={{0,4006,4007},{2007,0,2006},{3007,3006,0}};
+    for (unsigned movement=0;movement<3;++movement)
     for (unsigned origin=0;origin<3;++origin) for (unsigned target=0;target<3;++target) {
         if (origin==target) continue;
         boss_hold_stances=7;hold_reset(native[target],false);pending_heavy={};frost_input={};pad_buttons=0;
@@ -828,14 +845,26 @@ static void frost_cases() {
         put(player.data(),0x470,uint32_t(native[origin]));publish();tick();
         put(vitals,0x8C,25.0f);put(vitals,0x90,25.0f);latch_native_frost();
         const auto opened=frost_input.opened;assert(opened && frost_input.origin==origin);
-        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];
+        if (movement) {
+            constexpr uint32_t moving_keys[2][3]={{0xCDB,0xC9E,0xC61},{0xCDF,0xCA2,0xC65}};
+            put(walk,0,moving_keys[movement-1][origin]);put(walk_payload,0x20,int32_t((4-origin)*1000+(movement==1 ? 30 : 40)));
+            put(player.data(),0x58,address(walk));
+        }
+        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target]|(movement ? XINPUT_GAMEPAD_LEFT_THUMB : 0);
         put(player.data(),0x470,uint32_t(native[target]));publish();tick();
         assert(frost_input.choice==target && !boss_active);
         pad_buttons=0;memset(vitals,0,sizeof(vitals));publish();tick();
         put(flux,0,flux_keys[origin][target]);put(flux,0x20,address(flux_payload));
         put(flux_payload,0x20,flux_motions[origin][target]);flux_payload[0x0B]=uint8_t(native[target]);
-        put(player.data(),0x58,address(flux));
-        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target];publish();tick();
+        if (movement) {
+            // Continue moving in the destination stance between the two chord edges.
+            // No movement state may extend the timer or consume its first tap.
+            // Damage and reconnect rejection are still exercised by the surrounding cases.
+            constexpr uint32_t moving_keys[2][3]={{0xCDB,0xC9E,0xC61},{0xCDF,0xCA2,0xC65}};
+            put(walk,0,moving_keys[movement-1][target]);put(walk_payload,0x20,int32_t((4-target)*1000+(movement==1 ? 30 : 40)));
+            put(player.data(),0x58,address(walk));
+        } else put(player.data(),0x58,address(flux));
+        pad_buttons=XINPUT_GAMEPAD_RIGHT_SHOULDER|faces[target]|(movement ? XINPUT_GAMEPAD_LEFT_THUMB : 0);publish();tick();
         assert(boss_active && dispatch->control.dispatch_count==1 && frost_input.opened==opened);
         assert(boss_private_actions[5].payload[0x0B]==native[target]);
         boss_frost_variants[target]=0;

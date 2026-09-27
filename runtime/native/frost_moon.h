@@ -47,6 +47,10 @@ static unsigned frost_edge(FrostMoonInput& state, const GameInput& sample, unsig
     // Accept two distinct RB/face chord edges, including releasing and repressing RB.
     // Device, lifecycle and sampling gaps discard the window without replaying held inputs.
     const WORD buttons=sample.buttons[slot];
+    // Reading one published frame twice is not a reconnect or a new button press.
+    // Preserve the first tap and its deadline; ordinary stick motion only changes packet numbers.
+    if (state.sampled && state.slot==slot && state.epoch==epoch && sample.qpc==state.sampled
+        && sample.packets[slot]==state.packet && buttons==state.buttons) return 0;
     const bool reset=!state.sampled || state.slot!=slot || state.epoch!=epoch
         || sample.qpc<=state.sampled || sample.qpc-state.sampled>=frequency/10 || sample.packets[slot]<state.packet;
     if (reset) {

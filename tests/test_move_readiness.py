@@ -191,6 +191,13 @@ def load_tests(loader, tests, pattern):
     # Add unittest discovery of *_cases.py to this module's workflow checks.
     # Support files retain focused coverage without becoming separate maintained test commands.
     tests.addTests(loader.discover(str(SUPPORT),pattern='*_cases.py'))
+    # Product-owned expectations live with MWM, but still run through this single entrypoint.
+    import importlib.util
+    for path in sorted((ROOT.parent/'MWM/tests').glob('*_cases.py')):
+        spec = importlib.util.spec_from_file_location('mwm_'+path.stem, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        tests.addTests(loader.loadTestsFromModule(module))
     return tests
 
 

@@ -116,6 +116,8 @@ def stage_product(project, destination):
         for name in ('mod.json','moves.json','preset.json','controller-calibration.json'):
             shutil.copyfile(project/'data'/name,data/name)
         for name in ('imports','resources'): shutil.copytree(project/'data'/name,data/name)
+        if (project/'data/presets').is_dir():
+            shutil.copytree(project/'data/presets',data/'presets')
         if policy is not None:
             (data/'move-policy.json').write_text(json.dumps(policy,indent=2)+'\n',encoding='utf8')
         native=runtime/'native/build';native.mkdir(parents=True)
