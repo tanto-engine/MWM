@@ -3,7 +3,7 @@
   "kind": "sword",
   "name": "MWM",
   "engine_repository": "https://github.com/neuriv/tanto-engine.git",
-  "engine_commit": "f4e2ae2d80e32c26b7538834bfc2acfe7a98b777",
+  "engine_commit": "cd700d351d8b6a23b909e74ef41a7bcca254679a",
   "version": "0.3.0-alpha.1",
   "desktop": "electron",
   "worker_name": "MWMWorker"

@@ -340,8 +340,8 @@
   "ki_pulse": {
     "scope": "Every enabled attack/string recovery; aerial moves at landing, synchronized grabs after paired phases",
     "percent": 40,
-    "fill_frames": 25,
-    "hold_frames": 24,
+    "fill_frames": 30,
+    "hold_frames": 36,
     "frost_window": "native_remaining_ki_pulse_window",
     "acceptance": "Verify availability after every attack and fairness in gameplay; durations alone are not acceptance."
   },

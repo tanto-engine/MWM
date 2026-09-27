@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "name": "Sword Rebuild 1 - Jin subset (incomplete)",
+  "name": "Sword Rebuild 1 — supported subset (incomplete)",
   "weapon": "sword",
   "tap_move": null,
   "hold_move": null,
@@ -35,38 +35,8 @@
   },
   "chord_stance": "low",
   "move_settings": {
-    "jin_hayabusa.action_0c6e": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c6f": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c70": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0bbf": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c63": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c64": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c65": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c66": {
-      "speed": 1.0
-    },
     "jin_hayabusa.action_0c75": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c77": {
-      "speed": 1.0
-    },
-    "jin_hayabusa.action_0c78": {
-      "speed": 1.0
+      "speed": 1
     }
   }
 }

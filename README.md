@@ -1,4 +1,4 @@
-# MWM — Multi-Weapon Moveset Mod
+# MWM â€” Multi-Weapon Moveset Mod
 
 MWM is the shared application for ten planned Nioh weapon movesets, starting with single katana; Engine owns gameplay integration and Recorder supplies evidence for developer review.
 
@@ -8,7 +8,7 @@ MWM is the shared application for ten planned Nioh weapon movesets, starting wit
 
 `data/` is legacy runtime integration input: the old catalogue, reviewed import graphs, resource fingerprints and preset v8 defaults. It is not merged into the new dataset. Move choices, bindings and bounded speeds remain editable; Ki Pulse, physics and Frost Moon timing stay Engine-owned.
 
-`configurations/` specifies the new First Collection sword layout and its four unfinished boss routes. `data/presets/first-collection-supported.json` loads the five supported Jin routes; `data/move-policy.json` extends their recovery windows. See [configuration status](configurations/README.md) before using the subset.
+`configurations/` specifies the new Sword Rebuild 1 sword layout and its four unfinished boss routes. `data/presets/sword-rebuild-1-supported.json` loads the five supported Jin routes; `data/move-policy.json` extends their recovery windows. See [configuration status](configurations/README.md) before using the subset.
 
 `configurations/` defines Sword Rebuild 1 with dataset references and explicit adapter gaps. `data/presets/sword-rebuild-1-supported.json` is its loadable Jin-only subset; the complete new layout is not yet executable.
 
