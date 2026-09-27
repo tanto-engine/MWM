@@ -112,11 +112,13 @@ class ProductBoundaryTests(unittest.TestCase):
                         dict(path='sessions/0002-empty', recording_id='empty', boss_name='Maria')]
             files = {}
             for entry in sessions:
-                files[entry['path']+'/encounter.json'] = json.dumps(dict(schema_version=2,
+                files[entry['path']+'/encounter.json'] = json.dumps(dict(schema_version=2 if entry['recording_id']=='jin' else 1,
                     recording_id=entry['recording_id'], boss_id=entry['recording_id'], boss_name=entry['boss_name'],
                     annotations=[], draft=dict(text=''))).encode()
             raw = b'{"kind":"action_state","role":"unassigned","take":"a","t":1}\n{"kind":"action_state","role":"player_candidate","take":"a","t":2}\n{"kind":'
             files['sessions/0001-jin/events.jsonl'] = raw
+            # A migrated session's inline draft is current; its retained old sidecar is historical evidence.
+            files['sessions/0001-jin/draft.json'] = b'{"text":"Superseded legacy draft"}'
             files['sessions/0002-empty/draft.json'] = b'{"text":"High priority: three cuts"}'
             manifest = dict(schema_version=2, kind='tanto_session_archive', sessions=sessions,
                 files=[dict(path=name, size=len(data), sha256=hashlib.sha256(data).hexdigest()) for name, data in files.items()])
@@ -134,6 +136,7 @@ class ProductBoundaryTests(unittest.TestCase):
                 self.assertEqual([row['action_rows'] for row in report['sessions']], [2, 0])
                 self.assertTrue(report['sessions'][1]['no_raw_evidence'])
                 self.assertTrue(report['sessions'][1]['has_draft'])
+                self.assertFalse(report['sessions'][0]['has_draft'])
                 self.assertEqual(report['sessions'][0]['malformed_event_lines'], 1)
                 stored = base/'accepted/submissions'/report['bundle_sha256']
                 self.assertTrue(all((stored/name).read_bytes() == data for name, data in files.items()))
