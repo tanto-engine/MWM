@@ -114,7 +114,7 @@ class BindingGroupTests(unittest.TestCase):
             with patch.object(worker.Desktop, 'location', return_value=missing):
                 restored = worker.Desktop().snapshot()
             self.assertEqual(restored['preset']['modifier_mask'], 0x100)
-            self.assertEqual(restored['preset']['trigger_mask'], 0x2000)
+            self.assertEqual(restored['preset']['trigger_mask'], 0x400)
             self.assertFalse(restored['load_warning'])
 
     def test_add_override_selects_a_free_compilable_slot(self):

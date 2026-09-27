@@ -19,8 +19,8 @@ PlayStation and Xbox labels describe the same logical buttons. Frost Moon requir
 | Low heavy / dodge-heavy | Jin's three-hit string / second cyclone slash |
 | Mid heavy / dodge-heavy | Jin's five-hit string |
 | Low quick | Hideyori's four-hit string |
-| High heavy, then LB + Square/X | Tachibana's instant Omnislice |
-| **Low stance: tap LB + LT** | Sanada's hand-cannon, 1.15× speed; sword hidden during firing |
+| High heavy, then L1/LB + Square/X | Tachibana's instant Omnislice |
+| **Low stance: tap L1/LB + L2/LT** | Sanada's hand-cannon, 1.15× speed; sword hidden during firing |
 | Frost Moon → Low / Mid / High | Flying Swallow / Oda's two slashes at 1.1× / Jin's downward slash |
 
 The handgun uses tap-and-release; holding is unassigned by default. A new shot waits for the previous action to finish. [Configuration details](configurations/README.md) separate tested playback from remaining contact and recovery checks.

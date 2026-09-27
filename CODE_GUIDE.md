@@ -8,7 +8,7 @@ Keep 3–5 direct opening comments per function/callback: player-facing purpose,
 
 ## Follow a settings change
 
-The source UI uses `desktop/renderer.ts` for a pending preset, `desktop/preload.cjs` for one restricted IPC method, and `desktop/main.cjs` for dialogs and a private JSON-line pipe. `app/web_worker.py` reuses Engine validation and the existing trainer lifecycle without constructing Tk. Apply saves; Load and Baseline only edit the form; Save as exports without applying. Engine owns attachment, recovery and native timing. `Trainer.ps1` and `npm start` open Electron; `Trainer.ps1 -LegacyUI` retains the comparison UI.
+The source UI uses `desktop/renderer.ts` for a pending preset, `desktop/preload.cjs` for one restricted IPC method, and `desktop/main.cjs` for dialogs and a private JSON-line pipe. `app/web_worker.py` reuses Engine validation and the existing trainer lifecycle without constructing Tk. Save changes stores settings; Load and Original only edit the form; Export moveset writes a reusable file without applying. Engine owns attachment, recovery and native timing. `Trainer.ps1` and `npm start` open Electron; `Trainer.ps1 -LegacyUI` retains the comparison UI.
 
 The worker pipe explicitly uses UTF-8 so Windows code pages cannot corrupt preset names. Preview expands the same import graphs and effective speeds as live preparation without touching Nioh. Draft generations reject stale validation results; binding generations reject replies from cancelled listeners. Explicit speed `1` is stored, while clearing a field restores inheritance. `tests/desktop_ui.cjs` runs this renderer against a temporary real worker, with simulated hardware input and forbidden game lifecycle calls.
 

@@ -452,7 +452,7 @@ async function pollCapture() {
   try {
     const result = await window.mwm.request<{ mask?: number; label?: string; status?: string }>('capture_poll');
     if (!capture || generation !== captureGeneration) return;
-    if (result.mask !== undefined) { state.preset[target] = result.mask; capture = null; changed(); render(); message('Bound ' + result.label + '. Apply to save.'); }
+    if (result.mask !== undefined) { state.preset[target] = result.mask; capture = null; changed(); render(); message('Bound ' + result.label + '. Choose Save changes to use it.'); }
     else { message(result.status || 'Waiting for input'); timer = setTimeout(pollCapture, 70); }
   } catch (error) { if (generation === captureGeneration) { capture = null; render(); message(String(error), true); } }
 }
@@ -623,7 +623,7 @@ function renderBindingModules() {
         const result = await window.mwm.request<Preset | boolean | null>(operation, { ...params(), group: bindingGroup });
         if (!result) return;
         if (operation === 'binding_import') { state.preset = result as Preset; changed(); render(); }
-        message(operation === 'binding_import' ? 'Binding group loaded. Other groups and tuning are unchanged. Apply to save.' : 'Binding group exported.');
+        message(operation === 'binding_import' ? 'Binding group loaded. Other groups and tuning are unchanged. Choose Save changes to use it.' : 'Binding group exported.');
       });
     };
     controls.append(button);
