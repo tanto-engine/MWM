@@ -15,6 +15,7 @@ from recording_hotkey import GlobalHotkey
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT),str(ROOT.parent/'tanto-recorder/src')]
 from build_product import READ_ONLY, stage_product
+import build_product
 from recorder import export_capture
 from recording_bundle import intake_bundle, session_summary
 from encounter_recording import save_annotation
@@ -22,6 +23,29 @@ from encounter_recording_cases import state, metadata
 
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_exe_release_gate_rejects_unversioned_dirty_unpinned_and_reused_builds(self):
+        with tempfile.TemporaryDirectory() as td:
+            base=Path(td);engine=base/'tanto-engine';engine.mkdir()
+            product=base/'tanto-recorder';product.mkdir();(base/'SKM').mkdir()
+            spec=dict(kind='recorder',name='TantoRecorder',version='0.2.0-alpha.1',engine_commit='a'*40)
+            (product/'CHANGELOG.md').write_text('## 0.2.0-alpha.1\n\nOffline only.\n')
+            def write(): (product/'product.json').write_text(json.dumps(spec))
+            write()
+            with patch.object(build_product,'ROOT',engine), patch.object(build_product,'source_state',return_value=dict(commit='a'*40,dirty=False)) as state, \
+                 patch.object(build_product.subprocess,'check_output',return_value=''):
+                self.assertEqual(build_product.release_inputs(product)[0],spec)
+                for version in ('','latest','0.2','../../escape','0.2.0-alpha.0'):
+                    spec['version']=version;write()
+                    with self.assertRaises(ValueError):build_product.release_inputs(product)
+                spec['version']='0.2.0-alpha.1';write()
+                state.return_value=dict(commit='a'*40,dirty=True)
+                with self.assertRaises(ValueError):build_product.release_inputs(product)
+                state.return_value=dict(commit='b'*40,dirty=False)
+                with self.assertRaises(ValueError):build_product.release_inputs(product)
+                state.return_value=dict(commit='a'*40,dirty=False)
+                (product/'dist'/spec['version']).mkdir(parents=True)
+                with self.assertRaises(ValueError):build_product.release_inputs(product)
+
     def test_local_guide_opens_while_busy_and_does_not_block_stop(self):
         root=tk.Tk();root.withdraw()
         try:
@@ -316,7 +340,7 @@ class ProductBoundaryTests(unittest.TestCase):
         # Product resources and runtime libraries must be self-contained.
         with tempfile.TemporaryDirectory() as folder:
             destination=Path(folder)/'stage'
-            stage_product(ROOT.parent/'tanto-sword-mod',destination)
+            stage_product(ROOT.parent/'SKM',destination)
             self.assertNotIn('def record(', (destination/'runtime/boss_probe.py').read_text())
             self.assertNotIn('def save_catalogue(', (destination/'runtime/catalogue.py').read_text())
             self.assertTrue((destination/'runtime/native/build/nioh_skill_runtime.dll').is_file())

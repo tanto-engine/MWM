@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 ROOT=Path(__file__).resolve().parents[2]
-MOD=ROOT.parent/'tanto-sword-mod'
+MOD=ROOT.parent/'SKM'
 sys.path[:0]=[str(MOD),str(MOD/'app'),str(ROOT/'runtime')]
 import trainer
 from engine_config import DEFAULT_PRESET, validate_preset, atomic_json

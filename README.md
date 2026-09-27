@@ -6,7 +6,7 @@ Private developer tooling and native runtime implementation for building game mo
 |---|---|---|
 | neuriv/tanto-engine | Native integration, ownership/lifecycle, private policy, validation, builds and tests | None |
 | neuriv/tanto-recorder | Read-only recording, boss signatures, annotations, export and capture archive | TantoRecorder.exe |
-| neuriv/tanto-sword-mod | Sword definitions, import/resource profiles, default bindings and product UI | TantoSword.exe with selected micro-runtime |
+| neuriv/SKM | Sword definitions, import/resource profiles, default bindings and product UI | SKM.exe with selected micro-runtime |
 
 The first backend is the existing exact-build Nioh 1 sword implementation. The framework does not yet implement arbitrary weapons or asset formats. Additional mods need validated adapters and content definitions; putting an unknown move ID in JSON is insufficient. Engine-owned policies such as enemy weight/impulse and tracking are compiled/configured by developers, not exposed as unrestricted GUI fields.
 
@@ -18,8 +18,8 @@ Keep the three repositories as sibling checkouts. Use Python 3.10+ and Windows x
 .\runtime\native\Build.ps1
 .\Test-Offline.ps1
 python -B build_product.py ..\tanto-recorder --stage-only
-python -B build_product.py ..\tanto-sword-mod --onedir
-python -B build_product.py ..\tanto-sword-mod
+python -B build_product.py ..\SKM --onedir
+python -B build_product.py ..\SKM
 ```
 
 The two maintained test entrypoints remain tests/test_move_readiness.py and tests/test_resource_crashes.py. They exercise source logic, native owned-memory fixtures, cross-repository integration, contributor export and package boundaries. Clone both product repositories alongside this checkout for integration tests. The resource crash test also reads the supported local game archives. Passing tests does not certify live gameplay.
@@ -62,7 +62,7 @@ The saved gameplay preset uses Low full Flying Swallow, Mid somersault and High 
 
 ## Engine-owned tuning inventory
 
-The following are policy values, not inferred universal Nioh rules. The archived Downloads workbook contains the historical human-readable Tuning ledger; `../tanto-sword-mod/data/imports/` contains source requirements and graph recipes. Source bytes and current implementation remain authoritative when revising a policy. Do not conflate source recovery values with adapted cancellation frames.
+The following are policy values, not inferred universal Nioh rules. The archived Downloads workbook contains the historical human-readable Tuning ledger; `../SKM/data/imports/` contains source requirements and graph recipes. Source bytes and current implementation remain authoritative when revising a policy. Do not conflate source recovery values with adapted cancellation frames.
 
 | Policy | Current value and scope | Implementation |
 |---|---|---|

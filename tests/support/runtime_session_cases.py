@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'tanto-sword-mod'
+MOD_ROOT = ROOT.parent/'SKM'
 sys.path.insert(0, str(ROOT / 'runtime'))
 import native_loader as loader
 from runtime_session import encode_session, POINTER_FIELDS, SESSION_CONFIG, MOVE_IMPORT, MOVE_ADAPTER, MAGIC, VERSION

@@ -2,17 +2,54 @@
 import argparse
 import ast
 import hashlib
+import importlib.metadata
 import json
 from pathlib import Path
 import shutil
+import re
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0,str(ROOT/'runtime'))
 from engine_policy import validate_move_policy
 READ_ONLY = ('nioh_memory','boss_probe','action_banks','controller_reader')
+
+
+def source_state(project):
+    def git(*args):
+        return subprocess.check_output(['git','-C',str(project),*args],text=True).strip()
+    return dict(commit=git('rev-parse','HEAD'),dirty=bool(git('status','--porcelain')))
+
+
+def release_inputs(project):
+    spec=json.loads((project/'product.json').read_text(encoding='utf8'))
+    version=spec.get('version','')
+    if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?',version):
+        raise ValueError('Set a release version such as 0.2.0-alpha.1 in product.json')
+    if f'## {version}\n' not in (project/'CHANGELOG.md').read_text(encoding='utf8'):
+        raise ValueError('Add release notes for this version to CHANGELOG.md')
+    sources={p.name:source_state(p) for p in (ROOT,ROOT.parent/'SKM',ROOT.parent/'tanto-recorder')}
+    if any(state['dirty'] for state in sources.values()):
+        raise ValueError('Commit all Engine, SKM and Recorder changes before compiling an EXE')
+    if spec.get('engine_commit')!=sources[ROOT.name]['commit']:
+        raise ValueError('Review and pin this Engine revision in product.json before packaging')
+    used=(project/'dist'/version).exists()
+    for args in (['tag','--list',f'v{version}'],['ls-remote','--tags','origin',f'refs/tags/v{version}']):
+        used=used or bool(subprocess.check_output(['git','-C',str(project),*args],text=True).strip())
+    if used:
+        raise ValueError('This release version already exists; increment it before rebuilding')
+    dependencies={}
+    for path in (ROOT/'requirements-build.txt',project/'requirements.txt'):
+        if not path.exists():continue
+        for line in path.read_text().splitlines():
+            if not line or line.startswith('#'):continue
+            name,expected=line.split('==');actual=importlib.metadata.version(name)
+            if actual!=expected:raise ValueError(f'Install {name}=={expected} before building (found {actual})')
+            dependencies[name]=actual
+    return spec,sources,dependencies
 
 
 def stage_product(project, destination):
@@ -57,9 +94,9 @@ def stage_product(project, destination):
         shutil.copyfile(ROOT/'third_party/minhook/LICENSE.txt',destination/'MinHook-LICENSE.txt')
     files={p.relative_to(destination).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
            for p in destination.rglob('*') if p.is_file()}
-    (destination/'build-manifest.json').write_text(json.dumps(dict(product=spec,engine_commit=subprocess.check_output(
-        ['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),engine_dirty=bool(subprocess.check_output(
-        ['git','status','--porcelain'],cwd=ROOT,text=True).strip()),files=files),indent=2)+'\n',encoding='utf8')
+    engine=source_state(ROOT)
+    (destination/'build-manifest.json').write_text(json.dumps(dict(product=spec,
+        engine_commit=engine['commit'],engine_dirty=engine['dirty'],files=files),indent=2)+'\n',encoding='utf8')
     return spec
 
 
@@ -71,20 +108,28 @@ def main():
     parser.add_argument('project',type=Path);parser.add_argument('--stage-only',action='store_true')
     parser.add_argument('--onedir',action='store_true');args=parser.parse_args()
     project=args.project.resolve();build=project/'.build'/str(time.time_ns());stage=build/'stage'
-    spec=stage_product(project,stage)
-    if args.stage_only: print(stage);return
-    revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-    if spec.get('engine_commit') != revision:
-        raise ValueError('Review and pin this engine revision in product.json before packaging')
-    if subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip():
-        raise ValueError('Commit engine changes before packaging a reproducible release')
+    if args.stage_only: stage_product(project,stage);print(stage);return
+    spec,sources,dependencies=release_inputs(project)
+    build.mkdir(parents=True)
+    if spec['kind']=='sword':
+        subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'runtime/native/Build.ps1')],check=True)
+    with (build/'offline-tests.log').open('w',encoding='utf8') as log:
+        subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'Test-Offline.ps1'),'-PythonRuntime',sys.executable],
+                       stdout=log,stderr=subprocess.STDOUT,check=True)
+    counts=re.findall(r'Ran (\d+) tests?',(build/'offline-tests.log').read_text(encoding='utf8'))
+    if len(counts)!=2:raise ValueError('Both maintained offline test entrypoints must report their results')
+    stage_product(project,stage)
+    numeric=tuple(int(n) for n in spec['version'].split('-')[0].split('.'))+(0,)
+    version_file=build/'version-info.txt'
+    version_file.write_text(f"VSVersionInfo(ffi=FixedFileInfo(filevers={numeric!r},prodvers={numeric!r},mask=0x3f,flags=0,OS=0x40004,fileType=1,subtype=0,date=(0,0)),kids=[StringFileInfo([StringTable('040904B0',[StringStruct('ProductName',{spec['name']!r}),StringStruct('FileVersion',{spec['version']!r}),StringStruct('ProductVersion',{spec['version']!r})])]),VarFileInfo([VarStruct('Translation',[1033,1200])])])",encoding='utf8')
     local={p.stem for p in stage.rglob('*.py')};imports=set(local)
     for p in stage.rglob('*.py'):
         for node in ast.walk(ast.parse(p.read_text(encoding='utf8'))):
             if isinstance(node,ast.Import): imports.update(item.name for item in node.names)
             elif isinstance(node,ast.ImportFrom) and node.module: imports.add(node.module)
     command=[sys.executable,'-m','PyInstaller','--noconfirm','--onedir' if args.onedir else '--onefile','--windowed',
-             '--name',spec['name'],'--distpath',str(project/'dist'),'--workpath',str(build/'work'),'--specpath',str(build),
+             '--name',spec['name'],'--distpath',str(build/'package'),'--workpath',str(build/'work'),'--specpath',str(build),
+             '--version-file',str(version_file),
              '--paths',str(stage/'runtime'),'--paths',str(stage/'app'),'--paths',str(stage/'src')]
     for name in sorted(imports):
         if name.split('.')[0] in local or name.split('.')[0] in sys.stdlib_module_names:
@@ -94,7 +139,31 @@ def main():
     command+=['--add-data',f'{stage/"build-manifest.json"};.']
     if (stage/'MinHook-LICENSE.txt').exists(): command+=['--add-data',f'{stage/"MinHook-LICENSE.txt"};.']
     subprocess.run(command+[str(stage/'launch.py')],check=True)
-    shutil.copyfile(stage/'build-manifest.json',project/'dist'/f'{spec["name"]}-manifest.json')
+    package=build/'package'
+    if spec['kind']=='recorder':
+        exe=package/spec['name']/f'{spec["name"]}.exe' if args.onedir else package/f'{spec["name"]}.exe'
+        smoke=package/'ui-smoke.json'
+        subprocess.run([str(exe),'--ui-smoke',str(smoke)],check=True,timeout=60)
+        if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
+        (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
+    if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
+    shutil.copyfile(stage/'build-manifest.json',package/'build-manifest.json')
+    shutil.copyfile(build/'offline-tests.log',package/'offline-tests.log')
+    shutil.copyfile(project/'CHANGELOG.md',package/'CHANGELOG.md')
+    receipt=dict(schema_version=1,product=spec['name'],version=spec['version'],prerelease='-' in spec['version'],
+        built_at=datetime.now(timezone.utc).isoformat(),sources=sources,python=sys.version,dependencies=dependencies,
+        packaging='onedir' if args.onedir else 'onefile',workflow_tests=int(counts[0]),resource_tests=int(counts[1]),
+        gameplay_acceptance=False,other_pc_acceptance=False)
+    (package/'release.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf8')
+    hashes={p.relative_to(package).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(package.rglob('*')) if p.is_file()}
+    (package/'SHA256SUMS.txt').write_text(''.join(f'{sha}  {name}\n' for name,sha in hashes.items()),encoding='utf8')
+    destination=project/'dist'/spec['version'];destination.parent.mkdir(exist_ok=True)
+    package.rename(destination)
+    subprocess.run(['git','-C',str(project),'tag','-a',f'v{spec["version"]}',sources[project.name]['commit'],
+        '-m',f'{spec["name"]} {spec["version"]}; Engine {sources[ROOT.name]["commit"]}; SHA256SUMS '+
+        hashlib.sha256((destination/'SHA256SUMS.txt').read_bytes()).hexdigest()],check=True)
+    print(destination)
 
 
 if __name__=='__main__': main()

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'tanto-sword-mod'
+MOD_ROOT = ROOT.parent/'SKM'
 sys.path.insert(0,str(ROOT))
 from catalogue import iter_moves, load_catalogue, save_catalogue, validate_catalogue, merge_reconstruction, merge_recording, rename_move
 

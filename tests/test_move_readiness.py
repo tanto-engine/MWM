@@ -21,7 +21,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MOD_ROOT = ROOT.parent/'tanto-sword-mod'
+MOD_ROOT = ROOT.parent/'SKM'
 SUPPORT = ROOT/'tests/support'
 sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime'), str(ROOT.parent/'tanto-recorder/src')]
 from catalogue import load_catalogue, save_catalogue, merge_recording

@@ -6,7 +6,7 @@ from pathlib import Path
 from move_imports import read_import_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'tanto-sword-mod'
+MOD_ROOT = ROOT.parent/'SKM'
 FIXTURES = ROOT / 'tests/native/fixtures'
 PROFILE = json.loads((FIXTURES / 'session-profile.json').read_text())
 BOSS = json.loads((FIXTURES / 'boss-session.json').read_text())
