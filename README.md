@@ -8,7 +8,7 @@ A portable Nioh moveset editor, starting with single katana. Choose the moves as
 
 Download **MWM.exe** from [Releases](https://github.com/tanto-engine/MWM/releases). The EXE contains its own interface, Engine worker, move definitions and artwork; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
 
-Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. If you save while enabled, wait for Engine to finish reloading. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running.
+Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. If you save while enabled, wait for Engine to finish reloading. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. Before enabling a newer EXE, disable the running mod so the new Engine can replace it.
 
 ## Default controls
 
@@ -29,7 +29,7 @@ The handgun uses tap-and-release; holding is unassigned by default. A new shot w
 
 **Moves** shows assignments by stance, including **Hold Triangle / Y**. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or native inputs. For example, use Low held Triangle for the launcher and High held Triangle for Izuna. The drop still needs native enemy contact.
 
-**Controller** changes the custom modifier/trigger buttons and tap/hold actions; press-to-bind listens after you release the controls. There is one custom two-button chord plus native overrides and stance holds. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations explain the conflict before saving.
+**Controller** changes the custom modifier/trigger buttons and tap/hold actions; press-to-bind listens after you release the controls. There is one custom two-button chord plus native overrides and stance holds. R1/RB stays reserved for Ki Pulse and Frost Moon. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations explain the conflict before saving.
 
 **Speed** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests its native speed. **More** provides extra native inputs, Frost Moon destinations, Help, the original moveset, and moveset import/export. Binding groups let you reuse one part without replacing the rest. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
 
@@ -67,4 +67,4 @@ Match descriptions against the final few relevant executions before Stop, lookin
 
 Keep Engine, MWM and Recorder as sibling checkouts. After `npm ci`, `Trainer.ps1` builds current native libraries and opens the source UI. Engine's `Test-Offline.ps1` runs both maintained suites, including product UI and binding checks.
 
-`Build.ps1` requires clean commits, a pinned Engine, a new version and release notes. It packages and checks an isolated EXE, then records hashes and an immutable version tag. Packaged checks exercise startup, actual UI rebinding, saved settings, XInput translation and bundled assets with game access blocked. [CODE_GUIDE.md](CODE_GUIDE.md) gives module details and future work.
+Close the source editor before building. `Build.ps1` requires clean commits, a pinned Engine, a new version and release notes. It packages and checks an isolated EXE, then records hashes and an immutable version tag. Packaged checks exercise startup, actual UI rebinding, saved settings, XInput translation and bundled assets with game access blocked. [CODE_GUIDE.md](CODE_GUIDE.md) gives module details and future work.

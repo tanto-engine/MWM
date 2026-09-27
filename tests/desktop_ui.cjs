@@ -126,6 +126,12 @@ app.whenReady().then(async () => {
       assert(savedOverview.preset.frost_moon.high==='okatsu.leaping_slash','Overview move edit did not reach Python');
       assert(savedOverview.preset.stance_holds.low==='jin_hayabusa.action_0c79' && savedOverview.preset.stance_holds.high==='jin_hayabusa.izuna_drop','Separate launcher and Izuna stances did not persist');
       assert(!document.querySelector('#notice').textContent,'Saved settings left stale success text');
+      await tab('controls');
+      const pulseTrigger=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Trigger').querySelector('select');
+      const previousTrigger=pulseTrigger.value;
+      change(pulseTrigger,[...pulseTrigger.options].find(x=>x.textContent==='R1 / RB').value);await wait(300);
+      assert(document.querySelector('#apply').disabled && document.querySelector('#validation').textContent.includes('Ki Pulse'),'Reserved Frost input was not rejected before Save');
+      change(pulseTrigger,previousTrigger);await ready();
       document.querySelector('#baseline').click();await ready();
       await tab('native');
       const originalRows=document.querySelectorAll('.binding').length;

@@ -17,7 +17,7 @@ for folder in (CODE,):
 
 from catalogue import load_catalogue
 from engine_config import move_capabilities, atomic_json, read_json, validate_preset, binding_for_preset
-from game_controller import BindingCapture, GameController, binding_buttons, game_button_mask
+from game_controller import BindingCapture, GameController, binding_buttons, game_button_mask, game_binding
 from controller_reader import ControllerReader
 from trace_reader import Trace
 from process_support import active_runtime, process_matches, worker_command
@@ -490,6 +490,7 @@ class Trainer:
             self.button_choices=binding_buttons(calibration['device'],calibration.get('button_map'))
             for selector in self.button_selectors: selector.configure(values=list(self.button_choices))
             binding = binding_for_preset(self.calibration, preset)
+            game_binding(self.calibration, binding)
             atomic_json(RUNTIME/'controller-calibration.json', self.calibration)
             atomic_json(RUNTIME/'controller-binding.json', preset)
             self.binding, self.preset = binding, preset

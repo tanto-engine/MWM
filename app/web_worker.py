@@ -8,7 +8,7 @@ import sys
 
 import trainer
 from engine_config import DEFAULT_PRESET, atomic_json, binding_for_preset, move_capabilities, read_json, validate_preset
-from game_controller import BindingCapture, GameController, binding_buttons
+from game_controller import BindingCapture, GameController, binding_buttons, game_binding
 from controller_reader import ControllerReader
 from process_support import active_runtime, process_matches
 from trace_reader import Trace
@@ -72,7 +72,7 @@ class Desktop:
         slot = calibration.get('controller_slot')
         if slot is not None and (type(slot) is not int or slot not in (0, 1, 2, 3)):
             raise ValueError('Controller slot must be automatic or 1–4')
-        binding_for_preset(calibration, preset)
+        game_binding(calibration, binding_for_preset(calibration, preset))
         return preset
 
     def preview(self, params):
