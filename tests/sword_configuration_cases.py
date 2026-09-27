@@ -10,6 +10,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_portable_launches_preserve_the_owned_worker(self):
+        # Reproduce shared extraction using the pinned installer generator's actual option branch.
+        # Model launcher cleanup with owned temporary files, then reopen the retained worker.
+        # Neither the game nor a real gameplay supervisor is started by this lifetime check.
+        import subprocess
+        result = subprocess.run(['node', str(ROOT/'tests/portable_worker.cjs')],
+                                cwd=ROOT, capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+
     def test_desktop_edit_validate_save_and_bind_roundtrip(self):
         # Run the real renderer against a UTF-8 worker with temporary settings only.
         # Simulate physical binding and reject lifecycle calls so this cannot touch Nioh.

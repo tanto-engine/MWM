@@ -6,6 +6,17 @@ const { createInterface } = require('node:readline');
 const path = require('node:path');
 const fs = require('node:fs');
 const root = path.resolve(__dirname, '..');
+const smokeIndex = process.argv.indexOf('--ui-smoke');
+const smokeReport = smokeIndex < 0 ? null : path.resolve(process.argv[smokeIndex + 1]);
+if (smokeReport) {
+  // Keep packaged verification away from user settings and any registered game session.
+  // The worker rejects lifecycle/controller calls in this mode even if renderer behavior regresses.
+  // Only the caller-selected report directory receives test state.
+  const state = path.join(path.dirname(smokeReport), 'mwm-smoke-state');
+  app.setPath('userData', state);
+  process.env.MWM_UI_SMOKE = '1';
+  process.env.NIOH_RUNTIME_HOME = path.join(state, 'runtime');
+}
 const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'enable', 'disable']);
 const pending = new Map();
 let window, worker, nextId = 0;
@@ -24,10 +35,12 @@ function startWorker() {
   // Packaged builds resolve the gate-staged worker; source builds use the sibling Engine.
   const cached = path.join(process.env.USERPROFILE || '', '.cache', 'tanto-build', 'Scripts', 'python.exe');
   const python = process.env.NIOH_PYTHON || (fs.existsSync(cached) ? cached : 'python.exe');
-  const executable = app.isPackaged ? path.join(process.resourcesPath, 'worker', 'MWMWorker.exe') : python;
+  const version = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8')).version;
+  const executable = app.isPackaged ? require('./portable_worker.cjs').retainWorker(path.join(process.resourcesPath, 'worker'), app.getPath('userData'), version) : python;
   const args = app.isPackaged ? ['--desktop-worker'] : ['-B', path.join(root, 'app', 'web_worker.py')];
   if (app.isPackaged) fs.mkdirSync(app.getPath('userData'), { recursive: true });
-  worker = spawn(executable, args, { cwd: app.isPackaged ? app.getPath('userData') : root, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  worker = spawn(executable, args, { cwd: app.isPackaged ? app.getPath('userData') : root, windowsHide: true,
+    env: {...process.env, PYINSTALLER_RESET_ENVIRONMENT: '1'}, stdio: ['pipe', 'pipe', 'pipe'] });
   worker.stdin.on('error', error => {
     // A closed worker pipe must fail the current request instead of crashing Electron.
     // Pending promises share the same bounded error path as worker exit.
@@ -114,7 +127,7 @@ async function openWindow() {
   // CSS and TypeScript implement the interface; preload exposes one allowlisted request function.
   // External navigation and popups cannot replace this trusted local renderer.
   startWorker();
-  window = new BrowserWindow({ width: 1120, height: 840, minWidth: 860, minHeight: 640, backgroundColor: '#11151c', title: 'MWM · Multi-Weapon Moveset Mod', autoHideMenuBar: true, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false } });
+  window = new BrowserWindow({ show: !smokeReport, width: 1120, height: 840, minWidth: 860, minHeight: 640, backgroundColor: '#11151c', title: 'MWM · Multi-Weapon Moveset Mod', autoHideMenuBar: true, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, backgroundThrottling: !smokeReport } });
   window.webContents.setWindowOpenHandler(() => {
     // No application action requires a second browser window.
     // Block script-created windows before they receive navigation context.
@@ -128,10 +141,37 @@ async function openWindow() {
     event.preventDefault();
   });
   await window.loadFile(path.join(__dirname, 'index.html'));
+  if (smokeReport) {
+    await require('./smoke.cjs').runSmoke(window, call, smokeReport);
+    const child = worker; worker = null;
+    await new Promise(resolve => {
+      // Let the checked worker close its pipe before the gate removes isolated test files.
+      // Later renderer polls see an unavailable bridge rather than writing to a closing stream.
+      // This shuts down only the editor worker; smoke mode never starts gameplay.
+      child.once('exit', resolve); child.stdin.end();
+    });
+    app.exit(0);
+  }
 }
 
 ipcMain.handle('mwm:request', request);
-app.whenReady().then(openWindow);
+if (!app.requestSingleInstanceLock()) app.quit();
+else {
+  app.on('second-instance', () => {
+    // Reopening focuses the existing editor instead of starting another configuration worker.
+    // Gameplay remains owned by Engine's separate supervisor lock.
+    // Portable launches still extract privately before they reach this callback.
+    if (window) { if (window.isMinimized()) window.restore(); window.show(); window.focus(); }
+  });
+  app.whenReady().then(openWindow).catch(error => {
+    // Report packaged startup failures and terminate without a misleading empty editor.
+    // Automated smoke mode writes diagnostics without showing a blocking error dialog.
+    // Normal launches show the concrete failure to the user.
+    if (smokeReport) fs.writeFileSync(smokeReport, JSON.stringify({passed:false,error:String(error)}));
+    else dialog.showErrorBox('MWM could not start', String(error));
+    app.exit(1);
+  });
+}
 app.on('window-all-closed', () => {
   // Close the window-owned worker by ending its input stream.
   // Its finalizer releases any temporary binding reader.

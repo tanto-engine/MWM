@@ -16,6 +16,4 @@ Reuse a binding group saves or loads the custom chord, stance overrides, native 
 
 `configurations/` specifies the new Sword Rebuild 1 sword layout and its four unfinished boss routes. `data/presets/sword-rebuild-1-supported.json` loads the five supported Jin routes; `data/move-policy.json` extends their recovery windows. See [configuration status](configurations/README.md) before using the subset.
 
-`configurations/` defines Sword Rebuild 1 with dataset references and explicit adapter gaps. `data/presets/sword-rebuild-1-supported.json` is its loadable Jin-only subset; the complete new layout is not yet executable.
-
-`review_import.py` reports definition/evidence gaps. `Build.ps1` uses Engine's release gate to package a portable EXE with its own worker and data. This desktop version awaits its first package and acceptance. See [CODE_GUIDE.md](CODE_GUIDE.md) for module boundaries and migration TODOs; offline checks do not establish gameplay acceptance.
+`review_import.py` reports definition/evidence gaps. `Build.ps1` uses Engine's release gate to package one portable EXE with its own worker and data. The gate checks an isolated copy before release. `desktop/portable_worker.cjs` retains versioned workers in app data so closing the editor cannot remove an enabled Engine's files. See [CODE_GUIDE.md](CODE_GUIDE.md) for module boundaries and migration TODOs; gameplay and controller acceptance remain pending.

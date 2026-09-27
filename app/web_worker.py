@@ -29,6 +29,8 @@ class Desktop:
         # Aim settings at the registered Engine when it is already running.
         # An expected path on writes prevents a stale window from editing another active runtime.
         # Otherwise retain the existing Sword settings namespace for backwards compatibility.
+        if os.environ.get('MWM_UI_SMOKE') == '1':
+            return trainer.RUNTIME
         registration = active_runtime()
         runtime = Path(registration['runtime_path']) if registration else trainer.RUNTIME
         return runtime
@@ -103,6 +105,7 @@ class Desktop:
         self.cancel_capture()
         atomic_json(runtime/'controller-calibration.json', params['calibration'])
         atomic_json(runtime/'controller-binding.json', preset)
+        atomic_json(runtime/'trainer-settings.json', dict(nioh_exe=params.get('nioh_exe', '')))
         return self.snapshot()
 
     def add_override(self, params):
@@ -172,6 +175,8 @@ class Desktop:
         # Dispatch a fixed set of configuration operations instead of evaluating renderer code.
         # File paths reach this worker only through main-process open/save dialogs.
         # TODO(pack-registry): replace sword-only capability discovery after Engine exposes reviewed weapon manifests.
+        if os.environ.get('MWM_UI_SMOKE') == '1' and method in ('enable', 'disable', 'capture_start', 'capture_poll'):
+            raise ValueError('Game and controller operations are disabled during the packaged UI check')
         if method == 'snapshot':
             return self.snapshot()
         if method == 'validate':
@@ -230,7 +235,6 @@ class Desktop:
                 os.environ['NIOH_EXE'] = params['nioh_exe']
             else:
                 os.environ.pop('NIOH_EXE', None)
-            atomic_json(runtime/'trainer-settings.json', dict(nioh_exe=params.get('nioh_exe', '')))
             # An already-running Engine owns its loaded libraries; repeated Enable only reuses that owner.
             if not process_matches(read_json(runtime/'play-process.json')):
                 native = runtime/'native/build'

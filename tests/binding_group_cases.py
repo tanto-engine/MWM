@@ -15,6 +15,19 @@ from game_controller import game_button_mask
 
 
 class BindingGroupTests(unittest.TestCase):
+    def test_apply_persists_game_path_before_refreshing_the_form(self):
+        # Save to an isolated runtime so this check cannot change the user's selected game.
+        # Apply must persist the executable alongside the preset before returning a fresh snapshot.
+        # Clearing the path is also a saved choice; neither operation starts gameplay.
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            with patch.object(worker.Desktop, 'location', return_value=runtime), patch.object(worker, 'process_matches', return_value=False):
+                desktop = worker.Desktop()
+                for executable in (r'C:\Games\Nioh\nioh.exe', ''):
+                    result = desktop.apply(dict(self.params, runtime=str(runtime), nioh_exe=executable))
+                    self.assertEqual(result['nioh_exe'], executable)
+                    self.assertEqual(json.loads((runtime/'trainer-settings.json').read_text(encoding='utf8'))['nioh_exe'], executable)
+
     def setUp(self):
         # Use checked-in configuration without reading or changing active runtime settings.
         # Each test receives independent dictionaries so failed merges cannot contaminate another case.

@@ -1,7 +1,7 @@
 {
   "name": "mwm",
   "productName": "MWM",
-  "version": "0.3.0-alpha.1",
+  "version": "0.3.0-alpha.2",
   "private": true,
   "description": "Multi-Weapon Moveset Mod desktop configuration",
   "author": "neuriv",
@@ -24,6 +24,6 @@
     "files": ["desktop-dist/**/*", "product.json", "CHANGELOG.md"],
     "extraResources": [{ "from": "desktop-worker", "to": "worker" }],
     "win": { "target": "portable", "artifactName": "MWM.exe", "signAndEditExecutable": false },
-    "portable": { "requestExecutionLevel": "user" }
+    "portable": { "requestExecutionLevel": "user", "unpackDirName": true }
   }
 }

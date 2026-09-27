@@ -1,8 +1,12 @@
 # Release notes
 
-## Unreleased
+## 0.3.0-alpha.2
+
+First portable MWM desktop release candidate. The EXE includes its own Engine worker, reviewed move data, artwork and collection. Each launch extracts separately; versioned worker files survive editor closure so an enabled Engine can retain its runtime. Apply now saves the selected game path before refreshing the form. The release gate checks the copied EXE's startup, configuration and bundled assets with gameplay disabled.
 
 Added independent binding-group save/load with controller translation, atomic chord-button swapping and compatible override seeding. Invalid saved presets open as editable baseline drafts without overwriting the original. Group imports preserve unrelated bindings and tuning, reject conflicts and remain pending until Apply. These source changes do not add extra runtime chord slots or constitute gameplay acceptance.
+
+Sword Rebuild 1 provides five Jin routes. Sanada's handgun, Hideyori's Low quick string, Omnislice after High heavy and Oda's Mid Frost Moon still need Engine adapters; the complete requested layout is not yet playable. Current-build gameplay, physical-controller and another-PC acceptance remain pending.
 
 ## 0.3.0-alpha.1
 
