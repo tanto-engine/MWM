@@ -164,7 +164,7 @@ def main():
     parser.add_argument('project',type=Path);parser.add_argument('--stage-only',action='store_true')
     parser.add_argument('--onedir',action='store_true')
     parser.add_argument('--skip-tests-reason',help='Explicit user-authorized exception for an untested prerelease')
-    parser.add_argument('--startup-check',action='store_true',help='Run the packaged Recorder startup check even when offline suites are skipped')
+    parser.add_argument('--startup-check',action='store_true',help='Run the packaged desktop startup check even when offline suites are skipped')
     args=parser.parse_args()
     project=args.project.resolve();build=project/'.build'/str(time.time_ns());stage=build/'stage'
     if args.stage_only: stage_product(project,stage);print(stage);return
@@ -178,7 +178,7 @@ def main():
     if spec['kind']=='sword':
         subprocess.run(['pwsh','-NoProfile','-File',str(ROOT/'runtime/native/Build.ps1')],check=True)
     # An explicit prerelease exception records unknown results, never recycled passes from an older EXE.
-    # Normal builds still require both maintained suites and the packaged Recorder smoke check.
+    # Normal builds require both maintained suites and each packaged desktop's isolated startup check.
     counts=[None,None]
     with (build/'offline-tests.log').open('w',encoding='utf8') as log:
         if skip_reason:log.write('NOT RUN: '+skip_reason+'\n')
@@ -213,7 +213,7 @@ def main():
     subprocess.run(command+[str(stage/'launch.py')],check=True)
     package=build/'package'
     if desktop:package_desktop(project,build,build/'worker-package'/worker_name,package)
-    if spec['kind']=='recorder':
+    if spec['kind']=='recorder' or desktop:
         exe=package/spec['name']/f'{spec["name"]}.exe' if args.onedir else package/f'{spec["name"]}.exe'
         smoke=package/'ui-smoke.json'
         if skip_reason and not args.startup_check:
@@ -229,9 +229,14 @@ def main():
                     isolated_exe=isolated/exe.name;shutil.copyfile(exe,isolated_exe)
                 import os
                 environment={key:value for key,value in os.environ.items()
-                             if key.upper() not in ('PYTHONHOME','PYTHONPATH','TANTO_ENGINE_ROOT','TANTO_PRODUCT_ROOT')}
+                             if key.upper() not in ('PYTHONHOME','PYTHONPATH','TANTO_ENGINE_ROOT','TANTO_PRODUCT_ROOT',
+                                'TANTO_MOD_ROOT','TANTO_RUNTIME_CODE','NIOH_RUNTIME_HOME','NIOH_CATALOGUE_PATH','NIOH_PYTHON','MWM_UI_SMOKE')}
                 environment['TANTO_STATE_ROOT']=str(isolated/'state')
-                subprocess.run([str(isolated_exe),'--ui-smoke',str(smoke)],cwd=isolated,env=environment,check=True,timeout=180)
+                # Temporary settings and worker caches stay out of the published release folder.
+                # Copy back only the result; ordinary user configuration is never used by this check.
+                report=isolated/'ui-smoke.json'
+                subprocess.run([str(isolated_exe),'--ui-smoke',str(report)],cwd=isolated,env=environment,check=True,timeout=180)
+                shutil.copyfile(report,smoke)
             if not json.loads(smoke.read_text())['passed']:raise ValueError('Packaged UI check failed')
         (package/'recorder-smoke-settings.json').unlink(missing_ok=True)
     if release_inputs(project)[1]!=sources:raise ValueError('Source changed during the build; discard this candidate')
@@ -241,7 +246,7 @@ def main():
     receipt=dict(schema_version=1,product=spec['name'],version=spec['version'],prerelease='-' in spec['version'],
         built_at=datetime.now(timezone.utc).isoformat(),sources=sources,python=sys.version,dependencies=dependencies,
         packaging='electron-portable' if desktop else 'onedir' if args.onedir else 'onefile',workflow_tests=counts[0],resource_tests=counts[1],
-        automated_validation=dict(status='partial' if args.startup_check and spec['kind']=='recorder' else 'not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
+        automated_validation=dict(status='partial' if args.startup_check and (spec['kind']=='recorder' or desktop) else 'not_run',reason=skip_reason) if skip_reason else dict(status='passed'),
         gameplay_acceptance=False,other_pc_acceptance=False)
     (package/'release.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf8')
     hashes={p.relative_to(package).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
