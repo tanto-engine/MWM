@@ -48,6 +48,27 @@ def descriptor(payload=0x20000, table=0x30000, start=2, count=3):
 
 
 class ReadSafetyTests(unittest.TestCase):
+    def test_discovery_delivers_valid_ids_before_a_cancelled_heap_scan_finishes(self):
+        # A short take must receive the first valid node even when a large heap scan never finishes.
+        # Cancel after the first progress delivery, proving no final scan return is needed.
+        # Decode a real descriptor fixture and assert the bounded first-chunk read sequence.
+        raw = bytearray(1024 * 1024)
+        struct.pack_into('<Q', raw, 0x200, 0x70000)
+        game = FakeBytes({0x10000: raw, 0x300000: descriptor()})
+        game.identity = dict(pid=10, vtable='0x70000', creation_filetime='100')
+        game.vtable = 0x70000
+        game.alive = Mock(return_value=True)
+        region = self.region(0x10000, 2 * 1024 * 1024); region.Type = 0x20000
+        game.region = Mock(return_value=region)
+        game.snapshot = Mock(return_value=(b'', dict(current='0x300000', owner_like='0x400000')))
+        updates = []
+        with self.assertRaises(InterruptedError):
+            probe.discover(game, stop_requested=updates.__len__, on_progress=updates.append)
+        self.assertEqual(len(updates), 1)
+        self.assertFalse(updates[0]['scan_complete'])
+        self.assertEqual(updates[0]['candidates'][0]['descriptor']['action_key_hex'], '0x00000D4E')
+        self.assertEqual(game.reads, [(0x10000, 1024 * 1024), (0x300000, 0xD0)])
+
     def test_seed_scans_only_nearby_pool_and_rejects_a_previous_process(self):
         # Find a rebuilt actor beside a retired address without scanning unrelated heap regions.
         # Verify the exact read budget and reject a stale process birth before reading memory.

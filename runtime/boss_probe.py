@@ -296,12 +296,38 @@ def metadata(game, address, entry_limit=0):
     return result
 
 
-def discover(game, seed=None, stop_requested=None):
+def discover(game, seed=None, stop_requested=None, on_progress=None):
     # Find aligned action-node vtable references in writable private memory.
     # Revalidate candidate snapshots and bind them to process identity.
     # Support cancellation during long scans without arming stale actors.
     found = set()
     scanned = failures = 0
+    delivered, checked = {}, set()
+    last_progress = time.monotonic()
+
+    def progress():
+        # Let recording start as soon as an actual action node is found, before the whole heap is scanned.
+        # Validate each new vtable hit through its live snapshot; the sampler rechecks ownership again.
+        # Publish a cumulative bounded set, so a slow consumer can replace an earlier progress update.
+        nonlocal failures, last_progress
+        if on_progress is None:
+            return
+        before = len(delivered)
+        for address in sorted(found - checked):
+            checked.add(address)
+            try:
+                _, state = game.snapshot(address)
+                item = dict(object=hex(address), role='unassigned', **state)
+                if int(state['current'], 0):
+                    item['descriptor'] = descriptor_fields(game.bytes(int(state['current'], 0), 0xD0))
+                if len(delivered) < 256:
+                    delivered[address] = item
+            except OSError:
+                failures += 1
+        if len(delivered) != before or time.monotonic() - last_progress >= 1:
+            on_progress(dict(**game.identity, candidates=list(delivered.values()), bytes_scanned=scanned,
+                             failed_reads=failures, scan_complete=False))
+            last_progress = time.monotonic()
     if seed:
         old = json.loads(seed.read_text(encoding="utf8"))
         if old["pid"] != game.pid or int(old["vtable"], 0) != game.vtable:
@@ -327,6 +353,7 @@ def discover(game, seed=None, stop_requested=None):
                     while position!=-1:
                         if (start+position)%8==0: found.add(start+position)
                         position=raw.find(needle,position+1)
+                    progress()
                 except OSError:
                     failures+=1
     else:
@@ -365,6 +392,7 @@ def discover(game, seed=None, stop_requested=None):
                             found.add(candidate)
                     tail = data[-7:]
                     scanned += len(chunk)
+                    progress()
                     time.sleep(0.001)
             cursor = end
     candidates = []

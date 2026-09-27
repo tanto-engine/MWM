@@ -22,6 +22,36 @@ from action_capture import Journal, sample, publish
 from encounter_recording_cases import state, metadata
 
 class ProductBoundaryTests(unittest.TestCase):
+    def test_unexpected_discovery_failure_is_saved_instead_of_silencing_the_thread(self):
+        # A programming error in the scan thread must become evidence, not endless zero-ID health.
+        # Stop as soon as the sampler journals that error; the two-second guard bounds a broken regression.
+        # Exercise the real thread/mailbox path without attaching to a process or reading game memory.
+        from contextlib import nullcontext
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        game = SimpleNamespace(identity=dict(pid=1), alive=Mock(return_value=True))
+        stop = threading.Event()
+        guard = threading.Timer(2, stop.set)
+        with tempfile.TemporaryDirectory() as td, patch('boss_probe.discover', side_effect=RuntimeError('scan failed')), patch('builtins.print'):
+            path = Path(td) / 'events.jsonl'; journal = Journal(path, 'one')
+            emit = journal.emit
+
+            def record(kind, **fields):
+                # Keep production journal writes and their real serialized error detail.
+                # End the fixture only once the main sampler receives a scan diagnostic.
+                # An exception stranded in the background thread cannot satisfy this condition.
+                emit(kind, **fields)
+                if kind == 'diagnostic': stop.set()
+
+            journal.emit = record
+            guard.start()
+            try:
+                sample(game, journal, stop, discover_factory=Mock(return_value=nullcontext(game)))
+            finally:
+                guard.cancel(); journal.close()
+            rows = [json.loads(line) for line in path.read_text().splitlines()]
+            self.assertTrue(any(row.get('code') == 'discovery' and row.get('detail') == 'RuntimeError: scan failed' for row in rows))
+
     def test_action_journal_preserves_crash_tail_and_excludes_second_writer(self):
         # Resume a journal whose last line was cut short, without erasing any existing bytes.
         # Reject a second writer, then allow another take after the first releases its lock.
