@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "name": "Tanto Move Dataset",
+  "record_layout": "weapons/<weapon_id>/<boss_id>/<move_id>.json",
+  "weapons": {
+    "sword": {
+      "name": "Single katana"
+    }
+  },
+  "bosses": {
+    "tachibana_muneshige": {
+      "name": "Tachibana Muneshige"
+    }
+  },
+  "evidence_archive_layout": "<archive_sha256>.zip",
+  "runtime_integration": "Research only; reviewed imports are authored separately."
+}

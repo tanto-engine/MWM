@@ -22,7 +22,8 @@ The source UI uses `desktop/renderer.ts` for a pending preset, `desktop/preload.
 | `data/mod.json` | Stable product identity and readable MWM name | Renaming the display/repository does not require changing the legacy settings namespace. |
 | `data/preset.json` | Default stance, native/custom bindings and reviewed speeds | Schema v8 settings are validated; private physics/Pulse/timing policy is not an unrestricted user field. |
 | `data/controller-calibration.json` | Saved controller layout and raw/logical button meaning | A bitmask represents button states; a source-device bit may differ from its game-facing equivalent. |
-| `data/moves.json` | Readable names, source identities and review/implementation status | A catalogue entry may be research only. It does not automatically become a menu choice. |
+| `dataset/weapons/<weapon>/<boss>/*.json` | Fresh move strings, ordered source IDs, hypotheses and evidence references | Candidate names and descriptions are unconfirmed until reviewed; archived bytes remain outside Git. |
+| `data/moves.json` | Legacy catalogue required by the existing sword runtime | Compatibility data only; do not merge its old research into the fresh dataset. |
 | `data/imports/*.json` | Reviewed source signatures, graph phases, continuations, recovery and voice events | Full bank/action identity matters. Identical small action numbers from different bosses are not interchangeable. |
 | `data/resources/*.json` | Installed archive entries, sizes, hashes and motion/timing mappings | These identify game assets; they are not extracted animation archives shipped with the mod. |
 
