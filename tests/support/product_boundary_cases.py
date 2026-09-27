@@ -227,6 +227,7 @@ class ProductBoundaryTests(unittest.TestCase):
                     for width,height in ((680,650),(960,740),(1400,950)):
                         root.geometry(f'{width}x{height}');root.update()
                         self.assertFalse(errors)
+                        self.assertGreaterEqual(app.labels.winfo_height(),round(83*app.scale))
                         self.assertEqual(app.backdrop.picture.width(),app.backdrop.winfo_width())
                         self.assertEqual(app.backdrop.picture.height(),app.backdrop.winfo_height())
                         self.assertEqual(app.help_label.photo.get(0,0),app.backdrop.crop(app.help_label).getpixel((0,0)))
