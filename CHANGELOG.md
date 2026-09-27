@@ -6,6 +6,8 @@ Replaced the sprawling binding form with stance-based assignments, readable name
 
 Pending resource loads now detach their temporary frame hook and stop activation on failure. The user confirmed all six Jin inputs, with normal movement and death/retry in the isolated Low-heavy check. Mid dodge-heavy reuses the Mid-heavy string and chains correctly. No new EXE is included.
 
+Source checks also confirmed Oda's Mid Frost Moon and Tachibana's High-heavy follow-up playback. Oda's pair now inherits 1.1x speed. Hideyori's selected resources loaded successfully for the Low-quick trial; Sanada's projectile behavior remains untested.
+
 Added the complete Sword Rebuild 1 source trial using archive-matched Hideyori, Oda, Tachibana and Sanada resources. Bindings now include Low quick replacement, one-shot High-heavy follow-up and an any-stance chord. Companion animation/timing identities and combat behavior remain gameplay trials. The UI distinguishes trial/subset drafts, saved settings and actual Engine status. No new EXE is included.
 
 Gameplay trial stopped after reported drift and a missing death screen. No intended move substitutions were recorded; attachment/resource/lifecycle investigation remains open. Hideyori's resource load remained pending. Source definitions are retained for diagnosis, not marked accepted.

@@ -31,6 +31,9 @@ class SwordConfigurationTests(unittest.TestCase):
         self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),6144)
         self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,1,5,4])
         self.assertEqual(preset['chord_stance'],'any')
+        # The faster Oda root must also reach its second slash through ordinary speed inheritance.
+        self.assertEqual([setting['speed'] for move,setting in zip(fixture.config['imports'],fixture.config['move_settings'])
+                          if move['id'].startswith('oda_nobunaga.')], [1.1, 1.1])
         calibration=json.loads((ROOT/'data/controller-calibration.json').read_text())
         _, binding=game_binding(calibration,config.binding_for_preset(calibration,preset,fixture.config['imports']))
         self.assertEqual((binding['modifier_mask'],binding['trigger_mask']),(0x100,0x400))

@@ -52,6 +52,9 @@
   "move_settings": {
     "jin_hayabusa.action_0c75": {
       "speed": 1
+    },
+    "oda_nobunaga.action_0c6e": {
+      "speed": 1.1
     }
   }
 }

@@ -16,11 +16,15 @@ Reuse a binding group saves or loads the custom chord, stance overrides, native 
 
 `configurations/` documents the complete Sword Rebuild 1 layout. Hideyori, Oda, Tachibana and Sanada now have source trial adapters alongside Jin; their behavior on William still needs gameplay review. `data/move-policy.json` gives the selected graph roots shared Ki recovery leeway. See [configuration status](configurations/README.md) for bindings and uncertainties.
 
-**Full-trial blocker:** the initial 2026-09-27 multi-boss source trial was disabled after reported left-stick drift and a missing death screen. Its trace contains 3,572 action calls, zero intended substitutions and zero custom dispatches; the last sampled resource slots were original. Hideyori's timing/motion/camera load remained pending. These observations focus investigation on attachment and lifecycle handling but do not establish the cause.
+**Earlier full-trial failure:** the initial 2026-09-27 multi-boss source trial was disabled after reported left-stick drift and a missing death screen. Its trace contains 3,572 action calls, zero intended substitutions and zero custom dispatches; the last sampled resource slots were original. Hideyori's timing/motion/camera load remained pending. These observations focus investigation on attachment and lifecycle handling but do not establish the cause.
 
 A subsequent isolated test reproduced a loader hook remaining attached while archive loading was pending. Engine now detaches it after submission and on errors/timeouts, and stops activation on native load failure. The regression passes offline; new boss routes still need separate source checks before retrying the full preset.
 
 **Local source checks, 2026-09-27:** the user confirmed all six Jin inputs: Low heavy, Low dodge-heavy, Mid heavy, Mid dodge-heavy and Low/High Frost Moon. The isolated Low-heavy test also passed normal movement and death/retry. Native traces matched all 15 phases without intended-substitution mismatches, including Mid dodge entry `BC8 → BBF` and continuation `C63 → C64 → C65 → C66`. These results cover the Jin subset, not the full multi-boss preset or every contact/physics case.
+
+Oda's Mid Frost Moon subsequently played both slashes (`C6E → C6F`, motions `1010 → 1011`). Both now inherit 1.1× speed, which the user preferred. Tachibana's Omnislice also played from High heavy → LB+Square, with `D8D`/motion `5011` in the trace. These source checks confirm playback and binding, not every damage, contact or recovery case.
+
+Hideyori's four selected clips subsequently loaded successfully in the same Jin mission, and Low quick replacement is enabled for feedback. The earlier resource stall did not recur in this source check. Sanada's gun remains the next untested binding; animation playback alone cannot establish projectile ownership or damage.
 
 Boss action IDs are bank-local keys, not universal move names or boss identifiers. Jin and Oda both use `0x00000C6E`/`0x00000C6F` for different motions. Preserve the full 32-bit key, boss/source bank, payload bytes, motion/timing keys and game build together. One execution can contain several hits, and consecutive IDs do not prove a combo. Actor addresses can change or be reused after a death; generation and action-counter continuity matter more than the address alone.
 

@@ -1,6 +1,6 @@
 # Sword Rebuild 1
 
-**Source status:** the user confirmed all six Jin inputs, including Mid dodge-heavy starting and continuing the Mid string. The isolated Low-heavy check also passed normal movement and death/retry. The full multi-boss trial remains unverified after its earlier drift, death-screen and resource-loading failures. See the root README for evidence and ID interpretation.
+**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four clips now load and Low quicks are enabled for feedback; Sanada is untested. The full preset still needs broader gameplay checks. See the root README for evidence and ID interpretation.
 
 `data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Rebuild trial** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
 
@@ -18,9 +18,9 @@ Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatic
 | Mid heavy | Jin quick string B, BBF  ->  C63  ->  C64  ->  C65  ->  C66 | Included; trailing Flying Swallow excluded |
 | Mid dodge-heavy | Same Jin quick string B | Shares the Mid-heavy graph through native BC8/BC9 dodge entry |
 | Low quick | Hideyori four-hit string, D30  ->  D31  ->  D32  ->  D33 | Source trial with Square continuations |
-| After High heavy, LB + Square | Omnislice attack, D8D | Source trial with one-shot recovery gate |
+| After High heavy, LB + Square | Omnislice attack, D8D | Playback confirmed; one-shot recovery gate |
 | High Frost Moon | Jin downward slash, C75  ->  C77  ->  C78, 1x | Included |
-| Mid Frost Moon | Oda final two slashes, C6E  ->  C6F | Source trial with automatic second slash |
+| Mid Frost Moon | Oda final two slashes, C6E  ->  C6F | Both slashes confirmed; automatic continuation, 1.1x |
 | Low Frost Moon | Flying Swallow, C71  ->  C72  ->  C73  ->  C74 | Included |
 
 Action numbers above are shorthand, scoped to their boss and source bank. The design stores full IDs. Hideyori's four-hit string is directly supported by the recording; a fifth hit is not inferred. Omnislice should bypass its preparation by entering the attack phase, without seeking past damage or effect events. Its follow-up must open only after a High heavy, consume one fresh LB + Square press, and clear on damage, stance/weapon change or expiration; ordinary High guard-light is not an equivalent binding.
