@@ -5,7 +5,7 @@
 int main() {
     // Run the frame dispatcher at 0.5x and 1.5x against owned player and payload fixtures.
     // Check private Ki Pulse fields and playback deltas while shared payload and frame cursor stay unchanged.
-    // Paired actions, Frost playback and a neutral player must retain the native delta despite configured speed.
+    // Paired actions and a neutral player retain native delta; ordinary Frost playback honors configured speed.
     LARGE_INTEGER f;QueryPerformanceFrequency(&f);frequency=f.QuadPart;
     for (float rate : {.5f,1.5f}) {
         reset();boss_move_settings[0]={rate,65,18,35,0};
@@ -25,7 +25,7 @@ int main() {
             boss_frost_playback=frost;
             if (!frost) boss_imports[0].flags=0x8038000000ULL;
             put(player.data(),0x6A8,1.0f);put(player.data(),0x24,.25f);
-            assert(boss_advance_clock(player.data(),.25f)==.25f);
+            assert(boss_advance_clock(player.data(),.25f)==.25f*(frost ? rate : 1));
             boss_imports[0].flags=0x184C0000;
         }
         boss_frost_playback=false;
@@ -33,5 +33,5 @@ int main() {
         assert(boss_advance_clock(player.data(),.25f)==.25f);
         boss_move_settings[0]={};
     }
-    std::puts("move settings passed: whole playback, private Pulse, native paired/Frost speed, unchanged frame cursor");
+    std::puts("move settings passed: whole playback, private Pulse, native paired speed, configurable Frost speed, unchanged frame cursor");
 }

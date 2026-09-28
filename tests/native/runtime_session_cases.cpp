@@ -109,9 +109,9 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==11 && sizeof(RuntimeSessionConfig)==6144
-        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==3400
-        && offsetof(RuntimeSessionConfig,skill_bindings)==5448);
+    static_assert(RUNTIME_SESSION_VERSION==12 && sizeof(RuntimeSessionConfig)==12416
+        && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==6472
+        && offsetof(RuntimeSessionConfig,skill_bindings)==10568);
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
     moved.skill_bindings[0]={2,2,17,0,0,0,0};
     for (unsigned slot : {7u,8u}) {
@@ -132,7 +132,7 @@ int main() {
     wrong_binding=moved;wrong_binding.hold_stances=0;
     assert(!runtime_imports_valid(wrong_binding));
     wrong_binding=moved;wrong_binding.skill_bindings[1].variant=1;
-    assert(!runtime_imports_valid(wrong_binding));
+    assert(runtime_imports_valid(wrong_binding));
     auto frost=incoming;frost.import_count=10;frost.hold_variant=8;frost.hold_milliseconds=250;
     frost.frost_variants[2]=8;
     for (unsigned phase=0;phase<3;++phase) {
@@ -157,6 +157,23 @@ int main() {
     }
     wrong=frost;wrong.frost_speed=1;
     assert(!runtime_imports_valid(wrong));
+    // Compile every slot, then exercise a successor chain crossing the former 32-bit mask.
+    // A high-index cycle and a table beyond capacity must still be rejected.
+    auto expanded=incoming;expanded.import_count=BOSS_IMPORT_LIMIT;
+    for (unsigned i=7;i<BOSS_IMPORT_LIMIT;++i) {
+        expanded.imports[i]=incoming.imports[0];auto& move=expanded.imports[i];
+        move.key=0x100+i;move.motion=1500+i;
+        move.next_variant=i+1<BOSS_IMPORT_LIMIT ? int(i+1) : -1;
+        move.next_start=move.next_variant<0 ? 0 : 1;move.next_end=move.next_variant<0 ? 0 : 2;
+    }
+    assert(runtime_imports_valid(expanded));
+    expanded.imports[BOSS_IMPORT_LIMIT-1].next_variant=33;
+    expanded.imports[BOSS_IMPORT_LIMIT-1].next_end=2;
+    assert(!runtime_imports_valid(expanded));
+    expanded.import_count=BOSS_IMPORT_LIMIT+1;assert(!runtime_imports_valid(expanded));
+    auto ordinary=incoming;ordinary.hold_variant=2;ordinary.hold_milliseconds=250;ordinary.hold_stances=7;
+    for (unsigned i=0;i<3;++i) ordinary.skill_bindings[i]={3,1u<<i,2,0,0,0,0};
+    assert(runtime_imports_valid(ordinary));
     auto binding=incoming;binding.skill_bindings[0]={1,7,1,0xFAA,5090,21,0x40017C00000ULL};
     assert(runtime_imports_valid(binding));
     for (unsigned failure=0;failure<11;++failure) {

@@ -1062,6 +1062,31 @@ int main() {
     tracking_cases();
     slam_cases();
     frost_cases();
+    // Ordinary Okatsu entries use the same held input decision without a graph adapter.
+    // Native tap release keeps its original heavy; held input dispatches the selected source.
+    for (unsigned stance=0;stance<3;++stance) for (bool held : {false,true}) {
+        hold_reset(stance,false);pending_heavy={};boss_hold_variant=1;
+        const uint32_t opener=stance==0 ? 0xCB7 : stance==1 ? 0xC7A : 0xCF5;
+        for (auto& adapter : boss_adapters) adapter={};
+        put(heavy_payloads[0].data(),0x18,uint64_t(0x8000000594C0000ULL));
+        for (auto& binding : boss_skill_bindings) binding={};
+        boss_skill_bindings[0]={3,1u<<(2-stance),1,0,0,0,0};
+        assert(!observed_action(player.data(),opener,nullptr));
+        assert(pending_heavy.active && !boss_active && pending_heavy.hold==0);
+        DispatchCommand held_command{};
+        assert(held_binding_context(held_command,0,opener));
+        const unsigned other_stance=(stance+1)%3;
+        boss_skill_bindings[1]={3,1u<<(2-other_stance),1,0,0,0,0};
+        put(player.data(),0x470,other_stance);
+        assert(!held_binding_context(held_command,0,opener));
+        put(player.data(),0x470,stance);boss_skill_bindings[1]={};
+        if (held) pending_heavy.started-=frequency/4;
+        else pad_buttons=0;
+        publish();tick();
+        assert(!pending_heavy.active);
+        if (held) assert(boss_active && boss_active_slot==0);
+        else assert(!boss_active && same_field(address(player.data()),0x58,address(heavy_descriptors[0].data())));
+    }
     // Empty-Ki selection resolves D4A before the ordinary heavy opener.
     // Hold must defer that exact native selection; release replays the grapple entry.
     // Other stances and running descriptors must retain native selection.
@@ -1349,6 +1374,15 @@ int main() {
         assert(copy_field(address(player.data())+0x24,delta) && delta==sample[1]);
         assert(copy_field(address(player.data())+0x28,frame) && frame==sample[0]);
     }
+    // A Frost Moon route must honor the selected ordinary move's playback rate.
+    // Use Oda's two-hit signature after dispatch, preserving the same clock ownership checks.
+    // Paired actors remain synchronized at their native speed.
+    launcher.key=0xC6E;launcher.motion=1010;launcher.flags=0x19400000;
+    boss_frost_playback=true;boss_move_settings[5].speed=2;
+    put(player.data(),0x28,12.0f);SetLastError(INCOMING);
+    assert(observed_frame(player.data(),1.0f)==2.0f);
+    boss_frost_playback=false;boss_move_settings[5]={};
+    launcher.key=0xC79;launcher.flags=0x194C0000;
     launcher.motion=5010; assert(boss_move_timing(5).recovery==-1);
     put(player.data(),0x28,0.0f); SetLastError(INCOMING);
     assert(observed_frame(player.data(),1.0f)==1.0f);

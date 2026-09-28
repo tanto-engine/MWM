@@ -2,7 +2,7 @@
 import re
 import struct
 from engine_policy import NATIVE_SKILLS, LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, KI_PULSE, FROST_MILLISECONDS, FROST_STARTUP_SPEED, validate_launch_profiles, validate_tracking_rates
-from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, is_recorded_grounded, IMPORT_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
+from move_imports import check_import_topology, is_izuna_bridge, is_airborne_sword, is_recorded_grounded, IMPORT_LIMIT, BINDING_LIMIT, PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS, PLAYER_TEMPLATES, STANCE_OPENERS
 
 POINTER_FIELDS = (
     'player', 'player_owner', 'source_action_resource', 'source_timing_resource', 'vtable',
@@ -15,9 +15,9 @@ MOVE_IMPORT = struct.Struct('<5QIi hHhHHH 9I')
 MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
 MOVE_SETTINGS = struct.Struct('<f4H')
-SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*8 + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I')
-MAGIC, VERSION = 0x3153454e, 11
-assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 6144
+SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*BINDING_LIMIT + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I')
+MAGIC, VERSION = 0x3153454e, 12
+assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 12416
 
 
 def encode_session(config, pid, creation_filetime):
@@ -100,7 +100,9 @@ def encode_session(config, pid, creation_filetime):
     hold_slots = [index+1 for index,adapter in enumerate(adapters) if adapter is not None and adapter['kind'] == 2]
     paired_slots = [index for index,adapter in enumerate(adapters) if adapter is not None and adapter['kind'] == 3]
     if hold_variant:
-        if (hold_variant not in hold_slots
+        ordinary_hold = (0 < hold_variant <= len(moves) and adapters[hold_variant-1] is None
+                         and moves[hold_variant-1]['flags']==0x184C0000)
+        if (hold_variant not in hold_slots and not ordinary_hold
                 or not 80 <= hold_milliseconds <= 2000
                 or not (hold_camera==0 and not paired_slots or 0x10000 <= hold_camera <= 0x7fffffffffff)):
             raise ValueError('Hold entry, timing or camera differs from native adapters')
@@ -129,7 +131,7 @@ def encode_session(config, pid, creation_filetime):
         raise ValueError('Mid light ender must be a boolean')
     if config.get('mid_light_ender',False): native_bindings|=4
     bindings=config.get('skill_bindings',[]);encoded_bindings=[]
-    if not isinstance(bindings,list) or len(bindings)>8: raise ValueError('Too many skill bindings')
+    if not isinstance(bindings,list) or len(bindings)>BINDING_LIMIT: raise ValueError('Too many skill bindings')
     occupied=set()
     for binding in bindings:
         fields=[binding[field] for field in ('kind','stances','variant','key','motion','transition_count','flags')]
@@ -137,7 +139,7 @@ def encode_session(config, pid, creation_filetime):
         if any(type(value) is not int for value in fields) or kind not in (1,2,3,4,5) or not 0<stances<8 or not 0<variant<=len(moves):
             raise ValueError('Invalid compiled skill binding')
         adapter=adapters[variant-1]
-        if adapter is None and (kind==3 or moves[variant-1]['flags']!=0x184C0000):
+        if adapter is None and moves[variant-1]['flags']!=0x184C0000:
             raise ValueError('Skill binding requires an ordinary executable entry')
         if adapter is not None and adapter['kind']!=5 and not (kind==1 and key==0xBC8 and adapter['kind']==1 and adapter['player_key']==0xCF6 and stances==1) and (adapter['kind']!=2 or stances!=1<<list(STANCE_OPENERS.values()).index(adapter['player_key'])):
             raise ValueError('Skill binding and graph stance differ')
@@ -154,7 +156,7 @@ def encode_session(config, pid, creation_filetime):
             if identity in occupied: raise ValueError('Overlapping native skill bindings')
             occupied.add(identity)
         encoded_bindings.extend(fields)
-    encoded_bindings.extend([0]*(7*(8-len(bindings))))
+    encoded_bindings.extend([0]*(7*(BINDING_LIMIT-len(bindings))))
     hold_stances=config.get('hold_stances',7 if hold_variant else 0)
     frost=config.get('frost_variants',[0,0,0]); window=config.get('frost_milliseconds',FROST_MILLISECONDS)
     speed=config.get('frost_speed',FROST_STARTUP_SPEED)

@@ -46,7 +46,7 @@ struct BossPrivateAction {
     uint16_t transition_count;
     bool ready;
 };
-static BossPrivateAction boss_private_actions[32]{};
+static BossPrivateAction boss_private_actions[BOSS_IMPORT_LIMIT]{};
 static bool boss_preserve_weapon(unsigned slot, uint8_t* payload) {
     // Native704E50 schedules these source effects;709002 applies their equipment command.
     // Jin rows46/47 select weapon slots by stance, so remove only those exact pure commands.
