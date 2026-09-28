@@ -51,6 +51,7 @@ A move's timing table can request a boss vocal at a particular frame. Preparatio
 - `third_party/minhook` provides instruction detours; HDE64 decodes instruction lengths so patches do not split an instruction. Keep its upstream license/provenance and document local changes. Header byte tables are decoder data, not lists of Nioh moves.
 - `requirements-build.txt` pins the packaging tool. `.gitignore` keeps generated native files and session state out of commits; `.gitattributes` controls text/binary treatment.
 - JSON has no comment syntax. Fixture schemas, field names and the adjacent source validators explain those records; inserting comments into raw JSON/JSONL would change evidence or break parsing. MWM's product data and curated evidence live under `mwm/`; raw working captures remain outside the repository.
+- Keep observations, reviewed move graphs, playable imports and saved presets as separate versioned JSON contracts. Their records are small and irregular; the runtime does no bulk tensor arithmetic. PyTorch and TensorDict would add a large native dependency to the portable EXE without simplifying these contracts.
 
 ## Product direction and releases
 
