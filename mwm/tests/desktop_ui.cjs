@@ -8,9 +8,11 @@ const { spawn } = require('node:child_process');
 const { createInterface } = require('node:readline');
 const root = path.resolve(__dirname, '..');
 const folder = process.argv[2], python = process.argv[3];
+app.setPath('userData', path.join(folder, 'electron-state'));
 const pending = new Map(); let sequence = 0, capture = 0, oldCapture, delayPreview = false, cancelGroup = false;
 let delaySnapshot = false, waitSnapshot, snapshotStarted, releaseSnapshot;
 const methods = [];
+let phase = 'startup';
 let simulatedRunning = false, failExport = false, failController = false, savedGroup;
 const worker = spawn(python, ['-B', path.join(__dirname, 'desktop_worker_fixture.py'), folder], { windowsHide: true, stdio: ['pipe','pipe','pipe'] });
 process.on('uncaughtException', error => {
@@ -69,7 +71,10 @@ async function request(_event, method, params={}) {
   if (method==='collection') return JSON.parse(fs.readFileSync(path.join(root,'desktop-dist/collection.json'),'utf8'));
   if (method==='capture_cancel') return true;
   if (method==='capture_start') { capture++; if (capture===2 && oldCapture) setTimeout(()=>oldCapture({mask:1,label:'stale Square'}),25); return {status:'Waiting'}; }
-  if (method==='capture_poll') return capture===1 ? new Promise(resolve=>{oldCapture=resolve;}) : {status:'Waiting for new input'};
+  if (method==='capture_poll') return capture===1 ? new Promise(resolve=>{oldCapture=resolve;}) : capture===3
+    ? {mask:0x2000,label:'Circle / B',calibration:{schema:1,device:{backend:'xinput',slot:1},lb_mask:0x100,lt:{axis:'lt',neutral:0,full:255},controller_slot:1}}
+    : {status:'Waiting for new input'};
+  if (method==='haptic') return false;
   if (method==='export' || method==='import') params={...params,path:path.join(folder,'roundtrip.json')};
   if (method==='binding_import' && cancelGroup) { cancelGroup=false; return null; }
   if (method==='binding_export' || method==='binding_import') params={...params,path:path.join(folder,'group.json')};
@@ -254,12 +259,22 @@ app.whenReady().then(async () => {
       assert(label('Modifier').querySelector('select').value===triggerBefore && label('Trigger').querySelector('select').value===modifierBefore,'Button swap was not atomic');
       [...document.querySelectorAll('button')].find(x=>x.textContent==='Swap buttons').click();await ready();
       label('Modifier').querySelector('button').click();await wait(80);
+      assert(!document.querySelector('#capture-status').hidden && document.querySelector('#capture-status').textContent==='Waiting', 'Controller capture status is hidden');
       label('Trigger').querySelector('button').click();await wait(180);
       assert(label('Trigger').querySelector('select').value===triggerBefore,'Cancelled capture overwrote new target');
       [...document.querySelectorAll('button')].find(x=>x.textContent==='Cancel binding').click();await ready();
       document.querySelector('#apply').click();await ready();
       document.querySelector('#reload').click();await ready();
       assert(label('Modifier').querySelector('select').value==='256','Controller remap did not persist');
+      label('Modifier').querySelector('button').click();
+      for(let i=0;i<100 && label('Modifier').querySelector('select').value!=='8192';i++)await wait(30);
+      await ready();
+      assert(label('Modifier').querySelector('select').value==='8192','Physical capture did not set the pressed button');
+      assert(document.querySelector('#capture-status').hidden,'Capture status remained visible after binding');
+      assert(label('Controller mapping').querySelector('select').value==='2','Physical capture did not select its XInput slot');
+      document.querySelector('#apply').click();await ready();
+      const captured=await window.mwm.request('snapshot');
+      assert(captured.preset.modifier_mask===0x2000 && captured.calibration.controller_slot===1,'Physical capture did not persist controller and button together');
       await tab('speed');
       assert(document.querySelector('[data-speed-id="jin_hayabusa.action_0c6f"] input').value==='1','Apply/reload lost tuning');
       await tab('frost');
@@ -277,14 +292,12 @@ app.whenReady().then(async () => {
       if(!document.querySelector('#profile-name').textContent.startsWith('Sword Rebuild 1'))throw new Error('Trial did not restore its profile name');
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     })()`);
-    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'moves-1120.png'),image.toPNG()));
+    phase = 'layout'; window.showInactive();
     window.setSize(860,640); await new Promise(resolve=>setTimeout(resolve,150));
     const fit=await window.webContents.executeJavaScript(`({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,mainHeight:document.querySelector('main').clientHeight,mainOverflow:document.querySelector('main').scrollHeight>document.querySelector('main').clientHeight,footerBottom:document.querySelector('footer').getBoundingClientRect().bottom,height:innerHeight,labelSize:parseFloat(getComputedStyle(document.querySelector('.assignment>span')).fontSize),valueSize:parseFloat(getComputedStyle(document.querySelector('.assignment select')).fontSize)})`);
     if(fit.labelSize<12 || fit.valueSize<13 || fit.overflow || fit.mainHeight<300 || fit.footerBottom>fit.height)throw new Error('Minimum window does not fit: '+JSON.stringify(fit));
-    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'moves-860.png'),image.toPNG()));
     // Retain a terminal failure through the real Python snapshot, without starting Engine.
     // Saving a preset must not replace this independent runtime diagnosis with success copy.
-    // The owned screenshot documents the UI's failure state rather than any game surface.
     fs.writeFileSync(path.join(folder,'play-status.json'),JSON.stringify({state:'preparation_failed',detail:'Fixture: resource preparation failed. The mod is off.'}));
     await window.webContents.executeJavaScript(`(async()=>{
       for(let i=0;i<80;i++){
@@ -295,7 +308,6 @@ app.whenReady().then(async () => {
       if(!document.querySelector('#disable').hidden || document.querySelector('#enable').hidden)throw new Error('Runtime buttons contradict stopped Engine');
       if(document.querySelector('#notice').textContent)throw new Error('Stale action success hides runtime failure');
     })()`);
-    await window.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'runtime-failure-860.png'),image.toPNG()));
     if(methods.some(method=>method==='enable'||method==='disable'))throw new Error('UI fixture attempted gameplay lifecycle');
     fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({...result,terminalFailureVisible:true,noLifecycleCalls:true,fit,methods}));
     // Process exit closes the pipe after Chromium stops issuing status reads.
@@ -305,4 +317,4 @@ app.whenReady().then(async () => {
     worker.kill();app.exit(1);
   }
 });
-setTimeout(()=>{worker.kill();app.exit(2);},35000).unref();
+setTimeout(()=>{fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({timeout:true,phase,lastMethods:methods.slice(-20),worker:errors}));worker.kill();app.exit(2);},60000).unref();

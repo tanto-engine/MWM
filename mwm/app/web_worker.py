@@ -1,17 +1,19 @@
 """Line-delimited desktop requests; configuration uses the existing Engine validators."""
 from copy import deepcopy
+import ctypes as C
 import json
 import os
 from pathlib import Path
 import shutil
 import sys
+import time
 
 import trainer
 from engine_config import DEFAULT_PRESET, atomic_json, binding_for_preset, move_capabilities, read_json, validate_preset
-from game_controller import BindingCapture, GameController, binding_buttons, game_binding
+from game_controller import BindingCapture, binding_buttons, game_binding
 from controller_reader import ControllerReader
+from gestures import identity
 from process_support import active_runtime, process_matches
-from trace_reader import Trace
 from prepare_session import configured_imports, configured_replacements, compiled_move_settings, compiled_skill_bindings
 from binding_groups import describe_groups, export_group, import_group
 
@@ -20,12 +22,34 @@ class BindingError(ValueError):
     """A rejected draft, distinct from worker, file or lifecycle failures."""
 
 
+def haptic_pulse(slot):
+    """Give an opted-in XInput pad a short, gentle confirmation pulse."""
+    if type(slot) is not int or not 0 <= slot < 4:
+        return False
+    class Vibration(C.Structure):
+        _fields_ = [('left', C.c_ushort), ('right', C.c_ushort)]
+    try:
+        set_state = C.WinDLL('xinput1_4').XInputSetState
+        set_state.argtypes = [C.c_uint32, C.POINTER(Vibration)]
+        set_state.restype = C.c_uint32
+        if set_state(slot, C.byref(Vibration(0, 4500))):
+            return False
+        try:
+            time.sleep(.045)
+        finally:
+            set_state(slot, C.byref(Vibration()))
+        return True
+    except OSError:
+        return False
+
+
 class Desktop:
     def __init__(self):
         # Keep one temporary controller listener for this window's binding flow.
         # The worker reuses Engine configuration and lifecycle code without constructing Tk widgets.
         # Opening the UI does not attach to the game or write a default preset.
-        self.capture = self.reader = self.trace = None
+        self.capture = self.reader = None
+        self.captures = {}
         self.child = None
         self.capabilities = move_capabilities()
 
@@ -138,27 +162,36 @@ class Desktop:
 
     def cancel_capture(self):
         # Cancel a pending press without changing either preset button.
-        # Release the optional native observation mapping held by this listener.
+        # Release the temporary OS controller listener.
         # Re-arming always requires a new neutral state before accepting input.
         self.capture = self.reader = None
-        if self.trace:
-            self.trace.close()
-        self.trace = None
+        self.captures = {}
+
+    @staticmethod
+    def xinput_calibration(slot):
+        return dict(schema=1, device=dict(backend='xinput', slot=slot), lb_mask=0x100,
+                    lt=dict(axis='lt', neutral=0, full=255), controller_slot=slot)
+
+    def detected_calibration(self, event):
+        device = identity(event)
+        if device == self.capture.device:
+            return self.selected_calibration
+        if event['backend'] == 'xinput':
+            return self.xinput_calibration(event['slot'])
+        if event['backend'] == 'winmm' and (device.get('manufacturer'), device.get('product')) in ((0x054c, 0x09cc), (0x054c, 0x05c4)):
+            calibration = read_json(trainer.ROOT/'data/controller-calibration.json')
+            return dict(calibration, device=device)
+        return None
 
     def start_capture(self, calibration):
-        # Listen for one supported controller input after the user releases all controls.
-        # Use Engine's published observation when attached; otherwise poll supported OS controllers.
-        # This reads input only and never enables Engine or changes game memory.
+        # Listen to OS controllers whether Nioh is running or not. Detect the physical
+        # source of the press instead of silently ignoring a controller different from
+        # the saved mapping. Game traces can stop publishing while the game is paused.
         self.cancel_capture()
         try:
             self.capture = BindingCapture(calibration)
-            runtime = self.location()
-            if process_matches(read_json(runtime/'play-process.json')):
-                session = read_json(runtime/'boss-session.json')
-                self.trace = Trace(session['session']['pid'], 'NiohBossRepeatTrace_v2', tag=session['config_tag'])
-                self.reader = ControllerReader(backends=[GameController(self.trace, calibration)])
-            else:
-                self.reader = ControllerReader()
+            self.selected_calibration = calibration
+            self.reader = ControllerReader()
             return dict(status=self.capture.status)
         except Exception:
             self.cancel_capture()
@@ -170,12 +203,29 @@ class Desktop:
         # Completion returns a pending form value; Apply remains the persistence boundary.
         if not self.capture:
             return dict(status='Binding cancelled')
-        for event in self.reader.poll():
-            result = self.capture.process(event)
+        events = sorted(self.reader.poll(), key=lambda event: event['backend'] != 'xinput')
+        for event in events:
+            key = event['backend'], event['slot']
+            if event['kind'] == 'input_unavailable':
+                self.captures.pop(key, None)
+                self.capture.status = 'Controller disconnected. Reconnect it, then press one input.'
+                continue
+            if event['kind'] == 'input_device':
+                calibration = self.detected_calibration(event)
+                if calibration is None:
+                    self.capture.status = 'Unsupported controller layout. Enable Steam Input for Nioh, then try again.'
+                    continue
+                self.captures[key] = (BindingCapture(calibration), calibration)
+            candidate = self.captures.get(key)
+            if not candidate:
+                continue
+            result = candidate[0].process(event)
             if result:
                 self.cancel_capture()
-                return result
-        return dict(status=self.capture.status)
+                return dict(result, calibration=candidate[1])
+        if self.captures:
+            return dict(status='Press one input' if any(candidate[0].neutral for candidate in self.captures.values()) else 'Release all buttons, then press one input')
+        return dict(status=self.capture.status if events else 'No supported controller detected. Connect it or enable Steam Input.')
 
     def dispatch(self, method, params):
         # Dispatch a fixed set of configuration operations instead of evaluating renderer code.
@@ -204,12 +254,12 @@ class Desktop:
                                        read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
         if method == 'controller':
             choice = params['choice']
-            if choice not in ('saved', 'ds4', '1', '2', '3', '4'):
-                raise ValueError('Choose a saved mapping, DS4 or XInput controller 1–4')
+            if choice not in ('saved', 'ds4', 'detected', '1', '2', '3', '4'):
+                raise ValueError('Choose a saved mapping, detected pad, DS4 or XInput controller 1–4')
             calibration = (self.snapshot()['calibration'] if choice == 'saved' else
                            read_json(trainer.ROOT/'data/controller-calibration.json') if choice == 'ds4' else
-                           dict(schema=1, device=dict(backend='xinput', slot=int(choice)-1), lb_mask=0x100,
-                                lt=dict(axis='lt', neutral=0, full=255), controller_slot=int(choice)-1))
+                           params['detected_calibration'] if choice == 'detected' else
+                           self.xinput_calibration(int(choice)-1))
             return dict(calibration=calibration, preset=trainer.remap_preset(params['preset'], params['calibration'], calibration),
                         buttons=binding_buttons(calibration['device'], calibration.get('button_map')))
         if method == 'export':
@@ -233,6 +283,8 @@ class Desktop:
         if method == 'capture_cancel':
             self.cancel_capture()
             return True
+        if method == 'haptic':
+            return haptic_pulse(params.get('slot'))
         if method == 'disable':
             trainer.disable_engine()
             return True

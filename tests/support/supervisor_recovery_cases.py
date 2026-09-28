@@ -22,21 +22,22 @@ class Recovery(unittest.TestCase):
         # A pending native load may still own callbacks even after its frame hook detaches.
         # Feed its explicit terminal error through the real supervisor control flow.
         # Do not launch gameplay or repeatedly stack new resource requests in that process.
-        with tempfile.TemporaryDirectory() as temporary:
-            runtime = Path(temporary)
-            dll = runtime/'prebuilt.dll'
-            dll.write_bytes(b'owned fixture; never loaded')
-            failure = types.SimpleNamespace(returncode=1, stdout='', stderr=json.dumps(
-                dict(status='error', message='Hideyori resource load stalled', retryable=False)))
-            with patch.object(play, 'HERE', runtime), patch.object(play.subprocess, 'run', return_value=failure) as prepare, \
-                 patch.object(play, 'sleep_until', side_effect=AssertionError('Unexpected retry')), \
-                 patch.object(play, 'process_identity', return_value=dict(publisher_pid=12)), \
-                 contextlib.redirect_stdout(io.StringIO()):
-                result = play.supervise(argparse.Namespace(dll=dll))
-            self.assertEqual(result, 1)
-            self.assertEqual(prepare.call_count, 1)
-            status = json.loads((runtime/'play-status.json').read_text())
-            self.assertEqual((status['state'], status['detail']), ('preparation_failed', 'Hideyori resource load stalled'))
+        for message in ('Hideyori resource load stalled', 'Native resource load failed: ' + 'x'*1400):
+            with self.subTest(length=len(message)), tempfile.TemporaryDirectory() as temporary:
+                runtime = Path(temporary)
+                dll = runtime/'prebuilt.dll'
+                dll.write_bytes(b'owned fixture; never loaded')
+                failure = types.SimpleNamespace(returncode=1, stdout='', stderr=json.dumps(
+                    dict(status='error', message=message, retryable=False)))
+                with patch.object(play, 'HERE', runtime), patch.object(play.subprocess, 'run', return_value=failure) as prepare, \
+                     patch.object(play, 'sleep_until', side_effect=AssertionError('Unexpected retry')), \
+                     patch.object(play, 'process_identity', return_value=dict(publisher_pid=12)), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    result = play.supervise(argparse.Namespace(dll=dll))
+                self.assertEqual(result, 1)
+                self.assertEqual(prepare.call_count, 1)
+                status = json.loads((runtime/'play-status.json').read_text())
+                self.assertEqual((status['state'], status['detail']), ('preparation_failed', message[-1200:]))
 
     def exercise(self, result):
         # Run the play supervisor with a prebuilt dummy DLL and controlled worker report.

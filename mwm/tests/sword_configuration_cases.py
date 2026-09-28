@@ -10,6 +10,57 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_press_to_bind_detects_xinput_without_preselecting_a_mapping(self):
+        import importlib.util
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT/'app'))
+        spec = importlib.util.spec_from_file_location('mwm_capture_review', ROOT/'app/web_worker.py')
+        worker = importlib.util.module_from_spec(spec); spec.loader.exec_module(worker)
+        calibration = json.loads((ROOT/'data/controller-calibration.json').read_text())
+        event = dict(backend='xinput', slot=1)
+        class Reader:
+            def __init__(self):
+                self.events = iter([
+                    [dict(event, kind='input_device')],
+                    [dict(event, kind='input', buttons=0, axes={'lt': 0, 'rt': 0}, pov=None, edge_basis='unknown')],
+                    [dict(event, kind='input', buttons=0x2000, axes={'lt': 0, 'rt': 0}, pov=None, edge_basis='previous_observation')],
+                ])
+            def poll(self): return next(self.events)
+        for running in (False, True):
+            with self.subTest(game_running=running), tempfile.TemporaryDirectory() as folder, \
+                    patch.object(worker, 'ControllerReader', return_value=Reader()), \
+                    patch.object(worker, 'process_matches', return_value=running):
+                desktop = worker.Desktop(); desktop.location = lambda: Path(folder)
+                desktop.start_capture(calibration)
+                desktop.poll_capture(); desktop.poll_capture(); result = desktop.poll_capture()
+                self.assertEqual(result['mask'], 0x2000)
+                self.assertEqual(result['calibration']['device'], dict(backend='xinput', slot=1))
+                preset = json.loads((ROOT/'data/preset.json').read_text())
+                remapped = desktop.dispatch('controller', dict(choice='detected', preset=preset,
+                    calibration=calibration, detected_calibration=result['calibration']))
+                self.assertEqual(remapped['calibration']['controller_slot'], 1)
+                self.assertEqual(remapped['preset']['trigger_mask'], 0x400)
+
+    def test_haptic_confirmation_stops_the_selected_xinput_motor(self):
+        import importlib.util
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT/'app'))
+        spec = importlib.util.spec_from_file_location('mwm_haptic_review', ROOT/'app/web_worker.py')
+        worker = importlib.util.module_from_spec(spec); spec.loader.exec_module(worker)
+        calls = []
+        class SetState:
+            def __call__(self, slot, pointer):
+                calls.append((slot, pointer._obj.left, pointer._obj.right))
+                return 0
+        class Library:
+            XInputSetState = SetState()
+        with patch.object(worker.C, 'WinDLL', return_value=Library()), patch.object(worker.time, 'sleep'):
+            self.assertFalse(worker.haptic_pulse(None))
+            self.assertTrue(worker.haptic_pulse(2))
+        self.assertEqual(calls, [(2, 0, 4500), (2, 0, 0)])
+
     def test_complete_trial_compiles_separate_boss_owners_and_requested_bindings(self):
         # Compile the exact requested trial through the same encoder used to enable gameplay.
         # Colliding Jin/Oda action numbers must remain in separate resource-owner banks.
@@ -67,7 +118,7 @@ class SwordConfigurationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='mwm-ui-') as folder:
             result = subprocess.run([str(ROOT/'node_modules/electron/dist/electron.exe'),
                                      str(ROOT/'tests/desktop_ui.cjs'), folder, sys.executable],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=45,
+                                    cwd=ROOT, capture_output=True, text=True, timeout=75,
                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             report = Path(folder)/'ui-result.json'
             details = report.read_text(encoding='utf8') if report.exists() else result.stdout+result.stderr

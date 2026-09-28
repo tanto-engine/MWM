@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.3.0-alpha.5
+
+- Press-to-bind now reads connected OS controllers whether Nioh is running or closed. A supported pad's actual mapping and XInput slot become pending with its button; Save applies both together. Unsupported layouts show guidance instead of waiting silently.
+- The editor has a persistent right-hand field guide, clearer Tuning and Controller pages, responsive motion, quiet save/bind sounds with a mute switch, and optional gentle XInput binding haptics.
+- Resource submission now waits for a validated player and ready data allocator. Long terminal preparation failures retain their stop/retry decision. These are preventive fixes; the reported Isle of Demons crash has not been reproduced with a dump or verified in live gameplay.
+
+Physical-controller, gameplay and another-PC acceptance remain pending.
+
 ## 0.3.0-alpha.4
 
 - Incompatible bindings open a clear popup naming the move, conflicting inputs and how to correct them. Invalid drafts do not change saved settings.

@@ -73,15 +73,15 @@ def supervise(args):
                                   capture_output=True, text=True, cwd=HERE,
                                   creationflags=subprocess.CREATE_NO_WINDOW, env=env)
         if prepared.returncode:
-            detail = prepared.stderr.strip()[-1200:] or prepared.stdout.strip()[-1200:]
+            detail = prepared.stderr.strip() or prepared.stdout.strip()
             try:
                 failure = json.loads(detail)
             except ValueError:
                 failure = {}
             if failure.get('retryable') is False:
-                status('preparation_failed', detail=failure['message'])
+                status('preparation_failed', detail=failure['message'][-1200:])
                 return 1
-            status('waiting_for_resources', detail=failure.get('message', detail),
+            status('waiting_for_resources', detail=failure.get('message', detail)[-1200:],
                    limitation='Waiting for a supported player; source assets load independently.')
             sleep_until(4, stop)
             continue

@@ -2,11 +2,8 @@
 # Product definitions supply identities; source bytes and ownership checks remain authoritative.
 # See CODE_GUIDE.md for the player-readable flow and terminology.
 import json
-import sys
 from pathlib import Path
 
-if str(Path(__file__).resolve().parents[1]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from catalogue import load_catalogue, iter_moves
 
 from nioh_sword import (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS,

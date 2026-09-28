@@ -15,14 +15,31 @@
       <div class="runtime"><div class="runtime-copy"><span id="runtime">Connecting…</span><p id="runtime-detail" role="status"></p></div><button id="enable" data-action="enable">Enable mod</button><button id="disable" data-action="disable" hidden>Disable mod</button></div>
     </header>
     <nav aria-label="Moveset editor">
-      <button data-tab="overview" class="selected">Moves</button><button data-tab="speed">Speed</button><button data-tab="controls">Controller</button>
+      <button data-tab="overview" class="selected">Moves</button><button data-tab="speed">Tuning</button><button data-tab="controls">Controller</button>
       <details id="tools"><summary>More <span aria-hidden="true">⌄</span></summary><div class="tools-menu">
         <button data-tab="native">Other inputs &amp; options</button><button data-tab="frost">Stance-switch moves</button><button data-tab="collection">Recorded moves</button><button data-tab="guide">Help</button>
         <hr><button id="trial" data-action="trial">Load Sword Rebuild 1</button><button id="starter" data-action="starter">Load Rebuild subset</button><button id="baseline" data-action="baseline">Load original moveset</button>
         <hr><button id="load" data-action="load">Import moveset…</button><button id="save" data-action="save">Export moveset…</button><button id="reload" data-action="reload">Discard edits</button>
       </div></details>
     </nav>
-    <main id="content" aria-busy="true"></main>
+    <div class="workspace">
+      <main id="content" aria-busy="true"></main>
+      <aside class="inspector" aria-label="Context guide">
+        <div class="inspector-guide">
+          <p class="eyebrow">Field notes <span aria-hidden="true">✦</span></p>
+          <div class="guide-copy">
+            <h2 id="help-title">Move assignments</h2>
+            <p id="help-body">Choose an input to see what it changes. Every selection stays in your draft until you save.</p>
+            <p id="help-tip">Tip · Leave a move set to No replacement to keep Nioh’s original action.</p>
+          </div>
+        </div>
+        <div class="inspector-feedback">
+          <p class="eyebrow">Feedback</p>
+          <label class="feedback-option"><span>Soft sounds<small>Editor cues</small></span><input id="sound-toggle" type="checkbox"></label>
+          <label class="feedback-option"><span>Haptics<small>XInput controller</small></span><input id="haptic-toggle" type="checkbox"></label>
+        </div>
+      </aside>
+    </div>
     <footer><div class="feedback"><p id="validation" role="status">Reading moveset…</p><p id="notice" role="status"></p></div><button id="apply" data-action="apply" class="primary">Save changes</button></footer>
   </div>
   <dialog id="binding-error" aria-labelledby="error-title" aria-describedby="error-reason error-guidance">
