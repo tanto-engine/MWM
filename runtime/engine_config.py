@@ -21,6 +21,7 @@ if os.name == 'nt':
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
 # Preset validation does not certify gameplay acceptance.
 from engine_policy import NATIVE_SKILLS
+from move_imports import BINDING_LIMIT
 from project_paths import DATA
 
 # Product manifests own the choices; native preparation still verifies every source signature.
@@ -33,6 +34,7 @@ MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:2] +
     [move for move in _sword['moves'] if move['adapter_kind']==5])}
 HEAVY_STRINGS = {chain[0]: name for name, chain in _sword['candidates'].items()}
 HELD_MOVES = frozenset(root for source in SOURCE_MANIFESTS for root in source['hold_chains']) | frozenset(HEAVY_STRINGS)
+HELD_INPUT_MOVES = HELD_MOVES | frozenset(move['id'] for move in _ordinary['moves'][:2])
 CHORD_MOVES = frozenset(MOVE_VARIANTS) | HELD_MOVES
 SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']]
     if move['flags'] not in (0x8078000000, 0x8038000000))
@@ -57,7 +59,7 @@ def move_capabilities():
     names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
     ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']])
     return dict(moves=[dict(id=identifier, name=names[identifier], chord=identifier in CHORD_MOVES,
-        graph=identifier in HELD_MOVES, heavy_string=identifier in HEAVY_STRINGS,
+        graph=identifier in HELD_MOVES, held=identifier in HELD_INPUT_MOVES, heavy_string=identifier in HEAVY_STRINGS,
         native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
         speed=identifier in SPEED_MOVES) for identifier in ids],
         native_sources=[dict(id=source, label=SOURCE_LABELS[source],stances=['high'] if source=='high_heavy_followup' else ['low'] if source=='light_attack' else ['low','mid','high','any'])
@@ -181,8 +183,8 @@ def validate_preset(value):
     if not isinstance(holds, dict) or set(holds) != {'low','mid','high'}:
         raise ValueError('Held Triangle requires low, mid and high entries')
     enabled=[move for move in holds.values() if move is not None]
-    if any(not isinstance(move,str) or move not in HELD_MOVES for move in enabled):
-        move=next(move for move in enabled if not isinstance(move,str) or move not in HELD_MOVES)
+    if any(not isinstance(move,str) or move not in HELD_INPUT_MOVES for move in enabled):
+        move=next(move for move in enabled if not isinstance(move,str) or move not in HELD_INPUT_MOVES)
         raise ValueError(f'{move_label(move)} cannot be assigned to hold Triangle / Y. Choose a move from the held-input menu.')
     frost=result['frost_moon']
     if not isinstance(frost,dict) or set(frost)!=set(holds):
@@ -194,7 +196,7 @@ def validate_preset(value):
     if not isinstance(bindings,list):
         raise ValueError('Native overrides must contain source, stance and move rows. Reload a valid moveset.')
     entries=[(stance,move,f'{stance.title()} {label}') for mapping,label in ((holds,'hold Triangle / Y'),(frost,'Frost Moon'))
-             for stance,move in mapping.items() if move]
+             for stance,move in mapping.items() if move and (move in HELD_MOVES or move in frost.values())]
     entries += [(result['chord_stance'],result[field],f'Custom chord {field.split("_")[0]} ({result["chord_stance"].title()})') for field in ('tap_move','hold_move')
                 if result[field] in HELD_MOVES or result[field] is not None and result[field] in frost.values()]
     if result['chord_stance']=='any' and any(result[field] in HELD_MOVES for field in ('tap_move','hold_move')):
@@ -233,8 +235,8 @@ def validate_preset(value):
     if result['low_heavy'] in owners:
         raise ValueError(f'{move_label(result["low_heavy"])} is used by the Low Triangle / Y string and {owners[result["low_heavy"]][1]}. The string cannot share its move sequence with another binding. Disable the Low Triangle / Y string or choose another move for that binding.')
     count=sum(3 if binding['source']=='heavy_attack' and binding['stance']=='any' else 1 for binding in bindings)+len(enabled)
-    if count>8:
-        raise ValueError(f'This setup uses {count} native override slots; only 8 are supported. Held Triangle / Y uses one slot per stance; Heavy attack in Any stance uses three. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
+    if count>BINDING_LIMIT:
+        raise ValueError(f'This setup uses {count} native override slots; only {BINDING_LIMIT} are supported. Held Triangle / Y uses one slot per stance; Heavy attack in Any stance uses three. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
     return result

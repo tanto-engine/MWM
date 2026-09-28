@@ -1,5 +1,6 @@
 # Recognize configured sword gestures using saved controller identities.
 import math
+from move_imports import IMPORT_LIMIT
 
 
 def identity(event):
@@ -33,7 +34,7 @@ class ControllerGesture:
         if not isinstance(frequency, (int, float)) or not math.isfinite(frequency) or frequency <= 0:
             raise ValueError('Invalid input clock')
         self.variants = binding.get('variants', [0, 1])
-        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or not 0<=v<32) for v in self.variants):
+        if not isinstance(self.variants, list) or len(self.variants) != 2 or any(v is not None and (type(v) is not int or not 0<=v<IMPORT_LIMIT) for v in self.variants):
             raise ValueError('Unknown move variant')
         self.frequency = frequency
         self.threshold = int(binding['hold_seconds'] * frequency)

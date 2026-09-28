@@ -36,7 +36,7 @@ class RuntimeSessionTests(unittest.TestCase):
         # Encode a complete session and unpack its fixed header and pointer sequence.
         # Version seven places the stance mask, Frost slots, window and startup speed before resource pointers.
         values = SESSION_CONFIG.unpack(encode_session(self.config, self.pid, self.born))
-        self.assertEqual(values[:16], (MAGIC, 11, 6144, self.pid, self.born,
+        self.assertEqual(values[:16], (MAGIC, VERSION, SESSION_CONFIG.size, self.pid, self.born,
                                       0x123456789abcdef0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8))
         self.assertEqual(values[16:42], tuple(self.config[key] for key in POINTER_FIELDS)
                          + tuple(self.config['originals']))
@@ -45,8 +45,8 @@ class RuntimeSessionTests(unittest.TestCase):
         move = MOVE_IMPORT.unpack_from(encoded,328+2*96)
         self.assertEqual(move[4:13], (0x184C0000,0xC61,1210,52,14,3,30,45,1))
         self.assertEqual(move[13:16], (22,12,0x297D2215))
-        self.assertEqual(encoded[328+7*96:3400], bytes(25*96))
-        self.assertEqual(encoded[3400:5704], bytes(32*64+8*32))
+        self.assertEqual(encoded[328+7*96:6472], bytes(57*96))
+        self.assertEqual(encoded[6472:11592], bytes(64*64+32*32))
         grapple = dict(self.config, native_grapple=True)
         enabled = encode_session(grapple, self.pid, self.born)
         self.assertEqual(SESSION_CONFIG.unpack(enabled)[9], 1)
@@ -57,6 +57,25 @@ class RuntimeSessionTests(unittest.TestCase):
         header = (ROOT / 'runtime/native/boss_session_schema.h').read_text()
         import re
         self.assertEqual(re.findall(r'^    uint64_t (\w+);$', header.split('struct MoveVoice')[0], re.MULTILINE), list(POINTER_FIELDS))
+
+    def test_full_import_capacity_and_overflow(self):
+        # The former 32-phase cap rejected otherwise valid authored movesets.
+        # Encode every available slot, then reject an additional phase before packing.
+        # Native coverage separately verifies cycle detection beyond index 31.
+        from move_imports import IMPORT_LIMIT
+        for index in range(len(self.config['imports']),IMPORT_LIMIT):
+            move=copy.deepcopy(self.config['imports'][0])
+            move.update(id=f'fixture.action_{index}',key=0x100+index,next_variant=-1,next_start=0,next_end=0)
+            self.config['imports'].append(move);self.config['adapters'].append(None)
+        encoded=encode_session(self.config,self.pid,self.born)
+        self.assertEqual(SESSION_CONFIG.unpack(encoded)[42],IMPORT_LIMIT)
+        from gestures import ControllerGesture
+        calibration=dict(device={},lb_mask=1)
+        binding=dict(device={},lb_mask=1,circle_mask=2,hold_seconds=.25,variants=[32,IMPORT_LIMIT-1])
+        self.assertEqual(ControllerGesture(calibration,binding,1000).variants,[32,IMPORT_LIMIT-1])
+        self.config['imports'].append(copy.deepcopy(move));self.config['adapters'].append(None)
+        with self.assertRaisesRegex(ValueError,f'1 to {IMPORT_LIMIT}'):
+            encode_session(self.config,self.pid,self.born)
 
     def test_rejects_mismatched_process_and_invalid_pointer_types(self):
         # Reject process-identity mismatches and invalid pointer types.
@@ -85,10 +104,10 @@ class RuntimeSessionTests(unittest.TestCase):
                 bank=0x930000, motion_bank=0x940000, timing_wrapper=0x950000,
                 player_descriptor=0xA10000+index*0x1000,kind=1, **move['replacement']))
         encoded = encode_session(self.config, self.pid, self.born)
-        self.assertEqual(encoded[3400:3400+7*64], bytes(7*64))
-        self.assertEqual(MOVE_ADAPTER.unpack_from(encoded,3400+7*64),
+        self.assertEqual(encoded[6472:6472+7*64], bytes(7*64))
+        self.assertEqual(MOVE_ADAPTER.unpack_from(encoded,6472+7*64),
             (0x910000,0x920000,0x930000,0x940000,0x950000,0xA10000,0xCF5,4300,46,38,1))
-        self.assertEqual(encoded[3400+10*64:5704], bytes(22*64+8*32))
+        self.assertEqual(encoded[6472+10*64:11592], bytes(54*64+32*32))
         for field,value in (('player_descriptor',0),('player_key',0xCF4),('transition_count',65),('recovery_frame',0)):
             config=copy.deepcopy(self.config);config['adapters'][7][field]=value
             with self.subTest(field=field), self.assertRaises(ValueError):
@@ -189,10 +208,13 @@ class RuntimeSessionTests(unittest.TestCase):
         slots={move['id']:index+1 for index,move in enumerate(self.config['imports'])}
         self.config.update(hold_variant=entry+offset if entry else 0,hold_milliseconds=250 if entry else 0,
             hold_camera_bank=0x960000 if any(a and a['kind']==3 for a in self.config['adapters']) else 0,
-            hold_stances=compiled['hold_stances'] if compiled else 0,frost_variants=[slots.get(move,0) for move in settings['frost_moon'].values()],
+            hold_stances=sum(1<<i for i,move in enumerate(settings['stance_holds'].values()) if move),frost_variants=[slots.get(move,0) for move in settings['frost_moon'].values()],
             native_grapple=settings['okatsu_grapple'],mid_light_ender=settings['mid_light_ender'],
             skill_bindings=prepare.compiled_skill_bindings(settings,self.config['imports']),
             move_settings=prepare.compiled_move_settings(settings,self.config['imports']))
+        if not self.config['hold_variant'] and self.config['hold_stances']:
+            self.config['hold_variant']=next(slots[move] for move in settings['stance_holds'].values() if move)
+            self.config['hold_milliseconds']=round(settings['hold_seconds']*1000)
         return compiled
 
     def test_sword_preset_expands_only_selected_stance_dependencies(self):
@@ -209,7 +231,7 @@ class RuntimeSessionTests(unittest.TestCase):
         self.assertEqual(binding['variants'],[0,None])
         self.assertEqual(self.config['adapters'][22]['kind'],2)
         encoded=encode_session(self.config,self.pid,self.born);values=SESSION_CONFIG.unpack(encoded)
-        self.assertEqual((values[9],values[42],len(encoded)),(5,27,6144))
+        self.assertEqual((values[9],values[42],len(encoded)),(5,27,SESSION_CONFIG.size))
         self.assertEqual(self.config['skill_bindings'],[
             dict(kind=1,stances=7,variant=1,key=0xFAA,motion=5090,transition_count=21,flags=0x40017C00000),
             dict(kind=2,stances=4,variant=18,key=0,motion=0,transition_count=0,flags=0),
@@ -288,7 +310,7 @@ class RuntimeSessionTests(unittest.TestCase):
                 if timeout:
                     raise loader.PendingThread('owned timeout')
                 return 0
-            with patch.object(loader.K, 'VirtualAllocEx', return_value=0x12340000), \
+            with patch.object(loader.K, 'VirtualAllocEx', return_value=0x12647200), \
                  patch.object(loader.K, 'WriteProcessMemory', side_effect=write), \
                  patch.object(loader.K, 'VirtualFreeEx', return_value=True) as free, \
                  patch.object(loader, 'validate_target'), patch.object(loader, 'run_thread', side_effect=run):
@@ -298,4 +320,4 @@ class RuntimeSessionTests(unittest.TestCase):
                     free.assert_not_called()
                 else:
                     self.assertEqual(loader.call_export(1, args, 2, b'config'), 0)
-                    free.assert_called_once_with(1, 0x12340000, 0, 0x8000)
+                    free.assert_called_once_with(1, 0x12647200, 0, 0x8000)

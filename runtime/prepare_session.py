@@ -23,7 +23,7 @@ from profile_resources import StableReads, inspect_candidate, resources, inspect
 from load_resources import load_resources, ResourceLoadError
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
-from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
+from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, BINDING_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
 from engine_config import validate_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
 
@@ -311,7 +311,7 @@ def compiled_skill_bindings(configuration, imports):
                 variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
     for stance,move in configuration['stance_holds'].items():
         if move: result.append(dict(kind=3,stances=1<<list(STANCE_OPENERS).index(stance),variant=slots[move],key=0,motion=0,transition_count=0,flags=0))
-    if len(result)>8: raise ValueError(f'This setup uses {len(result)} native override slots; only 8 are supported. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
+    if len(result)>BINDING_LIMIT: raise ValueError(f'This setup uses {len(result)} native override slots; only {BINDING_LIMIT} are supported. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
     return result
 
 
@@ -450,6 +450,10 @@ def fresh_profile(game):
     native_grapple = configuration['okatsu_grapple']
     slots={move['id']:index+1 for index,move in enumerate(imports)}
     frost_variants=[slots.get(move,0) for move in configuration['frost_moon'].values()]
+    hold_stances=sum(1<<i for i,move in enumerate(configuration['stance_holds'].values()) if move)
+    if not hold_variant and hold_stances:
+        hold_variant=next(slots[move] for move in configuration['stance_holds'].values() if move)
+        hold_milliseconds=round(configuration['hold_seconds']*1000)
     from game_controller import controller_selection
     selection=controller_selection(read_json(HERE/'controller-calibration.json',{}))
     stable.check()

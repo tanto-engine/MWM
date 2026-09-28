@@ -85,6 +85,19 @@ static bool replacement_context(DispatchCommand& command, const MoveAdapter& ada
     return expected<=2 && copy_field(command.player+0x470,stance) && stance==expected;
 }
 
+static bool held_binding_context(DispatchCommand& command, unsigned slot, uint32_t key) {
+    // Ordinary source moves need the same publisher and stance checks as adapted graphs.
+    // Resolve their stance from the explicit hold row; no player-template pointer is required.
+    // Rechecking here cancels a pending press after a stance or lifecycle change.
+    if (boss_adapters[slot].kind) return replacement_context(command,boss_adapters[slot]);
+    uint32_t stance=0;
+    const unsigned expected=key==0xCF5 || key==0xD4A ? 2 : key==0xC7A ? 1 : key==0xCB7 ? 0 : 3;
+    if (!native_binding_context(command) || !copy_field(command.player+0x470,stance) || stance>2 || stance!=expected) return false;
+    for (const auto& binding : boss_skill_bindings)
+        if (binding.kind==3 && binding.variant==slot+1 && binding.stances==(1u<<(2-stance))) return true;
+    return false;
+}
+
 static DispatchReason choose_heavy(DispatchCommand& command) {
     // Finish only a tap/hold decision authorized by native low-heavy selection.
     // Resolve release or the configured deadline on a valid player frame, then consume once.
@@ -96,7 +109,7 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
     unsigned controller=0; bool down=false, interrupted=false;
     uint64_t current=0; uint32_t key=0;
     if (!heavy_button(controller,down,interrupted) || controller!=pending_heavy.controller || interrupted || !triangle_input.pressed
-        || !replacement_context(command,boss_adapters[pending_heavy.hold])
+        || !held_binding_context(command,pending_heavy.hold,pending_heavy.native_key)
         || command.reserved[2]!=pending_heavy.epoch
         || !copy_field(command.player+0x58,current) || !copy_field(current,key)
         || ((current!=pending_heavy.origin || key!=pending_heavy.origin_key) && !repeat_current_allowed(current,key))) {
@@ -333,7 +346,8 @@ static unsigned stance_hold(uint32_t key) {
     if (boss_hold_variant && (boss_hold_stances&stance))
         for (const auto& binding : boss_skill_bindings)
             if (binding.kind==3 && binding.stances==stance && binding.variant && binding.variant<=boss_import_count
-                && boss_adapters[binding.variant-1].kind==2 && boss_adapters[binding.variant-1].player_key==key)
+                && ((!boss_adapters[binding.variant-1].kind && boss_imports[binding.variant-1].flags==0x184C0000) || (boss_adapters[binding.variant-1].kind==2
+                    && boss_adapters[binding.variant-1].player_key==key)))
                 return binding.variant-1;
     return boss_import_count;
 }
@@ -373,13 +387,28 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         if (guard_slot>=0) {
             // Defer before importing the tap so a same-stance Triangle hold can select its own destination.
             const unsigned hold=stance_hold(key);
-            if (hold<boss_import_count && replacement_context(command,boss_adapters[hold])) {
+            if (hold<boss_import_count && held_binding_context(command,hold,key)) {
                 if (const uint64_t deferred=defer_heavy(player,key,unsigned(guard_slot),hold,command)) {
                     SetLastError(native_error); return deferred;
                 }
             }
             if (const uint64_t adapted=native_skill_import(unsigned(guard_slot),key,command)) {
                 *bank_index=1; SetLastError(native_error); return adapted;
+            }
+        }
+        // An ordinary hold destination has no replacement descriptor to enter the loop below.
+        // Defer only a native heavy opener with its full William motion/flags signature.
+        // Releasing replays that exact opener; holding dispatches the ordinary import.
+        const unsigned ordinary_hold=stance_hold(key);
+        if (ordinary_hold<boss_import_count && !boss_adapters[ordinary_hold].kind) {
+            uint64_t payload=0;const int32_t motion=key==0xCF5 ? 4300 : key==0xC7A ? 2300 : 3300;
+            if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
+                && copy_field(descriptor+0x20,payload) && grapple_field(payload,0x20,motion)
+                && grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
+                && held_binding_context(command,ordinary_hold,key)) {
+                if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,ordinary_hold,command)) {
+                    SetLastError(native_error);return deferred;
+                }
             }
         }
         if ((boss_native_bindings&4) && key>=0xC76 && key<=0xC78 && native_binding_context(command)) {
@@ -399,7 +428,7 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         if (hold<boss_import_count && grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
             && grapple_field(descriptor,0x82,uint16_t(37)) && copy_field(descriptor+0x20,payload)
             && grapple_field(payload,0x18,uint64_t(0x194C0000)) && grapple_field(payload,0x20,int32_t(5050))
-            && replacement_context(command,boss_adapters[hold])) {
+            && held_binding_context(command,hold,key)) {
             if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,hold,command)) {
                 SetLastError(native_error); return deferred;
             }
@@ -444,7 +473,7 @@ static bool replacements_configured() {
     // Native skill/chord bindings need lookup even when their destination uses baseline resources.
     // Baseline Okatsu sessions keep their established three-hook path.
     if (boss_native_bindings || boss_native_grapple) return true;
-    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2 || binding.kind==5) return true;
+    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2 || binding.kind==3 || binding.kind==5) return true;
     for (unsigned i=0; i<boss_import_count; ++i) if (boss_adapters[i].kind==1 || boss_adapters[i].kind==2) return true;
     return false;
 }

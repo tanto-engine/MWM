@@ -97,7 +97,7 @@ static float boss_advance_clock(void* actor, float native_delta) {
         || (move.key==0xC7A && move.motion==1050 && boss_native_successor(slot,0x3B2)>=0);
     const unsigned group=izuna ? 0 : airborne_sword(move,boss_adapters[slot]) && boss_adapters[slot].kind!=5
         ? (move.key>=0xC81 ? 1 : 2) : 3;
-    const float playback=boss_frost_playback || boss_paired(move.flags) ? 1 : boss_settings(slot).speed;
+    const float playback=boss_paired(move.flags) ? 1 : boss_settings(slot).speed;
     if (!timing.startup_end && group==3 && playback==1) return native_delta;
     if (!trace || !dispatch || !InterlockedCompareExchange(&trace->header.enabled, 0, 0)
         || !InterlockedCompareExchange(&dispatch->control.enabled, 0, 0)

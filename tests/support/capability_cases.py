@@ -46,6 +46,19 @@ class CapabilityTests(unittest.TestCase):
                     fixture,_=self.fixture(preset)
                     self.assertGreater(fixture.config['frost_variants'][('low','mid','high').index(stance)],0)
 
+    def test_okatsu_ordinary_moves_support_held_heavy_in_each_stance(self):
+        # Reproduce the missing Charged Rush menu/validation path through the real compiler.
+        # Ordinary imports retain their own source and can serve independently held stances.
+        # Serialize the complete binding and hold metadata without inventing a graph adapter.
+        preset=empty_preset()
+        preset['stance_holds']=dict(low='okatsu.charged_rush',mid='okatsu.charged_rush',high='okatsu.leaping_slash')
+        fixture,_=self.fixture(preset)
+        self.assertEqual(fixture.config['hold_stances'],7)
+        self.assertEqual([b['variant'] for b in fixture.config['skill_bindings']],[1,1,2])
+        choices={move['id']:move['held'] for move in config.move_capabilities()['moves']}
+        self.assertTrue(choices['okatsu.charged_rush'])
+        self.assertFalse(choices['jin_hayabusa.flying_swallow_jump'])
+
     def test_speed_and_developer_pulse_reach_graph_phases_and_abi(self):
         # Check that graph phases inherit their root's speed and developer Ki Pulse policy.
         # Decode the actual session bytes at the move-settings offsets and compare every imported phase.
@@ -58,8 +71,8 @@ class CapabilityTests(unittest.TestCase):
         encoded=encode_session(fixture.config,fixture.pid,fixture.born)
         for i,move in enumerate(fixture.config['imports']):
             expected=(.5,65,18,35,0) if move['id'].startswith('jin_hayabusa.') else (1.,40,25,24,0)
-            self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,5752+i*MOVE_SETTINGS.size),expected)
-        self.assertEqual(struct.unpack_from('<II',encoded,6136),(0,0))
+            self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,11640+i*MOVE_SETTINGS.size),expected)
+        self.assertEqual(struct.unpack_from('<II',encoded,12408),(0,0))
 
     def test_public_settings_reject_private_fields_and_frame_cuts(self):
         # Keep public presets limited to supported playback choices.
@@ -88,7 +101,7 @@ class CapabilityTests(unittest.TestCase):
         for selection in range(5):
             fixture.config['controller_selection']=selection
             encoded=encode_session(fixture.config,fixture.pid,fixture.born)
-            self.assertEqual(struct.unpack_from('<I',encoded,6136)[0],selection)
+            self.assertEqual(struct.unpack_from('<I',encoded,12408)[0],selection)
         for selection in (5,-1,True):
             with self.assertRaises(ValueError):
                 encode_session(dict(fixture.config,controller_selection=selection),fixture.pid,fixture.born)
@@ -197,7 +210,7 @@ class CapabilityTests(unittest.TestCase):
                                   ('guard_light','any'),('light_attack','low'),('high_heavy_followup','high'))]
         self.fixture(preset)
         preset['stance_holds']['low']='jin_hayabusa.action_0c79'
-        with self.assertRaisesRegex(ValueError,'9 native override slots; only 8'):config.validate_preset(preset)
+        self.fixture(preset)
         preset=empty_preset();preset.update(low_heavy='jin_hayabusa.action_0c6e',tap_move='jin_hayabusa.izuna_drop',
             hold_move='sanada_yukimura.action_0c6a',chord_stance='high')
         preset['stance_holds']['mid']='jin_hayabusa.action_0bbf'
@@ -205,7 +218,8 @@ class CapabilityTests(unittest.TestCase):
         preset['skill_bindings']=[dict(source='light_attack',stance='low',move='toyotomi_hideyori.action_0d30'),
             dict(source='guard_light',stance='mid',move='oda_nobunaga.action_0c6e'),
             dict(source='high_heavy_followup',stance='high',move='tachibana_muneshige.action_0d8d')]
-        with self.assertRaisesRegex(ValueError,'33 move phases; the Engine supports 32'):prepare.configured_replacements(preset)
+        self.assertEqual(len(prepare.configured_imports(preset)['moves'])+len(prepare.configured_replacements(preset)['moves']),33)
+        self.fixture(preset)
         preset['hold_move']=None;self.fixture(preset)
         preset=empty_preset();preset['tap_move']='jin_hayabusa.action_0c71'
         read=prepare.read_import_manifest

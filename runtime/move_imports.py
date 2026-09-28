@@ -12,7 +12,8 @@ from catalogue import load_catalogue, iter_moves
 from nioh_sword import (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS,
                         PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS,
                         PLAYER_TEMPLATES, STANCE_OPENERS, is_airborne_sword, is_izuna_bridge, is_recorded_grounded)
-IMPORT_LIMIT = 32
+IMPORT_LIMIT = 64
+BINDING_LIMIT = 32
 
 
 def shared_source(first, second):
@@ -38,7 +39,7 @@ def check_import_topology(moves, string_variant):
     # Check source families, bounds, voice slots and successor cycles.
     # Only a grab-success edge may enter a paired attacker action.
     if not isinstance(moves, list) or not 1 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 1 to 32 moves')
+        raise ValueError(f'Import table requires 1 to {IMPORT_LIMIT} moves')
     if any(not isinstance(move, dict) for move in moves):
         raise ValueError('Import rows must be objects')
     replacement_only = string_variant is None and all(move['flags'] in (PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS) or is_izuna_bridge(move) or is_airborne_sword(move) or is_recorded_grounded(move) for move in moves)
@@ -133,7 +134,7 @@ def read_import_manifest(path, catalogue_path=None):
         raise ValueError('Import manifest does not match the owned resource profile')
     moves = manifest['moves']
     if not isinstance(moves, list) or not 1 <= len(moves) <= IMPORT_LIMIT:
-        raise ValueError('Import table requires 1 to 32 moves')
+        raise ValueError(f'Import table requires 1 to {IMPORT_LIMIT} moves')
     positions = {move['id']: index for index, move in enumerate(moves)}
     if manifest['string_entry'] is not None and manifest['string_entry'] not in positions:
         raise ValueError('Unknown string entry move')

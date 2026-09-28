@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+static constexpr unsigned BOSS_IMPORT_LIMIT = 64, BOSS_BINDING_LIMIT = 32;
+
 // Runtime addresses are session data, never compiled move identities.
 // These uint64_t values are addresses inside this Nioh process, not portable asset IDs.
 // The loader retains source packages; this record identifies player components that must be revalidated after reload.
@@ -88,15 +90,15 @@ struct RuntimeSessionConfig {
     uint64_t hold_stances, frost_variants[3], frost_milliseconds, frost_speed;
     BossSession session;
     uint32_t import_count, string_variant;
-    MoveImport imports[32];
-    MoveAdapter adapters[32];
-    SkillBinding skill_bindings[8];
+    MoveImport imports[BOSS_IMPORT_LIMIT];
+    MoveAdapter adapters[BOSS_IMPORT_LIMIT];
+    SkillBinding skill_bindings[BOSS_BINDING_LIMIT];
     LaunchProfile launch_profiles[2];
     float air_juggle_boost, tracking_rates[3];
-    MoveSettings move_settings[32];
+    MoveSettings move_settings[BOSS_IMPORT_LIMIT];
     uint32_t controller_selection, reserved;
 };
-static_assert(sizeof(RuntimeSessionConfig) == 6144 && offsetof(RuntimeSessionConfig, imports) == 328,
+static_assert(sizeof(RuntimeSessionConfig) == 12416 && offsetof(RuntimeSessionConfig, imports) == 328,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 11;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 12;

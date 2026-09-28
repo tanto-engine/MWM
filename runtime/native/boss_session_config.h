@@ -3,14 +3,14 @@
 #include "nioh_sword_definitions.h"
 static uint64_t BOSS_CONFIG_TAG;
 static BossSession boss_session{};
-static MoveImport boss_imports[32]{};
-static MoveAdapter boss_adapters[32]{};
+static MoveImport boss_imports[BOSS_IMPORT_LIMIT]{};
+static MoveAdapter boss_adapters[BOSS_IMPORT_LIMIT]{};
 static uint32_t boss_import_count, boss_string_variant;
 static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank;
 static uint64_t boss_native_grapple;
 static uint64_t boss_native_bindings;
-static SkillBinding boss_skill_bindings[8]{};
-static MoveSettings boss_move_settings[32]{};
+static SkillBinding boss_skill_bindings[BOSS_BINDING_LIMIT]{};
+static MoveSettings boss_move_settings[BOSS_IMPORT_LIMIT]{};
 static uint32_t boss_controller_selection;
 static LaunchProfile boss_launch_profiles[2]={{75,.75f,14,0},{200,.45f,17,0}};
 static float boss_air_juggle_boost=2, boss_tracking_rates[3]={540,420,180};
@@ -21,7 +21,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Validate the configuration-only import table before native callbacks can use it.
     // Check pointer bounds, supported action families, voice rows and acyclic combo topology.
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
-    if (config.import_count < 2 || config.import_count > 32 || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
+    if (config.import_count < 2 || config.import_count > BOSS_IMPORT_LIMIT || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
         || config.hold_stances>7 || config.frost_milliseconds || config.frost_speed!=8
         || config.controller_selection>4 || config.reserved)
         return false;
@@ -45,7 +45,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         for (unsigned prior=0;prior<stance;++prior) if (config.frost_variants[prior]==slot) return false;
     }
     uint32_t held_stances=0;
-    for (unsigned index=0;index<8;++index) {
+    for (unsigned index=0;index<BOSS_BINDING_LIMIT;++index) {
         const auto& binding=config.skill_bindings[index];const SkillBinding empty{};
         if (!binding.kind) { if (memcmp(&binding,&empty,sizeof(empty))) return false; continue; }
         if (binding.kind>5 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
@@ -54,7 +54,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             if (config.frost_variants[stance]==binding.variant && binding.stances!=(1u<<stance)) return false;
         const auto& adapter=config.adapters[binding.variant-1];
         if (binding.kind==3) {
-            if (adapter.kind!=2) return false;
+            if (adapter.kind && adapter.kind!=2) return false;
             held_stances|=binding.stances;
         }
         if (!adapter.kind && config.imports[binding.variant-1].flags!=0x184C0000ULL) return false;
@@ -81,7 +81,8 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     if (held_stances!=config.hold_stances || (held_stances && !config.hold_variant)) return false;
     if (config.imports[config.string_variant].flags == 0x8078000000ULL) return false;
     if (config.hold_variant) {
-        if (config.hold_variant > config.import_count || config.adapters[config.hold_variant-1].kind != 2
+        if (config.hold_variant > config.import_count || (config.adapters[config.hold_variant-1].kind != 2
+                && (config.adapters[config.hold_variant-1].kind || config.imports[config.hold_variant-1].flags!=0x184C0000))
             || config.hold_milliseconds < 80 || config.hold_milliseconds > 2000
             || (config.hold_camera_bank && (config.hold_camera_bank < 0x10000 || config.hold_camera_bank > 0x7fffffffffffULL))) return false;
     } else if (config.hold_milliseconds || config.hold_camera_bank) return false;
@@ -89,7 +90,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     const MoveAdapter no_adapter{};
     const MoveSettings no_settings{};
     bool grapple_target=false;
-    for (unsigned i = config.import_count; i != 32; ++i)
+    for (unsigned i = config.import_count; i != BOSS_IMPORT_LIMIT; ++i)
         if (memcmp(&config.imports[i], &empty, sizeof(empty))
             || memcmp(&config.adapters[i], &no_adapter, sizeof(no_adapter))
             || memcmp(&config.move_settings[i], &no_settings, sizeof(no_settings))) return false;
@@ -168,11 +169,11 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                     if (event.frame == move.voices[prior].frame && event.index == move.voices[prior].index) return false;
             }
         }
-        uint32_t visited = 0;
+        bool visited[BOSS_IMPORT_LIMIT]{};
         int current = int(i);
         while (current != -1) {
-            if (visited & (1u << current)) return false;
-            visited |= 1u << current;
+            if (visited[current]) return false;
+            visited[current] = true;
             current = config.imports[current].next_variant;
             if (current < -1 || current >= int(config.import_count)) return false;
         }
