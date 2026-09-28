@@ -41,7 +41,7 @@ def release_inputs(project):
         raise ValueError('Set a release version such as 0.2.0-alpha.1 in product.json')
     if f'## {version}\n' not in (project/'CHANGELOG.md').read_text(encoding='utf8'):
         raise ValueError('Add release notes for this version to CHANGELOG.md')
-    repositories=(ROOT,ROOT.parent/'tanto-recorder') if spec['kind']=='recorder' else (ROOT,)
+    repositories=(ROOT,project) if spec['kind']=='recorder' else (ROOT,)
     sources={p.name:source_state(p) for p in repositories}
     if any(state['dirty'] for state in sources.values()):
         raise ValueError('Commit Engine/MWM and Recorder source changes before compiling an EXE')
