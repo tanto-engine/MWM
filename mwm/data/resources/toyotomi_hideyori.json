@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "toyotomi_hideyori.resources.v1",
+  "boss_id": "toyotomi_hideyori",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 147,
+      "source_name": "/D00E1CD682921EA57ABA177767DEB62D672F9EBFFE15422B66A55C1387AD2EFC",
+      "size": 202236,
+      "sha256": "982e0c3226ed6c284e40e71ecf94ee29e003d5fa5c815ea98c0b8096fd8bdf38"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4048,
+      "source_name": "/2B9ACD9EFFB0CF3A708C0BFCF96E4AE7AA1CA6FD4C7903A4CD308A213079F7F1",
+      "size": 191616,
+      "sha256": "56b53b6f0cd607d1ba4f491244ad7a84e6838103b496a990ed3ead193e2979b5"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4049,
+      "source_name": "/38717A2DFE69D2F6DD559CED647E7DC81ECE940C042081395EA86C0DC95E868C",
+      "size": 2658672,
+      "sha256": "5c8100273ac6aa17de24b1ea285afe082af253ba6493e88b44587debfe0a2b32"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4050,
+      "source_name": "/1B37ABBFABF81B3991A8C3DF251311E6AC24298FB83B1A77AFCC4D6732779224",
+      "size": 2528,
+      "sha256": "15360acd84f0806535fc22e457e3a6893446a56f1e891fdccec956dcfd13d8ca"
+    }
+  },
+  "moves": {
+    "D30": {
+      "motion_key": 2000,
+      "timing_key": 2000,
+      "motion_index": 22,
+      "motion_record_offset": 366912,
+      "timing_index": 22,
+      "timing_record_offset": 26560,
+      "timing_event_count": 23,
+      "source_payload_offset": 63292
+    },
+    "D31": {
+      "motion_key": 2010,
+      "timing_key": 2010,
+      "motion_index": 23,
+      "motion_record_offset": 407168,
+      "timing_index": 24,
+      "timing_record_offset": 28928,
+      "timing_event_count": 24,
+      "source_payload_offset": 63468
+    },
+    "D32": {
+      "motion_key": 2020,
+      "timing_key": 2020,
+      "motion_index": 24,
+      "motion_record_offset": 435456,
+      "timing_index": 25,
+      "timing_record_offset": 30656,
+      "timing_event_count": 20,
+      "source_payload_offset": 63644
+    },
+    "D33": {
+      "motion_key": 2030,
+      "timing_key": 2030,
+      "motion_index": 25,
+      "motion_record_offset": 467648,
+      "timing_index": 26,
+      "timing_record_offset": 32384,
+      "timing_event_count": 26,
+      "source_payload_offset": 63820
+    }
+  }
+}

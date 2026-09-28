@@ -1,0 +1,29 @@
+{
+  "name": "mwm",
+  "productName": "MWM",
+  "version": "0.3.0-alpha.4",
+  "private": true,
+  "description": "Multi-Weapon Moveset Mod desktop configuration",
+  "author": "neuriv",
+  "main": "desktop-dist/main.cjs",
+  "scripts": {
+    "build:ui": "tsc --noEmit && node desktop/build.mjs",
+    "build": "npm run build:ui",
+    "check": "tsc --noEmit",
+    "start": "npm run build:ui && electron ."
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  },
+  "build": {
+    "appId": "neuriv.tanto.mwm",
+    "asar": true,
+    "files": ["desktop-dist/**/*", "product.json", "CHANGELOG.md"],
+    "extraResources": [{ "from": "desktop-worker", "to": "worker" }],
+    "win": { "target": "portable", "artifactName": "MWM.exe", "signAndEditExecutable": false },
+    "portable": { "requestExecutionLevel": "user", "unpackDirName": true }
+  }
+}

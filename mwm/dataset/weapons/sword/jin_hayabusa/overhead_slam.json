@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "sword.jin_hayabusa.overhead_slam",
+  "name": "Overhead slam",
+  "weapon_id": "sword",
+  "boss_id": "jin_hayabusa",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Overhead slam, followed by pause.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C75",
+        "motion_id": 5010,
+        "timing_id": 5010
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C77",
+        "motion_id": 5012,
+        "timing_id": 5012
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C78",
+        "motion_id": 5013,
+        "timing_id": 5013
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "The last three boss-candidate executions form the selected sequence. A counter gap precedes its start; the three selected counters are consecutive. These IDs also recur earlier in other Jin recordings.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "861505e63ba8823eeea05f3b3299361bb6bcf33d1a5389c94a22eba31083991b",
+      "files": {
+        "encounter.json": "b8bcb4f19c0739d940010bdbf358bc720cd889e8131762c33b3824d6ec2d886d",
+        "events.jsonl": "bd8480f20146c61508bfb39051b156088d4c9ce706ed4c6b113f77f0f9b708ac"
+      },
+      "recording_id": "20e86a61-01c5-441f-875e-fbb5b2d03a51",
+      "take_id": "e9d8459b-ca12-412f-9b90-8b9a96125438",
+      "annotation_id": "508fbb5e-a32b-4f01-b806-26470c32d0d4",
+      "annotation_text": "Overhead slam, followed by pause.",
+      "annotation_end_seconds": 65.016,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 590,
+          "metadata_line": 591,
+          "first_observed_seconds": 61.109,
+          "counter": 225
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 595,
+          "metadata_line": 596,
+          "first_observed_seconds": 61.484,
+          "counter": 226
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 599,
+          "metadata_line": 600,
+          "first_observed_seconds": 61.828,
+          "counter": 227
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 0
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 0
+        }
+      ]
+    }
+  ]
+}

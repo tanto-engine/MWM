@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "tachibana_muneshige.resources.v1",
+  "boss_id": "tachibana_muneshige",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 107,
+      "source_name": "/135236E8E2366A8C591AF76B635179F7F7B82938847BCE151EFA40ED0F88FED8",
+      "size": 322684,
+      "sha256": "c87c225ecf0608c08635521cd9671ede1897ef72344a7edc0497f2767f01029e"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4005,
+      "source_name": "/6493303189591D560D54435F0477E5A6CBFB58E168BBC97704A84AACCC616BBF",
+      "size": 377600,
+      "sha256": "27105949ae90740e443f885716b3adab8fb316e7d4cfa1e9485df1e0af1f745f"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4006,
+      "source_name": "/0E94F289B57187F092908E9AE1A1B77C9684C5970215D63A315C2AF66631A26E",
+      "size": 6019072,
+      "sha256": "a4a57431fbaa8999c2748f70516aa4b2e64233d6420a66e5799e74d199ed05ff"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4007,
+      "source_name": "/556834456D2E02228CBE481D96B935DE8CAAEB29F329AD9A4DAEBD7B19F50BB2",
+      "size": 1008,
+      "sha256": "112c88ad3e3d07367d978a3c143090a920856882a8d2fb15503ac9a235002aad"
+    }
+  },
+  "moves": {
+    "D8D": {
+      "motion_key": 5011,
+      "timing_key": 5011,
+      "motion_index": 204,
+      "motion_record_offset": 3796640,
+      "timing_index": 217,
+      "timing_record_offset": 269952,
+      "timing_event_count": 48,
+      "source_payload_offset": 92092
+    }
+  }
+}

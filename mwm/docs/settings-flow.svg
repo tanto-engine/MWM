@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="244" viewBox="0 0 960 244" role="img" aria-labelledby="title desc">
+  <title id="title">How an MWM setting reaches William</title>
+  <desc id="desc">The editor sends choices to the Python worker. Engine validates and expands them into native action hooks, which restore borrowed state when a move ends.</desc>
+  <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7" fill="#8caac2"/></marker></defs>
+  <rect width="960" height="244" rx="12" fill="#111920"/>
+  <g font-family="Segoe UI, Arial, sans-serif" fill="#eef4fa">
+    <text x="24" y="35" font-size="21" font-weight="600">From your settings to William's moves</text>
+    <text x="24" y="61" font-size="14" fill="#b6c9d8">Saving checks the complete moveset; enabling gives Engine ownership of its native changes.</text>
+    <g fill="#18252f" stroke="#5c778b"><rect x="24" y="86" width="210" height="132" rx="7"/><rect x="258" y="86" width="210" height="132" rx="7"/><rect x="492" y="86" width="210" height="132" rx="7"/><rect x="726" y="86" width="210" height="132" rx="7"/></g>
+    <g stroke="#8caac2" stroke-width="1.5" marker-end="url(#arrow)"><path d="M235 151 H252"/><path d="M469 151 H486"/><path d="M703 151 H720"/></g>
+    <g font-size="18" font-weight="600"><text x="40" y="117">1. Edit</text><text x="274" y="117">2. Validate + save</text><text x="508" y="117">3. Prepare</text><text x="742" y="117">4. Play + restore</text></g>
+    <g font-size="14" fill="#d6e2ec">
+      <text x="40" y="146">Choose inputs and moves.</text><text x="40" y="168">Set each move's speed.</text>
+      <text x="274" y="146">Reject conflicting bindings.</text><text x="274" y="168">Save complete JSON files.</text>
+      <text x="508" y="146">Expand the move graph.</text><text x="508" y="168">Load its required assets.</text>
+      <text x="742" y="146">Select native actions.</text><text x="742" y="168">Restore owned state on exit.</text>
+    </g>
+    <g font-size="12" fill="#9ab4c9"><text x="40" y="199">desktop/renderer.ts</text><text x="274" y="199">app/web_worker.py</text><text x="508" y="199">Engine configuration + loader</text><text x="742" y="199">Engine native hooks</text></g>
+  </g>
+</svg>

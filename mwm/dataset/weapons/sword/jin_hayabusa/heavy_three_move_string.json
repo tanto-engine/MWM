@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "sword.jin_hayabusa.heavy_three_move_string",
+  "name": "Three-move heavy attack string",
+  "weapon_id": "sword",
+  "boss_id": "jin_hayabusa",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "heavy attack string with 3 moves, afterwards he rolled backwards, then almost started next move. I paused and stopped recording.",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6E",
+        "motion_id": 2400,
+        "timing_id": 2400
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6F",
+        "motion_id": 2410,
+        "timing_id": 2410
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C70",
+        "motion_id": 2420,
+        "timing_id": 2420
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Three consecutive states precede 0x00000023 at 24.359s (reported backward roll) and 0x00000C71 at 24.984s (next move starting). Those trailing states are excluded from the string.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "ef4eaa73eb20265e690c4a97fca43c10e7eb19aee60f2dc589469a4150aa9337",
+      "files": {
+        "encounter.json": "74c673b307cb7662c0817d8a5dd788d2163ffde297a4dc837e42429c8ad0c45b",
+        "events.jsonl": "b4eb6410b7e2fc84857ba4f1a9a6431e684d42cc8d33359f9a501af3679e74b6"
+      },
+      "recording_id": "94ff9fdc-dafa-40af-964a-20ece03edde2",
+      "take_id": "9fceeb09-8aab-453b-9040-afc865ada0be",
+      "annotation_id": "0fc3ee37-3bfc-4f90-8fdb-f43c3d877c29",
+      "annotation_text": "heavy attack string with 3 moves, afterwards he rolled backwards, then almost started next move. I paused and stopped recording.",
+      "annotation_end_seconds": 27.406,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 208,
+          "metadata_line": 209,
+          "first_observed_seconds": 22.047,
+          "counter": 29
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 212,
+          "metadata_line": 213,
+          "first_observed_seconds": 22.531,
+          "counter": 30
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 216,
+          "metadata_line": 217,
+          "first_observed_seconds": 23.156,
+          "counter": 31
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 1
+        }
+      ]
+    }
+  ]
+}

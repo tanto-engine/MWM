@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.ground_slam_followup",
+  "name": "Ground slam with fire into normal follow-up",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ground slam + fire, running into normal string (3ish hit), paused after. he mightve moved/dodged while I paused.",
+  "mapping_status": "partial",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x000005E1",
+        "motion_id": 7050,
+        "timing_id": 7050
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D38",
+        "motion_id": 2200,
+        "timing_id": 2200
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D36",
+        "motion_id": 2120,
+        "timing_id": 2120
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "0x000005E1 is a ground-slam candidate, followed later by two attack states. There is a long observation gap from 3.140s to 10.812s and a boss counter gap before 0x000005E1. The reported roughly three hits cannot be equated to three observed IDs. Movement between and after attacks is retained in raw evidence, not inserted as attacks.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "a22a81bafe04e77edf2eba383a273374109db96d20ff344dc0fcc918d8fbe78d",
+      "files": {
+        "encounter.json": "0710e40d597b9a8607f1ba75b9606eb06dd3d29d715b5120feb18441364263f3",
+        "events.jsonl": "d3b27114fff56fbba6091e386f7aa8382454b2f99d6bea01000c335552bbeb7f"
+      },
+      "recording_id": "442f3a94-bb0d-4f67-a819-ced4c5ae50d5",
+      "take_id": "579a28fa-e9f8-4371-a4ec-8f4b698a2f0e",
+      "annotation_id": "1232c36f-7880-4b0c-a0e8-90ceb8708c5d",
+      "annotation_text": "Ground slam + fire, running into normal string (3ish hit), paused after. he mightve moved/dodged while I paused.",
+      "annotation_end_seconds": 21.187,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 38,
+          "metadata_line": 39,
+          "first_observed_seconds": 11.015,
+          "counter": 162
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 73,
+          "metadata_line": 74,
+          "first_observed_seconds": 15.484,
+          "counter": 167
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 81,
+          "metadata_line": 82,
+          "first_observed_seconds": 15.828,
+          "counter": 168
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 6
+        }
+      ]
+    }
+  ]
+}

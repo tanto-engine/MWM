@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "handgun.sanada_yukimura.handgun_sequence",
+  "name": "bloodborne gun shot",
+  "weapon_id": "handgun",
+  "boss_id": "sanada_yukimura",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "pulled out handgun, fired shot, sheathed, continued walking, pause + stop recording.",
+  "mapping_status": "partial",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6A",
+        "motion_id": 1130,
+        "timing_id": 1130
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6A",
+        "motion_id": 1130,
+        "timing_id": 1130
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Only two repeated 0x00000C6A executions are directly selected for the gun candidate. Native metadata lists 0x00000C6B as an available target, but that ID was not observed. Counter 404 is missing before the return state at 8.937s. Draw/fire/sheath cannot yet be assigned separate observed IDs; the record is partial.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "7339207231c190a255700a7ae03db5027b61d5ae642bb443a7ab4b466142229f",
+      "files": {
+        "encounter.json": "2f80cf5492960b7706c5b85ad35605717f0b59d30f7549a3ece5ffc13047db03",
+        "events.jsonl": "049af436f038bda94866da334c3b701e41c3edd85670e7f83480becbf81e9963"
+      },
+      "recording_id": "ebebb324-e1cb-4e44-8675-cbe9ec25a475",
+      "take_id": "f69b0aef-4292-4916-9acd-3d4a33248817",
+      "annotation_id": "77b3d0a8-e632-456a-8121-49f5b3cf1543",
+      "annotation_text": "pulled out handgun, fired shot, sheathed, continued walking, pause + stop recording.",
+      "annotation_end_seconds": 13.422,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 158,
+          "metadata_line": 159,
+          "first_observed_seconds": 7.469,
+          "counter": 402
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 161,
+          "metadata_line": 159,
+          "first_observed_seconds": 7.906,
+          "counter": 403
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 1
+        }
+      ]
+    }
+  ]
+}

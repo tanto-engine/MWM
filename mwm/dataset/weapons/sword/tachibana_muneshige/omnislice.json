@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.omnislice",
+  "name": "Omnislice",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Step back and sheath, then perform Omnislice. The preparation and attack identification remain unconfirmed.",
+  "steps": [
+    {
+      "id": "preparation",
+      "description": "Step back and sheath",
+      "description_basis": "user_hypothesis",
+      "source": {
+        "action_id": "0x00000D8C",
+        "motion_id": 5010,
+        "timing_id": 5010
+      }
+    },
+    {
+      "id": "attack",
+      "description": "Omnislice attack",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D8D",
+        "motion_id": 5011,
+        "timing_id": 5011
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "preparation",
+      "to": "attack",
+      "basis": [
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "guardian_spirit": "dog active throughout, reported by user",
+    "guardian_spirit_required": null,
+    "actor_identity": "unverified; selected by matching the described sequence"
+  },
+  "review_notes": [
+    "The user requested this preparation/attack pair as the first Tachibana data point; do not treat that request as confirmation of the visual identity.",
+    "The native transition establishes an available connection, not a proven unconditional auto-chain.",
+    "This record contains no reviewed player adaptation, binding, speed override or gameplay acceptance."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "fe030fef9cb75f749d223eaada006e6c7b8b65902f60981e2db3373516feb025",
+      "files": {
+        "encounter.json": "90f8a4ddd125127787898dca37d578432926e6572e8c6df47ac491d8a92348fb",
+        "events.jsonl": "1d6e4e8ebd1ec89c85c33d0b5f1e91f15bc85a9e84d7804051904251bcbaf072"
+      },
+      "recording_id": "c03167eb-d436-4c0a-a38f-a833ba54607e",
+      "take_id": "a820106a-4b8a-426b-9ade-b96091ca8adf",
+      "annotation_id": "09109169-583b-4b32-9ad0-a6fbec610c30",
+      "annotation_text": "dog summon, omnislice, then roll (all while dog still active)",
+      "annotation_end_seconds": 19.422,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "steps": [
+        {
+          "step_id": "preparation",
+          "action_line": 145,
+          "metadata_line": 146,
+          "first_observed_seconds": 13.563,
+          "counter": 21
+        },
+        {
+          "step_id": "attack",
+          "action_line": 158,
+          "metadata_line": 159,
+          "first_observed_seconds": 14.563,
+          "counter": 22
+        }
+      ],
+      "identity_line": 2,
+      "native_links": [
+        {
+          "from": "preparation",
+          "to": "attack",
+          "transition_entry_index": 6
+        }
+      ]
+    }
+  ]
+}

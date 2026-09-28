@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "boss_id": "sanada_yukimura",
+  "resource_profile_id": "sanada_yukimura.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "sanada_yukimura.action_0c6a": [
+      "sanada_yukimura.action_0c6a"
+    ]
+  },
+  "moves": [
+    {
+      "id": "sanada_yukimura.action_0c6a",
+      "key": 3178,
+      "motion": 1130,
+      "flags": 4398470660096,
+      "ki_cost": 5,
+      "recovery_frame": -1,
+      "transition_count": 9,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 5,
+          "index": 7,
+          "hash": 818085863
+        }
+      ],
+      "source_payload_prefix": "02000000000200000000ff016a0cffff010900000000050000004819000400006a040000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}

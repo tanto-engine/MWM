@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "boss_id": "oda_nobunaga",
+  "resource_profile_id": "oda_nobunaga.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "oda_nobunaga.action_0c6e": [
+      "oda_nobunaga.action_0c6e",
+      "oda_nobunaga.action_0c6f"
+    ]
+  },
+  "moves": [
+    {
+      "id": "oda_nobunaga.action_0c6e",
+      "key": 3182,
+      "motion": 1010,
+      "flags": 423624704,
+      "ki_cost": 10,
+      "recovery_frame": -1,
+      "transition_count": 10,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 27,
+          "index": 5,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff016e0cffff0109000000000a000000401900000000f2030000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "oda_nobunaga.action_0c6f",
+      "key": 3183,
+      "motion": 1011,
+      "flags": 423624704,
+      "ki_cost": 10,
+      "recovery_frame": -1,
+      "transition_count": 6,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 17,
+          "index": 5,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff016f0cffff0109000000000a000000401900000000f3030000ffffffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}

@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "sessions": [
+    {
+      "source_folder": "jin-hayabusa-1790500173156-2ea67e",
+      "recording_id": "2ea67e4b-44a2-46e1-8e0d-8d19c7117399",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "1d7e4cf845783390f95e15d6b2bd25d45479600292ef1f3f698fcfe4d740e877",
+      "files": {
+        "encounter.json": "f457552b7d255776556c5b7156becf19eaee4e060c176b977027fc7d19feb7c4",
+        "events.jsonl": "1e46f1a120cd23abc3d4c9775c5158008d5f6ef916477f6965474801ba687bd3"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 207,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 39,
+        "action_state": 207,
+        "metadata": 113,
+        "snapshot_race": 8,
+        "object_unreadable": 2,
+        "diagnostic": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "805aa660-a91f-4cd6-8c58-e14e538b64e5",
+          "text": "quick attack string A, ending with a low swipe. He followed up with half an aerial attack, but then I paused and ended recording. I died somewhere in the middle of the recording, but that shouldnt be relevant.",
+          "take_id": "7daf81f6-ea8e-4726-8354-be9fbe032f99",
+          "end_seconds": 41.843,
+          "move_ids": [
+            "sword.jin_hayabusa.quick_string_a"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "jin-hayabusa-1790500288521-475fef",
+      "recording_id": "475fefab-6f85-462f-9cfc-1941100fba83",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "e4c606b872c0a6183eac39e8ea6d38ecf41b3173a18bcaffe9989eb9be4d0840",
+      "files": {
+        "encounter.json": "e028b9bd93eecd1904c290f2c5aeca3d88a8a9578a88de0d07735bf300e9e010",
+        "events.jsonl": "ef9ff879c26e522801b1fad9945ce1cd35ef58f75382198b5b73f5b6fb904fd6"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 159,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 159,
+        "metadata": 70,
+        "discovery_progress": 22,
+        "snapshot_race": 13,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "792a70c3-2de7-4003-be92-b1936ad72456",
+          "text": "launch + izuna drop into my death.",
+          "take_id": "c0ae78c9-6a85-49f5-847d-3703534c3aac",
+          "end_seconds": 23.047,
+          "move_ids": [
+            "sword.jin_hayabusa.launcher_izuna_drop"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "jin-hayabusa-1790500339206-94e14c",
+      "recording_id": "94e14c14-23a6-47c1-b4d4-0113f51baca4",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "fc0c6496916038dab92a94465942d407d77b7fbc5e9d8a69026d824eb13ca632",
+      "files": {
+        "encounter.json": "c04ab826b91748d4c2ac7fb9e89523986d0ec530c5a2f2170ab1c2afb7ede534",
+        "events.jsonl": "332810277d660d4e25fe25d3d4839ee1aaa292792efe4322cd64fb63af112f10"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 61,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 61,
+        "metadata": 43,
+        "discovery_progress": 11,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "fa8b2a0c-ac78-4954-92ce-f01c4fc9647e",
+          "text": "quick attack string B, into Flying Swallow, I paused then stopped recording. I got hit by the flying swallow, though that shouldnt matter.",
+          "take_id": "cb27ea1b-3a73-4d05-bb31-6f04829287ef",
+          "end_seconds": 11.344,
+          "move_ids": [
+            "sword.jin_hayabusa.quick_string_b_flying_swallow"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "jin-hayabusa-1790500392599-94ff9f",
+      "recording_id": "94ff9fdc-dafa-40af-964a-20ece03edde2",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "ef4eaa73eb20265e690c4a97fca43c10e7eb19aee60f2dc589469a4150aa9337",
+      "files": {
+        "encounter.json": "74c673b307cb7662c0817d8a5dd788d2163ffde297a4dc837e42429c8ad0c45b",
+        "events.jsonl": "b4eb6410b7e2fc84857ba4f1a9a6431e684d42cc8d33359f9a501af3679e74b6"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 126,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 126,
+        "metadata": 72,
+        "discovery_progress": 26,
+        "snapshot_race": 3,
+        "actor_reset": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "0fc3ee37-3bfc-4f90-8fdb-f43c3d877c29",
+          "text": "heavy attack string with 3 moves, afterwards he rolled backwards, then almost started next move. I paused and stopped recording.",
+          "take_id": "9fceeb09-8aab-453b-9040-afc865ada0be",
+          "end_seconds": 27.406,
+          "move_ids": [
+            "sword.jin_hayabusa.heavy_three_move_string"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "jin-hayabusa-1790500504717-20e86a",
+      "recording_id": "20e86a61-01c5-441f-875e-fbb5b2d03a51",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "861505e63ba8823eeea05f3b3299361bb6bcf33d1a5389c94a22eba31083991b",
+      "files": {
+        "encounter.json": "b8bcb4f19c0739d940010bdbf358bc720cd889e8131762c33b3824d6ec2d886d",
+        "events.jsonl": "bd8480f20146c61508bfb39051b156088d4c9ce706ed4c6b113f77f0f9b708ac"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 465,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 465,
+        "metadata": 66,
+        "discovery_progress": 48,
+        "snapshot_race": 24,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "508fbb5e-a32b-4f01-b806-26470c32d0d4",
+          "text": "Overhead slam, followed by pause.",
+          "take_id": "e9d8459b-ca12-412f-9b90-8b9a96125438",
+          "end_seconds": 65.016,
+          "move_ids": [
+            "sword.jin_hayabusa.overhead_slam"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "jin-hayabusa-1790500603539-859ffa",
+      "recording_id": "859ffab0-de11-47e4-b25f-7739236cc1bf",
+      "source_boss_name": "Jin Hayabusa",
+      "boss_id": "jin_hayabusa",
+      "weapon_id": "sword",
+      "archive_sha256": "3e179037adf9da92418c2fca44ed63a240bfadf1042d3209027049734ffe67bb",
+      "files": {
+        "encounter.json": "a1d2781ecb70afe32b426a796afeaca4120456fd4fdaaf1845fe747d7440a596",
+        "events.jsonl": "5ddd544b1117f6a16f34c6f6a893f0ad9e15f39203ba6457a7ff43913ffcbf57"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 87,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 87,
+        "metadata": 54,
+        "discovery_progress": 26,
+        "actor_reset": 2,
+        "object_unreadable": 2,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "bd3ee502-38f5-479b-9ed7-41750677c14e",
+          "text": "Two Flying Swallows, then I died. Should give us the data we needed.",
+          "take_id": "1550e00b-17d3-44f0-93b6-fa6e9026e8a9",
+          "end_seconds": 27.171,
+          "move_ids": [
+            "sword.jin_hayabusa.two_flying_swallows"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790503588499-fc6cb5",
+      "recording_id": "fc6cb52a-e651-42a5-9d29-deb7e712ec20",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "65c68e80193ae61bda931588107479c0486e22f49ecea6a578661c8739a6e167",
+      "files": {
+        "encounter.json": "156b0b06f191a2c434875b5981fda6686e04d7d98a370714106c68a6bf7182a1",
+        "events.jsonl": "44ed3d681d01ee116daaf8353ffd02c8f57b973d6292410be2965f8a05977704"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 28,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 11,
+        "action_state": 28,
+        "metadata": 18,
+        "object_unreadable": 1,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "f554b07a-4c28-4564-bcd4-f86fb0b3143e",
+          "text": "normals, into two final swipe + slash. The swipe slash was followed by recording stop but not pause and i think he mightve done a last extra frame.",
+          "take_id": "ed2aff78-8807-4af0-83f5-aeaee5f24c51",
+          "end_seconds": 13.359,
+          "move_ids": [
+            "sword.oda_nobunaga.normals_swipe_slash"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "sanada-yukimura-1790504887639-ebebb3",
+      "recording_id": "ebebb324-e1cb-4e44-8675-cbe9ec25a475",
+      "source_boss_name": "Sanada Yukimura",
+      "boss_id": "sanada_yukimura",
+      "weapon_id": "handgun",
+      "archive_sha256": "7339207231c190a255700a7ae03db5027b61d5ae642bb443a7ab4b466142229f",
+      "files": {
+        "encounter.json": "2f80cf5492960b7706c5b85ad35605717f0b59d30f7549a3ece5ffc13047db03",
+        "events.jsonl": "049af436f038bda94866da334c3b701e41c3edd85670e7f83480becbf81e9963"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 91,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 9,
+        "action_state": 91,
+        "metadata": 74,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "77b3d0a8-e632-456a-8121-49f5b3cf1543",
+          "text": "pulled out handgun, fired shot, sheathed, continued walking, pause + stop recording.",
+          "take_id": "f69b0aef-4292-4916-9acd-3d4a33248817",
+          "end_seconds": 13.422,
+          "move_ids": [
+            "handgun.sanada_yukimura.handgun_sequence"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790499665632-507ee0",
+      "recording_id": "507ee006-b650-4603-b148-127f0dd00df0",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "294c3f13995b773791e1082c9f90fdad72d10baf6aa28f475c7bf8e1ff4004ea",
+      "files": {
+        "encounter.json": "ab90281a36a2090abe55e3341b40855c6cb41c2e341c05928162acfab02e415f"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 0,
+      "journal_event_counts": {},
+      "status": "missing_journal_and_description",
+      "annotations": [],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790499700229-c03167",
+      "recording_id": "c03167eb-d436-4c0a-a38f-a833ba54607e",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "fe030fef9cb75f749d223eaada006e6c7b8b65902f60981e2db3373516feb025",
+      "files": {
+        "encounter.json": "90f8a4ddd125127787898dca37d578432926e6572e8c6df47ac491d8a92348fb",
+        "events.jsonl": "1d6e4e8ebd1ec89c85c33d0b5f1e91f15bc85a9e84d7804051904251bcbaf072"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 98,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 98,
+        "metadata": 65,
+        "discovery_progress": 19,
+        "snapshot_race": 5,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "09109169-583b-4b32-9ad0-a6fbec610c30",
+          "text": "dog summon, omnislice, then roll (all while dog still active)",
+          "take_id": "a820106a-4b8a-426b-9ade-b96091ca8adf",
+          "end_seconds": 19.422,
+          "move_ids": [
+            "sword.tachibana_muneshige.omnislice"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "totoyomi-hideyori-1790501788983-442f3a",
+      "recording_id": "442f3a94-bb0d-4f67-a819-ced4c5ae50d5",
+      "source_boss_name": "Totoyomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "a22a81bafe04e77edf2eba383a273374109db96d20ff344dc0fcc918d8fbe78d",
+      "files": {
+        "encounter.json": "0710e40d597b9a8607f1ba75b9606eb06dd3d29d715b5120feb18441364263f3",
+        "events.jsonl": "d3b27114fff56fbba6091e386f7aa8382454b2f99d6bea01000c335552bbeb7f"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 55,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 18,
+        "action_state": 55,
+        "metadata": 31,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "1232c36f-7880-4b0c-a0e8-90ceb8708c5d",
+          "text": "Ground slam + fire, running into normal string (3ish hit), paused after. he mightve moved/dodged while I paused.",
+          "take_id": "579a28fa-e9f8-4371-a4ec-8f4b698a2f0e",
+          "end_seconds": 21.187,
+          "move_ids": [
+            "sword.toyotomi_hideyori.ground_slam_followup"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "totoyomi-hideyori-1790501864879-193a56",
+      "recording_id": "193a56f5-7a8c-4da9-8e2c-eaade7749a7c",
+      "source_boss_name": "Totoyomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "b3e1d15bb47ea1f0a24dc279c022ce4be99305eb3eeaa34aa326634ddd0f0fd4",
+      "files": {
+        "encounter.json": "262dca5a1ea6ae89f345e9207b29801a0aa3bb8f887bab7140d9fbad1333670a",
+        "events.jsonl": "ccb98694bd856196122afbd9be3638587c36fff08a100d3408453943445374cb"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 95,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 95,
+        "metadata": 45,
+        "discovery_progress": 13,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "376ae9e3-8b45-4332-a6fc-21447a690c17",
+          "text": "stab, two swipes, stab, half-onmyo summon, then paused and stopped recording.",
+          "take_id": "8cd00c26-de25-40af-adfa-aaef0379ee89",
+          "end_seconds": 17.203,
+          "move_ids": [
+            "sword.toyotomi_hideyori.stab_swipes_stab"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "totoyomi-hideyori-1790501917961-47f26d",
+      "recording_id": "47f26d15-f3b1-4a73-8ec4-b6644a93d2bd",
+      "source_boss_name": "Totoyomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "87ea91cb8fb1559992c7246acd421d1598268e3acd23c7436015e587179cfe05",
+      "files": {
+        "encounter.json": "6e9af41a81fcc4ed5a6c4c751b701e3806fb8ed7d4a63e361abfd64fb8c129e2",
+        "events.jsonl": "3355c0727e75b4025184d27c25650fe48e969f01ceb27c292a1cfc90cb38d897"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 57,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 57,
+        "metadata": 37,
+        "discovery_progress": 8,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "07ccc8ae-874b-4876-9628-e5f43c0b870b",
+          "text": "four hit string",
+          "take_id": "81231ded-d11b-4529-8891-ac5196b998bd",
+          "end_seconds": 11.063,
+          "move_ids": [
+            "sword.toyotomi_hideyori.four_hit_string"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "totoyomi-hideyori-1790501946760-362d87",
+      "recording_id": "362d8768-71e0-4a32-8fe3-de7e481b7687",
+      "source_boss_name": "Totoyomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "fb949e361c4459f34978b12c0d443736a68203a552e5945453f84f904c4193df",
+      "files": {
+        "encounter.json": "00705f7d4628b38025df8b76418cf6c4486d99fe601effdbcbcb2a3de8195de6",
+        "events.jsonl": "0eebfd577c87ca1bf4c6f33cbcf12e540213b60677b2dad0d586599c43b83a73"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 79,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 79,
+        "metadata": 37,
+        "discovery_progress": 14,
+        "snapshot_race": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "curated_candidate",
+      "annotations": [
+        {
+          "id": "49e3d780-0ee5-4458-b234-67accdab80e8",
+          "text": "grab + action camera into two swipes, then pause and stop recording",
+          "take_id": "f147b366-d96a-4e1e-a17e-bf3e157d546f",
+          "end_seconds": 16.922,
+          "move_ids": [
+            "sword.toyotomi_hideyori.grab_two_swipes"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "totoyomi-hideyori-1790502012907-60b360",
+      "recording_id": "60b360aa-47f5-4108-989c-5fddf7dd55d4",
+      "source_boss_name": "Totoyomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "39e1b10da7b673af517c7a5c35ddf50efc110ff24085de3917446ecf3697b269",
+      "files": {
+        "encounter.json": "9674c2cd352ccb1b5ca94e96b06fa7abb42316a1028d24ab0ae9f776d7f2a1b4"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 0,
+      "journal_event_counts": {},
+      "status": "missing_journal_and_description",
+      "annotations": [],
+      "draft": {
+        "text": ""
+      }
+    }
+  ]
+}

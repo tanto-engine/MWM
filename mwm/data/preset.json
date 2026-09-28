@@ -1,0 +1,63 @@
+{
+  "schema_version": 8,
+  "name": "Sword Rebuild 1 - gameplay trial",
+  "weapon": "sword",
+  "tap_move": "sanada_yukimura.action_0c6a",
+  "hold_move": null,
+  "modifier_mask": 16,
+  "trigger_mask": 64,
+  "hold_seconds": 0.25,
+  "low_heavy": "jin_hayabusa.action_0c6e",
+  "stance_holds": {
+    "low": null,
+    "mid": null,
+    "high": null
+  },
+  "okatsu_grapple": false,
+  "mid_light_ender": false,
+  "string_enabled": false,
+  "skill_bindings": [
+    {
+      "source": "dodge_attack",
+      "stance": "low",
+      "move": "jin_hayabusa.action_0c6f"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0bbf"
+    },
+    {
+      "source": "dodge_attack",
+      "stance": "mid",
+      "move": "jin_hayabusa.action_0bbf"
+    },
+    {
+      "source": "light_attack",
+      "stance": "low",
+      "move": "toyotomi_hideyori.action_0d30"
+    },
+    {
+      "source": "high_heavy_followup",
+      "stance": "high",
+      "move": "tachibana_muneshige.action_0d8d"
+    }
+  ],
+  "frost_moon": {
+    "low": "jin_hayabusa.action_0c71",
+    "mid": "oda_nobunaga.action_0c6e",
+    "high": "jin_hayabusa.action_0c75"
+  },
+  "chord_stance": "low",
+  "move_settings": {
+    "sanada_yukimura.action_0c6a": {
+      "speed": 1.15
+    },
+    "jin_hayabusa.action_0c75": {
+      "speed": 1
+    },
+    "oda_nobunaga.action_0c6e": {
+      "speed": 1.1
+    }
+  }
+}

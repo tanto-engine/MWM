@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "kind": "configuration_design",
+  "id": "sword_rebuild_1",
+  "name": "Sword Rebuild 1",
+  "weapon": "sword",
+  "status": "source_gameplay_trial",
+  "executable": false,
+  "routes": [
+    {
+      "id": "handgun",
+      "trigger": {
+        "kind": "chord",
+        "buttons": [
+          "LB",
+          "LT"
+        ],
+        "stance": "low"
+      },
+      "dataset_id": "handgun.sanada_yukimura.handgun_sequence",
+      "step_ids": [
+        "stage_1",
+        "stage_2"
+      ],
+      "runtime_move": "sanada_yukimura.action_0c6a",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C6A",
+          "motion_id": 1130,
+          "timing_id": 1130
+        },
+        {
+          "action_id": "0x00000C6A",
+          "motion_id": 1130,
+          "timing_id": 1130
+        }
+      ],
+      "status": "gameplay_trial",
+      "speed": 1.15
+    },
+    {
+      "id": "low_heavy",
+      "trigger": {
+        "kind": "native",
+        "source": "heavy_attack",
+        "stance": "low"
+      },
+      "dataset_id": "sword.jin_hayabusa.heavy_three_move_string",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3"
+      ],
+      "runtime_move": "jin_hayabusa.action_0c6e",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C6E",
+          "motion_id": 2400,
+          "timing_id": 2400
+        },
+        {
+          "action_id": "0x00000C6F",
+          "motion_id": 2410,
+          "timing_id": 2410
+        },
+        {
+          "action_id": "0x00000C70",
+          "motion_id": 2420,
+          "timing_id": 2420
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
+      "id": "low_dodge_attack",
+      "trigger": {
+        "kind": "native",
+        "source": "dodge_attack",
+        "stance": "low"
+      },
+      "dataset_id": "sword.jin_hayabusa.heavy_three_move_string",
+      "step_ids": [
+        "stage_2"
+      ],
+      "runtime_move": "jin_hayabusa.action_0c6f",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C6F",
+          "motion_id": 2410,
+          "timing_id": 2410
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
+      "id": "mid_heavy",
+      "trigger": {
+        "kind": "native",
+        "source": "heavy_attack",
+        "stance": "mid"
+      },
+      "dataset_id": "sword.jin_hayabusa.quick_string_b_flying_swallow",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3",
+        "stage_4",
+        "stage_5"
+      ],
+      "runtime_move": "jin_hayabusa.action_0bbf",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000BBF",
+          "motion_id": 2100,
+          "timing_id": 2100
+        },
+        {
+          "action_id": "0x00000C63",
+          "motion_id": 2110,
+          "timing_id": 2110
+        },
+        {
+          "action_id": "0x00000C64",
+          "motion_id": 2120,
+          "timing_id": 2120
+        },
+        {
+          "action_id": "0x00000C65",
+          "motion_id": 2130,
+          "timing_id": 2130
+        },
+        {
+          "action_id": "0x00000C66",
+          "motion_id": 2140,
+          "timing_id": 2140
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
+      "id": "mid_dodge_attack",
+      "trigger": {
+        "kind": "native",
+        "source": "dodge_attack",
+        "stance": "mid"
+      },
+      "dataset_id": "sword.jin_hayabusa.quick_string_b_flying_swallow",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3",
+        "stage_4",
+        "stage_5"
+      ],
+      "runtime_move": "jin_hayabusa.action_0bbf",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000BBF",
+          "motion_id": 2100,
+          "timing_id": 2100
+        },
+        {
+          "action_id": "0x00000C63",
+          "motion_id": 2110,
+          "timing_id": 2110
+        },
+        {
+          "action_id": "0x00000C64",
+          "motion_id": 2120,
+          "timing_id": 2120
+        },
+        {
+          "action_id": "0x00000C65",
+          "motion_id": 2130,
+          "timing_id": 2130
+        },
+        {
+          "action_id": "0x00000C66",
+          "motion_id": 2140,
+          "timing_id": 2140
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
+      "id": "low_quick",
+      "trigger": {
+        "kind": "native",
+        "source": "light_attack",
+        "stance": "low"
+      },
+      "dataset_id": "sword.toyotomi_hideyori.four_hit_string",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3",
+        "stage_4"
+      ],
+      "runtime_move": "toyotomi_hideyori.action_0d30",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000D30",
+          "motion_id": 2000,
+          "timing_id": 2000
+        },
+        {
+          "action_id": "0x00000D31",
+          "motion_id": 2010,
+          "timing_id": 2010
+        },
+        {
+          "action_id": "0x00000D32",
+          "motion_id": 2020,
+          "timing_id": 2020
+        },
+        {
+          "action_id": "0x00000D33",
+          "motion_id": 2030,
+          "timing_id": 2030
+        }
+      ],
+      "status": "gameplay_trial",
+      "speed": 1.0
+    },
+    {
+      "id": "high_heavy_omnislice",
+      "trigger": {
+        "kind": "followup",
+        "stance": "high",
+        "after": "heavy_attack",
+        "buttons": [
+          "LB",
+          "Square"
+        ],
+        "window": "native_attack_cancel_or_recovery",
+        "consume_once": true,
+        "clear_on": [
+          "stance_change",
+          "different_attack",
+          "dodge",
+          "death",
+          "detach"
+        ]
+      },
+      "dataset_id": "sword.tachibana_muneshige.omnislice",
+      "step_ids": [
+        "attack"
+      ],
+      "runtime_move": "tachibana_muneshige.action_0d8d",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000D8D",
+          "motion_id": 5011,
+          "timing_id": 5011
+        }
+      ],
+      "status": "gameplay_trial",
+      "speed": 1.0
+    },
+    {
+      "id": "frost_high",
+      "trigger": {
+        "kind": "frost_moon",
+        "destination_stance": "high"
+      },
+      "dataset_id": "sword.jin_hayabusa.overhead_slam",
+      "step_ids": [
+        "stage_1",
+        "stage_2",
+        "stage_3"
+      ],
+      "runtime_move": "jin_hayabusa.action_0c75",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C75",
+          "motion_id": 5010,
+          "timing_id": 5010
+        },
+        {
+          "action_id": "0x00000C77",
+          "motion_id": 5012,
+          "timing_id": 5012
+        },
+        {
+          "action_id": "0x00000C78",
+          "motion_id": 5013,
+          "timing_id": 5013
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    },
+    {
+      "id": "frost_mid",
+      "trigger": {
+        "kind": "frost_moon",
+        "destination_stance": "mid"
+      },
+      "dataset_id": "sword.oda_nobunaga.normals_swipe_slash",
+      "step_ids": [
+        "stage_4",
+        "stage_5"
+      ],
+      "runtime_move": "oda_nobunaga.action_0c6e",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C6E",
+          "motion_id": 1010,
+          "timing_id": 1010
+        },
+        {
+          "action_id": "0x00000C6F",
+          "motion_id": 1011,
+          "timing_id": 1011
+        }
+      ],
+      "status": "gameplay_trial",
+      "speed": 1.1
+    },
+    {
+      "id": "frost_low",
+      "trigger": {
+        "kind": "frost_moon",
+        "destination_stance": "low"
+      },
+      "dataset_id": "sword.jin_hayabusa.quick_string_b_flying_swallow",
+      "step_ids": [
+        "stage_6",
+        "stage_7",
+        "stage_8",
+        "stage_9"
+      ],
+      "runtime_move": "jin_hayabusa.action_0c71",
+      "blockers": [],
+      "source_actions": [
+        {
+          "action_id": "0x00000C71",
+          "motion_id": 1050,
+          "timing_id": 1050
+        },
+        {
+          "action_id": "0x00000C72",
+          "motion_id": 5000,
+          "timing_id": 5000
+        },
+        {
+          "action_id": "0x00000C73",
+          "motion_id": 5001,
+          "timing_id": 5001
+        },
+        {
+          "action_id": "0x00000C74",
+          "motion_id": 5002,
+          "timing_id": 5002
+        }
+      ],
+      "status": "existing_adapter",
+      "speed": 1.0
+    }
+  ],
+  "ki_pulse": {
+    "scope": "Every enabled attack/string recovery; aerial moves at landing, synchronized grabs after paired phases",
+    "percent": 40,
+    "fill_frames": 30,
+    "hold_frames": 36,
+    "frost_window": "native_remaining_ki_pulse_window",
+    "acceptance": "Verify availability after every attack and fairness in gameplay; durations alone are not acceptance."
+  },
+  "decisions": [
+    "Use Hideyori four-hit string D30-D33; no recorded five-hit string is established.",
+    "Quick string 2 means Jin quick string B: BBF/C63/C64/C65/C66, excluding its recorded Flying Swallow follow-up.",
+    "Omnislice enters attack D8D directly, skipping step-back/sheath D8C. Instant means no extra preparation or hold delay, not zero animation duration.",
+    "Frost stance labels are destination stances, matching existing Engine semantics.",
+    "High downward-slash phases stay at 1x; preserve the existing specialized Flying Swallow adaptation.",
+    "New boss trials match full recorded payload prefixes to installed archive assets. Companion timing/motion packages are reviewed source hypotheses requiring gameplay verification.",
+    "Handgun trial enters one C6A execution per LB+LT tap; repeated observations are not forced into a two-shot sequence.",
+    "Omnislice accepts a fresh LB+Square press during native High-heavy recovery and consumes it once."
+  ],
+  "supported_preset": "data/presets/sword-rebuild-1-supported.json",
+  "trial_preset": "data/presets/sword-rebuild-1.json"
+}

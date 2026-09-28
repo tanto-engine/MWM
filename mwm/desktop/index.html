@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>MWM · Moveset editor</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="renderer.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="identity"><span class="wordmark">MWM</span><div><h1>Single katana</h1><p id="profile-name">Reading moveset…</p></div></div>
+      <div class="runtime"><div class="runtime-copy"><span id="runtime">Connecting…</span><p id="runtime-detail" role="status"></p></div><button id="enable" data-action="enable">Enable mod</button><button id="disable" data-action="disable" hidden>Disable mod</button></div>
+    </header>
+    <nav aria-label="Moveset editor">
+      <button data-tab="overview" class="selected">Moves</button><button data-tab="speed">Speed</button><button data-tab="controls">Controller</button>
+      <details id="tools"><summary>More <span aria-hidden="true">⌄</span></summary><div class="tools-menu">
+        <button data-tab="native">Other inputs &amp; options</button><button data-tab="frost">Stance-switch moves</button><button data-tab="collection">Recorded moves</button><button data-tab="guide">Help</button>
+        <hr><button id="trial" data-action="trial">Load Sword Rebuild 1</button><button id="starter" data-action="starter">Load Rebuild subset</button><button id="baseline" data-action="baseline">Load original moveset</button>
+        <hr><button id="load" data-action="load">Import moveset…</button><button id="save" data-action="save">Export moveset…</button><button id="reload" data-action="reload">Discard edits</button>
+      </div></details>
+    </nav>
+    <main id="content" aria-busy="true"></main>
+    <footer><div class="feedback"><p id="validation" role="status">Reading moveset…</p><p id="notice" role="status"></p></div><button id="apply" data-action="apply" class="primary">Save changes</button></footer>
+  </div>
+  <dialog id="binding-error" aria-labelledby="error-title" aria-describedby="error-reason error-guidance">
+    <h2 id="error-title">Incompatible bind</h2>
+    <p id="error-reason"></p><p id="error-guidance"></p>
+    <form method="dialog"><button autofocus>Return to editor</button></form>
+  </dialog>
+</body>
+</html>

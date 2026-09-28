@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.grab_two_swipes",
+  "name": "Grab into two swipes",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "grab + action camera into two swipes, then pause and stop recording",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x000005E4",
+        "motion_id": 2310,
+        "timing_id": 2310
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x000003AA",
+        "motion_id": 2311,
+        "timing_id": 2311
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D30",
+        "motion_id": 2000,
+        "timing_id": 2000
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D31",
+        "motion_id": 2010,
+        "timing_id": 2010
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "0x000005E4 leads to 0x000003AA; the other actor enters paired 0x000003AB at the same time as 0x000003AA. After an intervening idle state, 0x00000D30 and 0x00000D31 match the two reported swipes. Camera behavior itself is only user-reported.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "fb949e361c4459f34978b12c0d443736a68203a552e5945453f84f904c4193df",
+      "files": {
+        "encounter.json": "00705f7d4628b38025df8b76418cf6c4486d99fe601effdbcbcb2a3de8195de6",
+        "events.jsonl": "0eebfd577c87ca1bf4c6f33cbcf12e540213b60677b2dad0d586599c43b83a73"
+      },
+      "recording_id": "362d8768-71e0-4a32-8fe3-de7e481b7687",
+      "take_id": "f147b366-d96a-4e1e-a17e-bf3e157d546f",
+      "annotation_id": "49e3d780-0ee5-4458-b234-67accdab80e8",
+      "annotation_text": "grab + action camera into two swipes, then pause and stop recording",
+      "annotation_end_seconds": 16.922,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 103,
+          "metadata_line": 104,
+          "first_observed_seconds": 7.937,
+          "counter": 242
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 110,
+          "metadata_line": 111,
+          "first_observed_seconds": 8.609,
+          "counter": 243
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 124,
+          "metadata_line": 49,
+          "first_observed_seconds": 13.094,
+          "counter": 245
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 127,
+          "metadata_line": 60,
+          "first_observed_seconds": 13.687,
+          "counter": 246
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 2
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 2
+        }
+      ]
+    }
+  ]
+}

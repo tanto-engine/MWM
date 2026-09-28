@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.four_hit_string",
+  "name": "Four-hit string",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "four hit string",
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Observed stage 1; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D30",
+        "motion_id": 2000,
+        "timing_id": 2000
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Observed stage 2; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D31",
+        "motion_id": 2010,
+        "timing_id": 2010
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Observed stage 3; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D32",
+        "motion_id": 2020,
+        "timing_id": 2020
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "Observed stage 4; visual phase assignment remains provisional",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000D33",
+        "motion_id": 2030,
+        "timing_id": 2030
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
+  "capture_context": {
+    "actor_identity": "Unverified; selected by late sequence order and descriptor continuity, not boss label alone.",
+    "weapon_classification": "User-specified destination category; not detected equipped weapon."
+  },
+  "review_notes": [
+    "Four consecutive late action counters match the reported four-hit order. A counter gap occurs before the selected first state; no missing preparation is invented.",
+    "One action ID is not necessarily one hit. Names come from the user note; source evidence verifies IDs and order, not visual identity.",
+    "Native transition targets show available paths, not unconditional execution. No player adaptation or gameplay acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "87ea91cb8fb1559992c7246acd421d1598268e3acd23c7436015e587179cfe05",
+      "files": {
+        "encounter.json": "6e9af41a81fcc4ed5a6c4c751b701e3806fb8ed7d4a63e361abfd64fb8c129e2",
+        "events.jsonl": "3355c0727e75b4025184d27c25650fe48e969f01ceb27c292a1cfc90cb38d897"
+      },
+      "recording_id": "47f26d15-f3b1-4a73-8ec4-b6644a93d2bd",
+      "take_id": "81231ded-d11b-4529-8891-ac5196b998bd",
+      "annotation_id": "07ccc8ae-874b-4876-9628-e5f43c0b870b",
+      "annotation_text": "four hit string",
+      "annotation_end_seconds": 11.063,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 80,
+          "metadata_line": 81,
+          "first_observed_seconds": 6.281,
+          "counter": 219
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 85,
+          "metadata_line": 86,
+          "first_observed_seconds": 6.906,
+          "counter": 220
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 90,
+          "metadata_line": 91,
+          "first_observed_seconds": 7.406,
+          "counter": 221
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 97,
+          "metadata_line": 98,
+          "first_observed_seconds": 7.813,
+          "counter": 222
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 2
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 2
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 2
+        }
+      ]
+    }
+  ]
+}

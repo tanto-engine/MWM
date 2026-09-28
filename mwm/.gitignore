@@ -1,0 +1,10 @@
+.build/
+dist/
+__pycache__/
+*.pyc
+runtime/
+node_modules/
+desktop/build/
+desktop-dist/
+desktop-worker/
+local-artifacts/
