@@ -137,7 +137,7 @@ class BindingGroupTests(unittest.TestCase):
     def test_add_override_selects_a_free_compilable_slot(self):
         # The old Add button duplicated Tiger Sprint already bound in Any stance.
         # Seed through production compilation and ensure the original draft stays untouched.
-        # Eight occupied entries fail cleanly without silently deleting another binding.
+        # Eight occupied entries leave other valid native inputs available.
         original = deepcopy(worker.DEFAULT_PRESET)
         result = worker.Desktop().add_override(dict(self.params, preset=original))
         self.assertEqual(len(result['skill_bindings']), len(original['skill_bindings'])+1)
@@ -146,8 +146,9 @@ class BindingGroupTests(unittest.TestCase):
         full = deepcopy(self.preset); full['stance_holds'] = dict(low=None,mid=None,high=None)
         full['skill_bindings'] = [dict(source=source,stance=stance,move='okatsu.charged_rush')
                                  for source in ('tiger_sprint','dodge_attack','guard_light') for stance in ('low','mid','high')][:8]
-        with self.assertRaisesRegex(ValueError, 'eight override slots'):
-            worker.Desktop().add_override(dict(self.params, preset=full))
+        extended=worker.Desktop().add_override(dict(self.params, preset=full))
+        self.assertEqual(len(extended['skill_bindings']),9)
+        worker.Desktop().preview(dict(self.params,preset=extended))
         bad = deepcopy(self.calibration); bad['controller_slot'] = True
         with self.assertRaisesRegex(ValueError, 'Controller slot'):
             worker.Desktop().validate(dict(self.params, calibration=bad))

@@ -2,7 +2,7 @@
 // Stable move IDs travel over IPC while readable names remain presentation data.
 export {};
 type Stance = 'low' | 'mid' | 'high';
-type MoveRole = 'chord' | 'graph' | 'heavy_string' | 'native' | 'speed';
+type MoveRole = 'chord' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
 type Move = { id: string; name: string } & Record<MoveRole, boolean>;
 type Calibration = { device: Record<string, unknown>; controller_slot?: number | null; [key: string]: unknown };
 type Binding = { source: string; stance: string; move: string };
@@ -257,7 +257,7 @@ function renderOverview() {
     card.append(element('h3', `${stance[0].toUpperCase() + stance.slice(1)} stance`)); cards.append(card);
     if (stance === 'low') assignment(card, 'Heavy attack string', 'low-heavy', 'heavy_string', p.low_heavy, value => { p.low_heavy = value || null; });
     for (const binding of p.skill_bindings.filter(row => row.stance === stance)) nativeRow(card, binding);
-    assignment(card, 'Hold Triangle / Y', `hold:${stance}`, 'graph', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; });
+    assignment(card, 'Hold Triangle / Y', `hold:${stance}`, 'held', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; });
     assignment(card, 'Frost Moon · stance switch', `frost:${stance}`, 'chord', p.frost_moon[stance], value => { p.frost_moon[stance] = value || null; });
   }
   const shared = element('section', undefined, 'shared-routes');
