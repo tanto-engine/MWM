@@ -9,8 +9,9 @@ const { createInterface } = require('node:readline');
 const root = path.resolve(__dirname, '..');
 const folder = process.argv[2], python = process.argv[3];
 const pending = new Map(); let sequence = 0, capture = 0, oldCapture, delayPreview = false, cancelGroup = false;
+let delaySnapshot = false, waitSnapshot, snapshotStarted, releaseSnapshot;
 const methods = [];
-let simulatedRunning = false, failExport = false, savedGroup;
+let simulatedRunning = false, failExport = false, failController = false, savedGroup;
 const worker = spawn(python, ['-B', path.join(__dirname, 'desktop_worker_fixture.py'), folder], { windowsHide: true, stdio: ['pipe','pipe','pipe'] });
 process.on('uncaughtException', error => {
   // A test failure must never open Electron's blocking error dialog.
@@ -41,6 +42,10 @@ async function request(_event, method, params={}) {
   // All preview, remapping, import, export and Apply operations use the real worker.
   methods.push(method);
   if (method==='test_runtime_running') { simulatedRunning=params; return true; }
+  if (method==='test_fail_controller') { failController=true; return true; }
+  if (method==='test_delay_snapshot') { delaySnapshot=true; waitSnapshot=new Promise(resolve=>{snapshotStarted=resolve;}); return true; }
+  if (method==='test_wait_snapshot') return waitSnapshot;
+  if (method==='test_release_snapshot') { releaseSnapshot(); return true; }
   if (method==='test_export_error') { failExport=true; return true; }
   if (method==='test_invalid_group') {
     const file=path.join(folder,'group.json');
@@ -49,7 +54,12 @@ async function request(_event, method, params={}) {
     return true;
   }
   if (method==='export' && failExport) { failExport=false; throw new Error('Fixture: file is read-only'); }
-  if (method==='snapshot') return {...await call(method,params),running:simulatedRunning};
+  if (method==='snapshot') {
+    const result={...await call(method,params),running:simulatedRunning};
+    if (delaySnapshot) { delaySnapshot=false; await new Promise(resolve=>{releaseSnapshot=resolve; snapshotStarted();}); }
+    return result;
+  }
+  if (method==='controller' && failController) { failController=false; throw new Error('Fixture: controller unavailable'); }
   if (method==='test_delay_preview') { delayPreview=true; return true; }
   if (method==='test_cancel_group') { cancelGroup=true; return true; }
   if (method==='preview' && delayPreview) {
@@ -89,6 +99,20 @@ app.whenReady().then(async () => {
       assert(document.querySelectorAll('.stance-card').length===3,'Default view is not grouped by stance');
       assert(document.querySelector('#disable').hidden && !document.querySelector('#enable').hidden,'Disabled runtime shows both actions');
       assert(document.querySelector('#apply').disabled,'Saved moveset still offers redundant save');
+      await tab('controls');
+      const failedDevice=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Controller mapping').querySelector('select');
+      await window.mwm.request('test_fail_controller');change(failedDevice,'1');await wait(350);
+      assert(document.querySelector('#binding-error').open,'Failed controller translation was not reported');
+      assert(failedDevice.value==='saved' && document.querySelector('#apply').disabled && !document.querySelector('#profile-name').textContent.includes('unsaved'),'Failed controller translation changed clean editor state');
+      dismiss();await tab('overview');
+      await window.mwm.request('test_delay_snapshot');await window.mwm.request('test_wait_snapshot');
+      await window.mwm.request('test_runtime_running',true);
+      document.querySelector('#reload').click();await ready();
+      assert(!document.querySelector('#disable').hidden,'Reload did not show newer running status');
+      await window.mwm.request('test_release_snapshot');await wait(250);
+      assert(!document.querySelector('#disable').hidden,'Old status poll overwrote newer runtime state');
+      await window.mwm.request('test_runtime_running',false);
+      document.querySelector('#reload').click();await ready();
       // An independent tool can save while this window is open; use only fixture settings.
       // Clean views should follow that saved model, while real draft edits and focus survive polling.
       // Both saves execute production Python Apply rather than replacing renderer state directly.
