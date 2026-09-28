@@ -30,7 +30,7 @@ class SwordConfigurationTests(unittest.TestCase):
                 adapter[field]+=offset
             for field in ('descriptor','payload','clip','timing_record'): move[field]+=offset
         self.assertEqual(len(fixture.config['imports']),25)
-        self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),6144)
+        self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),12416)
         self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,1,5,4])
         self.assertEqual(preset['chord_stance'],'low')
         # The faster Oda root must also reach its second slash through ordinary speed inheritance.
@@ -137,7 +137,7 @@ class SwordConfigurationTests(unittest.TestCase):
         self.assertEqual(len(jin), 15)  # Three heavy, five quick, four Swallow, three downward-slash phases.
         for index, move in enumerate(fixture.config['imports']):
             if move in jin:
-                self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,5752+index*MOVE_SETTINGS.size), (1.,40,30,36,0))
+                self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,11640+index*MOVE_SETTINGS.size), (1.,40,30,36,0))
 
     def test_research_dataset_rejects_misclassification_truncated_ids_and_reversed_strings(self):
         # The fresh collection uses stable weapon/boss paths instead of the legacy runtime catalogue.

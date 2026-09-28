@@ -121,8 +121,6 @@ class Desktop:
         # Try reviewed moves against real graph compilation, including stance ownership and slot limits.
         # Return a new draft only; a full table or incompatible setup leaves the caller unchanged.
         preset = self.validate(params)
-        if len(preset['skill_bindings']) + sum(value is not None for value in preset['stance_holds'].values()) >= 8:
-            raise ValueError('All eight override slots are occupied. Remove an override or held-heavy binding first.')
         for source in self.capabilities['native_sources']:
             for stance in self.capabilities['stances']:
                 if any(row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):

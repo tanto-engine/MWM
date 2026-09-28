@@ -2,7 +2,7 @@
 // Stable move IDs travel over IPC while readable names remain presentation data.
 export {};
 type Stance = 'low' | 'mid' | 'high';
-type MoveRole = 'chord' | 'graph' | 'heavy_string' | 'native' | 'speed';
+type MoveRole = 'chord' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
 type Move = { id: string; name: string } & Record<MoveRole, boolean>;
 type Calibration = { device: Record<string, unknown>; controller_slot?: number | null; [key: string]: unknown };
 type Binding = { source: string; stance: string; move: string };
@@ -34,6 +34,7 @@ let controllerChoice = 'saved';
 let bindingGroup = 'chord';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let captureGeneration = 0, draftGeneration = 0;
+let actionGeneration = 0;
 let editGeneration = 0, explainedEdit = 0;
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -144,7 +145,7 @@ async function action(operation: () => Promise<void>) {
   // Disable the form during a request and surface worker validation errors in place.
   // Re-enable controls even if a dialog is cancelled or the worker fails.
   if (busy || !state) return;
-  busy = true; document.body.inert = true;
+  ++actionGeneration; busy = true; document.body.inert = true;
   try { await operation(); } catch (error) {
     message(errorText(error), true); explainError(error);
     if (error && typeof error === 'object' && 'kind' in error && error.kind === 'validation') {
@@ -174,7 +175,7 @@ function field(label: string, input: HTMLElement, parent: HTMLElement) {
   return wrapper;
 }
 
-function select(options: [string, string][], value: string | null, update: (value: string) => void) {
+function select(options: [string, string][], value: string | null, update: (value: string) => void, markChanged = true) {
   // Render only caller-supplied reviewed options using stable IDs as values.
   // A blank value means Native/Disabled according to the owning control.
   // Changing the selection modifies the pending form only.
@@ -185,7 +186,7 @@ function select(options: [string, string][], value: string | null, update: (valu
     // Read the option value rather than trying to reverse-map its visible name.
     // The owner stores the appropriate nullable ID, stance or controller choice.
     // All tab edits share one explicit Apply boundary.
-    update(control.value); changed();
+    update(control.value); if (markChanged) changed();
   };
   return control;
 }
@@ -257,7 +258,7 @@ function renderOverview() {
     card.append(element('h3', `${stance[0].toUpperCase() + stance.slice(1)} stance`)); cards.append(card);
     if (stance === 'low') assignment(card, 'Heavy attack string', 'low-heavy', 'heavy_string', p.low_heavy, value => { p.low_heavy = value || null; });
     for (const binding of p.skill_bindings.filter(row => row.stance === stance)) nativeRow(card, binding);
-    assignment(card, 'Hold Triangle / Y', `hold:${stance}`, 'graph', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; });
+    assignment(card, 'Hold Triangle / Y', `hold:${stance}`, 'held', p.stance_holds[stance], value => { p.stance_holds[stance] = value || null; });
     assignment(card, 'Frost Moon · stance switch', `frost:${stance}`, 'chord', p.frost_moon[stance], value => { p.frost_moon[stance] = value || null; });
   }
   const shared = element('section', undefined, 'shared-routes');
@@ -542,9 +543,9 @@ function renderControls() {
       // Ask Engine to preserve logical button meaning across mappings.
       // Replace calibration, buttons and preset as one UI state update.
       // No file writes occur in this translation request.
-      await cancelCapture(); Object.assign(state, await window.mwm.request('controller', { ...params(), choice: value })); controllerChoice = value; render(); changed();
-    });
-  });
+      await cancelCapture(); Object.assign(state, await window.mwm.request('controller', { ...params(), choice: value })); controllerChoice = value; changed(); render();
+    }).finally(() => { devices.value = controllerChoice; });
+  }, false);
   field('Controller mapping', devices, grid);
   field('Game controller slot', select([['', 'Auto (one controller)'], ['0', '1'], ['1', '2'], ['2', '3'], ['3', '4']], state.calibration.controller_slot == null ? '' : String(state.calibration.controller_slot), value => {
     // Keep the game's controller slot distinct from raw OS controller identity.
@@ -734,14 +735,17 @@ async function pollStatus() {
   // Recheck after awaiting the worker so an in-flight read cannot overwrite a new draft.
   // Unchanged snapshots update runtime status without rebuilding controls or moving focus.
   if (state && !busy && !capture) {
+    const generation = actionGeneration;
     try {
       const snapshot = await window.mwm.request<Snapshot>('snapshot');
-      if (!dirty && !busy && !capture && JSON.stringify(params(snapshot)) !== JSON.stringify(params())) {
-        state = snapshot; controllerChoice = 'saved'; dirty = Boolean(snapshot.load_warning);
-        render(); message(snapshot.load_warning || '', Boolean(snapshot.load_warning));
+      if (generation === actionGeneration && !busy) {
+        if (!dirty && !capture && JSON.stringify(params(snapshot)) !== JSON.stringify(params())) {
+          state = snapshot; controllerChoice = 'saved'; dirty = Boolean(snapshot.load_warning);
+          render(); message(snapshot.load_warning || '', Boolean(snapshot.load_warning));
+        }
+        showRuntime(snapshot);
       }
-      showRuntime(snapshot);
-    } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; document.querySelector('#runtime-detail')!.textContent = errorText(error); }
+    } catch (error) { if (generation === actionGeneration && !busy) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; document.querySelector('#runtime-detail')!.textContent = errorText(error); } }
   }
   setTimeout(pollStatus, 1800);
 }
