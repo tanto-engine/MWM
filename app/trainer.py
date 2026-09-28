@@ -491,6 +491,8 @@ class Trainer:
             for selector in self.button_selectors: selector.configure(values=list(self.button_choices))
             binding = binding_for_preset(self.calibration, preset)
             game_binding(self.calibration, binding)
+            if process_matches(read_json(RUNTIME/'play-process.json')):
+                raise ValueError('Disable the mod before saving changes. Your edits remain in the editor.')
             atomic_json(RUNTIME/'controller-calibration.json', self.calibration)
             atomic_json(RUNTIME/'controller-binding.json', preset)
             self.binding, self.preset = binding, preset

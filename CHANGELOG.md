@@ -1,11 +1,20 @@
 # Release notes
 
+## 0.3.0-alpha.4
+
+- Incompatible bindings open a clear popup naming the move, conflicting inputs and how to correct them. Invalid drafts do not change saved settings.
+- Complete graph validation runs before Save; changing assignments requires the mod to be disabled.
+- The move is now named **bloodborne gun shot** throughout the move menus and documentation. Source IDs and recording evidence remain intact.
+- Activation rejects retained code from another Engine build. Restart Nioh after updating; a game exit during resource loading now stops activation instead of retrying silently.
+
+The earlier activation crash was observed during resource loading; its exact native cause and current-build gameplay acceptance remain unconfirmed.
+
 ## 0.3.0-alpha.3
 
 - Current Sword Rebuild 1 is the default for new installs; existing settings and the original moveset remain available.
 - Choose held Triangle/Y per stance, with separate launcher-only and launcher-plus-Izuna choices. Heavy replacements no longer swallow held bindings; matching custom chords take priority over competing native attacks. R1/RB remains reserved for Ki Pulse and Frost Moon.
 - Rebind custom buttons, native overrides and Frost Moon independently. Invalid stance combinations explain how to correct them.
-- Includes the confirmed Jin, Oda, Omnislice and Sanada source setup, Hideyori Ki correction, handgun assets and temporary sword hiding.
+- Includes the confirmed Jin, Oda, Omnislice and bloodborne gun shot source setup, Hideyori Ki correction, handgun assets and temporary sword hiding.
 - Portable EXE includes its worker, move definitions, artwork and collection. Packaged checks cover saving, rebinding and XInput translation without accessing the game.
 
 Physical Xbox/PS5, broad enemy contact and another-PC checks remain pending.
@@ -16,7 +25,7 @@ First portable MWM desktop release candidate. The EXE includes its own Engine wo
 
 Added independent binding-group save/load with controller translation, atomic chord-button swapping and compatible override seeding. Invalid saved presets open as editable baseline drafts without overwriting the original. Group imports preserve unrelated bindings and tuning, reject conflicts and remain pending until Apply. These source changes do not add extra runtime chord slots or constitute gameplay acceptance.
 
-Sword Rebuild 1 provides five Jin routes. Sanada's handgun, Hideyori's Low quick string, Omnislice after High heavy and Oda's Mid Frost Moon still need Engine adapters; the complete requested layout is not yet playable. Current-build gameplay, physical-controller and another-PC acceptance remain pending.
+Sword Rebuild 1 provides five Jin routes. bloodborne gun shot, Hideyori's Low quick string, Omnislice after High heavy and Oda's Mid Frost Moon still need Engine adapters; the complete requested layout is not yet playable. Current-build gameplay, physical-controller and another-PC acceptance remain pending.
 
 ## 0.3.0-alpha.1
 

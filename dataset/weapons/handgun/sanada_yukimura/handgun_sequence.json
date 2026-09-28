@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "handgun.sanada_yukimura.handgun_sequence",
-  "name": "Handgun draw, shot and sheath",
+  "name": "bloodborne gun shot",
   "weapon_id": "handgun",
   "boss_id": "sanada_yukimura",
   "kind": "move_string",

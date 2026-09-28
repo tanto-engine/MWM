@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, '..');
 const folder = process.argv[2], python = process.argv[3];
 const pending = new Map(); let sequence = 0, capture = 0, oldCapture, delayPreview = false, cancelGroup = false;
 const methods = [];
+let simulatedRunning = false, failExport = false, savedGroup;
 const worker = spawn(python, ['-B', path.join(__dirname, 'desktop_worker_fixture.py'), folder], { windowsHide: true, stdio: ['pipe','pipe','pipe'] });
 process.on('uncaughtException', error => {
   // A test failure must never open Electron's blocking error dialog.
@@ -24,7 +25,7 @@ createInterface({ input: worker.stdout }).on('line', line => {
   // Invalid production replies fail visibly instead of bypassing worker validation.
   // The test host uses the same JSON line protocol as the real application.
   const reply = JSON.parse(line), entry = pending.get(reply.id);
-  pending.delete(reply.id); reply.error ? entry.reject(new Error(reply.error)) : entry.resolve(reply.result);
+  pending.delete(reply.id); reply.error ? entry.reject(Object.assign(new Error(reply.error.message), {kind:reply.error.kind})) : entry.resolve(reply.result);
 });
 function call(method, params) {
   // Send only test-scoped production operations to Python.
@@ -34,11 +35,21 @@ function call(method, params) {
     const id = ++sequence; pending.set(id, {resolve,reject}); worker.stdin.write(JSON.stringify({id,method,params})+'\n');
   });
 }
-ipcMain.handle('mwm:request', async (_event, method, params={}) => {
+async function request(_event, method, params={}) {
   // Substitute chosen filenames for dialogs and deterministic events for hardware capture.
   // Deliberately deliver one cancelled binding late to exercise the generation guard.
   // All preview, remapping, import, export and Apply operations use the real worker.
   methods.push(method);
+  if (method==='test_runtime_running') { simulatedRunning=params; return true; }
+  if (method==='test_export_error') { failExport=true; return true; }
+  if (method==='test_invalid_group') {
+    const file=path.join(folder,'group.json');
+    if (params) { savedGroup=fs.readFileSync(file,'utf8'); const value=JSON.parse(savedGroup); value.bindings.frost_moon.high=value.bindings.frost_moon.low; fs.writeFileSync(file,JSON.stringify(value)); }
+    else fs.writeFileSync(file,savedGroup);
+    return true;
+  }
+  if (method==='export' && failExport) { failExport=false; throw new Error('Fixture: file is read-only'); }
+  if (method==='snapshot') return {...await call(method,params),running:simulatedRunning};
   if (method==='test_delay_preview') { delayPreview=true; return true; }
   if (method==='test_cancel_group') { cancelGroup=true; return true; }
   if (method==='preview' && delayPreview) {
@@ -54,17 +65,26 @@ ipcMain.handle('mwm:request', async (_event, method, params={}) => {
   if (method==='binding_export' || method==='binding_import') params={...params,path:path.join(folder,'group.json')};
   if (method==='enable' || method==='disable') throw new Error('Unexpected lifecycle action');
   return call(method,params);
+}
+ipcMain.handle('mwm:request', async (...args) => {
+  try { return {ok:true,result:await request(...args)}; }
+  catch (error) { return {ok:false,error:{kind:error.kind||'operation',message:error.message}}; }
 });
 app.whenReady().then(async () => {
   const window = new BrowserWindow({show:false,width:1120,height:800,webPreferences:{preload:path.join(root,'desktop/preload.cjs'),contextIsolation:true,sandbox:false,backgroundThrottling:false}});
   try {
-    await window.loadFile(path.join(root,'desktop-dist/index.html'));
+    const ui = path.join(folder,'ui'); fs.mkdirSync(ui);
+    for (const name of ['index.html','style.css']) fs.copyFileSync(path.join(root,'desktop',name),path.join(ui,name));
+    fs.cpSync(path.join(root,'desktop/assets'),path.join(ui,'assets'),{recursive:true});
+    fs.writeFileSync(path.join(ui,'renderer.js'),require('esbuild').transformSync(fs.readFileSync(path.join(root,'desktop/renderer.ts'),'utf8'),{loader:'ts',format:'iife'}).code);
+    await window.loadFile(path.join(ui,'index.html'));
     const result = await window.webContents.executeJavaScript(`(async () => {
       const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
       const assert=(value,message)=>{if(!value)throw new Error(message);};
       const ready=async()=>{for(let n=0;n<100;n++){if(!document.body.inert && document.querySelector('#validation').dataset.state==='valid')return;await wait(30);}throw new Error(document.querySelector('#validation').textContent);};
       const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input'));};
       const tab=async name=>{document.querySelector('[data-tab="'+name+'"]').click();await ready();};
+      const dismiss=()=>document.querySelector('#binding-error button').click();
       await ready();
       assert(document.querySelectorAll('.stance-card').length===3,'Default view is not grouped by stance');
       assert(document.querySelector('#disable').hidden && !document.querySelector('#enable').hidden,'Disabled runtime shows both actions');
@@ -84,9 +104,11 @@ app.whenReady().then(async () => {
       assert(document.activeElement===externalName && externalName.isConnected,'Routine polling reset clean field focus');
       change(externalName,'Pending local name');await ready();
       external.preset={...external.preset,name:'Second external moveset',hold_seconds:.4};
-      await window.mwm.request('apply',external);await wait(2300);
+      await window.mwm.request('apply',external);await window.mwm.request('test_runtime_running',true);await wait(2300);
       assert(externalName.value==='Pending local name' && externalName.isConnected && document.activeElement===externalName,'External save overwrote or rebuilt a dirty editor');
       assert(document.querySelector('#profile-name').textContent.startsWith('Pending local name'),'External snapshot replaced the draft header');
+      assert(document.querySelector('#apply').disabled && document.querySelector('#validation').textContent.includes('Disable the mod before saving changes'),'Running mod still permits a saved graph change');
+      await window.mwm.request('test_runtime_running',false);
       document.querySelector('#reload').click();await ready();
       assert(document.querySelector('#profile-name').textContent==='Second external moveset','Discard did not load latest saved model');
       await tab('overview');
@@ -100,18 +122,31 @@ app.whenReady().then(async () => {
       assert([...lowHold.options].some(x=>x.value==='jin_hayabusa.action_0c79' && x.text.includes('Launcher only')),'Standalone launcher is unclear');
       assert([...lowHold.options].some(x=>x.value==='jin_hayabusa.izuna_drop' && x.text.includes('Launcher + Izuna Drop')),'Complete Izuna is unclear');
       change(lowHold,'jin_hayabusa.action_0c79');await ready();
+      change(highHold,'jin_hayabusa.action_0c79');await wait(300);
+      assert(document.querySelector('#binding-error')?.open,'Invalid duplicate hold has no in-app explanation popup');
+      assert(document.querySelector('#error-reason').textContent.startsWith('This bind is incompatible because: '),'Incompatible popup lost its required explanation');
+      assert(document.querySelector('#error-reason').textContent.includes(highHold.selectedOptions[0].textContent),'Error reason disagrees with the selected move name');
+      assert(!document.querySelector('#error-reason').textContent.includes('Error invoking remote method'),'Popup leaks the Electron transport wrapper');
+      assert(document.querySelector('#apply').disabled && document.querySelector('#enable').disabled,'Invalid duplicate hold remains saveable');
+      assert(highHold.value==='jin_hayabusa.action_0c79','Invalid edit was silently discarded');
+      assert(document.querySelector('[data-assignment="chord:tap"]').selectedOptions[0].textContent==='bloodborne gun shot','Gun move does not use its canonical name');
+      assert(document.activeElement===document.querySelector('#binding-error button'),'Popup has no keyboard focus');
+      dismiss();await wait(2000);
+      assert(!document.querySelector('#binding-error').open,'Status polling repeated the incompatible popup');
       change(highHold,'jin_hayabusa.izuna_drop');await ready();
       change(highHold,'');await ready();
       assert(highHold.isConnected && highHold.value==='','Cleared held assignment cannot be reassigned');
       const chordHold=document.querySelector('[data-assignment="chord:hold"]');
       change(chordHold,'jin_hayabusa.izuna_drop');await wait(300);
       assert(document.querySelector('#apply').disabled && document.querySelector('#validation').textContent.includes('different stances'),'Same-stance Izuna conflict is not explained');
+      dismiss();
       change(chordHold,'');await ready();
       change(highHold,'jin_hayabusa.izuna_drop');await ready();
       await tab('controls');
       const chordStance=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Custom input stance').querySelector('select');
       change(chordStance,'any');await wait(300);
       assert(document.querySelector('#apply').disabled && document.querySelector('#validation').textContent.includes('Choose Low, Mid or High'),'Graph chord stance requirement is not explained');
+      dismiss();
       change(chordStance,'low');await ready();await tab('overview');
       const lowQuick=document.querySelector('[data-assignment="native:low:light_attack"]');
       assert(lowQuick && lowQuick.value==='toyotomi_hideyori.action_0d30','Trial route is missing');
@@ -119,6 +154,7 @@ app.whenReady().then(async () => {
       const frostHigh=document.querySelector('[data-assignment="frost:high"]');
       change(frostHigh,'jin_hayabusa.action_0c71');await wait(300);
       assert(document.querySelector('#apply').disabled,'Overview ignored a conflicting route');
+      dismiss();
       change(frostHigh,'okatsu.leaping_slash');await ready();
       document.querySelector('#apply').click();await ready();
       const savedOverview=await window.mwm.request('snapshot');
@@ -131,6 +167,7 @@ app.whenReady().then(async () => {
       const previousTrigger=pulseTrigger.value;
       change(pulseTrigger,[...pulseTrigger.options].find(x=>x.textContent==='R1 / RB').value);await wait(300);
       assert(document.querySelector('#apply').disabled && document.querySelector('#validation').textContent.includes('Ki Pulse'),'Reserved Frost input was not rejected before Save');
+      dismiss();
       change(pulseTrigger,previousTrigger);await ready();
       document.querySelector('#baseline').click();await ready();
       await tab('native');
@@ -149,8 +186,11 @@ app.whenReady().then(async () => {
       change(child,'1');await ready();
       assert(child.closest('[data-speed-id]').querySelector('output').textContent.includes('1×'),'Explicit native speed was lost');
       await window.mwm.request('test_delay_preview');change(child,'1.1');await wait(240);
-      change(child,'3');await wait(650);assert(document.querySelector('#apply').disabled,'Stale preview enabled an invalid draft');
+      change(child,'3');await wait(650);assert(document.querySelector('#apply').disabled,'Stale preview enabled an invalid draft');dismiss();
       change(child,'1');await ready();
+      await window.mwm.request('test_export_error');document.querySelector('#save').click();await wait(100);
+      assert(document.querySelector('#binding-error').open && document.querySelector('#error-reason').textContent==='Fixture: file is read-only','File error was mislabeled as an incompatible bind');
+      dismiss();
       document.querySelector('#save').click();await ready();
       change(child,'0.75');await ready();document.querySelector('#load').click();await ready();
       assert(document.querySelector('[data-speed-id="jin_hayabusa.action_0c6f"] input').value==='1','Export/import lost explicit speed');
@@ -162,6 +202,13 @@ app.whenReady().then(async () => {
       await window.mwm.request('test_cancel_group');
       [...document.querySelectorAll('button')].find(x=>x.textContent==='Load group…').click();await ready();
       assert(high.value==='','Cancelled group load changed the draft');
+      await window.mwm.request('test_invalid_group',true);
+      [...document.querySelectorAll('button')].find(x=>x.textContent==='Load group…').click();await wait(300);
+      assert(document.querySelector('#binding-error').open && document.querySelector('#error-reason').textContent.startsWith('This bind is incompatible because: '),'Group action did not explain its actual validation failure');
+      assert(high.value==='','Failed group import changed the draft');
+      dismiss();await ready();
+      assert(!document.querySelector('#apply').disabled && !document.querySelector('#binding-error').open,'Retained valid draft did not recover after failed group import');
+      await window.mwm.request('test_invalid_group',false);
       [...document.querySelectorAll('button')].find(x=>x.textContent==='Load group…').click();await ready();
       assert(document.querySelectorAll('main .fields select')[2].value==='jin_hayabusa.action_0c75','Group load did not restore Frost');
       await tab('speed');assert(document.querySelector('[data-speed-id="jin_hayabusa.action_0c6f"] input').value==='1','Binding module changed unrelated tuning');
@@ -170,6 +217,7 @@ app.whenReady().then(async () => {
       const source=rows[1].querySelectorAll('select')[0], stance=rows[1].querySelectorAll('select')[1];
       change(source,'dodge_attack');change(stance,'low');await wait(300);
       assert(document.querySelector('#apply').disabled,'Overlapping overrides were accepted');
+      dismiss();
       change(source,'heavy_attack');change(stance,'mid');await ready();
       await tab('controls');
       const devices=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Controller mapping').querySelector('select');

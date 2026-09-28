@@ -18,7 +18,7 @@ async function runSmoke(window, call, report) {
     return {artwork:[artwork.naturalWidth,artwork.naturalHeight],datasetMoves:collection.moves.length};
   })()`);
   // Capture the actual first-open app before test edits; the release keeps this image with its receipt.
-  await window.webContents.executeJavaScript('document.fonts.ready.then(() => true)');
+  await window.webContents.executeJavaScript('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');
   fs.writeFileSync(path.join(path.dirname(report), 'ui-preview.png'), (await window.webContents.capturePage()).toPNG());
   const uiRebinding = await window.webContents.executeJavaScript(`(async () => {
     // Change the same visible controls used by players and save through the normal renderer.
@@ -36,6 +36,21 @@ async function runSmoke(window, call, report) {
       const select=document.querySelector('[data-assignment="hold:'+stance+'"]');
       if (!select || ![...select.options].some(option=>option.value===move)) throw new Error('Missing held Triangle choice: '+move);
       select.value=move;select.dispatchEvent(new Event('change',{bubbles:true}));await wait();await ready();
+      if (stance==='low') {
+        // Reproduce the player's duplicate High launcher, through the packaged renderer and IPC.
+        // Reject it visibly without persisting either pending hold, then correct the draft normally.
+        const high=document.querySelector('[data-assignment="hold:high"]');
+        high.value=move;high.dispatchEvent(new Event('change',{bubbles:true}));
+        for (let i=0;i<200 && !document.querySelector('#binding-error').open;i++) await wait();
+        const reason=document.querySelector('#error-reason').textContent;
+        if (!document.querySelector('#binding-error').open || !reason.startsWith('This bind is incompatible because:')
+            || !reason.includes('Low hold Triangle / Y') || !reason.includes('High hold Triangle / Y')
+            || !document.querySelector('#apply').disabled || !document.querySelector('#enable').disabled)
+          throw new Error('Packaged incompatible binding was not explained: '+reason);
+        const unchanged=await window.mwm.request('snapshot');
+        if (unchanged.preset.stance_holds.low || unchanged.preset.stance_holds.high) throw new Error('Invalid edit changed saved bindings');
+        document.querySelector('#binding-error button').click();
+      }
     }
     document.querySelector('#apply').click();await wait();await ready();
     const saved=await window.mwm.request('snapshot');
@@ -66,7 +81,7 @@ async function runSmoke(window, call, report) {
   try { await call('enable', params); } catch (error) { blocked = String(error).includes('disabled during the packaged UI check'); }
   if (!blocked) throw new Error('Smoke game isolation failed');
   fs.writeFileSync(report, JSON.stringify({passed:true,...screen,compiledPhases:Object.keys(compiled.moves).length,
-    unicode:true,settings:true,bindings:true,uiRebinding,xinputRebinding:true,gameAccess:false}, null, 2));
+    unicode:true,settings:true,bindings:true,uiRebinding,incompatiblePopup:true,invalidDraftPreserved:true,xinputRebinding:true,gameAccess:false}, null, 2));
 }
 
 module.exports = {runSmoke};

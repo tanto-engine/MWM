@@ -1,10 +1,10 @@
 # Sword Rebuild 1
 
-**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four phases play, but zero boss Ki cost prevented Pulse; a player-cost correction is enabled for feedback. Sanada's Low LB+LT firing, 1.15× speed and temporary sword hiding are confirmed. The full preset still needs broader gameplay checks.
+**Source status:** the user confirmed all six Jin inputs, Oda's two slashes at 1.1x and Omnislice playback. The isolated Low-heavy check also passed normal movement and death/retry. Hideyori's four phases play, but zero boss Ki cost prevented Pulse; a player-cost correction is enabled for feedback. bloodborne gun shot’s Low LB+LT firing, 1.15× speed and temporary sword hiding are confirmed. The full preset still needs broader gameplay checks.
 
-`data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Rebuild trial** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and Sanada are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
+`data/presets/sword-rebuild-1.json` contains the complete layout. **More → Load Sword Rebuild 1** loads a draft; **Save changes** stores it and **Enable mod** activates it. Hideyori, Oda, Tachibana and bloodborne gun shot are experimental imports matched to recorded bytes and installed resources. Their animation, hit ownership, projectile and recovery behavior need separate gameplay checks.
 
-Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatically continues Oda C6E into C6F at the source's frame-40 branch. Omnislice accepts one fresh LB+Square press during native High-heavy recovery; idle, damage, dodge or stance change closes the opportunity. In Low stance, tap and release LB+LT for one Sanada C6A execution; holding has no assigned action. Its missing recorded counter is not silently invented as another shot.
+Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatically continues Oda C6E into C6F at the source's frame-40 branch. Omnislice accepts one fresh LB+Square press during native High-heavy recovery; idle, damage, dodge or stance change closes the opportunity. In Low stance, tap and release LB+LT for one bloodborne gun shot C6A execution; holding has no assigned action. Its missing recorded counter is not silently invented as another shot.
 
 **More → Recorded moves** shows the layout and research notes. **Load Rebuild subset** selects six Jin inputs, including both standing and dodging Mid heavies. Left-stick movement and L3 are independent of Frost Moon's stance-button edges; movement does not extend recovery. Damage, conflicting actions and controller reconnects still cancel the opportunity.
 
@@ -12,7 +12,7 @@ Low Square advances Hideyori D30–D33 one press per strike. Mid Frost automatic
 
 | Input | Requested action | Source implementation |
 | --- | --- | --- |
-| Tap LB + LT, Low stance | Sanada hand-cannon | Firing, 1.15× speed and sword hiding confirmed in the source trial |
+| Tap LB + LT, Low stance | bloodborne gun shot | Firing, 1.15× speed and sword hiding confirmed in the source trial |
 | Low heavy | Jin three-heavy string, C6E  ->  C6F  ->  C70 | Included |
 | Low dodge-heavy | Jin second heavy, C6F | Included; existing heavy continuation rules retained |
 | Mid heavy | Jin quick string B, BBF  ->  C63  ->  C64  ->  C65  ->  C66 | Included; trailing Flying Swallow excluded |

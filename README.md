@@ -8,7 +8,7 @@ A portable Nioh moveset editor, starting with single katana. Choose the moves as
 
 Download **MWM.exe** from [Releases](https://github.com/tanto-engine/MWM/releases). The EXE contains its own interface, Engine worker, move definitions and artwork; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
 
-Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. If you save while enabled, wait for Engine to finish reloading. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. Before enabling a newer EXE, disable the running mod so the new Engine can replace it.
+Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. Disable the mod before saving edits; invalid drafts stay in the editor and never change the running moveset. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. After an Engine update, restart Nioh before enabling the new EXE. Stop retains native code until the game exits; mixing builds is blocked.
 
 ## Default controls
 
@@ -20,16 +20,16 @@ PlayStation and Xbox labels describe the same logical buttons. Frost Moon requir
 | Mid heavy / dodge-heavy | Jin's five-hit string |
 | Low quick | Hideyori's four-hit string |
 | High heavy, then L1/LB + Square/X | Tachibana's instant Omnislice |
-| **Low stance: tap L1/LB + L2/LT** | Sanada's hand-cannon, 1.15× speed; sword hidden during firing |
+| **Low stance: tap L1/LB + L2/LT** | bloodborne gun shot, 1.15× speed; sword hidden during firing |
 | Frost Moon → Low / Mid / High | Flying Swallow / Oda's two slashes at 1.1× / Jin's downward slash |
 
-The handgun uses tap-and-release; holding is unassigned by default. A new shot waits for the previous action to finish. [Configuration details](configurations/README.md) separate tested playback from remaining contact and recovery checks.
+bloodborne gun shot uses tap-and-release; holding is unassigned by default. A new shot waits for the previous action to finish. [Configuration details](configurations/README.md) separate tested playback from remaining contact and recovery checks.
 
 ## Change your bindings
 
 **Moves** shows assignments by stance, including **Hold Triangle / Y**. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or native inputs. For example, use Low held Triangle for the launcher and High held Triangle for Izuna. The drop still needs native enemy contact.
 
-**Controller** changes the custom modifier/trigger buttons and tap/hold actions; press-to-bind listens after you release the controls. There is one custom two-button chord plus native overrides and stance holds. R1/RB stays reserved for Ki Pulse and Frost Moon. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations explain the conflict before saving.
+**Controller** changes the custom modifier/trigger buttons and tap/hold actions; press-to-bind listens after you release the controls. There is one custom two-button chord plus native overrides and stance holds. R1/RB stays reserved for Ki Pulse and Frost Moon. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations open a popup naming the conflicting move, controls and stances, with a correction. One graph cannot belong to two different stances: to move the launcher from Low to High, clear its Low assignment first and remove any High Izuna Drop assignment.
 
 **Speed** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests its native speed. **More** provides extra native inputs, Frost Moon destinations, Help, the original moveset, and moveset import/export. Binding groups let you reuse one part without replacing the rest. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
 
@@ -49,11 +49,11 @@ Automated checks cover logical Xbox/PS mappings, analog triggers, slot changes, 
 
 `dataset/` organizes 12 sword strings and one handgun record by weapon and boss, preserving notes and hashed evidence. `data/imports/` describes playable phase graphs; `data/resources/` identifies installed assets; `data/presets/` holds assignments. `dataset/compile_trial.py` reproduces archive matches. Raw recording archives stay in this private repository and are excluded from the EXE.
 
-Sanada demonstrated why animation alone is insufficient: C6A created object IDs `229757` and `944393` at frames 13 and 78, but their models were absent. Its profile now requests native asset keys `3257` and `3258` before activation. The user confirmed firing, the faster timing and sword hiding. Hideyori's zero boss Ki cost required William's native Low-quick costs; live Ki recovery is observed, but manual Pulse acceptance remains pending.
+bloodborne gun shot demonstrated why animation alone is insufficient: C6A created object IDs `229757` and `944393` at frames 13 and 78, but their models were absent. Its profile now requests native asset keys `3257` and `3258` before activation. The user confirmed firing, the faster timing and sword hiding. Hideyori's zero boss Ki cost required William's native Low-quick costs; live Ki recovery is observed, but manual Pulse acceptance remains pending.
 
 ## Evidence and remaining checks
 
-The user confirmed Jin's six routes, Oda's two slashes, Omnislice playback and Sanada's hand-cannon. Isolated Jin Low-heavy testing also confirmed normal movement and death/retry. These results do not establish every enemy contact, projectile damage, camera or mission transition. The initial multi-boss failure exposed a loader hook left attached during pending I/O; Engine now detaches after submission and stops activation on load failure.
+The user confirmed Jin's six routes, Oda's two slashes, Omnislice playback and bloodborne gun shot. Isolated Jin Low-heavy testing also confirmed normal movement and death/retry. These results do not establish every enemy contact, projectile damage, camera or mission transition. An alpha.3 activation exited during resource loading while older source-build modules were retained. The exact crash cause is unconfirmed; preparation now rejects mixed native builds before loading resources, and a resource-loading exit stops activation until another explicit Enable. The initial multi-boss failure exposed a loader hook left attached during pending I/O; Engine now detaches after submission and stops activation on load failure.
 
 Boss action IDs are bank-local keys, not universal move names or boss identifiers. Jin and Oda both use `0x00000C6E`/`0x00000C6F` for different motions. Preserve the full 32-bit key, boss/source bank, payload bytes, motion/timing keys and game build together. One execution can contain several hits, and consecutive IDs do not prove a combo. Actor addresses can change or be reused after a death; generation and action-counter continuity matter more than the address alone.
 

@@ -34,12 +34,43 @@ let controllerChoice = 'saved';
 let bindingGroup = 'chord';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let captureGeneration = 0, draftGeneration = 0;
+let editGeneration = 0, explainedEdit = 0;
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 type Preview = { preset: Preset; used: string[]; moves: Record<string, { speed: number; percent: number; fill_frames: number; hold_frames: number }> };
 let preview: Preview | null = null, showUnused = false;
 const content = document.querySelector<HTMLElement>('#content')!;
 const notice = document.querySelector<HTMLElement>('#notice')!;
+const errorDialog = document.querySelector<HTMLDialogElement>('#binding-error')!;
+
+function errorText(error: unknown): string {
+  // Read worker failures without exposing Electron's transport implementation.
+  // Browser-local exceptions keep their useful message.
+  // Names and paths remain plain text even when supplied by a failed import.
+  return error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error).replace(/^Error: /, '');
+}
+
+function explainError(error: unknown) {
+  // Keep rejected drafts editable behind an accessible explanation.
+  // Operation and IO failures remain distinct from incompatible bindings.
+  // Dismissing the native dialog restores focus, including when using Escape.
+  const incompatible = Boolean(error && typeof error === 'object' && 'kind' in error && error.kind === 'validation');
+  document.querySelector('#error-title')!.textContent = incompatible ? 'Incompatible bind' : 'Could not complete action';
+  document.querySelector('#error-reason')!.textContent = (incompatible ? 'This bind is incompatible because: ' : '') + errorText(error);
+  document.querySelector('#error-guidance')!.textContent = incompatible ? 'Choose another move or clear the conflicting assignment. Your edits remain in the editor.' : 'Your edits remain in the editor. Resolve the reported problem, then try again.';
+  if (!errorDialog.open) errorDialog.showModal();
+}
+
+function refreshActions() {
+  // Allow saving valid drafts only while gameplay is stopped.
+  // Export does not change the running configuration and remains available.
+  // Status polling updates controls without revalidating or showing another popup.
+  const label = document.querySelector<HTMLElement>('#validation')!, valid = label.dataset.state === 'valid';
+  for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = !valid || (button.id === 'apply' ? !dirty || state.running : button.id === 'enable' && dirty);
+  document.querySelector<HTMLButtonElement>('#apply')!.title = state.running ? 'Disable the mod before saving changes.' : '';
+  document.querySelector<HTMLButtonElement>('#enable')!.title = dirty ? 'Save changes before enabling' : '';
+  if (valid) label.textContent = dirty ? state.running ? 'Disable the mod before saving changes. Your edits remain in the editor.' : 'Unsaved changes · ready to save' : 'Saved moveset';
+}
 
 function message(text: string, error = false) {
   // Show one current operation result without hiding it behind modal dialogs.
@@ -55,6 +86,7 @@ function changed() {
   // Apply validates the combined form, including conflicts across different tabs.
   // Reload remains available to discard edits and reread the Engine's actual state.
   dirty = true;
+  ++editGeneration;
   message('');
   schedulePreview();
 }
@@ -87,15 +119,14 @@ function schedulePreview() {
     // Errors stay separate from messages about binding, loading and saving.
     try {
       const invalid = content.querySelector<HTMLInputElement>('input:invalid');
-      if (invalid) throw new Error(`${invalid.closest('label')?.querySelector('span')?.textContent || 'Value'}: ${invalid.validationMessage}`);
+      if (invalid) throw { kind: 'validation', message: `${invalid.closest('label')?.querySelector('span')?.textContent || 'Value'}: ${invalid.validationMessage}` };
       const result = await window.mwm.request<Preview>('preview', params());
       if (generation !== draftGeneration) return;
-      preview = result; label.textContent = dirty ? 'Unsaved changes · ready to save' : 'Saved moveset'; label.dataset.state = 'valid'; label.classList.remove('error');
-      for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = button.id === 'apply' ? !dirty : button.id === 'enable' && dirty;
-      document.querySelector<HTMLButtonElement>('#enable')!.title = dirty ? 'Save changes before enabling' : '';
+      preview = result; label.dataset.state = 'valid'; label.classList.remove('error'); refreshActions();
     } catch (error) {
       if (generation !== draftGeneration) return;
-      preview = null; label.dataset.state = 'invalid'; label.textContent = String(error).replace(/^Error: /, ''); label.classList.add('error');
+      preview = null; label.dataset.state = 'invalid'; label.textContent = errorText(error); label.classList.add('error');
+      if (editGeneration > explainedEdit) { explainedEdit = editGeneration; explainError(error); }
     }
     refreshTuning();
   }, 180);
@@ -114,7 +145,13 @@ async function action(operation: () => Promise<void>) {
   // Re-enable controls even if a dialog is cancelled or the worker fails.
   if (busy || !state) return;
   busy = true; document.body.inert = true;
-  try { await operation(); } catch (error) { message(String(error).replace(/^Error: /, ''), true); }
+  try { await operation(); } catch (error) {
+    message(errorText(error), true); explainError(error);
+    if (error && typeof error === 'object' && 'kind' in error && error.kind === 'validation') {
+      explainedEdit = editGeneration;
+      schedulePreview();
+    }
+  }
   finally { busy = false; document.body.inert = false; }
 }
 
@@ -172,7 +209,7 @@ function moveOptions(role: MoveRole, empty = 'Native'): [string, string][] {
   // Research-only catalogue records never appear in these controls.
   // The Engine repeats this check when validating a submitted preset.
   const choices: [string, string][] = [['', empty]];
-  for (const move of state.capabilities.moves) if (move[role]) choices.push([move.id, moveName(move)]);
+  for (const move of state.capabilities.moves) if (move[role]) choices.push([move.id, move.name]);
   return choices;
 }
 
@@ -182,29 +219,6 @@ function section(title: string, hint: string) {
   // Returning that grid avoids multiple competing spacing conventions.
   content.append(element('h2', title, 'section-title'), element('p', hint, 'hint'));
   const grid = element('div', undefined, 'fields'); content.append(grid); return grid;
-}
-
-function moveName(move: Move): string {
-  // UI names describe recorded moves; stable IDs still cross the worker boundary.
-  // Trial labels come from the curated route descriptions, not inferred gameplay effects.
-  // Source addresses remain available only in the research collection.
-  const names: Record<string, string> = {
-    'jin_hayabusa.action_0c6e': 'Jin · Cyclone slash string',
-    'jin_hayabusa.action_0c6f': 'Jin · Second cyclone slash',
-    'jin_hayabusa.action_0bbf': 'Jin · Five-strike sword string',
-    'jin_hayabusa.action_0c79': 'Jin · Launcher only',
-    'jin_hayabusa.izuna_drop': 'Jin · Launcher + Izuna Drop',
-    'oda_nobunaga.action_0c6e': 'Oda · Final two slashes',
-    'oda_nobunaga.action_0c6f': 'Oda · Final slash',
-    'sanada_yukimura.action_0c6a': 'Sanada · Handgun shot',
-    'tachibana_muneshige.action_0d8d': 'Tachibana · Omnislice',
-    'toyotomi_hideyori.action_0d30': 'Hideyori · Four-hit string',
-    'toyotomi_hideyori.action_0d31': 'Hideyori · Second strike',
-    'toyotomi_hideyori.action_0d32': 'Hideyori · Third strike',
-    'toyotomi_hideyori.action_0d33': 'Hideyori · Final strike'
-  };
-  const boss = move.id.startsWith('jin_hayabusa.') ? 'Jin' : move.id.startsWith('okatsu.') ? 'Okatsu' : '';
-  return names[move.id] || (boss ? `${boss} · ${move.name}` : move.name);
 }
 
 function assignment(parent: HTMLElement, label: string, key: string, role: MoveRole, value: string | null, update: (value: string) => void) {
@@ -430,7 +444,7 @@ function renderSpeed() {
       else state.preset.move_settings[move.id] = { speed: control.valueAsNumber };
       changed();
     };
-    field(moveName(move), control, row);
+    field(move.name, control, row);
     const reset = element('button', 'Inherit'); reset.title = 'Remove this speed override';
     reset.onclick = () => {
       // Restore inheritance for this phase without resetting any other setting.
@@ -454,7 +468,7 @@ async function pollCapture() {
     if (!capture || generation !== captureGeneration) return;
     if (result.mask !== undefined) { state.preset[target] = result.mask; capture = null; changed(); render(); message('Bound ' + result.label + '. Choose Save changes to use it.'); }
     else { message(result.status || 'Waiting for input'); timer = setTimeout(pollCapture, 70); }
-  } catch (error) { if (generation === captureGeneration) { capture = null; render(); message(String(error), true); } }
+  } catch (error) { if (generation === captureGeneration) { capture = null; render(); message(errorText(error), true); } }
 }
 
 async function cancelCapture() {
@@ -556,11 +570,11 @@ function renderCollection() {
   // The layout and exact notes explain which recorded sequences still need adaptation.
   // Filtering only hides cards; it never edits the pending moveset or loses keyboard focus.
   content.append(element('h2', 'Sword Rebuild 1', 'section-title'));
-  content.append(element('p', 'The subset contains Jin moves. Sword Rebuild 1 adds Oda, Tachibana, Hideyori and Sanada. Save changes stores the draft; Enable mod activates it. See each route for its acceptance status.', 'hint'));
+  content.append(element('p', 'The subset contains Jin moves. Sword Rebuild 1 adds Oda, Tachibana, Hideyori and bloodborne gun shot. Save changes stores the draft; Enable mod activates it. See each route for its acceptance status.', 'hint'));
   const labels: Record<string, string> = { handgun: 'LB + LT', low_heavy: 'Low · heavy', low_dodge_attack: 'Low · dodge + heavy',
     mid_heavy: 'Mid · heavy', mid_dodge_attack: 'Mid · dodge + heavy', low_quick: 'Low · quick', high_heavy_omnislice: 'High heavy → LB + Square',
     frost_high: 'High Frost Moon', frost_mid: 'Mid Frost Moon', frost_low: 'Low Frost Moon' };
-  const actions: Record<string, string> = { low_dodge_attack: 'Jin · second heavy', mid_heavy: 'Jin · five-hit quick string B', mid_dodge_attack: 'Jin · five-hit quick string B',
+  const actions: Record<string, string> = { handgun: 'bloodborne gun shot', low_dodge_attack: 'Jin · second heavy', mid_heavy: 'Jin · five-hit quick string B', mid_dodge_attack: 'Jin · five-hit quick string B',
     frost_mid: 'Oda · final two slashes', frost_low: 'Jin · Flying Swallow', high_heavy_omnislice: 'Tachibana · Omnislice attack immediately' };
   const routes = element('dl', undefined, 'route-list');
   for (const route of collection.design.routes) {
@@ -648,9 +662,9 @@ function render() {
   else {
     const guide = element('article', undefined, 'guide');
     guide.append(element('h2', 'Edit, save, enable.'));
-    for (const text of ['1. Choose moves for your inputs, then Save changes.', '2. Open Controller to set your device and custom buttons if needed.', '3. Enable mod and test your moves. Check its status above; use Disable mod when finished.']) guide.append(element('p', text));
+    for (const text of ['1. Choose moves for your inputs. Disable the mod before Save changes; your draft stays in the editor.', '2. Open Controller to set your device and custom buttons if needed.', '3. Enable mod after saving. Check its status above; use Disable mod before further saves.']) guide.append(element('p', text));
     guide.append(element('h2', 'Sword Rebuild 1 defaults'));
-    for (const text of ['Low Triangle / Y and dodge + heavy use Jin’s cyclone string. Mid Triangle / Y and dodge + heavy use Jin’s five strikes. Low Square / X uses Hideyori’s four-hit string.', 'Low LB + LT tap fires Sanada’s handgun. High heavy → LB + Square / X uses Tachibana’s Omnislice.', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice. Low uses Flying Swallow, Mid uses Oda’s final two slashes, High uses the downward slash.', 'Choose Hold Triangle / Y separately in each stance. Launcher only and Launcher + Izuna Drop must use different stances; the drop requires contact.', 'Use Reuse a binding group under Controller or More → Other inputs & options to export or load one group. Other groups and speed settings stay unchanged.']) guide.append(element('p', text));
+    for (const text of ['Low Triangle / Y and dodge + heavy use Jin’s cyclone string. Mid Triangle / Y and dodge + heavy use Jin’s five strikes. Low Square / X uses Hideyori’s four-hit string.', 'Low LB + LT tap uses bloodborne gun shot. High heavy → LB + Square / X uses Tachibana’s Omnislice.', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice. Low uses Flying Swallow, Mid uses Oda’s final two slashes, High uses the downward slash.', 'Choose Hold Triangle / Y separately in each stance. Launcher only and Launcher + Izuna Drop must use different stances; the drop requires contact.', 'Use Reuse a binding group under Controller or More → Other inputs & options to export or load one group. Other groups and speed settings stay unchanged.']) guide.append(element('p', text));
     content.append(guide);
   }
   schedulePreview();
@@ -712,6 +726,7 @@ function showRuntime(snapshot: Snapshot) {
   const detail = document.querySelector<HTMLElement>('#runtime-detail')!; detail.textContent = snapshot.detail; detail.title = snapshot.detail;
   document.querySelector<HTMLButtonElement>('#enable')!.hidden = snapshot.running;
   document.querySelector<HTMLButtonElement>('#disable')!.hidden = !snapshot.running;
+  refreshActions();
 }
 
 async function pollStatus() {
@@ -726,7 +741,7 @@ async function pollStatus() {
         render(); message(snapshot.load_warning || '', Boolean(snapshot.load_warning));
       }
       showRuntime(snapshot);
-    } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; document.querySelector('#runtime-detail')!.textContent = String(error); }
+    } catch (error) { document.querySelector('#runtime')!.textContent = 'Worker unavailable'; document.querySelector('#runtime-detail')!.textContent = errorText(error); }
   }
   setTimeout(pollStatus, 1800);
 }
@@ -736,7 +751,7 @@ async function start() {
   // Startup failure stays visible instead of presenting an empty ready form.
   // Status polling is read-only and does not attach to Nioh.
   document.body.inert = true;
-  try { collection = await window.mwm.request<Collection>('collection'); await reload(); void pollStatus(); } catch (error) { message(String(error), true); }
+  try { collection = await window.mwm.request<Collection>('collection'); await reload(); void pollStatus(); } catch (error) { message(errorText(error), true); }
   finally { document.body.inert = false; }
 }
 void start();

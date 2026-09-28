@@ -25,5 +25,10 @@
     <main id="content" aria-busy="true"></main>
     <footer><div class="feedback"><p id="validation" role="status">Reading moveset…</p><p id="notice" role="status"></p></div><button id="apply" data-action="apply" class="primary">Save changes</button></footer>
   </div>
+  <dialog id="binding-error" aria-labelledby="error-title" aria-describedby="error-reason error-guidance">
+    <h2 id="error-title">Incompatible bind</h2>
+    <p id="error-reason"></p><p id="error-guidance"></p>
+    <form method="dialog"><button autofocus>Return to editor</button></form>
+  </dialog>
 </body>
 </html>

@@ -107,6 +107,13 @@ input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #
 .recorded-note { white-space: pre-wrap; font-size: 12px; line-height: 1.6; }
 .source-ids { font-family: monospace; font-size: 11px; overflow-wrap: anywhere; }
 .empty { color: var(--muted); }
+dialog { width: min(520px,calc(100vw - 40px)); border: 1px solid #ffffff30; border-radius: 8px; padding: 24px; background: #1a2229; color: inherit; box-shadow: 0 16px 60px #0009; }
+dialog::backdrop { background: #0008; }
+dialog h2 { font-size: 18px; margin: 0 0 14px; }
+dialog p { line-height: 1.6; overflow-wrap: anywhere; }
+dialog form { text-align: right; margin-top: 20px; }
+dialog button { border-color: #ffffff30; }
+#error-guidance { color: var(--muted); }
 
 /* One primary persistence action. */
 footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-top: 11px; border-top: 1px solid var(--line); min-height: 45px; }

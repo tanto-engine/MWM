@@ -126,7 +126,7 @@ def compile_sources(folder):
                                                 timing_index=ti,timing_record_offset=to,timing_event_count=count,
                                                 source_payload_offset=at)
             if not any(item['id']==identifier for item in catalogue['moves']):
-                catalogue['moves'].append(dict(id=identifier,name=boss.replace('_',' ').title()+f' · {key:04X} trial',boss_id=boss,
+                catalogue['moves'].append(dict(id=identifier,name='bloodborne gun shot' if boss=='sanada_yukimura' else boss.replace('_',' ').title()+f' · {key:04X} trial',boss_id=boss,
                     weapon='sword',designation='skill',source=dict(action_id=key,action_hex=f'{key:04X}',motion_id=motion_key,
                     timing_id=motion_key,flags=move['flags'],ki_cost=move['ki_cost'],recovery_frame=move['recovery_frame']),
                     default_binding=None,implementation=dict(selectable=True,engine_profile='recorded_grounded_trial'),

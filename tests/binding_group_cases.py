@@ -15,6 +15,23 @@ from game_controller import game_button_mask
 
 
 class BindingGroupTests(unittest.TestCase):
+    def test_invalid_or_running_draft_never_writes_settings(self):
+        # Reject duplicate held moves before persistence, even while gameplay is active.
+        # Valid drafts also require a stopped runtime so native graphs cannot hot-reload.
+        # Mocked process state and forbidden writers keep this test entirely offline.
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            with patch.object(worker.Desktop, 'location', return_value=runtime), patch.object(worker, 'process_matches', return_value=True), patch.object(worker, 'atomic_json') as write:
+                desktop = worker.Desktop()
+                with self.assertRaisesRegex(ValueError, 'Disable the mod before saving changes'):
+                    desktop.apply(dict(self.params, runtime=str(runtime)))
+                invalid = deepcopy(self.preset)
+                invalid['stance_holds'] = dict(low='jin_hayabusa.action_0c79', mid=None, high='jin_hayabusa.action_0c79')
+                with self.assertRaises(worker.BindingError):
+                    desktop.apply(dict(self.params, preset=invalid, runtime=str(runtime)))
+                write.assert_not_called()
+                self.assertEqual(list(runtime.iterdir()), [])
+
     def test_terminal_attachment_failure_remains_visible_after_worker_exit(self):
         # A failed resource loader stops its supervisor instead of retrying indefinitely.
         # Keep its failure text visible even though the process is no longer running.

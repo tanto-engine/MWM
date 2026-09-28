@@ -62,7 +62,7 @@ function startWorker() {
       const reply = JSON.parse(line), entry = pending.get(reply.id);
       if (!entry) return;
       clearTimeout(entry.timer); pending.delete(reply.id);
-      reply.error ? entry.reject(new Error(reply.error)) : entry.resolve(reply.result);
+      reply.error ? entry.reject(Object.assign(new Error(reply.error.message), { kind: reply.error.kind })) : entry.resolve(reply.result);
     } catch (error) { failPending(new Error('Invalid Engine worker response: ' + error.message)); }
   });
   worker.on('error', error => {
@@ -154,7 +154,13 @@ async function openWindow() {
   }
 }
 
-ipcMain.handle('mwm:request', request);
+ipcMain.handle('mwm:request', async (...args) => {
+  // Send failures as data so Electron cannot prepend its internal IPC exception wrapper.
+  // Validation keeps its identity through the isolated preload boundary.
+  // Worker startup and filesystem failures remain ordinary operation errors.
+  try { return { ok: true, result: await request(...args) }; }
+  catch (error) { return { ok: false, error: { kind: error.kind || 'operation', message: error.message } }; }
+});
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => {

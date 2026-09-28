@@ -16,6 +16,10 @@ from prepare_session import configured_imports, configured_replacements, compile
 from binding_groups import describe_groups, export_group, import_group
 
 
+class BindingError(ValueError):
+    """A rejected draft, distinct from worker, file or lifecycle failures."""
+
+
 class Desktop:
     def __init__(self):
         # Keep one temporary controller listener for this window's binding flow.
@@ -96,14 +100,16 @@ class Desktop:
     def apply(self, params):
         # Save a validated configuration only to the runtime this window originally displayed.
         # Engine readers receive complete JSON files through the maintained atomic writer.
-        # Changing a controller requires a stopped Engine so two settings files cannot mix live layouts.
+        # Saving requires a stopped Engine so edits cannot hot-reload native imports during combat.
         runtime = self.location()
         if str(runtime) != params['runtime']:
             raise ValueError('Active Engine changed. Reload settings before applying.')
-        preset = self.preview(params)['preset']
-        previous = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
-        if previous != params['calibration'] and process_matches(read_json(runtime/'play-process.json')):
-            raise ValueError('Disable the Engine before changing controller mapping or slot')
+        try:
+            preset = self.preview(params)['preset']
+        except ValueError as error:
+            raise BindingError(str(error)) from error
+        if process_matches(read_json(runtime/'play-process.json')):
+            raise ValueError('Disable the mod before saving changes. Your edits remain in the editor.')
         self.cancel_capture()
         atomic_json(runtime/'controller-calibration.json', params['calibration'])
         atomic_json(runtime/'controller-binding.json', preset)
@@ -270,7 +276,9 @@ def main():
                 result = desktop.dispatch(request['method'], request.get('params', {}))
                 reply = dict(id=request['id'], result=result)
             except (ValueError, KeyError, TypeError, OSError, RuntimeError) as error:
-                reply = dict(id=request.get('id'), error=str(error))
+                validation = isinstance(error, BindingError) or (isinstance(error, ValueError) and not isinstance(error, json.JSONDecodeError)
+                    and request.get('method') in ('preview', 'validate', 'add_override', 'binding_import', 'import', 'controller'))
+                reply = dict(id=request.get('id'), error=dict(kind='validation' if validation else 'operation', message=str(error)))
             print(json.dumps(reply, allow_nan=False), flush=True)
     finally:
         desktop.cancel_capture()

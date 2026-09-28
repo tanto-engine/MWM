@@ -55,7 +55,7 @@
     {
       "id": "okatsu.charged_rush",
       "boss_id": "okatsu",
-      "name": "Charged Rush",
+      "name": "Okatsu · Charged Rush",
       "name_status": "descriptive_mod_name",
       "category": "sword_rush",
       "weapon": "sword",
@@ -1365,7 +1365,7 @@
     {
       "id": "okatsu.leaping_slash",
       "boss_id": "okatsu",
-      "name": "Leaping Slash",
+      "name": "Okatsu · Leaping Slash",
       "name_status": "descriptive_mod_name",
       "category": "sword_leaping_attack",
       "weapon": "sword",
@@ -1488,7 +1488,7 @@
     {
       "id": "okatsu.action_0c61",
       "boss_id": "okatsu",
-      "name": "Sword slash string",
+      "name": "Okatsu · Sword slash string",
       "name_status": "descriptive_mod_name",
       "category": "sword_combo",
       "weapon": "sword",
@@ -3543,7 +3543,7 @@
     {
       "id": "okatsu.action_0c69",
       "boss_id": "okatsu",
-      "name": "Sword grab and finisher",
+      "name": "Okatsu · Sword grab and finisher",
       "name_status": "descriptive_mod_name",
       "category": "grab_attempt",
       "weapon": "sword",
@@ -4479,7 +4479,7 @@
     {
       "id": "jin_hayabusa.action_0bbf",
       "boss_id": "jin_hayabusa",
-      "name": "Sword string A, five recorded strikes",
+      "name": "Jin · Five-strike sword string",
       "name_status": "inferred",
       "category": "normal",
       "weapon": "sword",
@@ -27580,7 +27580,7 @@
     {
       "id": "jin_hayabusa.action_0bc0",
       "boss_id": "jin_hayabusa",
-      "name": "Heavy sword string C",
+      "name": "Jin · Heavy sword string C",
       "name_status": "inferred",
       "category": "normal",
       "weapon": "sword",
@@ -35250,7 +35250,7 @@
     {
       "id": "jin_hayabusa.action_0c6e",
       "boss_id": "jin_hayabusa",
-      "name": "Heavy sword string D: vertical slash, two cyclone spins",
+      "name": "Jin · Cyclone slash string",
       "name_status": "user_confirmed",
       "category": "heavy_attack",
       "weapon": "sword",
@@ -43067,7 +43067,7 @@
     {
       "id": "jin_hayabusa.action_0c79",
       "boss_id": "jin_hayabusa",
-      "name": "Upward slash launcher",
+      "name": "Jin · Launcher only",
       "name_status": "player_confirmed",
       "category": "sword_launcher",
       "weapon": "sword",
@@ -43311,7 +43311,7 @@
     {
       "id": "jin_hayabusa.action_0c71",
       "boss_id": "jin_hayabusa",
-      "name": "Flying Swallow",
+      "name": "Jin · Flying Swallow",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -48450,7 +48450,7 @@
     {
       "id": "jin_hayabusa.action_0c81",
       "boss_id": "jin_hayabusa",
-      "name": "Aerial somersault",
+      "name": "Jin · Aerial somersault",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -52938,7 +52938,7 @@
     {
       "id": "jin_hayabusa.izuna_drop",
       "boss_id": "jin_hayabusa",
-      "name": "Izuna Drop",
+      "name": "Jin · Launcher + Izuna Drop",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -57500,7 +57500,7 @@
     {
       "id": "jin_hayabusa.action_0c75",
       "boss_id": "jin_hayabusa",
-      "name": "Downward sword slash",
+      "name": "Jin · Downward sword slash",
       "name_status": "player_confirmed",
       "category": "sword_skill",
       "weapon": "sword",
@@ -66198,7 +66198,7 @@
     {
       "id": "jin_hayabusa.flying_swallow_jump",
       "boss_id": "jin_hayabusa",
-      "name": "Flying Swallow jump",
+      "name": "Jin · Flying Swallow jump",
       "name_status": "player_confirmed",
       "category": "jump",
       "weapon": "sword",
@@ -66954,7 +66954,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d30",
-      "name": "Toyotomi Hideyori · 0D30 trial",
+      "name": "Hideyori · Four-hit string",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -66981,7 +66981,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d31",
-      "name": "Toyotomi Hideyori · 0D31 trial",
+      "name": "Hideyori · Second strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67008,7 +67008,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d32",
-      "name": "Toyotomi Hideyori · 0D32 trial",
+      "name": "Hideyori · Third strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67035,7 +67035,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d33",
-      "name": "Toyotomi Hideyori · 0D33 trial",
+      "name": "Hideyori · Final strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67062,7 +67062,7 @@
     },
     {
       "id": "oda_nobunaga.action_0c6e",
-      "name": "Oda Nobunaga · 0C6E trial",
+      "name": "Oda · Final two slashes",
       "boss_id": "oda_nobunaga",
       "weapon": "sword",
       "designation": "skill",
@@ -67089,7 +67089,7 @@
     },
     {
       "id": "oda_nobunaga.action_0c6f",
-      "name": "Oda Nobunaga · 0C6F trial",
+      "name": "Oda · Final slash",
       "boss_id": "oda_nobunaga",
       "weapon": "sword",
       "designation": "skill",
@@ -67116,7 +67116,7 @@
     },
     {
       "id": "tachibana_muneshige.action_0d8d",
-      "name": "Tachibana Muneshige · 0D8D trial",
+      "name": "Tachibana · Omnislice",
       "boss_id": "tachibana_muneshige",
       "weapon": "sword",
       "designation": "skill",
@@ -67143,7 +67143,7 @@
     },
     {
       "id": "sanada_yukimura.action_0c6a",
-      "name": "Sanada Yukimura · 0C6A trial",
+      "name": "bloodborne gun shot",
       "boss_id": "sanada_yukimura",
       "weapon": "sword",
       "designation": "skill",
