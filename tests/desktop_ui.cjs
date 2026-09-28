@@ -141,6 +141,7 @@ app.whenReady().then(async () => {
       assert(document.querySelectorAll('.stance-card [data-assignment^="hold:"]').length===3,'Hold Triangle is not directly selectable in every stance');
       assert(![...document.querySelectorAll('main option')].some(x=>/\\b(?:0x)?[0-9A-F]{4}\\b/.test(x.textContent)),'Overview exposes source hex IDs');
       const lowHold=document.querySelector('[data-assignment="hold:low"]');
+      assert([...lowHold.options].some(option=>option.value==='okatsu.charged_rush'),'Charged Rush is absent from held-heavy choices');
       const highHold=document.querySelector('[data-assignment="hold:high"]');
       assert(lowHold.getAttribute('aria-label')==='Hold Triangle / Y','Held input does not identify the controller button');
       assert([...lowHold.options].some(x=>x.value==='jin_hayabusa.action_0c79' && x.text.includes('Launcher only')),'Standalone launcher is unclear');
