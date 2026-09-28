@@ -89,7 +89,8 @@ class SwordConfigurationTests(unittest.TestCase):
         self.assertEqual(result[-1],dict(source='tiger_sprint',stance='any',move='okatsu.leaping_slash'))
         self.app.binding_stance.set('low');self.app.set_native_binding()
         self.assertEqual(self.app.form()['skill_bindings'],result)
-        self.assertIn('overlap',self.app.notice.get())
+        self.assertIn('Low Tiger Sprint',self.app.notice.get())
+        self.assertIn('Only one override can own this input',self.app.notice.get())
 
     def test_invalid_speed_never_replaces_saved_configuration(self):
         # Try an invalid playback multiplier through the real speed editor.
