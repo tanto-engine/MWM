@@ -672,7 +672,7 @@ class ProductBoundaryTests(unittest.TestCase):
         # Product resources and runtime libraries must be self-contained.
         with tempfile.TemporaryDirectory() as folder:
             destination=Path(folder)/'stage'
-            stage_product(ROOT.parent/'MWM',destination)
+            stage_product(ROOT/'mwm',destination)
             self.assertNotIn('def record(', (destination/'runtime/boss_probe.py').read_text())
             self.assertNotIn('def save_catalogue(', (destination/'runtime/catalogue.py').read_text())
             self.assertTrue((destination/'runtime/native/build/nioh_skill_runtime.dll').is_file())

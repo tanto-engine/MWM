@@ -1,7 +1,7 @@
 # Build a distributable MWM EXE through the shared Engine release gate.
-# The gate owns version/pin checks, tests, packaging, checksums and the immutable version tag.
+# The gate owns version checks, tests, packaging, checksums and the immutable version tag.
 # OneDir changes packaging layout only; it does not bypass release validation.
-param([string]$EngineRoot = (Join-Path $PSScriptRoot '..\tanto-engine'), [string]$PythonRuntime = 'python', [switch]$OneDir)
+param([string]$EngineRoot = (Join-Path $PSScriptRoot '..'), [string]$PythonRuntime = 'python', [switch]$OneDir)
 $ErrorActionPreference = 'Stop'
 $EngineRoot = (Resolve-Path -LiteralPath $EngineRoot).Path
 # Pass separate arguments so a checkout or Python path containing spaces remains intact.

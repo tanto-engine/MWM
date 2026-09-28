@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 os.environ.setdefault('TANTO_MOD_ROOT', str(ROOT))
-sys.path.insert(0, str(Path(os.environ.get('TANTO_ENGINE_ROOT', ROOT.parent/'tanto-engine'))/'runtime'))
+sys.path.insert(0, str(Path(os.environ.get('TANTO_ENGINE_ROOT', ROOT.parent))/'runtime'))
 from catalogue import iter_moves, load_catalogue
 from engine_config import atomic_json, read_json
 from move_imports import read_import_manifest

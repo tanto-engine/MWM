@@ -32,7 +32,7 @@ function failPending(error) {
 function startWorker() {
   // Use an explicit development Python override or the interpreter on PATH.
   // Engine remains a separate worker; frame-sensitive gameplay never runs in Chromium.
-  // Packaged builds resolve the gate-staged worker; source builds use the sibling Engine.
+  // Packaged builds resolve the gate-staged worker; source builds use this repository's Engine.
   const cached = path.join(process.env.USERPROFILE || '', '.cache', 'tanto-build', 'Scripts', 'python.exe');
   const python = process.env.NIOH_PYTHON || (fs.existsSync(cached) ? cached : 'python.exe');
   const version = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8')).version;

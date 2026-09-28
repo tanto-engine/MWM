@@ -14,7 +14,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'MWM'
+MOD_ROOT = ROOT/'mwm'
 sys.path.insert(0, str(ROOT / 'runtime'))
 import prepare_session as prepare
 
@@ -114,6 +114,9 @@ class PreparationTests(unittest.TestCase):
         configured = patch.object(prepare, 'configured_replacements', return_value=None)
         configured.start()
         self.addCleanup(configured.stop)
+        saved = patch.object(prepare, 'CURRENT_CONFIG', MOD_ROOT/'data/preset.json')
+        saved.start()
+        self.addCleanup(saved.stop)
 
     def test_player_replacement_pins_high_transition_slice_and_rejects_changed_rows(self):
         # Resolve William's recorded CF5 descriptor with transition indices above 4096.

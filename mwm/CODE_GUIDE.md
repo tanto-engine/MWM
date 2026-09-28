@@ -1,6 +1,6 @@
 # Read MWM as a Nioh player
 
-MWM means **Multi-Weapon Moveset Mod**. This repository is the shared weapon application, starting with the existing single-katana moveset. It owns selectable moves, defaults and the consumer interface; `tanto-engine` owns native integration and reviewed adaptations. Recorder remains separate, and incoming captures stay outside these source repositories.
+MWM means **Multi-Weapon Moveset Mod**. This folder is the weapon application inside Tanto Engine, starting with the existing single-katana moveset. It owns selectable moves, defaults and the consumer interface; `../runtime/` owns native integration and reviewed adaptations. Recorder remains separate, and incoming working captures stay outside these source repositories.
 
 Reviewed intake snapshots now live in this private repo under `dataset/evidence/`; working Recorder folders remain in Downloads. `desktop/build.mjs` embeds the readable dataset and design in the app, while raw archives stay out of the consumer package. MWM's product-specific tests live in `tests/`; Engine's existing offline entrypoint loads them alongside generic Engine checks.
 
@@ -14,7 +14,7 @@ The worker pipe explicitly uses UTF-8 so Windows code pages cannot corrupt prese
 
 `app/binding_groups.py` defines four disjoint groups using exact field lists. A schema-1 `mwm_binding_group` document stores its group, sword weapon and copied bindings; only chord files include source controller identity. Import merges into a copy, remaps chord masks and compiles the complete candidate before returning it. Files cannot patch speed, name or other groups. New override rows also compile against existing slot ownership before appearing in the draft. Invalid saved presets open as a remapped baseline draft with a warning; recovery never overwrites the original file.
 
-1. `Trainer.ps1` launches `launch.py`, or explicitly asks it to enable/disable the runtime. `launch.py` selects packaged code or the sibling Engine, sets product/state paths, and dispatches only its allowed worker modules. Existing packaged preferences remain under `Tanto/Sword/runtime` despite the product rename.
+1. `Trainer.ps1` launches `launch.py`, or explicitly asks it to enable/disable the runtime. `launch.py` selects packaged code or this checkout's `../runtime/`, sets product/state paths, and dispatches only its allowed worker modules. Existing packaged preferences remain under `Tanto/Sword/runtime` despite the repository rename.
 2. `app/trainer.py` obtains reviewed capabilities from Engine. A displayed name is mapped to a stable move ID; controller labels map to saved button bits. The form distinguishes pending edits from Apply, and Save cancellation does not apply a pending moveset.
 3. The Engine validator checks the complete preset, not just the last edited box. Native skill overrides are scoped by source and stance. Speed changes affect reviewed playback, while paired phases, Frost startup, Ki Pulse authoring and physics remain controlled by Engine.
 4. Press-to-bind first requires all controls to be released. It accepts one calibrated input from the selected controller and changes the form only. Changing devices translates through logical button meaning; a device's name alone does not establish compatibility.
@@ -50,6 +50,6 @@ Match each description against the last few action executions before recording S
 
 ## Builds and repository hygiene
 
-`Build.ps1` delegates every EXE compilation to Engine's shared release gate. `CHANGELOG.md` describes version changes; Engine's `RELEASES.md` explains the required clean commits, exact pin, offline checks, immutable artifacts and tags. `.gitignore` excludes builds and local runtime state. `.gitattributes` preserves appropriate text/binary treatment.
+`Build.ps1` delegates every EXE compilation to the repository root's release gate. `CHANGELOG.md` describes version changes; `../RELEASES.md` explains clean commits, offline checks, immutable artifacts and tags. The repository's `.gitignore` excludes builds and local runtime state.
 
 Tests live in Engine and run through `Test-Offline.ps1`; do not create a second product-specific test workflow. A source comment change does not modify an already released EXE, and this review does not claim new MWM gameplay acceptance.

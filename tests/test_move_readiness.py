@@ -21,7 +21,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MOD_ROOT = ROOT.parent/'MWM'
+MOD_ROOT = ROOT/'mwm'
 SUPPORT = ROOT/'tests/support'
 sys.path[:0] = [str(ROOT), str(SUPPORT), str(ROOT/'runtime'), str(ROOT.parent/'tanto-recorder/src')]
 from catalogue import load_catalogue, save_catalogue, merge_recording
@@ -193,7 +193,7 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.discover(str(SUPPORT),pattern='*_cases.py'))
     # Product-owned expectations live with MWM, but still run through this single entrypoint.
     import importlib.util
-    for path in sorted((ROOT.parent/'MWM/tests').glob('*_cases.py')):
+    for path in sorted((ROOT/'mwm/tests').glob('*_cases.py')):
         spec = importlib.util.spec_from_file_location('mwm_'+path.stem, path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

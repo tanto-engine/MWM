@@ -9,7 +9,7 @@ import time
 
 ROOT = Path(os.environ.get('TANTO_MOD_ROOT', Path(__file__).resolve().parents[1]))
 RUNTIME = Path(os.environ.get('NIOH_RUNTIME_HOME', ROOT/'runtime'))
-CODE = Path(os.environ.get('TANTO_ENGINE_ROOT', ROOT.parent/'tanto-engine'))/'runtime' if not (ROOT/'runtime/engine_config.py').is_file() else ROOT/'runtime'
+CODE = Path(os.environ.get('TANTO_ENGINE_ROOT', ROOT.parent))/'runtime' if not (ROOT/'runtime/engine_config.py').is_file() else ROOT/'runtime'
 os.environ['TANTO_MOD_ROOT'] = str(ROOT)
 os.environ['NIOH_RUNTIME_HOME'] = str(RUNTIME)
 for folder in (CODE,):

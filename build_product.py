@@ -34,17 +34,18 @@ def source_state(project):
 def release_inputs(project):
     # Reject a release whose version, notes, source or dependencies cannot be traced.
     # Check both local and remote tags so another checkout cannot silently reuse a published version.
-    # All three checkouts participate in integration tests; their exact clean commits enter the receipt.
+    # The integrated Engine/MWM checkout and the separate Recorder enter the receipt.
     spec=json.loads((project/'product.json').read_text(encoding='utf8'))
     version=spec.get('version','')
     if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?',version):
         raise ValueError('Set a release version such as 0.2.0-alpha.1 in product.json')
     if f'## {version}\n' not in (project/'CHANGELOG.md').read_text(encoding='utf8'):
         raise ValueError('Add release notes for this version to CHANGELOG.md')
-    sources={p.name:source_state(p) for p in (ROOT,ROOT.parent/'MWM',ROOT.parent/'tanto-recorder')}
+    repositories=(ROOT,ROOT.parent/'tanto-recorder') if spec['kind']=='recorder' else (ROOT,)
+    sources={p.name:source_state(p) for p in repositories}
     if any(state['dirty'] for state in sources.values()):
-        raise ValueError('Commit all Engine, MWM and Recorder changes before compiling an EXE')
-    if spec.get('engine_commit')!=sources[ROOT.name]['commit']:
+        raise ValueError('Commit Engine/MWM and Recorder source changes before compiling an EXE')
+    if spec['kind']=='recorder' and spec.get('engine_commit')!=sources[ROOT.name]['commit']:
         raise ValueError('Review and pin this Engine revision in product.json before packaging')
     used=(project/'dist'/version).exists()
     for args in (['tag','--list',f'v{version}'],['ls-remote','--tags','origin',f'refs/tags/v{version}']):
@@ -260,7 +261,8 @@ def main():
     (package/'SHA256SUMS.txt').write_text(''.join(f'{sha}  {name}\n' for name,sha in hashes.items()),encoding='utf8')
     destination=project/'dist'/spec['version'];destination.parent.mkdir(exist_ok=True)
     package.rename(destination)
-    subprocess.run(['git','-C',str(project),'tag','-a',f'v{spec["version"]}',sources[project.name]['commit'],
+    source_key=project.name if spec['kind']=='recorder' else ROOT.name
+    subprocess.run(['git','-C',str(project),'tag','-a',f'v{spec["version"]}',sources[source_key]['commit'],
         '-m',f'{spec["name"]} {spec["version"]}; Engine {sources[ROOT.name]["commit"]}; SHA256SUMS '+
         hashlib.sha256((destination/'SHA256SUMS.txt').read_bytes()).hexdigest()],check=True)
     print(destination)

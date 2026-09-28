@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch, Mock
 
 ROOT = Path(__file__).resolve().parents[2]
-MOD_ROOT = ROOT.parent/'MWM'
+MOD_ROOT = ROOT/'mwm'
 sys.path[:0] = [str(MOD_ROOT/'app'), str(ROOT/'runtime')]
 import engine_config as config
 import process_support as process

@@ -1,4 +1,4 @@
-# Select packaged or sibling Engine code and dispatch the trainer or an allowed runtime worker.
+# Select packaged or repository Engine code and dispatch the trainer or an allowed runtime worker.
 # PyInstaller exposes bundled files through _MEIPASS; source development uses this checkout.
 # Keep product data/state paths separate from shared implementation; see CODE_GUIDE.md.
 import json
@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 ROOT=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parent))
-engine=Path(os.environ.get('TANTO_ENGINE_ROOT',ROOT.parent/'tanto-engine'))
+engine=Path(os.environ.get('TANTO_ENGINE_ROOT',ROOT.parent))
 code=ROOT/'runtime' if (ROOT/'runtime/engine_config.py').exists() else engine/'runtime'
 sys.path[:0]=[str(ROOT/'app'),str(code)]
 os.environ['TANTO_MOD_ROOT']=str(ROOT)

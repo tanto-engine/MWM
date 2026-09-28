@@ -27,7 +27,7 @@ if ($Enable -or $Disable) {
     # Source testing must use the current native code, not a DLL left by a previous release.
     # Build only the Engine DLLs; opening this editor still performs no game attachment.
     # Enable copies the completed libraries into its immutable session before using them.
-    & (Join-Path $PSScriptRoot '..\tanto-engine\runtime\native\Build.ps1')
+    & (Join-Path $PSScriptRoot '..\runtime\native\Build.ps1')
     Push-Location $PSScriptRoot
     try {
         & npm.cmd run build:ui

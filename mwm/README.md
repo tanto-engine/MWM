@@ -6,7 +6,7 @@ A portable Nioh moveset editor, starting with single katana. Choose the moves as
 
 ## Start playing
 
-Download **MWM.exe** from [Releases](https://github.com/tanto-engine/MWM/releases). The EXE contains its own interface, Engine worker, move definitions and artwork; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
+Download **MWM.exe** from [Releases](https://github.com/neuriv/tanto-engine/releases). The EXE contains its own interface, Engine worker, move definitions and artwork; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
 
 Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. Disable the mod before saving edits; invalid drafts stay in the editor and never change the running moveset. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. After an Engine update, restart Nioh before enabling the new EXE. Stop retains native code until the game exits; mixing builds is blocked.
 
@@ -65,6 +65,6 @@ Match descriptions against the final few relevant executions before Stop, lookin
 
 ## Build and release
 
-Keep Engine, MWM and Recorder as sibling checkouts. After `npm ci`, `Trainer.ps1` builds current native libraries and opens the source UI. Engine's `Test-Offline.ps1` runs both maintained suites, including product UI and binding checks.
+MWM lives in this repository's `mwm/` folder. Keep Recorder beside the repository for integration tests. After `npm ci` in `mwm/`, `Trainer.ps1` builds current native libraries and opens the source UI. The repository root's `Test-Offline.ps1` runs both maintained suites, including product UI and binding checks.
 
 Close the source editor before building. `Build.ps1` requires clean commits, a pinned Engine, a new version and release notes. It packages and checks an isolated EXE, then records hashes and an immutable version tag. Packaged checks exercise startup, actual UI rebinding, saved settings, XInput translation and bundled assets with game access blocked. [CODE_GUIDE.md](CODE_GUIDE.md) gives module details and future work.
