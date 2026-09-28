@@ -127,18 +127,18 @@ template<class T> static bool read_field(uintptr_t address, T& value) {
         && copied == sizeof(value);
 }
 
-static void locate_player(void* actor) {
+static bool locate_player(void* actor) {
     // Identify William through the researched sword action-bank fingerprint.
     // Respect enabled-bank priority and publish the owner before the actor pointer.
     // Resource discovery must not mistake a boss with a colliding action key for the player.
     const auto node = reinterpret_cast<uintptr_t>(actor);
     uintptr_t vtable = 0, owner = 0;
     if (!read_field(node, vtable) || vtable != base + 0x11A3530
-        || !read_field(node + 0x50, owner) || !owner) return;
+        || !read_field(node + 0x50, owner) || !owner) return false;
     for (unsigned slot = 0; slot != 3; ++slot) {
         uintptr_t bank = 0, table = 0; uint32_t count = 0;
         if (!read_field(node + 0x70 + 8 * slot, bank) || !bank) continue;
-        if (!read_field(bank + 0x128, table) || !read_field(bank + 0x130, count) || count > 4096) return;
+        if (!read_field(bank + 0x128, table) || !read_field(bank + 0x130, count) || count > 4096) return false;
         for (unsigned i = 0; i != count; ++i) {
             uintptr_t descriptor = 0, payload = 0; uint32_t key = 0; uint8_t enabled = 0; int32_t motion = 0;
             if (!read_field(table + 8 * i, descriptor) || !descriptor) continue;
@@ -147,10 +147,12 @@ static void locate_player(void* actor) {
             if (read_field(descriptor + 0x20, payload) && read_field(payload + 0x20, motion) && motion == 2033) {
                 state->owner = owner;
                 InterlockedExchange64(reinterpret_cast<volatile LONG64*>(&state->player), node);
+                return true;
             }
-            return; // Same enabled-bank priority as native73FA40.
+            return false; // Same enabled-bank priority as native73FA40.
         }
     }
+    return false;
 }
 
 static void resource_decoded(void* object) {
@@ -212,6 +214,7 @@ static void submit_resources() {
         return;
     }
     auto data_allocator = *reinterpret_cast<void**>(system + 0x20);
+    if (!data_allocator) { InterlockedExchange(&submitting, 0); return; }
     // Effects can create an empty object even when its model/projectile resource is absent.
     // F91850 is the native object-asset retain/load path used at 760F67; each successful
     // request owns one reference. Reattaching this immutable loader never submits it again.
@@ -272,8 +275,12 @@ static float resource_frame(void* actor, float delta) {
     // Detach can stop new work while outstanding callbacks and decoded assets remain valid.
     InterlockedIncrement(&callbacks);
     const DWORD error = GetLastError();
-    if (!state->player) locate_player(actor);
-    if (InterlockedCompareExchange(&state->phase, 0, 0) == 1
+    // Other actors may tick while William's banks and allocators are being replaced.
+    // Revalidate this frame even if a prior frame published the same recycled player address.
+    // Queue new resources only from a currently identifiable player callback.
+    const LONG phase=InterlockedCompareExchange(&state->phase, 0, 0);
+    const bool player_frame=(phase==1 || !state->player) && locate_player(actor);
+    if (player_frame && phase==1
         && !InterlockedCompareExchange(&submitting, 1, 0)) submit_resources();
     SetLastError(error);
     const float result = frame_original(actor, delta);
@@ -316,7 +323,7 @@ extern "C" __declspec(dllexport) DWORD WINAPI NiohResourcesStart(void* parameter
     const uint8_t expected[] = {0x40,0x53,0x48,0x83,0xec,0x20,0xf3,0x0f,0x11,0x89,0xa4,0x06,0,0};
     if (memcmp(frame_target, expected, sizeof(expected))) return ERROR_REVISION_MISMATCH;
     wchar_t name[128];
-    const int prefix = wsprintfW(name, L"Local\\NiohResources_v8_%lu_", GetCurrentProcessId());
+    const int prefix = wsprintfW(name, L"Local\\NiohResources_v9_%lu_", GetCurrentProcessId());
     const wchar_t digits[] = L"0123456789abcdef";
     for (unsigned i = 0; i != 32; ++i) {
         name[prefix + i * 2] = digits[incoming.profile_identity[i] >> 4];

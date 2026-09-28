@@ -79,7 +79,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
     code = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).parent))
     owner_file = state / 'resource-owners' / f'{tag}.json'
     owner = read_json(owner_file)
-    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 8
+    if (owner and owner['session'] == game.identity and owner.get('resource_schema') == 9
             and owner['resource_identity'] == tag):
         dll = Path(owner['dll'])
     else:
@@ -106,7 +106,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
     try:
         loader.validate_target(handle, args)
         module = loader.module_at_path(pid, dll) or loader.load_dll(handle, args, dll)
-        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=8,
+        atomic_json(owner_file, dict(session=game.identity, dll=str(dll.resolve()), resource_schema=9,
                                     resource_identity=tag, resource_profile_id=profile['resource_profile_id'],
                                     motion_keys=motion_keys, object_keys=object_keys))
         start = loader.remote_export(handle, module, 'NiohResourcesStart')
@@ -114,7 +114,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
         code = loader.call_export(handle, args, start, payload)
         if code:
             raise ResourceLoadError(f'Resource request rejected: {code}')
-        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v8_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
+        with mmap.mmap(-1, STATE.size, tagname=f'Local\\NiohResources_v9_{pid}_{tag}', access=mmap.ACCESS_READ) as status:
             deadline = time.monotonic() + 30
             while True:
                 magic, version, phase, error, observed_birth, observed_identity, actions, timing, motion, camera, completed, thread, player, owner, *object_assets = STATE.unpack(status[:])

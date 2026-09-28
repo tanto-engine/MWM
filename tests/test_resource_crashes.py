@@ -132,6 +132,13 @@ class ResourceCrashTests(unittest.TestCase):
             paths = [root/'first.json', root/'second.json']
             for path, profile in zip(paths, (first, second)):
                 path.write_text(json.dumps(profile))
+            # An older loader must not bypass new transition guards through its saved owner path.
+            # Keep the old DLL allocated; select this build's owner for the next activation.
+            stale_path=root/'old-resource-owner.dll'
+            owner_path=root/'resource-owners'/(resources.resource_identity(first).hex()+'.json')
+            owner_path.parent.mkdir()
+            owner_path.write_text(json.dumps(dict(session=game.identity,resource_schema=8,
+                resource_identity=resources.resource_identity(first).hex(),dll=str(stale_path))))
             loaded, mappings, requests = [], [], []
             corrupt_identity = False
             phase, detaches = 3, []
@@ -203,6 +210,9 @@ class ResourceCrashTests(unittest.TestCase):
                 object_ready = True
                 self.assertEqual(resources.load_resources(game, paths[1]), (1,2,3,4,5,6))
                 self.assertEqual(struct.unpack_from('<6I', requests[-1], 544), (2,3257,3258,0,0,0))
+            self.assertNotEqual(loaded[0],str(stale_path),'Older loader bypassed current transition guards')
+            self.assertEqual(json.loads(owner_path.read_text())['resource_schema'],9)
+            self.assertTrue(all('NiohResources_v9_' in name for name in mappings))
             self.assertEqual(len(loaded), 2, 'Different profiles reused one native DLL owner')
             self.assertNotEqual(mappings[0], mappings[1])
             self.assertEqual(mappings[0], mappings[2])

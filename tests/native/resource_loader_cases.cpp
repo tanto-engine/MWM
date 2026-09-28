@@ -5,15 +5,18 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <initializer_list>
 #include "MinHook.h"
 
 static uint8_t* image;
 static bool reject_mapping;
 static HANDLE rejected_handle;
+static unsigned allocation_calls;
 static void* unavailable_object(void*,size_t,size_t,void*) {
     // Supply a callable file allocator without granting it any resources.
     // Returning null makes reaching allocation itself visible as a loader error.
     // Missing System dependencies should be rejected before this callback runs.
+    ++allocation_calls;
     return nullptr;
 }
 static HMODULE WINAPI owned_module(const wchar_t*) {
@@ -93,6 +96,54 @@ int main(int argc,char**) {
         VirtualFree(image,0,MEM_RELEASE);
         return 0;
     }
+    // Mission transitions can still tick NPCs while William's action banks are absent.
+    // Complete allocator globals alone must not authorize resource construction on that frame.
+    // A previously published player address also cannot authorize a reused actor allocation.
+    uintptr_t system_words[5]{};system_words[4]=allocator_address;
+    const uintptr_t system_address=reinterpret_cast<uintptr_t>(system_words);
+    memcpy(image+0x2C946B8,&system_address,8);
+    uint8_t actor[0x88]{};
+    state=&owned_state;state->phase=1;
+    frame_original=[](void*,float delta) { SetLastError(77);return delta+1; };
+    for (bool reused : {false,true}) {
+        state->player=reused ? reinterpret_cast<uintptr_t>(actor) : 0;
+        submitting=0;allocation_calls=0;state->phase=1;state->error=0;
+        assert(resource_frame(actor,.5f)==1.5f && GetLastError()==77);
+        assert(!allocation_calls && !submitting && state->phase==1 && !state->error);
+    }
+    // A supported player frame may submit only after the motion-data allocator exists.
+    // When it becomes ready, the original allocation failure remains visible and terminal.
+    // This proves deferral did not disable ordinary activation or swallow native failures.
+    uint8_t bank[0x138]{},descriptor[0x48]{},payload[0x24]{};
+    const uintptr_t player_vtable=base+0x11A3530,owner_address=0x10000;
+    const uintptr_t bank_address=reinterpret_cast<uintptr_t>(bank),descriptor_address=reinterpret_cast<uintptr_t>(descriptor);
+    const uintptr_t table_address=reinterpret_cast<uintptr_t>(&descriptor_address),payload_address=reinterpret_cast<uintptr_t>(payload);
+    const uint32_t count=1,key=0xC64;const int32_t motion=2033;
+    memcpy(actor,&player_vtable,8);memcpy(actor+0x50,&owner_address,8);memcpy(actor+0x70,&bank_address,8);
+    memcpy(bank+0x128,&table_address,8);memcpy(bank+0x130,&count,4);
+    memcpy(descriptor,&key,4);descriptor[0x40]=1;memcpy(descriptor+0x20,&payload_address,8);memcpy(payload+0x20,&motion,4);
+    for (bool ready : {false,true}) {
+        system_words[4]=ready ? allocator_address : 0;
+        state->player=0;submitting=0;allocation_calls=0;state->phase=1;state->error=0;
+        assert(resource_frame(actor,.5f)==1.5f && GetLastError()==77);
+        assert(state->player==reinterpret_cast<uintptr_t>(actor) && state->owner==owner_address);
+        if (ready) assert(allocation_calls==1 && state->phase==4 && state->error==ERROR_OUTOFMEMORY);
+        else assert(!allocation_calls && !submitting && state->phase==1 && !state->error);
+    }
+    // Pending/completed owners avoid rescanning banks after discovering this player.
+    // Reattachment clears that publication and must still discover the current player at phase 3.
+    for (LONG phase : {2L,3L}) {
+        const uintptr_t next_owner=owner_address+phase;
+        memcpy(actor+0x50,&next_owner,8);
+        state->phase=phase;state->player=reinterpret_cast<uintptr_t>(actor);state->owner=owner_address;allocation_calls=0;
+        resource_frame(actor,.5f);
+        assert(state->owner==owner_address && !allocation_calls);
+        state->player=0;
+        resource_frame(actor,.5f);
+        assert(state->player==reinterpret_cast<uintptr_t>(actor) && state->owner==next_owner && !allocation_calls);
+    }
+    state=nullptr;submitting=0;
+    const uintptr_t absent=0;memcpy(image+0x2C946B8,&absent,8);
     ResourceRequest incoming{};
     incoming.magic=0x3152504e;incoming.version=5;incoming.pid=GetCurrentProcessId();incoming.count=4;
     FILETIME born{},ended{},kernel{},user{};
