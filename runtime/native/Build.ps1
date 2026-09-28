@@ -13,12 +13,13 @@ foreach ($file in @('buffer.c', 'hook.c', 'trampoline.c', 'hde\hde64.c')) {
     if ($LASTEXITCODE -ne 0) { throw "Compilation failed: $file" }
     $objects += $object
 }
-& g++ -std=c++17 -O2 -Wall -Wextra -Werror -shared -static-libgcc -static-libstdc++ `
+# Identical source rebuilds retain identical DLL hashes; only changed native code requires a new game process.
+& g++ -std=c++17 -O2 -Wall -Wextra -Werror -shared -static-libgcc -static-libstdc++ '-Wl,--no-insert-timestamp' `
     (Join-Path $source 'runtime.cpp') @objects -I (Join-Path $MinHook 'include') `
     -o (Join-Path $build 'nioh_skill_runtime.dll')
 if ($LASTEXITCODE -ne 0) { throw 'Link failed: nioh_skill_runtime.dll' }
 Write-Output 'Built nioh_skill_runtime.dll. Session data is supplied at startup; no game access performed.'
-& g++ -std=c++17 -O2 -Wall -Wextra -Werror -shared -static-libgcc -static-libstdc++ `
+& g++ -std=c++17 -O2 -Wall -Wextra -Werror -shared -static-libgcc -static-libstdc++ '-Wl,--no-insert-timestamp' `
     (Join-Path $source 'resource_loader.cpp') @objects -I (Join-Path $MinHook 'include') `
     -o (Join-Path $build 'nioh_resources.dll')
 if ($LASTEXITCODE -ne 0) { throw 'Link failed: nioh_resources.dll' }

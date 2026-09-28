@@ -23,9 +23,9 @@ from profile_resources import StableReads, inspect_candidate, resources, inspect
 from load_resources import load_resources, ResourceLoadError
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
-from move_imports import read_import_manifest, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
+from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
-from engine_config import validate_preset, read_json, atomic_json, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
+from engine_config import validate_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
 
 IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -38,6 +38,7 @@ def require_stopped(pid):
     # Stop returning busy leaves the trace enabled. Do not learn borrowed slots
     # as the next session's originals, or prepare during an active observer.
     mappings = [(prefix, None) for prefix in ('NiohBossTrace_v1', 'NiohDispatchTrace_v1', 'NiohResearchTrace_v1', 'NiohBossRepeatTrace_v1')]
+    retained = []
     # Previous workspaces and trainer installs can leave a live module behind.
     # Its loaded filename supplies the namespace even without our session cache.
     for module in modules(pid):
@@ -45,6 +46,9 @@ def require_stopped(pid):
         match = re.fullmatch(r'boss_repeat_([0-9a-f]{16})\.dll', name)
         if match:
             mappings.append(('NiohBossRepeatTrace_v2', match[1]))
+            retained.append((module, 'runtime'))
+        elif re.fullmatch(r'resources_[0-9a-f]{16}_[0-9a-f]{64}\.dll', name):
+            retained.append((module, 'resources'))
         elif name in ('boss_repeat.dll', 'nioh_skill_runtime.dll'):
             raise ValueError(f'Loaded runtime {module["path"]} has no discoverable session tag; preserve its current session before preparation')
     if (HERE / 'boss-session.json').exists():
@@ -68,6 +72,19 @@ def require_stopped(pid):
                 raise ValueError(f'{prefix} is active or not cleanly stopped; finish Stop before preparation')
         finally:
             trace.close()
+    # Stop restores gameplay state but deliberately retains native modules and their callbacks.
+    # Do not mix a newly compiled Engine with older retained code in the same game process.
+    expected = {}
+    for module, kind in retained:
+        if kind not in expected:
+            expected[kind] = (native_code_hash() if kind == 'runtime' else
+                hashlib.sha256((CODE/'native/build/nioh_resources.dll').read_bytes()).hexdigest())
+        try:
+            actual = hashlib.sha256(Path(module['path']).read_bytes()).hexdigest()
+        except OSError as error:
+            raise ResourceLoadError('Cannot verify a retained MWM module. Restart Nioh before enabling this version.') from error
+        if actual != expected[kind]:
+            raise ResourceLoadError('A different MWM Engine build is still loaded. Restart Nioh before enabling this version; Disable alone cannot unload retained native code.')
 
 
 def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
@@ -210,18 +227,18 @@ def configured_replacements(configuration=None, baseline=None):
     selected = list(manifest['candidates'][candidate]) if candidate else []
     by_id = {move['id']: move for move in manifest['moves']}
     if candidate and (len(selected) != 3 or len(set(selected)) != 3 or any(key not in by_id for key in selected)):
-        raise ValueError('Jin candidate must select three distinct recorded moves')
+        raise ValueError(f'{move_label(configuration["low_heavy"])} has an incomplete Low Triangle / Y string definition. Restore its three recorded moves before enabling it.')
     if candidate and [by_id[key]['replacement']['player_key'] for key in selected] != [0xCF5, 0xCF6, 0xCF7]:
-        raise ValueError('Jin candidate must replace the three low-stance heavy descriptors in order')
+        raise ValueError(f'{move_label(configuration["low_heavy"])} has an incompatible Low Triangle / Y sequence. Restore its Low-stance move definition before enabling it.')
     if hold:
         for stance, identifier in entries:
             player_key=STANCE_OPENERS.get(stance, STANCE_OPENERS['low'])
             if (identifier not in by_id or by_id[identifier]['adapter_kind'] not in (1, 2)
                     or identifier not in chains):
-                raise ValueError('Held entry has no supported input adapter')
+                raise ValueError(f'{move_label(identifier)} cannot start from {stance.title()} stance with its current definition. Choose another move or restore its supported input definition.')
             chain = chains[identifier]
             if not isinstance(chain, list) or not chain or chain[0] != identifier or any(item not in by_id for item in chain):
-                raise ValueError('Held entry has invalid native dependencies')
+                raise ValueError(f'{move_label(identifier)} has an incomplete move sequence. Restore its move definitions or choose another move before saving.')
             # Stance belongs to the binding, not the boss move's permanent identity.
             # Apply its verified William opener to the entry and ordinary continuations.
             # Native paired actions retain their partner-driven descriptors and no input template.
@@ -234,21 +251,38 @@ def configured_replacements(configuration=None, baseline=None):
                 move['replacement'] = dict(player_key=player_key, player_motion=motion,
                                            transition_count=count, recovery_frame=recovery)
             selected = selected + chain
-        baseline=baseline if baseline is not None else configured_imports(configuration)
-        if len(set(selected)) != len(selected) or len(selected) + len(baseline['moves']) > IMPORT_LIMIT:
-            raise ValueError('Selected holds duplicate imports or exceed the runtime table')
     if jump: selected.append('jin_hayabusa.flying_swallow_jump')
+    if len(set(selected)) != len(selected):
+        duplicate=next(identifier for identifier in selected if selected.count(identifier)>1)
+        raise ValueError(f'{move_label(duplicate)} appears in more than one selected move sequence. Disable one overlapping binding or choose a different move.')
     # Group selected dependencies by their resource owner; preserve order inside each graph.
     # Existing Jin layouts keep their indices; additional bosses never borrow Jin's bank.
     selected = [identifier for source in sources for identifier in selected if identifier.partition('.')[0]==source['boss_id']]
-    if len(selected)+len((baseline or configured_imports(configuration))['moves'])>IMPORT_LIMIT:
-        raise ValueError('Selected moves exceed the runtime import limit')
+    baseline=baseline if baseline is not None else configured_imports(configuration)
+    count=len(selected)+len(baseline['moves'])
+    if count>IMPORT_LIMIT:
+        raise ValueError(f'This moveset needs {count} move phases; the Engine supports {IMPORT_LIMIT}. Multi-part moves include all their follow-up phases. Disable an optional move or string to free slots before saving.')
     positions = {identifier:index for index,identifier in enumerate(selected)}
     all_moves = manifest['moves']
     manifest['moves'] = [by_id[key] for key in selected]
     for move in manifest['moves']:
+        dependencies=move.get('native_followups',[])
+        if not isinstance(dependencies,list) or any(not isinstance(identifier,str) for identifier in dependencies):
+            raise ValueError(f'{move_label(move["id"])} has an invalid follow-up definition. Restore its move definitions before saving.')
+        if move['next_variant'] != -1: dependencies=[*dependencies,all_moves[move['next_variant']]['id']]
+        missing=next((identifier for identifier in dependencies if identifier not in positions),None)
+        if missing:
+            raise ValueError(f'{move_label(move["id"])} needs {move_label(missing)}, which is missing from the selected move sequence. Restore its complete move definition or choose another move before saving.')
         if move['next_variant'] != -1:
             move['next_variant'] = positions[all_moves[move['next_variant']]['id']]
+    # Validate the complete table in live preparation's index space without changing replacement-local indices.
+    combined=deepcopy(manifest['moves'])
+    for move in combined:
+        if move['next_variant']!=-1:move['next_variant']+=len(baseline['moves'])
+    try:
+        check_import_topology(baseline['moves']+combined,baseline['string_variant'])
+    except ValueError as error:
+        raise ValueError(f'The selected move sequences are incompatible: {error}. Restore the affected move definitions or choose different moves before saving.') from error
     manifest['hold_variant'] = next((index+1 for index,move in enumerate(manifest['moves'])
                                      if move['adapter_kind'] == 2), 0)
     manifest['hold_milliseconds'] = round(configuration['hold_seconds']*1000) if manifest['hold_variant'] else 0
@@ -277,7 +311,7 @@ def compiled_skill_bindings(configuration, imports):
                 variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
     for stance,move in configuration['stance_holds'].items():
         if move: result.append(dict(kind=3,stances=1<<list(STANCE_OPENERS).index(stance),variant=slots[move],key=0,motion=0,transition_count=0,flags=0))
-    if len(result)>8: raise ValueError('At most eight compiled native skill/chord bindings are supported')
+    if len(result)>8: raise ValueError(f'This setup uses {len(result)} native override slots; only 8 are supported. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
     return result
 
 

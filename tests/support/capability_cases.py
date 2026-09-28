@@ -151,3 +151,73 @@ class CapabilityTests(unittest.TestCase):
             preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance='mid',move=move)]
             with self.assertRaisesRegex(ValueError,'Unsupported skill binding'):
                 config.validate_preset(preset)
+
+    def test_binding_conflicts_explain_controls_stances_and_a_fix(self):
+        # Exercise the actual selectable controls rather than malformed internal runtime objects.
+        # Every conflict must name the affected choices and leave the submitted draft intact.
+        # Different controls may still share a move when they agree on its stance.
+        launcher='jin_hayabusa.action_0c79';sanada='sanada_yukimura.action_0c6a';cases=[]
+        preset=empty_preset();preset['stance_holds'].update(low=launcher,high=launcher)
+        cases.append((preset,(config.move_label(launcher),'Low hold Triangle / Y','High hold Triangle / Y','clear Low')))
+        preset=empty_preset();preset['frost_moon'].update(low=launcher,mid=launcher)
+        cases.append((preset,('Low Frost Moon','Mid Frost Moon','same stance','clear Low')))
+        preset=empty_preset();preset['stance_holds']['low']=launcher
+        preset['skill_bindings']=[dict(source='heavy_attack',stance='high',move=launcher)]
+        cases.append((preset,('Low hold Triangle / Y','High Heavy attack','same stance','clear Low')))
+        preset=empty_preset();preset['skill_bindings']=[dict(source='tiger_sprint',stance='any',move=sanada)]
+        cases.append((preset,('Tiger Sprint',config.move_label(sanada),'Choose Low, Mid or High','instead of Any')))
+        preset=empty_preset();preset.update(tap_move=sanada,chord_stance='any')
+        cases.append((preset,('custom chord',config.move_label(sanada),'Choose Low, Mid or High','not supported')))
+        preset=empty_preset();preset['skill_bindings']=[dict(source='heavy_attack',stance='any',move='okatsu.charged_rush'),
+            dict(source='heavy_attack',stance='high',move='okatsu.leaping_slash')]
+        cases.append((preset,('High Heavy attack','Only one override','remove one row')))
+        for source,stance,required in (('light_attack','mid','Low stance'),('high_heavy_followup','low','High stance')):
+            preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance=stance,move=sanada)]
+            cases.append((preset,(config.SOURCE_LABELS[source],config.move_label(sanada),required,'Choose')))
+        preset=empty_preset();preset['low_heavy']='jin_hayabusa.action_0c6e'
+        preset['skill_bindings']=[dict(source='heavy_attack',stance='mid',move=preset['low_heavy'])]
+        cases.append((preset,('Low Triangle / Y string','Mid Heavy attack','cannot share','Disable')))
+        preset=empty_preset();preset['skill_bindings']=[dict(source='dodge_attack',stance='mid',move='jin_hayabusa.action_0c6f')]
+        cases.append((preset,('Low Dodge attack','Low Triangle / Y string','Enable that string')))
+        for preset,parts in cases:
+            before=copy.deepcopy(preset)
+            with self.subTest(parts=parts),self.assertRaises(ValueError) as caught:config.validate_preset(preset)
+            for part in parts:self.assertIn(part,str(caught.exception))
+            self.assertEqual(preset,before)
+        preset=empty_preset();preset['stance_holds']['high']=launcher
+        preset['skill_bindings']=[dict(source='guard_light',stance='high',move=launcher)]
+        self.fixture(preset)
+
+    def test_preview_rejects_slot_overflow_and_incomplete_selected_graphs(self):
+        # Compile pending moves through the same path used by Desktop.preview before Save.
+        # Cover native-slot expansion, phase capacity and missing native follow-up dependencies.
+        # A valid source manifest alone cannot certify the final selected graph.
+        preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance=stance,move='okatsu.charged_rush')
+            for source,stance in (('heavy_attack','any'),('tiger_sprint','any'),('dodge_attack','any'),
+                                  ('guard_light','any'),('light_attack','low'),('high_heavy_followup','high'))]
+        self.fixture(preset)
+        preset['stance_holds']['low']='jin_hayabusa.action_0c79'
+        with self.assertRaisesRegex(ValueError,'9 native override slots; only 8'):config.validate_preset(preset)
+        preset=empty_preset();preset.update(low_heavy='jin_hayabusa.action_0c6e',tap_move='jin_hayabusa.izuna_drop',
+            hold_move='sanada_yukimura.action_0c6a',chord_stance='high')
+        preset['stance_holds']['mid']='jin_hayabusa.action_0bbf'
+        preset['frost_moon']=dict(low='jin_hayabusa.action_0c71',mid='jin_hayabusa.action_0c81',high='jin_hayabusa.action_0c75')
+        preset['skill_bindings']=[dict(source='light_attack',stance='low',move='toyotomi_hideyori.action_0d30'),
+            dict(source='guard_light',stance='mid',move='oda_nobunaga.action_0c6e'),
+            dict(source='high_heavy_followup',stance='high',move='tachibana_muneshige.action_0d8d')]
+        with self.assertRaisesRegex(ValueError,'33 move phases; the Engine supports 32'):prepare.configured_replacements(preset)
+        preset['hold_move']=None;self.fixture(preset)
+        preset=empty_preset();preset['tap_move']='jin_hayabusa.action_0c71'
+        read=prepare.read_import_manifest
+        def incomplete(path):
+            # Remove one required phase after reading an otherwise valid source definition.
+            # This models an incomplete selection rather than corrupting the recorded source bytes.
+            # Preview must catch the missing dash dependency before native loading begins.
+            manifest=read(path)
+            if manifest['boss_id']=='jin_hayabusa':manifest['hold_chains'][preset['tap_move']].pop()
+            return manifest
+        with patch.object(prepare,'read_import_manifest',side_effect=incomplete),self.assertRaisesRegex(ValueError,'missing from the selected move sequence'):
+            prepare.configured_replacements(preset)
+        with patch.object(prepare,'check_import_topology',side_effect=ValueError('Unsupported source action family')), \
+             self.assertRaisesRegex(ValueError,'selected move sequences are incompatible'):
+            prepare.configured_replacements(preset)

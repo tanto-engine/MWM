@@ -120,6 +120,8 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                 magic, version, phase, error, observed_birth, observed_identity, actions, timing, motion, camera, completed, thread, player, owner, *object_assets = STATE.unpack(status[:])
                 if (magic, version, observed_birth, observed_identity) != (0x3152504e, 5, birth, identity):
                     raise ValueError('Resource owner identity mismatch')
+                if not game.alive():
+                    raise ResourceLoadError('Nioh exited during move-resource loading. Activation stopped; reopen Nioh and explicitly enable the mod again.')
                 if not detached and phase >= 2 and (player or error):
                     detach_resources(handle, args, module)
                     detached = True
@@ -133,8 +135,6 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                                        if not address or game.bytes(address+0x160, 1) != b'\x01']
                     if not pending_objects:
                         return actions, timing, motion, camera, player, owner
-                if not game.alive():
-                    raise TimeoutError('Nioh exited during resource loading')
                 if time.monotonic() >= deadline:
                     if phase == 2:
                         pending = ', '.join(kind for index, kind in enumerate(('actions', 'timing', 'motion', 'camera')) if not completed & (1 << index))
@@ -145,7 +145,7 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                 time.sleep(.05)
     finally:
         try:
-            if started and not detached:
+            if started and not detached and game.alive():
                 detach_resources(handle, args, module)
         finally:
             loader.K.CloseHandle(handle)

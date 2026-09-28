@@ -180,6 +180,56 @@ class PreparationTests(unittest.TestCase):
                 prepare.require_stopped(1234)
         self.assertEqual(closed, [True])
 
+    def test_stopped_modules_require_the_current_native_build(self):
+        # Model retained modules left by an older source or EXE activation.
+        # Refuse different bytes before loading any resources; identical builds remain reusable.
+        # A missing old DLL cannot establish compatibility and also requires a restart.
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder); (root/'native/build').mkdir(parents=True)
+            binary=root/'current.dll'; binary.write_bytes(b'current-runtime')
+            resource=root/'native/build/nioh_resources.dll'; resource.write_bytes(b'current-resources')
+            old=root/'retained.dll'; old.write_bytes(binary.read_bytes())
+            missing=OSError('No mapping'); missing.winerror=2
+            for name,current in (('boss_repeat_'+('a'*16)+'.dll',binary),
+                                 ('resources_'+('b'*16)+'_'+('c'*64)+'.dll',resource)):
+                module=dict(name=name,path=str(old))
+                with patch.object(prepare,'HERE',root), patch.object(prepare,'CODE',root), \
+                     patch.object(prepare,'modules',return_value=[module]), patch.object(prepare,'Trace',side_effect=missing), \
+                     patch.dict(prepare.os.environ,{'NIOH_RUNTIME_BUILD_DLL':str(binary)}):
+                    old.write_bytes(current.read_bytes()); prepare.require_stopped(1234)
+                    old.write_bytes(b'older-build')
+                    with self.assertRaisesRegex(prepare.ResourceLoadError,'Restart Nioh'):
+                        prepare.require_stopped(1234)
+                    old.unlink()
+                    with self.assertRaisesRegex(prepare.ResourceLoadError,'Cannot verify'):
+                        prepare.require_stopped(1234)
+
+    def test_resource_exit_stops_activation_without_detaching_a_dead_game(self):
+        # Reproduce the reported activation exiting while a resource request is pending.
+        # A terminal load error prevents the supervisor from silently attaching to the restarted game.
+        # All native calls use mocks; teardown must close our handle without calling the dead target.
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import load_resources as resources
+        profile_path=MOD_ROOT/'data/resources/okatsu.json'
+        profile=json.loads(profile_path.read_text()); identity=resources.resource_identity(profile,[])
+        game=SimpleNamespace(identity=dict(pid=1234,creation_filetime='11',build_sha256=profile['build_sha256']),alive=Mock(return_value=False))
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder); (root/'native/build').mkdir(parents=True)
+            (root/'native/build/nioh_resources.dll').write_bytes(b'fixture-dll')
+            with patch.dict(resources.os.environ,{'NIOH_RUNTIME_HOME':folder,'TANTO_RUNTIME_CODE':folder}), \
+                 patch.object(resources,'read_asset'), patch.object(resources.loader.K,'OpenProcess',return_value=123), \
+                 patch.object(resources.loader.K,'CloseHandle') as close, patch.object(resources.loader,'validate_target'), \
+                 patch.object(resources.loader,'module_at_path',return_value={'base':1}), \
+                 patch.object(resources.loader,'remote_export',return_value=1), patch.object(resources.loader,'call_export',return_value=0), \
+                 patch.object(resources,'detach_resources') as detach, patch.object(resources.mmap,'mmap') as mapped:
+                for phase,completed,player in ((1,0,0),(3,15,1)):
+                    mapped.return_value.__enter__.return_value=resources.STATE.pack(
+                        0x3152504e,5,phase,0,11,identity,*([0]*4),completed,0,player,0,*([0]*4))
+                    with self.assertRaisesRegex(prepare.ResourceLoadError,'Activation stopped'):
+                        resources.load_resources(game,profile_path)
+                    detach.assert_not_called(); close.assert_called_once_with(123); close.reset_mock()
+
     def test_preparation_rejects_untagged_runtime_and_uses_pinned_build_hash(self):
         # Reject untagged runtime modules and preserve the pinned compiled-build identity.
         # Present an untagged active runtime and inspect preparation's supported-build check.
