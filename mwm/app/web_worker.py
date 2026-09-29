@@ -4,7 +4,6 @@ import ctypes as C
 import json
 import os
 from pathlib import Path
-import shutil
 import sys
 import time
 
@@ -315,13 +314,6 @@ class Desktop:
                 os.environ['NIOH_EXE'] = params['nioh_exe']
             else:
                 os.environ.pop('NIOH_EXE', None)
-            # An already-running Engine owns its loaded libraries; repeated Enable only reuses that owner.
-            if not process_matches(read_json(runtime/'play-process.json')):
-                native = runtime/'native/build'
-                native.mkdir(parents=True, exist_ok=True)
-                for source in (trainer.CODE/'native/build').glob('*.dll'):
-                    if source.resolve() != (native/source.name).resolve():
-                        shutil.copyfile(source, native/source.name)
             self.child = trainer.launch_engine()
             return True
         raise ValueError('Unsupported desktop operation')

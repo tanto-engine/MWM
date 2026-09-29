@@ -18,6 +18,34 @@ import supervisor as play
 
 
 class Recovery(unittest.TestCase):
+    def test_unchanged_ready_state_is_published_once(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            runtime = Path(temporary)
+            dll = runtime/'prebuilt.dll'; dll.write_bytes(b'fixture')
+            writes = []
+            atomic = play.atomic_json
+            def publish(path, value):
+                if path.name == 'play-status.json': writes.append(value['state'])
+                atomic(path, value)
+            def prepare(command, **kwargs):
+                (runtime/'boss-session.json').write_text(json.dumps(dict(config_tag='0123456789abcdef', session=dict(pid=123))))
+                return types.SimpleNamespace(returncode=0, stdout='', stderr='')
+            def launch(command, **kwargs):
+                trace = Path(command[command.index('--outdir')+1]); trace.mkdir()
+                (trace/'ready.json').write_text('{}')
+                (trace/'status.json').write_text(json.dumps(dict(start_attempted=False, stop_completed=False)))
+                polls = iter((None, None, None, 0))
+                def poll():
+                    value = next(polls)
+                    if value is not None: (runtime/'stop.flag').touch()
+                    return value
+                return types.SimpleNamespace(poll=poll)
+            with patch.object(play, 'HERE', runtime), patch.object(play, 'atomic_json', side_effect=publish), \
+                 patch.object(play.subprocess, 'run', side_effect=prepare), patch.object(play.subprocess, 'Popen', side_effect=launch), \
+                 patch.object(play, 'process_identity', return_value=dict(publisher_pid=12)), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(play.supervise(argparse.Namespace(dll=dll)), 0)
+            self.assertEqual(writes.count('enabled'), 1)
+
     def test_native_resource_failure_stops_activation_without_retry(self):
         # A pending native load may still own callbacks even after its frame hook detaches.
         # Feed its explicit terminal error through the real supervisor control flow.

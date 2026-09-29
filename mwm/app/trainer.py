@@ -4,6 +4,7 @@ import argparse
 from copy import deepcopy
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -74,6 +75,11 @@ def launch_engine():
         return None
     if process_matches(read_json(RUNTIME/'play-process.json')):
         return None
+    native = RUNTIME/'native/build'
+    native.mkdir(parents=True, exist_ok=True)
+    for source in (CODE/'native/build').glob('*.dll'):
+        if source.resolve() != (native/source.name).resolve():
+            shutil.copyfile(source, native/source.name)
     if not (RUNTIME/'native/build/nioh_skill_runtime.dll').is_file():
         raise ValueError('Runtime is missing. Run runtime/native/Build.ps1 first.')
     (RUNTIME/'stop.flag').unlink(missing_ok=True)
@@ -623,16 +629,11 @@ def main(argv=None):
     parser.add_argument('--ui-smoke', type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     RUNTIME.mkdir(parents=True, exist_ok=True)
-    import shutil
-    for source,target in [('controller-calibration.json','controller-calibration.json'),('preset.json','controller-binding.json')]:
-        if not (RUNTIME/target).exists(): shutil.copyfile(ROOT/'data'/source,RUNTIME/target)
-    native = RUNTIME/'native/build'
-    native.mkdir(parents=True,exist_ok=True)
-    for source in (CODE/'native/build').glob('*.dll'):
-        if source.resolve() != (native/source.name).resolve(): shutil.copyfile(source,native/source.name)
     if args.disable:
         disable_engine()
         return 0
+    for source,target in [('controller-calibration.json','controller-calibration.json'),('preset.json','controller-binding.json')]:
+        if not (RUNTIME/target).exists(): shutil.copyfile(ROOT/'data'/source,RUNTIME/target)
     if args.enable:
         settings = read_json(RUNTIME/'trainer-settings.json', {})
         if settings.get('nioh_exe'): os.environ['NIOH_EXE'] = settings['nioh_exe']

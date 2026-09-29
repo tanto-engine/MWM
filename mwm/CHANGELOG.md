@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.3.0-alpha.10
+
+- The supervisor writes status only when state or details change, avoiding repeated disk writes while gameplay state is steady.
+- Disable now signals the active runtime before copying any defaults or DLLs. Native DLLs stage once in the shared launch path when a new engine starts; the desktop worker and source trainer no longer duplicate that work.
+
+Offline and packaged checks passed. Live gameplay and physical-controller acceptance remain pending; the two reported crashes remain open.
+
 ## 0.3.0-alpha.9
 
 - Replaced the crowded Sword overview with one stance branch at a time. Named inputs show their current moves; selecting one shows its exact trigger, behavior, and move picker. Detailed assignments remain available in the list view and Input routes.

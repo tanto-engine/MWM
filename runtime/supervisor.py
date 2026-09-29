@@ -50,14 +50,14 @@ def supervise(args):
     last_message = None
     def status(state, **extra):
         # Publish the current supervisor state and failure context.
-        # Atomically replace the status file and print only changed states.
-        # The UI sees actionable transitions without repeated log noise.
+        # Publish transitions; process identity, not the file timestamp, establishes liveness.
         nonlocal last_message
         value = dict(state=state, **extra)
+        if value == last_message:
+            return
         atomic_json(HERE / 'play-status.json', dict(value, updated_at=time.time(), publisher_pid=os.getpid()))
-        if value != last_message:
-            print(value, flush=True)
-            last_message = value
+        print(value, flush=True)
+        last_message = value
     source = args.dll or HERE / 'native/build/nioh_skill_runtime.dll'
     if not source.is_file():
         status('runtime_missing', detail='Build the runtime with runtime/native/Build.ps1.')

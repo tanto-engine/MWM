@@ -178,6 +178,27 @@ class RuntimeRegistryTests(unittest.TestCase):
             ui.assert_not_called()
             self.assertTrue((Path(td)/'stop.flag').exists())
 
+    def test_disable_cli_never_copies_native_modules(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); local = root/'local'; code = root/'code'; local.mkdir(); (code/'native/build').mkdir(parents=True)
+            (code/'native/build/fixture.dll').write_bytes(b'fixture')
+            with patch.object(trainer, 'RUNTIME', local), patch.object(trainer, 'CODE', code), \
+                 patch.object(trainer, 'active_runtime', return_value=None), \
+                 patch('shutil.copyfile', side_effect=AssertionError('Disable copied a native DLL')):
+                self.assertEqual(trainer.main(['--disable']), 0)
+            self.assertTrue((local/'stop.flag').exists())
+
+    def test_new_engine_stages_native_modules_at_launch(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); local = root/'local'; code = root/'code'; (code/'native/build').mkdir(parents=True)
+            (code/'native/build/nioh_skill_runtime.dll').write_bytes(b'fixture runtime')
+            with patch.object(trainer, 'RUNTIME', local), patch.object(trainer, 'CODE', code), \
+                 patch.object(trainer, 'active_runtime', return_value=None), \
+                 patch.object(trainer, 'process_matches', return_value=False), patch.object(trainer, 'launch', return_value='started') as launch:
+                self.assertEqual(trainer.launch_engine(), 'started')
+            self.assertEqual((local/'native/build/nioh_skill_runtime.dll').read_bytes(), b'fixture runtime')
+            self.assertEqual(launch.call_args.args[0], code/'supervisor.py')
+
     def test_open_trainer_adopts_other_runtime_before_applying_pending_edit(self):
         # Adopt another active runtime before applying a pending trainer edit.
         # Present an already-running external runtime while the open trainer has a pending edit.
