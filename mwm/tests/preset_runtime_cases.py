@@ -120,6 +120,17 @@ class PresetRuntimeTests(unittest.TestCase):
                 self.assertEqual(result['presets']['selected_id'], second)
                 self.assertNotEqual(first, second)
 
+    def test_editor_cycle_rejects_stale_runtime(self):
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            with patch.object(worker.Desktop, 'location', return_value=runtime), \
+                 patch.object(worker, 'process_matches', return_value=False):
+                desktop = worker.Desktop()
+                self.seed(runtime, desktop)
+                with self.assertRaisesRegex(ValueError, 'Active Engine changed'):
+                    desktop.preset_cycle(dict(runtime=str(runtime/'stale')))
+                self.assertEqual(worker.read_json(runtime/'controller-binding.json'), self.first)
+
     def test_cleanup_failure_leaves_old_binding_and_mod_stopped(self):
         with tempfile.TemporaryDirectory() as folder:
             runtime = Path(folder)
@@ -195,17 +206,19 @@ class PresetRuntimeTests(unittest.TestCase):
                     self.events = [list(batch) for batch in events]
                     if duplicate:
                         self.events[-1].append(dict(kind='input', backend='xinput', slot=0,
-                            observed_monotonic=.3, buttons=0x20, pressed_mask=0x20))
+                            observed_monotonic=.3, buttons=0x20 if duplicate == 'button' else 0,
+                            pressed_mask=0x20 if duplicate == 'button' else 0,
+                            logical_buttons=0x400 if duplicate == 'trigger' else 0))
                 def poll(self):
                     return self.events.pop(0)
             with patch.object(worker.Desktop, 'location', return_value=runtime), \
                  patch.object(worker, 'process_matches', return_value=True):
-                for duplicate in (True, False):
+                for duplicate in ('button', 'trigger', None):
                     reader = Reader(duplicate)
                     with patch.object(worker, 'ControllerReader', return_value=reader):
                         desktop = worker.Desktop()
                         self.assertEqual([desktop.preset_hotkey_poll() for _ in range(4)],
-                                         [False, False, False, not duplicate])
+                                         [False, False, False, duplicate is None])
 
 
 if __name__ == '__main__':

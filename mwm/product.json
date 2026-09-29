@@ -2,7 +2,7 @@
   "schema_version": 1,
   "kind": "sword",
   "name": "MWM",
-  "version": "0.3.0-alpha.10",
+  "version": "0.3.0-alpha.11",
   "desktop": "electron",
   "worker_name": "MWMWorker"
 }

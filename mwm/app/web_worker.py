@@ -318,7 +318,7 @@ class Desktop:
             self.hotkey_xinput_press = float('-inf')
         events = self.hotkey_reader.poll()
         for event in events:
-            if event['backend'] == 'xinput' and event['kind'] == 'input' and event.get('pressed_mask'):
+            if event['backend'] == 'xinput' and event['kind'] == 'input' and (event.get('pressed_mask') or event.get('logical_buttons', 0) & 0x0c00):
                 self.hotkey_xinput_press = event['observed_monotonic']
         for event in events:
             if (event['backend'], event['slot']) != ('winmm', device['slot']):
@@ -375,8 +375,10 @@ class Desktop:
                 raise RuntimeError('Engine did not restart; the mod remains disabled.')
         return dict(presets=self.preset_list(), snapshot=self.snapshot())
 
-    def preset_cycle(self):
+    def preset_cycle(self, params=None):
         runtime = self.location()
+        if params and params.get('runtime') != str(runtime):
+            raise ValueError('Active Engine changed. Reload settings before switching presets.')
         value = self.library(runtime)
         if len(value['presets']) < 2:
             raise ValueError('Save at least two presets to switch')
@@ -506,7 +508,7 @@ class Desktop:
         if method == 'preset_delete':
             return self.preset_delete(params)
         if method == 'preset_cycle':
-            return self.preset_cycle()
+            return self.preset_cycle(params)
         if method == 'preset_switch':
             return self.preset_switch(params)
         if method == 'preset_hotkey_poll':

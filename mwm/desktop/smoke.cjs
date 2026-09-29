@@ -32,12 +32,15 @@ async function runSmoke(window, call, report) {
       throw new Error('Packaged rebinding did not validate: '+document.querySelector('#validation').textContent);
     }
     for (const [stance, move] of [['low','jin_hayabusa.action_0c79'],['high','jin_hayabusa.izuna_drop']]) {
+      [...document.querySelectorAll('.skill-stance')].find(button=>button.textContent===stance.toUpperCase()).click();await ready();
+      if (document.querySelector('.skill-stance[aria-selected="true"]')?.textContent!==stance.toUpperCase()) throw new Error('Stance tab did not select '+stance);
       const select=document.querySelector('[data-assignment="hold:'+stance+'"]');
-      if (!select || ![...select.options].some(option=>option.value===move)) throw new Error('Missing held Triangle choice: '+move);
+      if (!select?.closest('.skill-row') || ![...select.options].some(option=>option.value===move)) throw new Error('Missing held Triangle choice: '+move);
       select.value=move;select.dispatchEvent(new Event('change',{bubbles:true}));await wait();await ready();
       if (stance==='low') {
         // Reproduce the player's duplicate High launcher, through the packaged renderer and IPC.
         // Reject it visibly without persisting either pending hold, then correct the draft normally.
+        [...document.querySelectorAll('.skill-stance')].find(button=>button.textContent==='HIGH').click();await ready();
         const high=document.querySelector('[data-assignment="hold:high"]');
         high.value=move;high.dispatchEvent(new Event('change',{bubbles:true}));
         for (let i=0;i<200 && !document.querySelector('#binding-error').open;i++) await wait();

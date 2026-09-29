@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.3.0-alpha.11
+
+- Rebuilt Moves around direct Low, Mid and High input rows. The persistent guide explains each route; editing an all-stance route now splits it so other stances retain their moves. Speed uses one selected move and percentage control instead of duplicate fields.
+- Added additive custom operators: hold a modifier with a first button, release that button, then press a follow-up within 0.6 seconds. The reviewed controls are L1/LB, Circle/B, Triangle/Y, L2/LT and Square/X; all three must differ. Original game inputs remain active.
+- Added a saved preset library, draft loading, manual activation and safe live cycling. A supported direct DS4 WinMM touchpad click cycles on a clean double-tap; XInput and Steam Input mappings use the app switch. Active Engine cleanup completes before a preset is written and restarted. Unsaved editor drafts remain intact.
+- Updated Controller and Input routes guidance, preset status, editing feedback and packaged UI checks. Fixed stale preset selection after normal Save, stale runtime requests during cycling, and XInput trigger duplication during touchpad detection.
+
+Offline and packaged checks do not establish physical-controller or live Nioh acceptance. The two reported crashes remain open.
+
 ## 0.3.0-alpha.10
 
 - The supervisor writes status only when state or details change, avoiding repeated disk writes while gameplay state is steady.
