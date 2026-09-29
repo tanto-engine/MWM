@@ -300,6 +300,7 @@ def compiled_skill_bindings(configuration, imports):
     slots={move['id']:index+1 for index,move in enumerate(imports)}
     result=[]
     for binding in configuration['skill_bindings']:
+        if 'input' in binding: continue
         source,stance,move=(binding[field] for field in ('source','stance','move'))
         scopes=list(STANCE_OPENERS) if source=='heavy_attack' and stance=='any' else [stance]
         for scope in scopes:

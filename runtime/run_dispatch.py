@@ -14,7 +14,7 @@ import struct
 import time
 
 from process_support import run, loader_report, CommandFailure, process_identity
-from gestures import ControllerGesture
+from gestures import ControllerGesture, RoutedGesture
 from engine_config import atomic_json, read_json, validate_preset, binding_for_preset
 from trace_reader import Trace, CAPACITY
 from game_controller import GameController, game_binding, controller_selection
@@ -84,7 +84,7 @@ class CommandMap:
             raise C.WinError(C.get_last_error())
         return value.value
 
-    def publish(self, config, *, heartbeat, edge, expires, chord_sequence, armed, held, latched=0, variant=0, context_epoch=0, reserve=True):
+    def publish(self, config, *, heartbeat, edge, expires, chord_sequence, armed, held, latched=0, variant=0, context_epoch=0, reserve=True, chord_policy=None):
         # Write one selected move and its input lease into shared memory.
         # Commit matching sequence markers after the payload copy.
         # The native reader rejects partial publication without blocking the game thread.
@@ -93,7 +93,7 @@ class CommandMap:
         body = COMMAND.pack(self.sequence, heartbeat, edge, expires, chord_sequence,
                             config['generation'], config['player'], config['owner'], config['vtable'],
                             *config['banks'], selected['descriptor'], selected['payload'], selected['key'],
-                            selected['motion'], int(armed), int(held), latched | (config.get('chord_policy',0) if reserve else 0), variant, context_epoch, self.sequence)
+                            selected['motion'], int(armed), int(held), latched | ((config.get('chord_policy',0) if chord_policy is None else chord_policy) if reserve else 0), variant, context_epoch, self.sequence)
         address = self.address + CONTROL.size
         # Single publisher, aligned 64-bit stores on Windows x64. Native reads
         # both markers with interlocked barriers and never waits on the writer.
@@ -324,7 +324,8 @@ def main():
             frequency = control['frequency']
             started = command.qpc()
             deadline = started + int(args.seconds * frequency) if args.seconds else None
-            intent = ControllerGesture(calibration, runtime_binding, frequency, boss['string_variant'])
+            routed=bool(runtime_binding.get('routes'))
+            intent = (RoutedGesture if routed else ControllerGesture)(calibration, runtime_binding, frequency, boss['string_variant'])
             next_check = started
             last_resource_state = None
             last_gesture = 0
@@ -359,6 +360,7 @@ def main():
                         if playable and last_input_event:
                             intent.process(dict(last_input_event, edge_basis='unknown'), begin)
                     context_valid = playable
+                    if routed: intent.set_stance(I32(game.bytes(config['player']+0x470,4),0))
                     for event in reader.poll():
                         if event.get('kind') == 'input' and (event.get('backend'), event.get('slot')) == (calibration['device']['backend'], calibration['device']['slot']):
                             last_input_event = event
@@ -466,7 +468,7 @@ def main():
             try:
                 if config and 'generation' in config:
                     command.publish(config, heartbeat=command.qpc(), edge=0, expires=0,
-                                    chord_sequence=0, armed=False, held=False)
+                                    chord_sequence=0, armed=False, held=False, reserve=False)
             except Exception as error:
                 status['errors'].append('Disarm: ' + str(error))
             try:

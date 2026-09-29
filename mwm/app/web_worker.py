@@ -10,7 +10,7 @@ import time
 
 import trainer
 from engine_config import DEFAULT_PRESET, atomic_json, binding_for_preset, move_capabilities, read_json, validate_preset
-from game_controller import BindingCapture, binding_buttons, game_binding
+from game_controller import BindingCapture, binding_buttons, game_binding, game_button_mask
 from controller_reader import ControllerReader
 from gestures import identity
 from process_support import active_runtime, process_matches
@@ -145,9 +145,25 @@ class Desktop:
         # Try reviewed moves against real graph compilation, including stance ownership and slot limits.
         # Return a new draft only; a full table or incompatible setup leaves the caller unchanged.
         preset = self.validate(params)
+        if params.get('mode') == 'custom':
+            calibration=params['calibration']
+            masks={game_button_mask(calibration['device'],mask,calibration.get('button_map')):mask
+                   for mask in binding_buttons(calibration['device'],calibration.get('button_map')).values()}
+            for gesture in ('tap','hold'):
+                for logical in (0x2000,0x8000,0x400,0x4000):
+                    if 0x100 not in masks or logical not in masks: continue
+                    for stance in self.capabilities['stances']:
+                        for move in self.capabilities['moves']:
+                            if not move['chord']: continue
+                            candidate=deepcopy(preset)
+                            candidate['skill_bindings'].append(dict(source='tiger_sprint',stance=stance,move=move['id'],
+                                input=dict(modifier_mask=masks[0x100],trigger_mask=masks[logical],gesture=gesture)))
+                            try: return self.preview(dict(params,preset=candidate))['preset']
+                            except ValueError: continue
+            raise ValueError('No compatible custom input route is available with these bindings.')
         for source in self.capabilities['native_sources']:
             for stance in self.capabilities['stances']:
-                if any(row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):
+                if any('input' not in row and row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):
                     continue
                 for move in self.capabilities['moves']:
                     if not move['native']:

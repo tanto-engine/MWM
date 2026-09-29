@@ -35,7 +35,7 @@ def export_group(preset, calibration, group):
     preset = validate_preset(preset)
     value = dict(schema_version=1, kind='mwm_binding_group', weapon='sword', group=group,
                  bindings={field: deepcopy(preset[field]) for field in fields})
-    if group == 'chord':
+    if group == 'chord' or group == 'skills' and any('input' in row for row in preset['skill_bindings']):
         value['controller'] = {key: deepcopy(calibration[key]) for key in ('device', 'button_map') if key in calibration}
     return value
 
@@ -45,8 +45,9 @@ def import_group(document, preset, calibration, group):
     # Reject mismatched files and unexpected fields rather than silently widening their scope.
     # Validate the merged result; cross-group prerequisites remain Engine's authority.
     fields = group_fields(group)
-    keys = {'schema_version', 'kind', 'weapon', 'group', 'bindings'} | ({'controller'} if group == 'chord' else set())
-    if not isinstance(document, dict) or set(document) != keys or type(document.get('schema_version')) is not int or document['schema_version'] != 1:
+    keys = {'schema_version', 'kind', 'weapon', 'group', 'bindings'}
+    allowed = [keys | {'controller'}] if group == 'chord' else [keys, keys | {'controller'}] if group == 'skills' else [keys]
+    if not isinstance(document, dict) or set(document) not in allowed or type(document.get('schema_version')) is not int or document['schema_version'] != 1:
         raise ValueError('Unsupported binding-group file')
     if document['kind'] != 'mwm_binding_group' or document['weapon'] != 'sword' or document['group'] != group:
         raise ValueError('This file does not contain the selected binding group')
@@ -54,10 +55,12 @@ def import_group(document, preset, calibration, group):
         raise ValueError('Binding file contains missing or unrelated settings')
     result = deepcopy(preset)
     result.update(deepcopy(document['bindings']))
-    if group == 'chord':
+    if group == 'chord' or group == 'skills' and 'controller' in document:
         controller = document['controller']
         if (not isinstance(controller, dict) or not isinstance(controller.get('device'), dict)
                 or 'backend' not in controller['device'] or set(controller) - {'device', 'button_map'}):
             raise ValueError('Chord file requires its source controller mapping')
-        return remap_preset(result, controller, calibration)
+        return remap_preset(result, controller, calibration, top_level=group == 'chord')
+    if group == 'skills' and any('input' in row for row in result['skill_bindings']):
+        raise ValueError('Custom input group requires its source controller mapping')
     return validate_preset(result)

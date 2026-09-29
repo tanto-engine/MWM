@@ -90,6 +90,17 @@ def game_binding(calibration, binding):
     stance=binding.get('moveset',{}).get('chord_stance','any')
     stances=7 if stance=='any' else 1<<('low','mid','high').index(stance)
     compiled['chord_policy']=((compiled['modifier_mask']|compiled['trigger_mask'])<<16)|(stances<<32) if enabled else 0
+    if binding.get('routes'):
+        routes=[dict(modifier_mask=compiled['modifier_mask'],trigger_mask=compiled['trigger_mask'],
+                     gesture=gesture,stance=stance,variant=variant)
+                for gesture,variant in zip(('tap','hold'),binding['variants']) if variant is not None]
+        for route in binding['routes']:
+            route=dict(route,modifier_mask=game_button_mask(device,route['modifier_mask'],mapping),
+                       trigger_mask=game_button_mask(device,route['trigger_mask'],mapping))
+            if route['modifier_mask']!=0x100 or route['trigger_mask'] not in (0x2000,0x8000,0x400,0x4000):
+                raise ValueError('Custom inputs require L1 / LB with Circle / B, Triangle / Y, L2 / LT or Square / X')
+            routes.append(route)
+        compiled['routes']=routes
     return dict(calibration, device=GAME_DEVICE, lb_mask=lb), compiled
 
 

@@ -158,10 +158,90 @@ class ControllerGesture:
                     chord_sequence=self.chord_sequence, armed=self.pending,
                     held=self.string_held if self.variant == self.string_variant else self.lb and self.circle,
                     latched=0 if self.variant == self.string_variant else 1, variant=self.variant,
-                    reserve=not (self.fired and not self.pending))
+                    reserve=self.variant != self.string_variant and not (self.fired and not self.pending))
 
     def dispatched(self, repeat=True):
         # Consume the pending gesture after native acceptance.
         # Clear its armed state while retaining the physical hold information.
         # A single press cannot repeatedly enqueue the same move.
         self.pending = False
+
+
+class RoutedGesture:
+    """Select one validated physical chord and stance for the existing command slot."""
+    def __init__(self, calibration, binding, frequency, string_variant=None):
+        groups={}
+        for route in binding['routes']:
+            stances=range(3) if route['stance']=='any' else [('high','mid','low').index(route['stance'])]
+            for stance in stances:
+                key=(stance,route['modifier_mask'],route['trigger_mask'])
+                variants=groups.setdefault(key,[None,None])
+                variants[('tap','hold').index(route['gesture'])]=route['variant']
+        self.gates={key:ControllerGesture(calibration,dict(binding,modifier_mask=key[1],trigger_mask=key[2],
+                            variants=variants,string_enabled=False),frequency) for key,variants in groups.items()}
+        self.string=ControllerGesture(calibration,dict(binding,variants=[None,None]),frequency,string_variant)
+        self.seen={key:0 for key in self.gates}
+        self.seen['string']=0
+        self.stance=self.active=None
+        self.chord_sequence=self.variant=0
+        self.connected=False
+
+    def reset(self):
+        for gate in (*self.gates.values(),self.string): gate.reset()
+        self.active=None
+
+    def set_stance(self, stance):
+        if stance not in (0,1,2):
+            self.reset()
+            self.stance=None
+        elif stance!=self.stance:
+            self.reset()
+            self.stance=stance
+
+    def process(self, event, now, context_valid=True):
+        if not context_valid or event.get('kind') in ('input_device','input_unavailable') or event.get('edge_basis')=='unknown':
+            self.reset()
+        result=self.string.process(event,now,context_valid)
+        candidate='string' if self.string.string_held or self.string.pending else None
+        if candidate=='string':
+            for gate in self.gates.values(): gate.reset()
+        else:
+            for key,gate in self.gates.items():
+                if event.get('kind')!='input' or key[0]==self.stance:
+                    observed=gate.process(event,now,context_valid)
+                    if key[0]==self.stance and (gate.started or gate.chord_sequence>self.seen[key]):
+                        candidate=key
+                        result=observed
+        if candidate is not None and candidate!=self.active:
+            if self.active is not None: self._gate(self.active).dispatched()
+            self.active=candidate
+        if self.active is not None:
+            gate=self._gate(self.active)
+            if gate.chord_sequence>self.seen[self.active]:
+                self.chord_sequence+=1
+                self.seen[self.active]=gate.chord_sequence
+            self.variant=gate.variant
+            if result and result.get('kind')=='logical_input': result=dict(result,chord_sequence=self.chord_sequence)
+        self.connected=self.string.connected
+        return result
+
+    def _gate(self, key):
+        return self.string if key=='string' else self.gates[key]
+
+    def fields(self, now):
+        if self.active is None:
+            return dict(heartbeat=now,edge=0,expires=0,chord_sequence=self.chord_sequence,
+                        armed=False,held=False,latched=0,variant=0,reserve=False,chord_policy=0)
+        gate=self._gate(self.active)
+        fields=gate.fields(now)
+        if gate.chord_sequence>self.seen[self.active]:
+            self.chord_sequence+=1
+            self.seen[self.active]=gate.chord_sequence
+        self.variant=fields['variant']
+        policy=0 if self.active=='string' else ((self.active[1]|self.active[2])<<16)|(1<<(34-self.active[0]))
+        fields.update(chord_sequence=self.chord_sequence,chord_policy=policy,
+                      reserve=self.active!='string' and (bool(gate.started and not gate.fired) or gate.pending))
+        return fields
+
+    def dispatched(self, repeat=True):
+        if self.active is not None: self._gate(self.active).dispatched()

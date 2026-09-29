@@ -1,6 +1,7 @@
 # Source trainer UI for the sword runtime.
 # Packaged UI uses the same validated settings; gameplay acceptance remains separate.
 import argparse
+from copy import deepcopy
 import os
 from pathlib import Path
 import subprocess
@@ -23,18 +24,23 @@ from trace_reader import Trace
 from process_support import active_runtime, process_matches, worker_command
 
 
-def remap_preset(preset, source, target):
+def remap_preset(preset, source, target, top_level=True):
     # Keep a player's chosen physical buttons when switching controller mappings.
     # Translate saved bits through logical game buttons, then back into the destination mapping.
     # Reject missing equivalents and validate the translated preset before it can replace saved settings.
     """Preserve physical button meaning when the saved mask namespace changes."""
     buttons=binding_buttons(target['device'],target.get('button_map'))
     masks={game_button_mask(target['device'],mask,target.get('button_map')):mask for mask in buttons.values()}
-    result=dict(preset)
-    for key in ('modifier_mask','trigger_mask'):
-        logical=game_button_mask(source['device'],preset[key],source.get('button_map'))
+    result=deepcopy(preset)
+    def remap(mask):
+        logical=game_button_mask(source['device'],mask,source.get('button_map'))
         if logical not in masks: raise ValueError('This controller mapping does not support a saved input')
-        result[key]=masks[logical]
+        return masks[logical]
+    if top_level:
+        for key in ('modifier_mask','trigger_mask'): result[key]=remap(result[key])
+    for row in result['skill_bindings']:
+        if 'input' in row:
+            for key in ('modifier_mask','trigger_mask'): row['input'][key]=remap(row['input'][key])
     return validate_preset(result)
 
 

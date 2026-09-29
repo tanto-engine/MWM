@@ -38,6 +38,7 @@ HELD_INPUT_MOVES = HELD_MOVES | frozenset(move['id'] for move in _ordinary['move
 CHORD_MOVES = frozenset(MOVE_VARIANTS) | HELD_MOVES
 SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']]
     if move['flags'] not in (0x8078000000, 0x8038000000))
+CUSTOM_BINDING_LIMIT = 24
 PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon chord_stance move_settings'.split())
 SOURCE_LABELS = dict(tiger_sprint='Tiger Sprint',dodge_attack='Dodge attack',heavy_attack='Heavy attack',
     guard_light='Guard + light attack',light_attack='Quick attack',high_heavy_followup='High-heavy follow-up')
@@ -67,7 +68,7 @@ def move_capabilities():
                              stances=['high'] if source=='high_heavy_followup' else ['low','mid','high','any'])
                         for source in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup')],
         speed=dict(min=.25,max=2.0), stances=['low','mid','high'],chord_stances=['low','mid','high','any'],
-        native_binding_limit=BINDING_LIMIT)
+        native_binding_limit=BINDING_LIMIT, custom_binding_limit=CUSTOM_BINDING_LIMIT)
 
 
 def atomic_json(path, value):
@@ -206,25 +207,53 @@ def validate_preset(value):
         move=next(result[field] for field in ('tap_move','hold_move') if result[field] in HELD_MOVES)
         raise ValueError(f'Choose Low, Mid or High for the custom chord: {move_label(move)} needs one stance for its move sequence. Any stance is not supported for this move.')
     occupied={}
+    routes=[]
+    for gesture,field in (('tap','tap_move'),('hold','hold_move')):
+        if result[field] is not None:
+            routes.append((result['chord_stance'],result['modifier_mask'],result['trigger_mask'],gesture))
+    custom_count=0
     for binding in bindings:
-        if not isinstance(binding,dict) or set(binding)!={'source','stance','move'}:
+        if not isinstance(binding,dict) or set(binding) not in ({'source','stance','move'}, {'source','stance','move','input'}):
             raise ValueError('Skill binding requires source, stance and move')
         source,stance,move=(binding[field] for field in ('source','stance','move'))
         if source not in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
             label=SOURCE_LABELS.get(source,source) if isinstance(source,str) else str(source)
             raise ValueError(f'Unsupported skill binding: {label} ({stance}) → {move_label(move)}. Choose a source, stance and move from the supported menus.')
+        custom=binding.get('input')
+        if custom is not None:
+            if not isinstance(custom,dict) or set(custom)!={'modifier_mask','trigger_mask','gesture'}:
+                raise ValueError('Custom input requires modifier_mask, trigger_mask and gesture')
+            modifier,trigger,gesture=(custom[key] for key in ('modifier_mask','trigger_mask','gesture'))
+            if (any(type(bit) is not int or not 0<bit<=0x80000000 or bit&(bit-1) for bit in (modifier,trigger))
+                    or modifier==trigger or gesture not in ('tap','hold')):
+                raise ValueError('Custom input requires two distinct single button bits and tap or hold')
+            if move not in CHORD_MOVES:
+                raise ValueError(f'{move_label(move)} cannot use a custom input; choose its original source')
+            if stance=='any' and move in HELD_MOVES:
+                raise ValueError(f'{move_label(move)} needs one stance for its move sequence')
+            for old_stance,old_modifier,old_trigger,old_gesture in routes:
+                overlap=stance=='any' or old_stance=='any' or stance==old_stance
+                if overlap and {modifier,trigger}=={old_modifier,old_trigger} and (modifier,trigger)!=(old_modifier,old_trigger):
+                    raise ValueError('The reversed custom chord overlaps another route in this stance; choose different buttons')
+                if overlap and (modifier,trigger,gesture)==(old_modifier,old_trigger,old_gesture):
+                    raise ValueError('This custom chord gesture already selects a move in this stance')
+            routes.append((stance,modifier,trigger,gesture))
+            custom_count+=1
         if move=='jin_hayabusa.action_0c6f' and (source!='dodge_attack' or stance!='low' or result['low_heavy']!='jin_hayabusa.action_0c6e'):
             raise ValueError(f'{move_label(move)} requires Low Dodge attack and the {move_label("jin_hayabusa.action_0c6e")} Low Triangle / Y string. Enable that string and choose Low Dodge attack, or choose another move.')
         if move in HELD_MOVES and stance=='any':
             raise ValueError(f'{SOURCE_LABELS[source]}: {move_label(move)} needs one stance for its move sequence. Choose Low, Mid or High instead of Any.')
-        if source=='high_heavy_followup' and stance!='high':
+        if custom is None and source=='high_heavy_followup' and stance!='high':
             raise ValueError(f'High-heavy follow-up for {move_label(move)} requires High stance because it follows the High heavy attack. Choose High or another source.')
-        scopes=list(holds) if stance=='any' else [stance]
-        for scope in scopes:
-            if (source,scope) in occupied:
-                raise ValueError(f'{scope.title()} {SOURCE_LABELS[source]} selects both {move_label(occupied[source,scope])} and {move_label(move)}. Only one override can own this input; remove one row or change its source or stance.')
-            occupied[source,scope]=move
-        if move in HELD_MOVES or move in frost.values(): entries.append((stance,move,f'{stance.title()} {SOURCE_LABELS[source]}'))
+        if custom is None:
+            scopes=list(holds) if stance=='any' else [stance]
+            for scope in scopes:
+                if (source,scope) in occupied:
+                    raise ValueError(f'{scope.title()} {SOURCE_LABELS[source]} selects both {move_label(occupied[source,scope])} and {move_label(move)}. Only one override can own this input; remove one row or change its source or stance.')
+                occupied[source,scope]=move
+        if move in HELD_MOVES or move in frost.values(): entries.append((stance,move,f'{stance.title()} {"custom input" if custom else SOURCE_LABELS[source]}'))
+    if custom_count>CUSTOM_BINDING_LIMIT:
+        raise ValueError(f'Only {CUSTOM_BINDING_LIMIT} custom input rows are supported')
     owners={}
     for stance,move,label in entries:
         if move in owners and owners[move][0]!=stance:
@@ -235,7 +264,7 @@ def validate_preset(value):
         raise ValueError(f'{move_label("jin_hayabusa.action_0c79")} ({launcher[1]}) and {move_label("jin_hayabusa.izuna_drop")} ({drop[1]}) share a source action and require different stances. Move one assignment to another stance or disable it.')
     if result['low_heavy'] in owners:
         raise ValueError(f'{move_label(result["low_heavy"])} is used by the Low Triangle / Y string and {owners[result["low_heavy"]][1]}. The string cannot share its move sequence with another binding. Disable the Low Triangle / Y string or choose another move for that binding.')
-    count=sum(3 if binding['source']=='heavy_attack' and binding['stance']=='any' else 1 for binding in bindings)+len(enabled)
+    count=sum(3 if binding['source']=='heavy_attack' and binding['stance']=='any' else 1 for binding in bindings if 'input' not in binding)+len(enabled)
     if count>BINDING_LIMIT:
         raise ValueError(f'This setup uses {count} native override slots; only {BINDING_LIMIT} are supported. Held Triangle / Y uses one slot per stance; Heavy attack in Any stance uses three. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
@@ -252,9 +281,13 @@ def binding_for_preset(calibration, preset, imports=None):
     # Session addresses never become part of a saved moveset.
     preset = validate_preset(preset)
     variants={move['id']:i for i,move in enumerate(imports)} if imports is not None else MOVE_VARIANTS
+    if imports is not None and any(binding['move'] not in variants for binding in preset['skill_bindings'] if 'input' in binding):
+        raise ValueError('Custom input move is absent from prepared imports')
+    routes=[dict(**binding['input'],stance=binding['stance'],variant=variants.get(binding['move']))
+            for binding in preset['skill_bindings'] if 'input' in binding]
     return dict(schema=1, device=copy.deepcopy(calibration['device']),
                   lb_mask=calibration['lb_mask'], circle_mask=preset['trigger_mask'],
                   modifier_mask=preset['modifier_mask'], trigger_mask=preset['trigger_mask'],
                   hold_seconds=preset['hold_seconds'], moveset=preset,
                   string_enabled=preset['string_enabled'],
-                  variants=[variants.get(preset['tap_move']), variants.get(preset['hold_move'])])
+                  variants=[variants.get(preset['tap_move']), variants.get(preset['hold_move'])], routes=routes)
