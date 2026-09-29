@@ -1,0 +1,36 @@
+.controller-diagram { margin-bottom: 20px; padding: 16px 16px 12px; border: 1px solid #52636c; border-radius: 8px; background: #182731; color: #ecf1ef; }
+.controller-diagram__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.controller-diagram__header h2 { margin: 0; font-size: 16px; }
+.controller-diagram__header span { display: block; margin-top: 3px; color: #cdb98e; font-size: 11px; }
+.controller-diagram__switch { display: flex; flex: none; padding: 2px; border: 1px solid #52636c; border-radius: 6px; background: #111d25; }
+.controller-diagram__switch button { min-height: 27px; padding: 3px 9px; border: 0; border-radius: 4px; background: transparent; color: #b9c8cc; font-size: 11px; }
+.controller-diagram__switch button[aria-pressed="true"] { background: #394c5a; color: #fff; }
+.controller-diagram__switch button:focus-visible,.cd-callout:focus-visible { outline: 2px solid #e3c787; outline-offset: 2px; }
+.controller-diagram__stage { overflow-x: auto; margin: 8px -4px 0; }
+.controller-diagram__stage svg { display: block; width: 100%; min-width: 520px; height: auto; font-family: inherit; }
+.controller-diagram__note { margin: 4px 0 0; color: #b7c7ca; font-size: 11px; line-height: 1.4; }
+.cd-shadow { fill: #0c171f; transform: translateY(7px); opacity: .7; }
+.cd-trigger { fill: #2b4050; stroke: #7893a1; stroke-width: 2; }
+.cd-bumper { fill: #304959; stroke: #7c98a6; stroke-width: 2; }
+.cd-shell { fill: url(#cd-shell); stroke: #9bb0b7; stroke-width: 2.2; }
+.cd-seam { fill: none; stroke: #667f8c; stroke-width: 1.5; }
+.cd-center { fill: url(#cd-inset); stroke: #718b96; stroke-width: 1.5; }
+.cd-menu { fill: #a2bac1; }
+.cd-mark { fill: #c7ad76; }
+.cd-mark-line { fill: none; stroke: #293541; stroke-width: 1.6; stroke-linecap: round; }
+.cd-stick-ring { fill: #172630; stroke: #90a7ae; stroke-width: 2; }
+.cd-stick { fill: #385160; stroke: #162630; stroke-width: 2; }
+.cd-stick-top { fill: #445d6c; stroke: #78949e; stroke-width: 1.5; }
+.cd-dpad { fill: #223540; stroke: #a5b6b8; stroke-width: 2; stroke-linejoin: round; }
+.cd-face { fill: #1b2c36; stroke: #90a6ad; stroke-width: 1.5; }
+.cd-face-symbol { font-size: 13px; font-weight: 800; text-anchor: middle; }
+.cd-north { fill: #f0cb6d; }.cd-west { fill: #90bde9; }.cd-east { fill: #eb8a83; }.cd-south { fill: #91d5a7; }
+.cd-face-bracket,.cd-leader { fill: none; stroke: #839ba4; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.cd-anchor { fill: #d6bd85; }
+.cd-callout { cursor: default; }
+.cd-badge { fill: #101e27; stroke: #738b96; stroke-width: 1; }
+.cd-key { fill: #f0d297; font-size: 10px; font-weight: 750; text-anchor: middle; }
+.cd-action { fill: #edf0ee; font-size: 11px; font-weight: 550; }
+.cd-callout:hover .cd-badge,.cd-callout:focus-visible .cd-badge { fill: #354a58; stroke: #e3c787; }
+.cd-callout:hover .cd-leader,.cd-callout:focus-visible .cd-leader { stroke: #e3c787; stroke-width: 2; }
+.cd-combo .cd-key { font-size: 10px; }
