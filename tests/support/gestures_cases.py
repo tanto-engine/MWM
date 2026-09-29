@@ -93,93 +93,33 @@ class Gestures(unittest.TestCase):
 
 
 class TriggerString(unittest.TestCase):
-    def test_disabled_preset_cannot_emit_any_okatsu_binding(self):
-        # Exercise the inactive preset with the legacy string entry still available.
-        # Attempt both Circle gestures and the two-trigger chord after neutral input.
-        # Preserving imported moves must not preserve their disabled bindings.
-        g = ControllerGesture(C, dict(B, variants=[None, None], string_enabled=False), 1000, 2)
-        g.process(dict(kind='input_device', **C['device']), 100)
-        for t, buttons, lt, rt in ((101,0,0,0), (200,20,0,0), (250,16,0,0),
-                                   (300,20,0,0), (800,20,0,0), (850,0,0,0),
-                                   (900,0,255,255), (1500,0,255,255)):
-            self.assertFalse(self.input(g, lt, rt, t, buttons)['armed'])
-        self.assertEqual(g.chord_sequence, 0)
+    def input(self, gate, buttons, tick, lt=0, rt=0, valid=True):
+        gate.process(dict(kind='input', backend='winmm', slot=0, buttons=buttons,
+                          axes=dict(lt=lt, rt=rt), edge_basis='previous_observation'), tick, valid)
+        return gate.fields(tick)
 
-    def make(self):
-        # Create the trigger-string recognizer with entry variant two.
-        # Register the saved device without inventing a neutral trigger observation.
-        # Each test must explicitly establish neutral before arming the chain.
-        g=ControllerGesture(C,B,1000,string_variant=2)
-        g.process(dict(kind='input_device',**C['device']),100)
-        return g
+    def test_bound_string_hold_keeps_followups_armed_until_release(self):
+        gate = ControllerGesture(C, dict(B, variants=[None, 2]), 1000, string_variant=2)
+        gate.process(dict(kind='input_device', **C['device']), 100)
+        self.input(gate, 0, 101)
+        self.input(gate, 20, 200)
+        start = gate.fields(700)
+        self.assertEqual((start['variant'], start['armed'], start['held'], start['latched']), (2, True, True, 0))
+        gate.dispatched()
+        self.assertTrue(gate.fields(710)['held'])
+        self.assertFalse(self.input(gate, 16, 720)['held'])
 
-    def input(self,g,lt,rt,t,buttons=0,**extra):
-        # Feed both trigger axes and optional lifecycle fields to the recognizer.
-        # Return published gesture fields at the same deterministic QPC tick.
-        # Tests can correlate held-state cancellation with the exact queued variant.
-        g.process(dict(kind='input',backend='winmm',slot=0,buttons=buttons,
-                       axes=dict(lt=lt,rt=rt),**extra),t)
-        return g.fields(t)
+    def test_unbound_triggers_do_not_start_a_hidden_string(self):
+        gate = ControllerGesture(C, dict(B, variants=[None, None]), 1000, string_variant=2)
+        gate.process(dict(kind='input_device', **C['device']), 100)
+        self.input(gate, 0, 101)
+        self.assertFalse(self.input(gate, 0, 200, 255, 255)['armed'])
+        self.assertEqual(gate.chord_sequence, 0)
 
-    def test_partial_release_finishes_current_move_and_requires_both_neutral(self):
-        # Cancel later string links when either trigger releases and require both neutral.
-        # Release either trigger mid-string and repress it while the other remains held.
-        # The current move may finish, but the cancelled chain cannot resume until both release.
-        for released in ((0,255),(255,0)):
-            with self.subTest(released=released):
-                g=self.make()
-                self.input(g,0,0,101)
-                start=self.input(g,255,255,200)
-                self.assertEqual((start['variant'],start['latched'],start['held'],start['armed']),(2,0,True,True))
-                g.dispatched()
-                self.assertTrue(self.input(g,255,255,700)['held'])
-                self.assertFalse(g.fields(700)['armed'])
-                self.assertFalse(self.input(g,*released,701)['held'])
-                self.assertFalse(self.input(g,255,255,702)['armed'])
-                self.assertEqual(g.chord_sequence,1)
-                self.input(g,0,0,703)
-                self.assertTrue(self.input(g,255,255,704)['armed'])
-                self.assertEqual(g.chord_sequence,2)
-
-    def test_reconnect_or_context_loss_while_held_never_restarts_chain(self):
-        # Prevent reconnect or context recovery from restarting a held string.
-        # Lose connection or gameplay context and return with triggers still held.
-        # A new valid context must require neutral instead of reviving stale string intent.
-        for interruption in ('reconnect','context','unknown'):
-            with self.subTest(interruption=interruption):
-                g=self.make();self.input(g,0,0,101);self.input(g,255,255,200)
-                if interruption=='reconnect':
-                    g.process(dict(kind='input_unavailable',backend='winmm',slot=0),201)
-                    g.process(dict(kind='input_device',**C['device']),202)
-                elif interruption=='context':
-                    g.process(dict(kind='input',backend='winmm',slot=0,buttons=0,axes=dict(lt=255,rt=255)),201,False)
-                else:
-                    self.input(g,255,255,201,edge_basis='unknown')
-                self.assertFalse(self.input(g,255,255,203)['armed'])
-                self.assertFalse(g.fields(203)['held'])
-                self.input(g,0,0,204)
-                self.assertTrue(self.input(g,255,255,205)['armed'])
-
-    def test_threshold_noise_expiry_and_baseline_gesture(self):
-        # Separate trigger threshold noise and expiry from the baseline tap-hold gesture.
-        # Vary trigger noise, queued-string expiry and the original Circle chord.
-        # String recognition must respect thresholds without replacing the working tap/hold binding.
-        g=self.make()
-        self.assertFalse(self.input(g,255,255,101)['armed'])
-        self.input(g,0,0,102)
-        self.assertFalse(self.input(g,127,255,200)['armed'])
-        self.assertTrue(self.input(g,128,255,201)['armed'])
-        self.assertTrue(self.input(g,97,97,202)['held'])
-        self.assertFalse(self.input(g,96,97,203)['held'])
-        self.input(g,0,0,204)
-        self.input(g,255,255,205)
-        self.assertFalse(g.fields(605)['armed'])
-        self.assertTrue(g.fields(605)['held'])
-        self.input(g,0,0,606)
-        self.input(g,0,0,700,buttons=20)
-        tap=self.input(g,0,0,750,buttons=16)
-        self.assertEqual((tap['armed'],tap['variant'],tap['latched']),(True,0,1))
-        g.dispatched()
-        self.input(g,0,0,800,buttons=20)
-        hold=g.fields(1250)
-        self.assertEqual((hold['armed'],hold['variant']),(True,1))
+    def test_context_loss_cancels_held_string(self):
+        gate = ControllerGesture(C, dict(B, variants=[None, 2]), 1000, string_variant=2)
+        gate.process(dict(kind='input_device', **C['device']), 100)
+        self.input(gate, 0, 101)
+        self.input(gate, 20, 200)
+        self.assertTrue(gate.fields(700)['held'])
+        self.assertFalse(self.input(gate, 20, 701, valid=False)['held'])

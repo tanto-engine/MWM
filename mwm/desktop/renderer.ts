@@ -3,7 +3,7 @@ import { createControllerDiagram } from './controller_diagram';
 // Stable move IDs travel over IPC while readable names remain presentation data.
 export {};
 type Stance = 'low' | 'mid' | 'high';
-type MoveRole = 'chord' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
+type MoveRole = 'chord' | 'string_hold' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
 type Move = { id: string; name: string; input?: string; description?: string } & Record<MoveRole, boolean>;
 type Calibration = { device: Record<string, unknown>; controller_slot?: number | null; [key: string]: unknown };
 type ButtonKey = 'modifier_mask' | 'trigger_mask';
@@ -78,7 +78,7 @@ const pageHelp: Record<string, [string, string, string]> = {
   speed: ['Speed modification', 'Select a move on the left, then adjust its playback percentage.', 'Inherit follows its sequence. 100% explicitly uses native speed.'],
   presets: ['Preset manager', 'Save named movesets and switch the active one in the app.', 'On a supported DS4 mapping, double-tap the touchpad click to cycle during gameplay.'],
   controls: ['Controller', 'Set the device mapping and the buttons for the global custom chord.', 'Input routes can use additional chords with separate buttons.'],
-  native: ['Input routes', 'Original routes replace a Nioh action. Custom routes use their own controller buttons.', 'Custom routes leave original game actions active. Sequential operators keep the modifier held through both presses.'],
+  native: ['Input routes', 'Original routes replace a named Nioh action. Custom routes use their own controller buttons.', 'A configured chord takes priority over a game action on the same buttons. Sequential operators keep the modifier held through both presses.'],
   frost: ['Stance-switch moves', 'Choose the move used when Frost Moon reaches each stance.', 'Trigger during a Ki Pulse window with R1 / RB and two stance taps.'],
   collection: ['Move library', 'Playable moves can be assigned in Sword or Input routes. Recorded candidates remain research until adapted and reviewed.', 'A video or action ID alone does not establish that William can play a move.'],
   guide: ['Help', 'Choose moves, save the draft, then enable the mod.', 'Disable the mod before saving further changes.']
@@ -98,14 +98,14 @@ const fieldHelp: Record<string, [string, string]> = {
   'Hold modifier': ['Hold this controller button through both steps of a custom operator.', 'The first and follow-up buttons must differ from it.'],
   'First press': ['Press this button while the modifier is held, then release this button.', 'Keep holding the modifier for the follow-up.'],
   'Then press': ['Press this follow-up button while still holding the modifier.', 'Complete it within the sequence window shown above.'],
-  Source: ['The game-selected sword input replaced by this original route.', 'Switch Activation to custom buttons to leave the original input unchanged.'],
-  Activation: ['Original Nioh input replaces the selected game action. Custom controller chord starts from the buttons in this row.', 'A custom route adds an input without changing original game actions.'],
+  Source: ['The game-selected sword input replaced by this original route.', 'A custom chord leaves this named source unchanged but takes priority if its buttons overlap another game action.'],
+  Activation: ['Original Nioh input replaces the selected game action. Custom controller chord starts from the buttons in this row.', 'A configured chord takes priority over a game action on those same buttons.'],
   Gesture: ['Tap starts on a short Trigger press. Hold starts after the custom chord hold threshold.', 'A tap and hold can use the same buttons for separate routes.'],
   Stance: ['The stance in which this route applies.', 'Any works where the selected move and original source permit it.'],
   Move: ['The reviewed move played by this route.', 'Remove the row to clear the route.'],
   'Okatsu grapple': ['When a sword grapple succeeds and its native contact condition is met, use the imported Okatsu grapple sequence.', 'This does not turn normal attacks into grapples.'],
   'Mid quick-attack finisher': ['While a native Mid quick-attack string is active, hold Guard (LB/L1) and press Strong attack (Y/Triangle) in its combo window for William’s native finisher.', 'It adds a finisher to three Mid quick strings; it does not replace every quick press.'],
-  'Okatsu dual-trigger string': ['After both analog triggers return to neutral, hold LT+RT (L2+R2) past their threshold to start the optional Okatsu imported string.', 'This is separate from replacing Nioh’s ordinary Quick attack source.'],
+  'Include Okatsu kicking string': ['Add Okatsu’s quick/kick sequence to the move choices, then assign it to a held controller chord in Sword.', 'Keep the chord held through the flip and grab attempt.'],
   'Low heavy string': ['Replaces Low stance’s ordinary heavy-attack sequence with the selected reviewed string.', 'Its later phases continue from the first attack; set phase speeds in Tuning.']
 };
 
@@ -344,7 +344,7 @@ function moveOptions(role: MoveRole, empty = 'Native'): [string, string][] {
   // Research-only catalogue records never appear in these controls.
   // The Engine repeats this check when validating a submitted preset.
   const choices: [string, string][] = [['', empty]];
-  for (const move of state.capabilities.moves) if (move[role]) choices.push([move.id, move.name]);
+  for (const move of state.capabilities.moves) if (move[role] || role === 'string_hold' && move.chord) choices.push([move.id, move.name]);
   return choices;
 }
 
@@ -595,7 +595,7 @@ function renderOverview() {
   for (const [key, label] of [['tap_move', 'Tap'], ['hold_move', 'Hold']] as const) {
     const row = element('label', undefined, 'skill-shared-row');
     row.append(element('span', `${globalInput} · ${label}`));
-    const choice = select(moveOptions('chord', 'Disabled'), preset[key], value => { preset[key] = value || null; changed(); });
+    const choice = select(moveOptions(key === 'hold_move' ? 'string_hold' : 'chord', 'Disabled'), preset[key], value => { preset[key] = value || null; changed(); });
     choice.dataset.assignment = key === 'tap_move' ? 'chord:tap' : 'chord:hold'; row.append(choice); sharedRows.append(row);
   }
   const editShared = element('button', 'Change shared buttons →', 'inline-button'); editShared.onclick = () => navigate('controls');
@@ -634,7 +634,8 @@ function renderMoves() {
   }), grid);
   renderChordButtons(grid);
   for (const [key, label] of [['tap_move', 'Tap / release'], ['hold_move', 'Hold']] as const) {
-    const move = select(moveOptions('chord', 'Disabled'), p[key], value => {
+    const role = key === 'hold_move' ? 'string_hold' : 'chord';
+    const move = select(moveOptions(role, 'Disabled'), p[key], value => {
       // Store the chosen reviewed action by its stable identity.
       // Clearing the option disables this half of the chord.
       // Tap and hold remain independently configurable.
@@ -643,7 +644,7 @@ function renderMoves() {
     const route = field(label, move, grid);
     const updateHelp = () => { const [body, tip] = moveHelp(move.value, `${label} of the Modifier + Trigger chord`); annotate(route, label, body, tip); };
     updateHelp(); move.addEventListener('change', () => { updateHelp(); explainTarget(move); });
-    browseMove(route, move, 'chord', label);
+    browseMove(route, move, role, label);
   }
   const threshold = input(state.preset.hold_seconds, value => {
     // Express hold duration in seconds for the existing chord interpreter.
@@ -680,7 +681,7 @@ function renderOverrides() {
     annotate(heldField, `${stance.toUpperCase()} held strong`, `Hold Triangle / Y in ${stance} stance to start the selected reviewed sequence.`, 'The Izuna Drop continuation requires a successful launcher and contact.');
     browseMove(heldField, held, 'graph', `${stance} held strong`);
   }
-  for (const [key, label] of [['okatsu_grapple', 'Okatsu grapple'], ['mid_light_ender', 'Mid quick-attack finisher'], ['string_enabled', 'Okatsu dual-trigger string']] as const) {
+  for (const [key, label] of [['okatsu_grapple', 'Okatsu grapple'], ['mid_light_ender', 'Mid quick-attack finisher'], ['string_enabled', 'Include Okatsu kicking string']] as const) {
     const check = element('input'); check.type = 'checkbox'; check.checked = p[key];
     check.onchange = () => {
       // Toggle one established sword adaptation without exposing its internal timing.
@@ -698,7 +699,7 @@ function renderNative() {
   // The same source can label several custom routes without consuming native slots.
   const p = state.preset;
   content.append(element('h2', 'Input overrides', 'section-title'),
-    element('p', 'Original routes replace a game action. Custom inputs add a controller route while leaving the original action active. After-attack inputs appear by stance in Sword.', 'hint'));
+    element('p', 'Original routes replace a named game action. Custom chords take priority over game actions on the same buttons. After-attack inputs appear by stance in Sword.', 'hint'));
   const toolbar = element('div', undefined, 'route-toolbar');
   const search = element('input'); search.type = 'search'; search.placeholder = 'Filter source, buttons, stance, or move'; search.setAttribute('aria-label', 'Filter input routes');
   search.oninput = () => { const query = search.value.trim().toLowerCase(); for (const row of content.querySelectorAll<HTMLElement>('.binding')) row.hidden = !row.dataset.search?.includes(query); };
@@ -730,7 +731,7 @@ function renderNative() {
     row.dataset.routeKey = binding.input ? `custom:${index}` : `native:${binding.stance}:${binding.source}`;
     row.classList.toggle('custom-route', Boolean(binding.input));
     row.dataset.search = `${routeInput(binding)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
-    annotate(row, 'Input route', followup ? 'After a confirmed attack, press Guard with the shown button before its recovery window ends.' : binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press and release the first button, then press the follow-up to play the selected move.' : 'This custom chord plays a reviewed move without replacing a Nioh input.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
+    annotate(row, 'Input route', followup ? 'After a confirmed attack, press Guard with the shown button before its recovery window ends.' : binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press and release the first button, then press the follow-up. The first pair does not also perform its game action.' : 'This custom chord takes priority over a game action on the same buttons.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
     const head = element('div', undefined, 'binding-head');
     head.append(element('span', `ROUTE ${String(index + 1).padStart(2, '0')}`, 'route-number'),
       element('span', routeInput(binding), 'route-notation'),
@@ -758,11 +759,11 @@ function renderNative() {
     if (!followup) field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller input']], binding.input ? 'custom' : 'original', value => {
       if (value === 'custom' && !binding.input) binding.input = suggestedInput(binding.stance);
       if (value === 'original') delete binding.input;
-      const choices = moveOptions(binding.input ? 'chord' : 'native').slice(1);
+      const choices = moveOptions(binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : 'native').slice(1);
       if (!choices.some(([id]) => id === binding.move)) binding.move = choices[0][0];
       void action(async () => { await cancelCapture(); render(); });
     }), row);
-    const role = binding.input ? 'chord' : 'native';
+    const role = binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : 'native';
     const replacement = select(moveOptions(role).slice(1), binding.move, value => {
       // Expose only actions reviewed for native-source replacement.
       // This stores an ID, never a raw game address.
@@ -783,12 +784,15 @@ function renderNative() {
         const input = binding.input;
         buttonPicker(row, label, input[key]!, value => { input[key] = value; }, { kind: 'route', binding, key });
       }
-      if (sequence) row.append(element('p', `Hold Modifier + First press, release First press, then press the follow-up within ${state.capabilities.custom_sequence?.window_seconds || .6}s. Original game inputs stay active.`, 'control-note'));
+      if (sequence) row.append(element('p', `Hold Modifier + First press, release First press, then press the follow-up within ${state.capabilities.custom_sequence?.window_seconds || .6}s. The configured start pair takes priority over its game action.`, 'control-note'));
       else {
         field('Gesture', select([['tap', 'Tap / release'], ['hold', `Hold · ${p.hold_seconds}s`]], binding.input.gesture, value => {
           binding.input!.gesture = value as 'tap' | 'hold';
+          const choices = moveOptions(value === 'hold' ? 'string_hold' : 'chord').slice(1);
+          if (!choices.some(([id]) => id === binding.move)) binding.move = choices[0][0];
+          render();
         }), row);
-        row.append(element('p', 'Original Nioh inputs stay unchanged. Hold L1/LB, then use the selected Trigger gesture.', 'control-note'));
+        row.append(element('p', 'Hold the modifier, then use the selected Trigger gesture. This pair takes priority over a game action on the same buttons.', 'control-note'));
       }
       if (capture?.kind === 'route' && capture.binding === binding) captureStatus(row);
       }

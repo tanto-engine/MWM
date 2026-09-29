@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.3.0-alpha.14
+
+- Custom controller chords now reserve their configured button pair before Nioh selects a competing skill. A fresh publisher heartbeat is required, so a stopped editor cannot keep consuming native inputs. Live Low L1+Triangle taps played Charged Rush instead of Nioh's Guard+Strong skill; L1+Circle and L1+L2 also worked in source trials.
+- Hideyori's four-hit Mid Strong replacement retains Triangle for its continuations; the live source trace and player reached all four hits. Conflicting assignments of this graph to two input classes are rejected.
+- Okatsu's quick/kick sequence is named accurately and can use a held controller chord. The player confirmed the full sequence on L1+L2. Removed the hidden LT+RT activation because it briefly entered the game's aim animation. The option now includes the sequence for explicit binding.
+- Cataloged all 67 annotated sword recordings, including twelve older candidates previously absent from the move library. Edward Kelley remains excluded. Research-only candidates are clearly unavailable until their action ownership, complete graph, resources and William adaptation are established.
+- Kept the desktop regression worker isolated from a live Engine registration and clarified that custom chords take priority over game actions on the same buttons.
+
+Source-runtime observations do not certify the new EXE. Mission-entry crashes #2/#10, the Hideyori Dodge Heavy root-motion snap #16, live touchpad preset cycling #12, and further native input source expansion #11 remain open.
+
 ## 0.3.0-alpha.13
 
 - Fixed After Strong availability when ordinary Strong remains original but Hold Strong has a separate move. The Mid stance screenshot case now selects and saves both routes.

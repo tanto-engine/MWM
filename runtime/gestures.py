@@ -56,8 +56,6 @@ class ControllerGesture:
         if type(binding.get('string_enabled', True)) is not bool:
             raise ValueError('String binding enable flag must be boolean')
         self.string_variant = string_variant if binding.get('string_enabled', True) else None
-        self.trigger_neutral = self.string_held = False
-        self.triggers = (False, False)
 
     def reset(self):
         # Discard gesture state after a discontinuity or invalid context.
@@ -67,8 +65,6 @@ class ControllerGesture:
         self.started = self.edge = self.expires = 0
         self.fired = False
         self.lb = self.circle = False
-        self.trigger_neutral = self.string_held = False
-        self.triggers = (False, False)
 
     def emit_intent(self, now, variant):
         # Publish exactly one enabled tap or hold choice.
@@ -84,8 +80,7 @@ class ControllerGesture:
 
     def process(self, event, now, context_valid=True):
         # Turn ordered input samples into release/hold gestures.
-        # Gate identity and context, apply trigger hysteresis, then track chord edges.
-        # Reconnects and either-trigger release cannot continue an old string.
+        # Gate identity and context, then track chord edges.
         if not context_valid:
             self.reset()
         if (event.get('backend'), event.get('slot')) != (self.device['backend'], self.device['slot']):
@@ -107,29 +102,6 @@ class ControllerGesture:
             return None
         if event.get('edge_basis') == 'unknown':
             self.reset()
-        if self.string_variant is not None:
-            axes = event['axes']
-            values = axes['lt'], axes['rt']
-            if any(type(value) is not int or not 0 <= value <= 255 for value in values):
-                self.reset()
-                return None
-            previous = self.triggers
-            self.triggers = tuple(value > (96 if held else 127) for value,held in zip(values,previous))
-            held = all(self.triggers)
-            if not any(self.triggers):
-                self.trigger_neutral = True
-            if held and not all(previous) and self.trigger_neutral:
-                self.chord_sequence += 1
-                self.edge, self.expires = now, now+int(.4*self.frequency)
-                self.variant, self.pending = self.string_variant, True
-                self.started = 0
-                self.trigger_neutral = False
-                self.string_held = True
-            elif not held and self.string_held:
-                self.pending = self.string_held = False
-            if self.string_held:
-                return dict(kind='logical_input', connected=True, lt=True, rt=True,
-                            chord_sequence=self.chord_sequence)
         if buttons & ~(self.lb_mask | self.circle_mask):
             self.reset()
             return None
@@ -164,7 +136,7 @@ class ControllerGesture:
             self.pending = False
         return dict(heartbeat=now, edge=self.edge, expires=self.expires,
                     chord_sequence=self.chord_sequence, armed=self.pending,
-                    held=self.string_held if self.variant == self.string_variant else self.lb and self.circle,
+                    held=self.lb and self.circle,
                     latched=0 if self.variant == self.string_variant else 1, variant=self.variant,
                     reserve=self.variant != self.string_variant and not (self.fired and not self.pending))
 
@@ -433,7 +405,7 @@ class RoutedGesture:
         if not context_valid or event.get('kind') in ('input_device','input_unavailable') or event.get('edge_basis')=='unknown':
             self.reset()
         result=self.string.process(event,now,context_valid)
-        candidate='string' if self.string.string_held or self.string.pending else None
+        candidate='string' if self.string.pending else None
         if candidate=='string':
             for key,gate in self.gates.items():
                 gate.reset();self.seen[key]=gate.chord_sequence
@@ -479,6 +451,8 @@ class RoutedGesture:
                         armed=False,held=False,latched=0,variant=0,reserve=False,chord_policy=0)
         gate=self._gate(self.active)
         fields=gate.fields(now)
+        if self.string.string_variant is not None and gate.variant==self.string.string_variant and fields['held']:
+            fields['latched']=0
         if gate.chord_sequence>self.seen[self.active]:
             self.chord_sequence+=1
             self.seen[self.active]=gate.chord_sequence

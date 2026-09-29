@@ -10,6 +10,8 @@ static uint64_t boss_hold_variant, boss_hold_milliseconds, boss_hold_camera_bank
 static uint64_t boss_native_grapple;
 static uint64_t boss_native_bindings;
 static SkillBinding boss_skill_bindings[BOSS_BINDING_LIMIT]{};
+static ChordReservation boss_chord_reservations[32]{};
+static uint32_t boss_chord_reservation_count;
 static MoveSettings boss_move_settings[BOSS_IMPORT_LIMIT]{};
 static uint32_t boss_controller_selection;
 static LaunchProfile boss_launch_profiles[2]={{75,.75f,14,0},{200,.45f,17,0}};
@@ -23,8 +25,24 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     // Paired actions and legacy baseline aliases must not gain unsupported dispatch paths.
     if (config.import_count < 2 || config.import_count > BOSS_IMPORT_LIMIT || config.string_variant >= config.import_count || (config.native_bindings&~5ULL)
         || config.hold_stances>7 || config.frost_milliseconds || config.frost_speed!=8
-        || config.controller_selection>4 || config.reserved)
+        || config.controller_selection>4 || config.reserved
+        || config.chord_reservation_count>32 || config.chord_reservation_reserved)
         return false;
+    const ChordReservation empty_chord{};
+    for (unsigned i=0;i<32;++i) {
+        const auto& chord=config.chord_reservations[i];
+        if (i>=config.chord_reservation_count) {
+            if (memcmp(&chord,&empty_chord,sizeof(chord))) return false;
+            continue;
+        }
+        const uint16_t bits=chord.buttons;
+        const uint16_t remaining=uint16_t(bits&(bits-1));
+        if (!chord.stances || chord.stances>7 || chord.mode
+            || (bits&~uint16_t(0xE500)) || !remaining || (remaining&(remaining-1))) return false;
+        for (unsigned prior=0;prior<i;++prior)
+            if (config.chord_reservations[prior].buttons==bits
+                && config.chord_reservations[prior].mode==chord.mode) return false;
+    }
     if (!(config.air_juggle_boost>=0 && config.air_juggle_boost<=5)) return false;
     for (float rate : config.tracking_rates) if (!(rate>=0 && rate<=720)) return false;
     uint32_t previous=0;
@@ -231,6 +249,8 @@ static DWORD load_runtime_session(const void* parameter) {
             && incoming.hold_stances==boss_hold_stances && incoming.frost_milliseconds==boss_frost_milliseconds
             && incoming.frost_speed==boss_frost_speed
             && incoming.controller_selection==boss_controller_selection
+            && incoming.chord_reservation_count==boss_chord_reservation_count
+            && !memcmp(incoming.chord_reservations,boss_chord_reservations,sizeof(boss_chord_reservations))
             && !memcmp(incoming.move_settings,boss_move_settings,sizeof(boss_move_settings))
             && incoming.air_juggle_boost==boss_air_juggle_boost
             && !memcmp(incoming.tracking_rates,boss_tracking_rates,sizeof(boss_tracking_rates))
@@ -244,6 +264,8 @@ static DWORD load_runtime_session(const void* parameter) {
     memcpy(boss_skill_bindings,incoming.skill_bindings,sizeof(boss_skill_bindings));
     memcpy(boss_move_settings,incoming.move_settings,sizeof(boss_move_settings));
     boss_controller_selection=incoming.controller_selection;
+    memcpy(boss_chord_reservations,incoming.chord_reservations,sizeof(boss_chord_reservations));
+    boss_chord_reservation_count=incoming.chord_reservation_count;
     memcpy(boss_launch_profiles,incoming.launch_profiles,sizeof(boss_launch_profiles));
     boss_air_juggle_boost=incoming.air_juggle_boost;
     memcpy(boss_tracking_rates,incoming.tracking_rates,sizeof(boss_tracking_rates));

@@ -1500,7 +1500,7 @@
     {
       "id": "okatsu.action_0c61",
       "boss_id": "okatsu",
-      "name": "Okatsu \u00b7 Sword slash string",
+      "name": "Okatsu \u00b7 Kicking string",
       "name_status": "descriptive_mod_name",
       "category": "sword_combo",
       "weapon": "sword",
@@ -68936,6 +68936,390 @@
       "evidence": [
         {
           "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_toyotomi_stronger_iai_strike_f041f1d8.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.heavy_three_move_string",
+      "name": "Three-move heavy attack string",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/heavy_three_move_string.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.launcher_izuna_drop",
+      "name": "Launcher into Izuna Drop",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/launcher_izuna_drop.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.overhead_slam",
+      "name": "Overhead slam",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/overhead_slam.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.quick_string_a",
+      "name": "Quick attack string A",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/quick_string_a.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.quick_string_b_flying_swallow",
+      "name": "Quick attack string B into Flying Swallow",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/quick_string_b_flying_swallow.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.jin_hayabusa.two_flying_swallows",
+      "name": "Two Flying Swallows",
+      "boss_id": "jin_hayabusa",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/jin_hayabusa/two_flying_swallows.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.normals_swipe_slash",
+      "name": "Normal string into swipe and slash",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/normals_swipe_slash.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.omnislice",
+      "name": "Omnislice",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/omnislice.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.four_hit_string",
+      "name": "Four-hit string",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/four_hit_string.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.grab_two_swipes",
+      "name": "Grab into two swipes",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/grab_two_swipes.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.ground_slam_followup",
+      "name": "Ground slam with fire into normal follow-up",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/ground_slam_followup.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.stab_swipes_stab",
+      "name": "Stab, two swipes, then stab",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/stab_swipes_stab.json",
           "kind": "recorded_candidate"
         }
       ],

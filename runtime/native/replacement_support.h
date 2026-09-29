@@ -58,10 +58,20 @@ static bool native_binding_context(DispatchCommand& command) {
 }
 
 static WORD configured_chord_buttons() {
-    // Read the prepublished chord before native input can start a competing action.
-    // Require its exact buttons, stance and fresh player/controller ownership; releases remove the reservation.
+    // Reserve configured pairs on the first native input frame, before Python publishes its edge.
+    // A published command retains the existing per-press expiry and ownership checks.
     // R1 combinations remain owned by native stance switching and Frost Moon.
     DispatchCommand command{};GameInput input{};unsigned slot=0;uint32_t stance=0;
+    if (boss_chord_reservation_count && trace && native_binding_context(command)
+        && boss_player_valid() && !boss_active && read_game_input(trace->header,input)
+        && selected_game_controller(input,slot) && copy_field(boss_session.player+0x470,stance) && stance<=2) {
+        const WORD down=(input.buttons[slot]&0xF3FF) | (input.left_trigger[slot]>=128 ? 0x400 : 0)
+            | (input.right_trigger[slot]>=128 ? 0x800 : 0);
+        for (unsigned i=0;i<boss_chord_reservation_count;++i) {
+            const auto& chord=boss_chord_reservations[i];
+            if (!chord.mode && (chord.stances&(1u<<(2-stance))) && down==chord.buttons) return down;
+        }
+    }
     if (!dispatch || !snapshot_command(command) || !valid_chord_policy(command.reserved[0])) return 0;
     const uint64_t policy=command.reserved[0];const WORD buttons=WORD(policy>>16);
     if (!buttons || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER) || !native_binding_context(command)
@@ -366,7 +376,7 @@ static bool custom_chord_blocks(uint32_t key) {
         || !copy_field(current,current_key) || !repeat_current_allowed(current,current_key)) return false;
     if (key==24 || key==25) return true;
     if ((buttons&XINPUT_GAMEPAD_B) && key==9) return true; // Circle/B otherwise enters native dodge before chord dispatch.
-    if ((buttons&XINPUT_GAMEPAD_Y) && (key==0xBC0 || key==0xCF5 || key==0xC7A || key==0xCB7 || key==0xD4A)) return true;
+    if ((buttons&XINPUT_GAMEPAD_Y) && (key==0xBC0 || key==0xCF5 || key==0xC7A || key==0xCB7 || key==0xD4A || key==0xFB8)) return true;
     uint8_t row[0x30];
     if (!selected_sword_row(key,row)) return false;
     const unsigned selector=(buttons&XINPUT_GAMEPAD_Y) ? 1 : (buttons&XINPUT_GAMEPAD_X) ? 0 : 0xff;

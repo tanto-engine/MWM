@@ -248,10 +248,21 @@ app.whenReady().then(async () => {
       const activation=[...newOriginal.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Activation').querySelector('select');
       change(activation,'custom');await ready();
       const converted=[...document.querySelectorAll('.binding')].at(-1);
-      assert(converted.querySelector('.control-note').textContent.includes('stay unchanged'),'Custom mode does not explain original input');
+      assert(converted.querySelector('.control-note').textContent.includes('takes priority'),'Custom mode does not explain button priority');
       assert(![...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Source'),'Custom route exposes an inert source selector');
       assert([...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Modifier' && x.querySelector('button')?.textContent==='Press to bind'),'Custom route has no button capture');
       assert([...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Gesture'),'Custom route has no tap/hold choice');
+      const routeControl=label=>[...[...document.querySelectorAll('.binding')].at(-1).querySelectorAll('label')]
+        .find(x=>x.querySelector('span')?.textContent===label).querySelector('select');
+      const includeString=()=>[...document.querySelectorAll('label')]
+        .find(x=>x.querySelector('span')?.textContent==='Include Okatsu kicking string').querySelector('input');
+      includeString().click();await ready();
+      change(routeControl('Gesture'),'hold');await ready();
+      assert([...routeControl('Move').options].some(x=>x.value==='okatsu.action_0c61'),'Held route lacks Okatsu string');
+      change(routeControl('Move'),'okatsu.action_0c61');await ready();
+      change(routeControl('Gesture'),'tap');await ready();
+      assert(routeControl('Move').value!=='okatsu.action_0c61','Changing a string hold to tap kept an invalid hidden move');
+      includeString().click();await ready();
       [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add custom input').click();await ready();
       assert(document.querySelectorAll('.binding').length===originalRows+2,'Custom add did not permit another route');
       assert(document.querySelector('.slot-count').textContent.includes('custom routes'),'Separate custom capacity is missing');

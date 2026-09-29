@@ -11,6 +11,7 @@ import web_worker
 # Reject lifecycle calls even if a renderer regression unexpectedly tries to enable gameplay.
 web_worker.Desktop.location = lambda self: Path(sys.argv[1])
 web_worker.process_matches = lambda value: False
+web_worker.active_runtime = lambda: None
 original = web_worker.Desktop.dispatch
 
 

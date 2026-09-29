@@ -12,7 +12,7 @@ sys.path[:0]=[str(ROOT/'runtime'),str(ROOT/'mwm/app')]
 from engine_config import DEFAULT_PRESET, binding_for_preset, move_capabilities, validate_preset
 from game_controller import GAME_DEVICE, game_binding, saved_buttons
 from gestures import RoutedGesture
-from prepare_session import compiled_skill_bindings
+from prepare_session import compiled_skill_bindings, compiled_chord_reservations
 from run_dispatch import CommandMap
 from trainer import remap_preset
 from binding_groups import export_group, import_group
@@ -32,6 +32,62 @@ def preset():
 
 
 class MultiChordCases(unittest.TestCase):
+    def test_reservations_cover_every_route_before_its_first_input_frame(self):
+        value=preset()
+        value['tap_move']='okatsu.charged_rush'
+        value['hold_move']=None
+        value['skill_bindings'][1]['input']['gesture']='tap'
+        reservations=compiled_chord_reservations(value,DS4,[dict(id='okatsu.charged_rush'),
+                                                        dict(id='okatsu.leaping_slash')])
+        self.assertEqual(reservations,[dict(buttons=0x500,stances=1,mode=0),
+            dict(buttons=0x2100,stances=1,mode=0),
+            dict(buttons=0x8100,stances=1,mode=0)])
+
+    def test_reservations_skip_attack_followup_and_include_sequence_start(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence')),
+            dict(source='tiger_sprint',stance='high',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=8,gesture='after_quick'))]
+        reservations=compiled_chord_reservations(value,DS4,[dict(id=value['tap_move']),
+            dict(id='okatsu.charged_rush')])
+        self.assertEqual(reservations,[dict(buttons=0x500,stances=1,mode=0),
+            dict(buttons=0x2100,stances=1,mode=0)])
+
+    def test_custom_hold_string_stays_held_and_unlatched_for_chain(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['string_enabled']=True
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',
+            move='okatsu.action_0c61',input=dict(modifier_mask=16,trigger_mask=4,gesture='hold'))]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,
+            [dict(id='okatsu.charged_rush'),dict(id='okatsu.leaping_slash'),dict(id='okatsu.action_0c61')]))
+        gate=RoutedGesture(calibration,binding,1000,string_variant=2)
+        gate.set_stance(2);gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        def send(mask,now):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
+                              edge_basis='previous_observation',axes=dict(lt=0,rt=0)),now)
+        send(0,101);send(0x2100,200)
+        fields=gate.fields(450)
+        self.assertEqual((fields['armed'],fields['held'],fields['latched'],fields['variant']),
+                         (True,True,0,2))
+        owned=C.create_string_buffer(224)
+        command=CommandMap.__new__(CommandMap)
+        command.address,command.sequence=C.addressof(owned),0
+        config=dict(generation=7,player=0x100000,owner=0x200000,vtable=0x300000,
+                    banks=[0x400000,0x500000,0x600000],imports=[dict(descriptor=0x700000+i,
+                    payload=0x800000+i,key=0xC60+i,motion=1200+i) for i in range(3)])
+        command.publish(config,**fields)
+        self.assertEqual(struct.unpack_from('<3Q',owned.raw,64+128),
+                         (fields['chord_policy'],2,0))
+        gate.dispatched()
+        continued=gate.fields(451)
+        self.assertEqual((continued['armed'],continued['held'],continued['latched']),
+                         (False,True,0))
+        command.publish(config,**continued)
+        self.assertEqual(struct.unpack_from('<3Q',owned.raw,64+128),(0,2,0))
+        send(0x100,500)
+        self.assertFalse(gate.fields(501)['held'])
+
     def test_sequence_requires_order_and_preserves_original_input(self):
         value=copy.deepcopy(DEFAULT_PRESET)
         value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',

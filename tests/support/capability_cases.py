@@ -23,6 +23,13 @@ def empty_preset():
 
 
 class CapabilityTests(unittest.TestCase):
+    def test_hideyori_string_uses_one_continuation_input(self):
+        preset=empty_preset()
+        preset['stance_holds']['low']='toyotomi_hideyori.action_0d30'
+        preset['skill_bindings']=[dict(source='light_attack',stance='low',move='toyotomi_hideyori.action_0d30')]
+        with self.assertRaisesRegex(ValueError,'cannot use two inputs'):
+            config.validate_preset(preset)
+
     def fixture(self,preset):
         # Create a native-shaped session for an edited preset without attaching to Nioh.
         # Reuse the maintained session fixture and serialize it through the production ABI encoder.

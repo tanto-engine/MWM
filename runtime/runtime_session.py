@@ -15,9 +15,10 @@ MOVE_IMPORT = struct.Struct('<5QIi hHhHHH 9I')
 MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
 MOVE_SETTINGS = struct.Struct('<f4H')
-SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*BINDING_LIMIT + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I')
-MAGIC, VERSION = 0x3153454e, 12
-assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 12416
+CHORD_RESERVATION_LIMIT = 32
+SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*BINDING_LIMIT + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I' + 'HBB'*CHORD_RESERVATION_LIMIT + '2I')
+MAGIC, VERSION = 0x3153454e, 13
+assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 12552
 
 
 def encode_session(config, pid, creation_filetime):
@@ -199,6 +200,20 @@ def encode_session(config, pid, creation_filetime):
     selection=config.get('controller_selection',0)
     if type(selection) is not int or not 0<=selection<=4:
         raise ValueError('Controller selection requires auto or an XInput slot')
+    reservations=config.get('chord_reservations',[])
+    if not isinstance(reservations,list) or len(reservations)>CHORD_RESERVATION_LIMIT:
+        raise ValueError('Too many chord reservations')
+    encoded_reservations=[];seen=set()
+    for row in reservations:
+        if not isinstance(row,dict) or set(row)!={'buttons','stances','mode'}:
+            raise ValueError('Invalid chord reservation')
+        buttons,stances,mode=(row[key] for key in ('buttons','stances','mode'))
+        if (any(type(value) is not int for value in (buttons,stances,mode)) or not 0<stances<=7
+                or mode!=0 or buttons & ~0xE500 or buttons.bit_count()!=2
+                or (buttons,mode) in seen):
+            raise ValueError('Invalid chord reservation')
+        seen.add((buttons,mode));encoded_reservations.extend((buttons,stances,mode))
+    encoded_reservations.extend([0]*3*(CHORD_RESERVATION_LIMIT-len(reservations)))
     profiles=config.get('launch_profiles',LAUNCH_PROFILES); boost=config.get('air_juggle_boost',AIR_JUGGLE_BOOST)
     validate_launch_profiles(profiles,boost)
     tracking=config.get('tracking_rates',TRACKING_RATES)
@@ -207,4 +222,4 @@ def encode_session(config, pid, creation_filetime):
     return SESSION_CONFIG.pack(MAGIC, VERSION, SESSION_CONFIG.size, pid,
                                int(creation_filetime), int(tag, 16), hold_variant, hold_milliseconds, hold_camera, native_bindings,
                                hold_stances,*frost,window,speed,*pointers,
-                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, *(tracking[key] for key in TRACKING_RATES),*encoded_settings,selection,0)
+                               len(moves), string_variant, *imports, *encoded_adapters, *encoded_bindings, *launch, boost, *(tracking[key] for key in TRACKING_RATES),*encoded_settings,selection,0,*encoded_reservations,len(reservations),0)

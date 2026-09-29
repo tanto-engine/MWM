@@ -30,7 +30,7 @@ class PresetRuntimeTests(unittest.TestCase):
     def test_library_load_is_controller_aware_and_preserves_dirty_draft(self):
         with tempfile.TemporaryDirectory() as folder:
             runtime = Path(folder)
-            with patch.object(worker.Desktop, 'location', return_value=runtime), patch.object(worker, 'process_matches', return_value=False):
+            with patch.object(worker.Desktop, 'location', return_value=runtime), patch.object(worker, 'process_matches', return_value=False), patch.object(worker, 'active_runtime', return_value=None):
                 desktop = worker.Desktop()
                 params, first, second = self.seed(runtime, desktop)
                 listing = desktop.preset_list()

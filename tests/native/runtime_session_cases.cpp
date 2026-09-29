@@ -109,9 +109,22 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==12 && sizeof(RuntimeSessionConfig)==12416
+    static_assert(RUNTIME_SESSION_VERSION==13 && sizeof(RuntimeSessionConfig)==12552
         && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==6472
-        && offsetof(RuntimeSessionConfig,skill_bindings)==10568);
+        && offsetof(RuntimeSessionConfig,skill_bindings)==10568
+        && offsetof(RuntimeSessionConfig,chord_reservations)==12416);
+    auto chords=incoming;chords.chord_reservation_count=2;
+    chords.chord_reservations[0]={0x8100,1,0}; // Low LB+Y.
+    chords.chord_reservations[1]={0x2100,7,0}; // LB+B in every stance.
+    assert(runtime_imports_valid(chords));
+    auto bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8000;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8300;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[0].stances=8;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[1].mode=2;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[1].buttons=0xC01;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[2].buttons=0x8100;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservation_count=33;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservation_reserved=1;assert(!runtime_imports_valid(bad_chord));
     auto moved=aerial;moved.frost_variants[1]=17;moved.frost_variants[2]=8;
     moved.skill_bindings[0]={2,2,17,0,0,0,0};
     for (unsigned slot : {7u,8u}) {

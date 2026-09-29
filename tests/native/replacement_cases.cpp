@@ -295,7 +295,8 @@ static void replacement_reset() {
     // Use recorded William transition bytes and the source recovery/count signatures.
     // Distinct banks reveal accidental reuse of Okatsu resources during replacement or exit.
     for (auto& adapter : boss_adapters) adapter={};
-    reset();for (auto& binding : boss_skill_bindings) binding={};boss_active_slot=0; pending_heavy={}; boss_hold_variant=0; boss_hold_milliseconds=0;
+    reset();for (auto& binding : boss_skill_bindings) binding={};for (auto& chord : boss_chord_reservations) chord={};
+    boss_chord_reservation_count=0;boss_active_slot=0; pending_heavy={}; boss_hold_variant=0; boss_hold_milliseconds=0;
     game_input_state=replacement_input; pad_mask=1; pad_buttons=0; native_idle_fallbacks=0; publish_during_input=false;
     boss_import_count=5;
     const int16_t recovery[]={35,45,45}, player_recovery[]={38,29,33};
@@ -430,6 +431,66 @@ static void low_quick_string_cases() {
     }
     assert(sword_string_successor(boss_imports[8])==0);
     original_lookup=native_lookup;
+}
+
+static void mid_hideyori_string_cases() {
+    // Mid Strong must keep Triangle on the D30 -> D31 native continuation rows.
+    // The Low Quick route above instead needs Square; both use the same source string.
+    replacement_reset(); boss_import_count=6;
+    auto& move=boss_imports[2]; auto& adapter=boss_adapters[2];
+    move.key=0xD30; move.motion=2000; move.flags=0x184C0000;
+    move.transition_count=46; move.recovery_frame=45; move.next_variant=-1;
+    put(jin_descriptors[0].data(),0,move.key);
+    put(jin_descriptors[0].data(),0x78,address(player_pointers[0].data()));
+    put(jin_descriptors[0].data(),0x82,move.transition_count);
+    put(jin_payloads[0].data(),0x18,move.flags);
+    put(jin_payloads[0].data(),0x20,move.motion);
+    put(jin_payloads[0].data(),0x24,move.recovery_frame);
+    adapter.kind=2; adapter.player_key=0xC7A; adapter.player_motion=2300;
+    adapter.transition_count=42; adapter.recovery_frame=46;
+    put(heavy_descriptors[0].data(),0,uint32_t(0xC7A));
+    put(heavy_descriptors[0].data(),0x82,uint16_t(42));
+    put(heavy_payloads[0].data(),0x20,int32_t(2300));
+    put(heavy_payloads[0].data(),0x24,int16_t(46));
+    for (auto& row : player_rows[0]) {
+        int16_t target=0; memcpy(&target,row.data()+0x14,2);
+        if (target==0xCF6) put(row.data(),0x14,int16_t(0xC7B));
+    }
+    boss_imports[5]=move; boss_imports[5].key=0xD31;
+    boss_imports[5].motion=2010; boss_adapters[5]=adapter;
+    boss_adapters[5].kind=4;
+    boss_skill_bindings[0]={1,2,3,0xC7A,2300,42,0x8000000594C0000ULL};
+    assert(boss_native_successor(2,0xD31)==5);
+    assert(boss_prepare_private_action(2));
+    unsigned triangles=0;
+    for (unsigned row=0;row<boss_private_actions[2].transition_count;++row) {
+        const auto* body=boss_private_actions[2].transition_bodies[row];
+        int16_t target=0; memcpy(&target,body+0x14,2);
+        if (target==0xD31 && body[0x0B]==1 && body[0x0C]==1) ++triangles;
+    }
+    assert(triangles==2);
+}
+
+static void chord_reservation_cases() {
+    // The first LB+Y game input can select FB8 before an external gesture intent exists.
+    // A validated session pair reserves that exact input; other stances and buttons stay native.
+    replacement_reset();state(3303,2061,2);publish_player_context(.25f);
+    boss_chord_reservations[0]={uint16_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y),1,0};
+    boss_chord_reservation_count=1;command.reserved[0]=0;publish();
+    pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;
+    observe_game_input(trace->header);
+    assert(configured_chord_buttons()==pad_buttons && custom_chord_blocks(0xFB8));
+    const auto heartbeat=dispatch->command.heartbeat_qpc;
+    dispatch->command.heartbeat_qpc-=frequency;
+    assert(!configured_chord_buttons()); // A stopped publisher cannot consume native inputs.
+    dispatch->command.heartbeat_qpc=heartbeat;
+    assert(!custom_chord_blocks(0x3E8));
+    put(player.data(),0x470,uint32_t(1));assert(!configured_chord_buttons());
+    put(player.data(),0x470,uint32_t(2));pad_buttons|=XINPUT_GAMEPAD_B;
+    observe_game_input(trace->header);assert(!configured_chord_buttons());
+    pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;
+    observe_game_input(trace->header);dispatch->control.enabled=0;
+    assert(!configured_chord_buttons());
 }
 
 static void hold_reset(unsigned stance=2, bool select_heavy=true) {
@@ -1148,6 +1209,8 @@ int main() {
     recorded_pulse_cost_cases();
     native_heavy_string_cases();
     low_quick_string_cases();
+    mid_hideyori_string_cases();
+    chord_reservation_cases();
     held_slot_cases();
     weapon_policy_cases();
     airborne_cases();

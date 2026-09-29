@@ -10,6 +10,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_okatsu_string_opener_can_use_a_regular_chord(self):
+        from prepare_session import configured_imports
+        preset = json.loads((ROOT/'data/preset.json').read_text(encoding='utf8'))
+        preset['hold_move'] = 'okatsu.action_0c61'
+        with self.assertRaisesRegex(ValueError, 'Enable Okatsu kicking string'):
+            config.validate_preset(preset)
+        preset['string_enabled'] = True
+        imports = configured_imports(config.validate_preset(preset))
+        self.assertEqual(imports['string_variant'], 2)
+        self.assertEqual(config.binding_for_preset(
+            {'device': {'backend': 'xinput', 'slot': 0}, 'lb_mask': 16},
+            preset, imports['moves'])['variants'][1], 2)
+        preset['tap_move'] = 'okatsu.action_0c61'
+        with self.assertRaises(ValueError): config.validate_preset(preset)
+
     def test_capture_failure_keeps_worker_available(self):
         import subprocess
         import sys
@@ -98,7 +113,7 @@ class SwordConfigurationTests(unittest.TestCase):
                 adapter[field]+=offset
             for field in ('descriptor','payload','clip','timing_record'): move[field]+=offset
         self.assertEqual(len(fixture.config['imports']),25)
-        self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),12416)
+        self.assertEqual(len(encode_session(fixture.config,fixture.pid,fixture.born)),12552)
         self.assertEqual([b['kind'] for b in fixture.config['skill_bindings']],[1,1,1,5,4])
         self.assertEqual(preset['chord_stance'],'low')
         # The faster Oda root must also reach its second slash through ordinary speed inheritance.

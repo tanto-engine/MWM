@@ -58,6 +58,21 @@ class RuntimeSessionTests(unittest.TestCase):
         import re
         self.assertEqual(re.findall(r'^    uint64_t (\w+);$', header.split('struct MoveVoice')[0], re.MULTILINE), list(POINTER_FIELDS))
 
+    def test_chord_reservations_are_encoded_and_bounded(self):
+        self.config['chord_reservations']=[dict(buttons=0x8100,stances=1,mode=0),
+                                           dict(buttons=0x2100,stances=7,mode=0)]
+        encoded=encode_session(self.config,self.pid,self.born)
+        self.assertEqual(encoded[12416:12424],bytes.fromhex('0081010000210700'))
+        self.assertEqual(encoded[12424:12544],bytes(120))
+        self.assertEqual(encoded[12544:12552],bytes.fromhex('0200000000000000'))
+        for rows in ([dict(buttons=0x8100,stances=1,mode=0)]*2,
+                     [dict(buttons=0x8100,stances=0,mode=0)],
+                     [dict(buttons=0xC00,stances=7,mode=1)],
+                     [dict(buttons=0x200,stances=1,mode=0)],
+                     [dict(buttons=0x8100,stances=1,mode=2)]):
+            with self.subTest(rows=rows),self.assertRaisesRegex(ValueError,'chord reservation'):
+                encode_session(dict(self.config,chord_reservations=rows),self.pid,self.born)
+
     def test_full_import_capacity_and_overflow(self):
         # The former 32-phase cap rejected otherwise valid authored movesets.
         # Encode every available slot, then reject an additional phase before packing.

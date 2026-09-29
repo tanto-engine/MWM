@@ -255,7 +255,7 @@ class PreparationTests(unittest.TestCase):
         # Prepare a session using only the player and engine-owned resource fields.
         # The encoded ABI must not require any borrowed source boss object.
         from engine_policy import LAUNCH_PROFILES, TRACKING_RATES
-        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=0,frost_speed=8,mid_light_ender=False,skill_bindings=[],move_settings=None,controller_selection=0,launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2,tracking_rates=copy.deepcopy(TRACKING_RATES))
+        bindings=dict(hold_stances=0,frost_variants=[0,0,0],frost_milliseconds=0,frost_speed=8,mid_light_ender=False,skill_bindings=[],chord_reservations=[],move_settings=None,controller_selection=0,launch_profiles=copy.deepcopy(LAUNCH_PROFILES),air_juggle_boost=2,tracking_rates=copy.deepcopy(TRACKING_RATES))
         fields, originals = prepare.boss_fields(dict(PROFILE,**bindings))
         expected=dict(BOSS,**bindings)
         self.assertEqual(fields, {key:expected[key] for key in fields})
@@ -370,7 +370,8 @@ class PreparationTests(unittest.TestCase):
                      patch.object(prepare,'resolve_imports',return_value=([first,PROFILE['charged_candidate']],BOSS['imports'])), \
                      patch.object(prepare,'inspect_motion',return_value={'presence':'present','clip':'0x56000000'}), \
                      patch.object(prepare,'resources',side_effect=inspect_resources), \
-                     patch.object(prepare,'compiled_skill_bindings',return_value=[]):
+                     patch.object(prepare,'compiled_skill_bindings',return_value=[]), \
+                     patch.object(prepare,'compiled_chord_reservations',return_value=[]):
                     if index not in (0,1,2) or changed:
                         with self.assertRaises(ValueError):prepare.fresh_profile(game)
                     else:

@@ -31,12 +31,14 @@ _sword = json.loads((DATA/'imports/jin_hayabusa.json').read_text(encoding='utf8'
 _trials = [json.loads(path.read_text(encoding='utf8')) for path in sorted((DATA/'imports').glob('*.json'))
            if path.stem not in ('okatsu','jin_hayabusa')]
 SOURCE_MANIFESTS = [_sword, *_trials]
-MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:2] +
+MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:3] +
     [move for move in _sword['moves'] if move['adapter_kind']==5])}
+STRING_ENTRY = 'okatsu.action_0c61'
 HEAVY_STRINGS = {chain[0]: name for name, chain in _sword['candidates'].items()}
 HELD_MOVES = frozenset(root for source in SOURCE_MANIFESTS for root in source['hold_chains']) | frozenset(HEAVY_STRINGS)
 HELD_INPUT_MOVES = HELD_MOVES | frozenset(move['id'] for move in _ordinary['moves'][:2])
-CHORD_MOVES = frozenset(MOVE_VARIANTS) | HELD_MOVES
+CHORD_MOVES = frozenset(MOVE_VARIANTS) - {STRING_ENTRY} | HELD_MOVES
+HOLD_CHORD_MOVES = CHORD_MOVES | {STRING_ENTRY}
 SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']]
     if move['flags'] not in (0x8078000000, 0x8038000000))
 CUSTOM_BINDING_LIMIT = 24
@@ -62,6 +64,7 @@ def move_capabilities():
     names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
     ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']])
     return dict(moves=[dict(id=identifier, name=names[identifier], **MOVE_HELP['moves'][identifier], chord=identifier in CHORD_MOVES,
+        string_hold=identifier==STRING_ENTRY,
         graph=identifier in HELD_MOVES, held=identifier in HELD_INPUT_MOVES, heavy_string=identifier in HEAVY_STRINGS,
         native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
         speed=identifier in SPEED_MOVES) for identifier in ids],
@@ -165,7 +168,8 @@ def validate_preset(value):
     if not isinstance(result['name'], str) or not result['name'].strip() or len(result['name']) > 100:
         raise ValueError('Give the moveset a name of 1 to 100 characters')
     for key in ('tap_move', 'hold_move'):
-        if result[key] is not None and (not isinstance(result[key], str) or result[key] not in CHORD_MOVES):
+        choices = HOLD_CHORD_MOVES if key=='hold_move' else CHORD_MOVES
+        if result[key] is not None and (not isinstance(result[key], str) or result[key] not in choices):
             raise ValueError(f'Custom chord {key.split("_")[0]}: {move_label(result[key])} cannot be assigned here. Choose a move from this control’s menu.')
     if result['chord_stance'] not in ('low','mid','high','any'):
         raise ValueError('Choose a stance or Any for the custom chord')
@@ -226,6 +230,8 @@ def validate_preset(value):
             label=SOURCE_LABELS.get(source,source) if isinstance(source,str) else str(source)
             raise ValueError(f'Unsupported skill binding: {label} ({stance}) → {move_label(move)}. Choose a source, stance and move from the supported menus.')
         custom=binding.get('input')
+        if move==STRING_ENTRY and custom is None:
+            raise ValueError('Okatsu kicking string needs a held controller chord')
         if custom is not None:
             sequence=isinstance(custom,dict) and custom.get('gesture')=='sequence'
             required={'modifier_mask','trigger_mask','followup_mask','gesture'} if sequence else {'modifier_mask','trigger_mask','gesture'}
@@ -244,7 +250,7 @@ def validate_preset(value):
                 raise ValueError('This attack follow-up input is occupied by a Nioh 1 skill in this stance')
             if attack:
                 attack_routes.append((gesture,stance))
-            if move not in CHORD_MOVES:
+            if move not in CHORD_MOVES and not (move==STRING_ENTRY and gesture=='hold'):
                 raise ValueError(f'{move_label(move)} cannot use a custom input; choose its original source')
             if stance=='any' and move in HELD_MOVES:
                 raise ValueError(f'{move_label(move)} needs one stance for its move sequence')
@@ -285,6 +291,8 @@ def validate_preset(value):
         raise ValueError(f'Only {CUSTOM_BINDING_LIMIT} custom input rows are supported')
     owners={}
     for stance,move,label in entries:
+        if move=='toyotomi_hideyori.action_0d30' and move in owners:
+            raise ValueError('Hideyori four-hit string cannot use two inputs; choose one source for its continuation buttons')
         if move in owners and owners[move][0]!=stance:
             raise ValueError(f'{move_label(move)} is assigned to {owners[move][1]} and {label}. This move must use the same stance across bindings. To use {label}, clear {owners[move][1]} or choose a different move there.')
         owners[move]=(stance,label)
@@ -298,6 +306,8 @@ def validate_preset(value):
         raise ValueError(f'This setup uses {count} native override slots; only {BINDING_LIMIT} are supported. Held Triangle / Y uses one slot per stance; Heavy attack in Any stance uses three. Remove an override or held binding, or narrow an Any Heavy attack to one stance.')
     if any(type(result[key]) is not bool for key in ('okatsu_grapple','mid_light_ender','string_enabled')):
         raise ValueError('Grapple and string enable flags must be boolean')
+    if not result['string_enabled'] and STRING_ENTRY in (result['tap_move'], result['hold_move'], *(binding['move'] for binding in bindings)):
+        raise ValueError('Enable Okatsu kicking string before assigning its opener')
     return result
 
 

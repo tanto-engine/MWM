@@ -177,11 +177,12 @@ def verify_intake(root, records, evidence_root):
 
 def verify_catalogue(records, path):
     # A raw recording may be discoverable, but cannot silently become a runnable import.
-    # Keep every unmapped candidate mirrored in the product catalogue with no action ID.
+    # Keep every sword candidate mirrored in the product catalogue with no action ID.
     # A later reviewed adapter must pass the normal resource and William checks separately.
     catalogue = json.loads(Path(path).read_text(encoding='utf8'))
     rows = {move['id']: move for move in catalogue['moves']}
-    candidates = {key: value for key, value in records.items() if value.get('mapping_status') == 'unmapped'}
+    candidates = {key: value for key, value in records.items()
+                  if value['weapon_id'] == 'sword' and value['review_status'] == 'candidate'}
     for identifier, record in candidates.items():
         require(identifier in rows, f'{identifier}: absent from product catalogue')
         require(all(ref['game_build_sha256'] in (None, catalogue['supported_build_sha256']) for ref in record['evidence']),
@@ -191,7 +192,10 @@ def verify_catalogue(records, path):
                 move['weapon'] == 'sword' and not move['implementation']['selectable'] and
                 not move['implementation'].get('engine_profile') and
                 all(move['source'].get(key) is None for key in ('action_id', 'motion_id', 'timing_id')) and
-                move['blocked_reasons'] == record['blocked_reasons'],
+                bool(move['blocked_reasons']) and
+                (record.get('mapping_status') != 'unmapped' or move['blocked_reasons'] == record['blocked_reasons']) and
+                any(ref.get('path') == f"dataset/weapons/sword/{record['boss_id']}/{identifier.rsplit('.', 1)[1]}.json"
+                    for ref in move['evidence']),
                 f'{identifier}: unreviewed candidate became playable or changed identity')
     require({key for key, value in rows.items() if value['id'].startswith('sword.') and
              value['implementation'].get('engine_profile') is None} == set(candidates),

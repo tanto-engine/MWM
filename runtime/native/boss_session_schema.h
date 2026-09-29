@@ -74,6 +74,9 @@ struct SkillBinding {
 };
 static_assert(sizeof(SkillBinding)==32,"Skill binding ABI size");
 
+struct ChordReservation { uint16_t buttons; uint8_t stances, mode; };
+static_assert(sizeof(ChordReservation)==4,"Chord reservation ABI size");
+
 // Thresholds choose a launch policy by resistance; weight_scale and vertical_impulse affect separate native fields.
 struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };
 // Playback speed is a multiplier; pulse_percent controls recoverable Ki and fill/hold use native frame units.
@@ -97,8 +100,11 @@ struct RuntimeSessionConfig {
     float air_juggle_boost, tracking_rates[3];
     MoveSettings move_settings[BOSS_IMPORT_LIMIT];
     uint32_t controller_selection, reserved;
+    ChordReservation chord_reservations[32];
+    uint32_t chord_reservation_count, chord_reservation_reserved;
 };
-static_assert(sizeof(RuntimeSessionConfig) == 12416 && offsetof(RuntimeSessionConfig, imports) == 328,
+static_assert(sizeof(RuntimeSessionConfig) == 12552 && offsetof(RuntimeSessionConfig, imports) == 328
+              && offsetof(RuntimeSessionConfig, chord_reservations) == 12416,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 12;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 13;

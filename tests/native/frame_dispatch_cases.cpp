@@ -221,6 +221,8 @@ static void reset() {
     boss_session.player_pulse_descriptor=address(pulse_descriptor.data());
     entries[0]=address(desired.data()); put(bank.data(),0x128,address(entries)); put(bank.data(),0x130,uint32_t(1));
     fixture_imports();
+    for (auto& chord : boss_chord_reservations) chord={};
+    boss_chord_reservation_count=0;
     state(0,0,3);
     dispatch->control.qpc_frequency=frequency; trace->header.qpc_frequency=frequency;
     input_rescan=0; begin_dispatch(); trace->header.enabled=1;

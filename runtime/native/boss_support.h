@@ -278,6 +278,11 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         || !copy_field(payload+0x24,recovery) || recovery != adapter.recovery_frame) return false;
     uint64_t pointers[64]{}, after[64]{};
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return false;
+    bool quick_string=false;
+    if (boss_imports[slot].flags==0x184C0000 && boss_imports[slot].key>=0xD30 && boss_imports[slot].key<=0xD33)
+        for (const auto& binding : boss_skill_bindings) if (binding.kind==5 && binding.variant
+            && binding.variant<=boss_import_count && boss_imports[binding.variant-1].key==0xD30
+            && boss_adapters[binding.variant-1].bank==adapter.bank) quick_string=true;
     for (unsigned i=0; i<count; ++i) {
         uint8_t row_check[0x30];
         if (!copy_bytes(pointers[i],bodies[i],0x30) || !copy_bytes(pointers[i],row_check,0x30)
@@ -300,8 +305,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             // The final strike disables this continuation instead of restarting the string.
             target=boss_native_successor(slot,next)>=0 ? int16_t(next) : int16_t(-1);
             memcpy(bodies[i]+0x14,&target,2);
-            if (boss_imports[slot].flags==0x184C0000 && boss_imports[slot].key>=0xD30 && boss_imports[slot].key<=0xD33)
-                bodies[i][0x0B]=0; // This recorded string advances with Square, not William's template Triangle.
+            if (quick_string) bodies[i][0x0B]=0; // Quick uses Square; native Heavy keeps Triangle.
             continue;
         }
         if (target == 0xD5F) memcpy(bodies[i]+0x20,&adapted_recovery,2);

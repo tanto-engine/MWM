@@ -25,7 +25,8 @@ from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, BINDING_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
-from engine_config import validate_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
+from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
+from game_controller import game_binding, controller_selection
 
 IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -316,6 +317,21 @@ def compiled_skill_bindings(configuration, imports):
     return result
 
 
+def compiled_chord_reservations(configuration, calibration, imports):
+    # Publish every configured start pair before its first game-frame action can win.
+    _, binding = game_binding(calibration, binding_for_preset(calibration, configuration, imports))
+    routes = binding.get('routes') or [dict(modifier_mask=binding['modifier_mask'],
+        trigger_mask=binding['trigger_mask'], stance=configuration['chord_stance'], gesture=gesture)
+        for gesture,variant in zip(('tap','hold'),binding['variants']) if variant is not None]
+    pairs = {}
+    for route in routes:
+        if route['gesture'] not in ('tap','hold','sequence'): continue
+        key = (route['modifier_mask'] | route['trigger_mask'], 0)
+        pairs[key] = pairs.get(key, 0) | (7 if route['stance']=='any' else 1<<list(STANCE_OPENERS).index(route['stance']))
+    return [dict(buttons=buttons, stances=stances, mode=mode)
+            for (buttons,mode),stances in pairs.items()]
+
+
 def compiled_move_settings(configuration, imports, policy=None):
     # Build playback speed and Ki Pulse settings for each imported action phase.
     # A phase inherits its string's root settings unless it has its own reviewed override.
@@ -455,8 +471,9 @@ def fresh_profile(game):
     if not hold_variant and hold_stances:
         hold_variant=next(slots[move] for move in configuration['stance_holds'].values() if move)
         hold_milliseconds=round(configuration['hold_seconds']*1000)
-    from game_controller import controller_selection
-    selection=controller_selection(read_json(HERE/'controller-calibration.json',{}))
+    calibration=read_json(HERE/'controller-calibration.json',{})
+    selection=controller_selection(calibration)
+    reservations=compiled_chord_reservations(configuration,calibration,imports)
     stable.check()
     return dict(session=game.identity, player=player, source=source, charged_candidate=moves[1], preset=configuration,
                 imports=imports, adapters=adapters, string_variant=manifest['string_variant'],
@@ -467,7 +484,7 @@ def fresh_profile(game):
                 camera=dict(source_bank=hex(camera_bank), player_slot=hex(camera_slot),
                             original=hex(camera_original), source_clip=camera_move['clip']),
                 resource_ownership='engine_retained', source_actor_required=False, native_grapple=native_grapple,
-                mid_light_ender=configuration['mid_light_ender'],
+                mid_light_ender=configuration['mid_light_ender'],chord_reservations=reservations,
                 skill_bindings=compiled_skill_bindings(configuration,imports))
 
 
@@ -505,6 +522,7 @@ def boss_fields(profile):
     fields['skill_bindings']=profile.get('skill_bindings',[])
     fields['move_settings']=profile.get('move_settings')
     fields['controller_selection']=profile.get('controller_selection',0)
+    fields['chord_reservations']=profile.get('chord_reservations',[])
     fields.update((field,profile[field]) for field in ('hold_stances','frost_variants','frost_milliseconds','frost_speed','launch_profiles','air_juggle_boost','tracking_rates'))
     return fields, originals
 

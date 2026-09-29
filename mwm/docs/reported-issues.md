@@ -1,6 +1,6 @@
 # Reported MWM issues
 
-These results describe source changes and offline checks through alpha.7. They do not establish live Nioh acceptance. The two crashes and gameplay-dependent reports remain open.
+The table records alpha.7 findings. Later source-runtime observations are below it; they do not certify a packaged EXE.
 
 | Issue | Mechanism and result |
 |---|---|
@@ -27,3 +27,11 @@ The demonstrated source defect was narrower: the resource hook called the native
 Native memory tests cover unrelated actor frames, a reused cached player address, missing data allocator, readiness becoming available, and unchanged native return value/LastError. A separate cache regression proves schema-8 ownership cannot silently select the old DLL. Live mission entry with the reported preset remains necessary to establish whether these guards address the actual crash. Use a fresh game process for that comparison so older retained DLL generations cannot affect the result.
 
 The preventive patch passed the native loader harness (including deferred discovery and reattachment), production DLL build, and all eight resource checks. The complete workflow initially passed 255 tests; a final rerun hit the Electron harness's 35-second timeout, and that unchanged UI test passed independently on retry. No EXE was released.
+
+## September 29 source-runtime trial
+
+- #8: A Low L1+Triangle tap previously reached Python after Nioh had selected its Guard+Strong skill. Session ABI v13 reserves configured chords on the first native input frame while the publisher heartbeat is fresh. Five traced Low taps blocked the game skill and entered Okatsu Charged Rush; the player confirmed the override worked. L1+Circle and L1+L2 also started a visible Charged Rush in earlier trials. Other physical controller types remain untested.
+- Hideyori Mid Heavy previously replayed D30 because all D30–D33 continuation rows were changed to Square. The new route-specific adaptation retains Triangle for Mid Heavy. The live trace reached D30→D31→D32→D33, and the player confirmed all four attacks. A preset assigning D30 to two different input classes is rejected because one imported graph cannot have both continuation buttons.
+- #14: Holding a configured L1+L2 chord played the full Okatsu quick/kick string through its flip. The automatic LT+RT route also played it, but briefly entered Nioh's aim animation. That fixed shortcut was removed; the option now includes the string for an explicit held binding. This cleanup has offline verification, with no later gameplay retest.
+- #2/#10: Windows recorded Nioh fail-fast exits at 13:24:53 and 13:36:51 with `0xc0000409`, subcode 7, and `nioh.exe+0x112a615`; archived reports list retained Tanto DLLs but contain no dump or stack. Both events coincide with requested game restarts, so they do not identify the reported mission-entry crashes. Keep both issues open.
+- #16: The Mid Heavy continuation fix does not address the reported root-motion snap when only the first hit starts from Dodge Heavy. Keep that issue open.
