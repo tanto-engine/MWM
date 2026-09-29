@@ -19,9 +19,11 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def save(path, value):
+def save(path, value, compact=False):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + '\n', encoding='utf8')
+    with path.open('w', encoding='utf8', newline='\n') as output:
+        output.write(json.dumps(value, indent=None if compact else 2,
+                                separators=(',', ':') if compact else None, ensure_ascii=True) + '\n')
 
 
 def archive(raw):
@@ -147,14 +149,22 @@ def signature_review(intake):
                 if signature not in entries:
                     entries[signature] = {'motion_id': signature[0], 'timing_id': signature[1],
                                           'payload_prefix_sha256': signature[2], 'observations': 0,
-                                          'recording_id': session['recording_id'], 'journal_line': line}
+                                          'recording_id': session['recording_id'], 'journal_line': line,
+                                          'recording_ids': []}
                 entries[signature]['observations'] += 1
+                if session['recording_id'] not in entries[signature]['recording_ids']:
+                    entries[signature]['recording_ids'].append(session['recording_id'])
     conflicts = [{'boss_id': boss, 'action_id': action, 'action_hex': f'{action:08X}',
-                  'signatures': list(signatures.values())}
+                  'signatures': [{key: value for key, value in row.items() if key != 'recording_ids'}
+                                 for row in signatures.values()]}
                  for (boss, action), signatures in sorted(groups.items()) if len(signatures) > 1]
-    return {'schema_version': 1, 'scope': 'named_encounter_context_not_proven_actor',
-            'distinct_boss_action_keys': len(groups), 'keys_with_multiple_signatures': len(conflicts),
-            'conflicts': conflicts}
+    index = [{'boss_id': boss, 'action_id': action, 'action_hex': f'{action:08X}', **row}
+             for (boss, action), signatures in sorted(groups.items()) for row in signatures.values()]
+    return ({'schema_version': 1, 'scope': 'named_encounter_context_not_proven_actor',
+             'distinct_boss_action_keys': len(groups), 'keys_with_multiple_signatures': len(conflicts),
+             'conflicts': conflicts},
+            {'schema_version': 1, 'scope': 'unmapped_sessions_named_encounter_context_not_proven_actor_or_weapon',
+             'distinct_signatures': len(index), 'signatures': index})
 
 
 def main():
@@ -171,7 +181,9 @@ def main():
     save(ROOT / 'dataset.json', dataset)
     save(ROOT / 'intake.json', intake)
     save(PRODUCT / 'data/moves.json', catalogue)
-    save(ROOT / 'signature-review.json', signature_review(intake))
+    review, index = signature_review(intake)
+    save(ROOT / 'signature-review.json', review)
+    save(ROOT / 'unmapped-action-index.json', index, compact=True)
     print(json.dumps(dict(counts, total_sessions=len(intake['sessions']),
                           sword_candidates=sum(move.get('mapping_status') == 'unmapped' for path in (ROOT / 'weapons/sword').glob('*/*.json')
                                                for move in [json.loads(path.read_text(encoding='utf8'))]))))

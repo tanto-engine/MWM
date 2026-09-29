@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.3.0-alpha.12
+
+- Fixed the Move library crash that hid the 55 newer sword recording candidates. Added a searchable index of 918 distinct action signatures from those sessions, with source recording and journal line. All 70 eligible sessions remain indexed; Edward Kelley is excluded. Unassigned actor data remains research only until William adaptation is verified.
+- Fixed Jin's heavy-string continuation retaining the imported action bank between William's Strong strikes.
+- Added an owned-memory check for Hideyori's four-phase Low Quick replacement. All phases retain their imported descriptor and source bank; live Square timing still needs gameplay verification.
+- Added stance-specific custom follow-ups after original Strong in Low/Mid and original Quick in Low/High. The input window begins at the confirmed attack's recovery, and incompatible source replacements are blocked. High Guard+Square and Mid Guard+Triangle remain with their occupied Nioh inputs.
+
+Offline checks passed. Live Nioh acceptance, the two reported crashes, and Onmyo/Ninjutsu Pulse cancellation remain open. Cast action signatures and end timing have not been recorded, so this release does not invent their cancel transitions.
+
 ## 0.3.0-alpha.11
 
 - Rebuilt Moves around direct Low, Mid and High input rows. The persistent guide explains each route; editing an all-stance route now splits it so other stances retain their moves. Speed uses one selected move and percentage control instead of duplicate fields.

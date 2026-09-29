@@ -402,8 +402,21 @@ app.whenReady().then(async () => {
       assert(document.querySelector('[data-assignment="native:low:tiger_sprint"]')?.value==='okatsu.charged_rush','Editing Mid erased the shared route from Low');
       await stance('high');
       assert(document.querySelector('[data-assignment="native:high:tiger_sprint"]')?.value==='okatsu.charged_rush','Editing Mid erased the shared route from High');
+      assert(!document.querySelector('[data-assignment="followup:high:after_strong"]'),'Occupied High strong follow-up was offered');
+      await stance('mid');
+      assert(!document.querySelector('[data-assignment="followup:mid:after_quick"]'),'Occupied Mid quick finisher was offered');
+      await stance('low');
+      change(document.querySelector('[data-assignment="followup:low:after_strong"]'),'okatsu.charged_rush');await ready();
+      assert(document.querySelector('[data-assignment="followup:low:after_strong"]')?.value==='okatsu.charged_rush','After Strong route did not appear in Low');
+      await tab('collection');
+      const research=[...document.querySelectorAll('.library-tabs button')].find(button=>button.textContent.includes('Unreviewed actions'));
+      const unreviewed=(await window.mwm.request('collection')).unreviewed;
+      assert(unreviewed.signatures.length>0 && research?.textContent.includes(String(unreviewed.distinct_signatures)),'Unreviewed recording index is missing from Move library');
+      research.click();
+      const rendered=document.querySelectorAll('.library-list:not([hidden]) .library-move').length;
+      assert(rendered===Math.min(60,unreviewed.signatures.length),'Unreviewed results were not bounded: '+rendered);
       await tab('controls');
-      return {externalSaveSynced:true,dirtyDraftProtected:true,pollingFocusPreserved:true,overviewEditsPersisted:true,singleSaveAction:true,runtimeSeparated:true,humanMoveNames:true,bindingGroups:true,freeOverrideSlots:true,customRoutes:true,customCapture:true,sequenceOperator:true,presetManager:true,sharedRouteSplit:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true};
+      return {externalSaveSynced:true,dirtyDraftProtected:true,pollingFocusPreserved:true,overviewEditsPersisted:true,singleSaveAction:true,runtimeSeparated:true,humanMoveNames:true,bindingGroups:true,freeOverrideSlots:true,customRoutes:true,customCapture:true,sequenceOperator:true,presetManager:true,sharedRouteSplit:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true,unreviewedIndexed:true};
     })()`);
     if (process.env.MWM_UI_SHOT) {
       await window.webContents.executeJavaScript(`(async()=>{

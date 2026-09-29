@@ -14,7 +14,8 @@ async function runSmoke(window, call, report) {
     if (document.querySelector('#validation').dataset.state!=='valid') throw new Error(document.querySelector('#notice').textContent);
     const collection=await window.mwm.request('collection');
     if (!collection.moves.length) throw new Error('Packaged move collection missing');
-    return {datasetMoves:collection.moves.length};
+    if (!collection.unreviewed || collection.unreviewed.signatures.length !== collection.unreviewed.distinct_signatures) throw new Error('Packaged recording index missing');
+    return {datasetMoves:collection.moves.length,unreviewedActions:collection.unreviewed.distinct_signatures};
   })()`);
   // Capture the actual first-open app before test edits; the release keeps this image with its receipt.
   await window.webContents.executeJavaScript('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');

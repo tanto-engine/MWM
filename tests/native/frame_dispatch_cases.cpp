@@ -327,6 +327,30 @@ int main() {
     reset(); command.reserved[0]=1|(1ULL<<35)|(1ULL<<34)|(0x100ULL<<16); publish(); tick();
     assert(!boss_active && dispatch->control.last_reason==InvalidConfig); ++checks;
 
+    // Attack-context intents use one exact native sword opener and its recovery edge.
+    for (const auto& attack : {std::array<int,5>{0xCF5,4300,2,36,2},
+                               {0xC7A,2300,1,36,1}, {0xCF0,4100,2,37,2},
+                               {0xCB3,3100,0,37,0}}) {
+        reset(); state(attack[0],attack[1],int8_t(attack[2]));
+        put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+        put(neutral_payload.data(),0x24,int16_t(30)); put(player.data(),0x28,30.0f);
+        put(player.data(),0x470,uint32_t(attack[4]));
+        command.reserved[0]=1ULL|(1ULL<<attack[3])|(1ULL<<(34-attack[4]));
+        assert(valid_chord_policy(command.reserved[0]));
+        assert(validate_actor(command,player.data())==Accepted);
+        put(player.data(),0x28,29.0f);
+        assert(validate_actor(command,player.data())==CurrentNotAllowed);
+        put(player.data(),0x28,30.0f);put(neutral_payload.data(),0x18,uint64_t(0));
+        assert(validate_actor(command,player.data())==CurrentNotAllowed);
+        put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+        command.held=0; publish();
+        boss_active=1;DispatchCommand blocked{};
+        assert(choose_dispatch(player.data(),0,nullptr,blocked,true)==BossPreviewActive);
+        boss_active=0;tick();
+        assert(boss_active && dispatch->control.dispatch_count==1); exit_move(); ++checks;
+    }
+    assert(!valid_chord_policy(1ULL|(1ULL<<36)|(1ULL<<37)|(1ULL<<32)));
+
     reset(); command.held=0; publish(); tick(); assert(!action_calls && dispatch->control.last_reason==Released); ++checks;
     command.reserved[0]=1; publish(); tick(); assert(action_calls==1 && boss_active); exit_move(); ++checks;
     reset(); command.armed=0; publish(); tick(); assert(!action_calls); ++checks;

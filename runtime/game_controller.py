@@ -104,6 +104,10 @@ def game_binding(calibration, binding):
                 controls=[route[key] for key in ('modifier_mask','trigger_mask','followup_mask')]
                 if len(set(controls))!=3 or any(bit not in supported for bit in controls):
                     raise ValueError('Sequences require L1 / LB, Circle / B, Triangle / Y, L2 / LT or Square / X')
+            elif route['gesture'] in ('after_strong','after_quick'):
+                expected=0x4000 if route['gesture']=='after_strong' else 0x8000
+                if route['modifier_mask']!=0x100 or route['trigger_mask']!=expected:
+                    raise ValueError('Attack follow-up requires L1 / LB with Square / X after Strong or Triangle / Y after Quick')
             elif route['modifier_mask']!=0x100 or route['trigger_mask'] not in supported[1:]:
                 raise ValueError('Custom inputs require L1 / LB with Circle / B, Triangle / Y, L2 / LT or Square / X')
             routes.append(route)

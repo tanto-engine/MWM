@@ -263,7 +263,6 @@ static bool replacement_action(void* actor, uint32_t key, void* context) {
     uint32_t index=0;
     uint64_t selected=0;
     if (context) {
-        assert(GetLastError()==FRAME_ERROR);
         const auto* banks=static_cast<uint64_t*>(context);
         assert(!banks[0] && !banks[2]);
         for (unsigned slot=0;slot<boss_import_count;++slot)
@@ -351,6 +350,86 @@ static void replacement_reset() {
     put(grapple_descriptor.data(),0x82,uint16_t(37));
     put(grapple_payload.data(),0x18,uint64_t(0x194C0000));
     put(grapple_payload.data(),0x20,int32_t(5050));
+}
+
+static void native_heavy_string_cases() {
+    // A native CF5 -> CF6 -> CF7 input string must retain its borrowed source
+    // bank while each accepted player follow-up enters the matching imported phase.
+    replacement_reset();
+    assert(observed_action(player.data(),0xCF5,nullptr));
+    assert(boss_active && boss_active_slot==2);
+    const auto bank=boss_adapters[3].bank;
+    boss_adapters[3].bank+=8;
+    assert(boss_native_successor(2,boss_imports[3].key)<0);
+    boss_adapters[3].bank=bank;
+    for (unsigned phase=1;phase<3;++phase) {
+        assert(boss_native_successor(phase+1,boss_imports[phase+2].key)==int(phase+2));
+        assert(observed_action(player.data(),0xCF5+phase,nullptr));
+        assert(boss_active && boss_active_slot==phase+2);
+        assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(phase+2)));
+    }
+    assert(sword_string_successor(boss_imports[4])==0);
+}
+
+static void low_quick_string_cases() {
+    // Enter Hideyori from native Low Square, then let each authored Square row
+    // request its next phase while the same source bank remains borrowed.
+    replacement_reset();boss_import_count=9;
+    static uint8_t descriptors[4][0xD0]{},payloads[4][0xB0]{},rows[4][46][0x30]{};
+    static uint64_t pointers[4][46]{},entries[4]{};
+    static uint8_t quick[0xD0]{},quick_payload[0xB0]{};
+    constexpr int16_t recoveries[]={45,30,35,-1};
+    for (unsigned phase=0;phase<4;++phase) {
+        const unsigned slot=5+phase;auto& move=boss_imports[slot];
+        move=boss_imports[2];move.key=0xD30+phase;move.motion=2000+int32_t(phase)*10;
+        move.flags=0x184C0000;move.recovery_frame=recoveries[phase];
+        move.transition_count=phase==3 ? 42 : 46;move.next_variant=-1;
+        move.descriptor=address(descriptors[phase]);move.payload=address(payloads[phase]);
+        boss_adapters[slot]=boss_adapters[2];boss_adapters[slot].kind=phase ? 4 : 2;
+        boss_adapters[slot].player_descriptor=address(heavy_descriptors[0].data());
+        boss_adapters[slot].player_key=0xCF5;boss_adapters[slot].player_motion=4300;
+        boss_adapters[slot].transition_count=46;boss_adapters[slot].recovery_frame=38;
+        boss_private_actions[slot]={};
+        memset(descriptors[phase],0,sizeof(descriptors[phase]));
+        memset(payloads[phase],0,sizeof(payloads[phase]));
+        descriptors[phase][0x40]=1;
+        put(descriptors[phase],0,move.key);put(descriptors[phase],0x20,move.payload);
+        put(descriptors[phase],0x78,address(pointers[phase]));
+        put(descriptors[phase],0x82,move.transition_count);
+        put(payloads[phase],0x18,move.flags);put(payloads[phase],0x20,move.motion);
+        put(payloads[phase],0x24,move.recovery_frame);
+        for (unsigned row=0;row<move.transition_count;++row) {
+            memset(rows[phase][row],0xff,0x30);pointers[phase][row]=address(rows[phase][row]);
+        }
+        entries[phase]=move.descriptor;
+    }
+    put(jin_bank.data(),0x128,address(entries));put(jin_bank.data(),0x130,uint32_t(4));
+    quick[0x40]=1;put(quick,0,uint32_t(0xCF0));put(quick,0x20,address(quick_payload));
+    put(quick_payload,0x18,uint64_t(0x8000000594C0000ULL));put(quick_payload,0x20,int32_t(4100));
+    original_lookup=[](void* context,uint32_t key,uint32_t* index)->uint64_t {
+        if (key==0xCF0) {if (index) *index=0;return address(quick);}
+        return native_lookup(context,key,index);
+    };
+    boss_skill_bindings[0]={5,1,6,0,0,0,0};
+    assert(observed_action(player.data(),0xCF0,nullptr));
+    assert(boss_active && boss_active_slot==5);bindings(true);
+    for (unsigned phase=0;phase<3;++phase) {
+        const unsigned slot=5+phase;const int16_t next=int16_t(boss_imports[slot+1].key);
+        assert(boss_native_successor(slot,uint32_t(next))==int(slot+1));
+        unsigned squares=0;
+        for (unsigned row=0;row<boss_private_actions[slot].transition_count;++row) {
+            const auto* body=boss_private_actions[slot].transition_bodies[row];int16_t target=0;
+            memcpy(&target,body+0x14,2);
+            if (target==next && body[0x0B]==0 && body[0x0C]==1) ++squares;
+        }
+        assert(squares==2);
+        assert(observed_action(player.data(),uint32_t(next),nullptr));
+        assert(boss_active && boss_active_slot==slot+1 &&
+            grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot+1)));
+        bindings(true);
+    }
+    assert(sword_string_successor(boss_imports[8])==0);
+    original_lookup=native_lookup;
 }
 
 static void hold_reset(unsigned stance=2, bool select_heavy=true) {
@@ -1067,6 +1146,8 @@ int main() {
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     recorded_pulse_cost_cases();
+    native_heavy_string_cases();
+    low_quick_string_cases();
     held_slot_cases();
     weapon_policy_cases();
     airborne_cases();

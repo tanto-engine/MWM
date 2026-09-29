@@ -20,4 +20,5 @@ for (const weapon of Object.keys(manifest.weapons)) for (const boss of Object.ke
 }
 const design = JSON.parse(await readFile('configurations/sword-rebuild-1.json', 'utf8'));
 const intake = JSON.parse(await readFile('dataset/intake.json', 'utf8'));
-await writeFile('desktop-dist/collection.json', JSON.stringify({ manifest, moves, design, intake }));
+const unreviewed = JSON.parse(await readFile('dataset/unmapped-action-index.json', 'utf8'));
+await writeFile('desktop-dist/collection.json', JSON.stringify({ manifest, moves, design, intake, unreviewed }));

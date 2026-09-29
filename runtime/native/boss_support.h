@@ -144,7 +144,11 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     if (!linked) return -1;
     for (unsigned next=0;next<boss_import_count;++next) {
         const auto& candidate=boss_adapters[next];
-        if (boss_imports[next].key!=key || candidate.kind<2 || candidate.bank!=owner.bank) continue;
+        if (boss_imports[next].key!=key || candidate.bank!=owner.bank) continue;
+        if (owner.kind==1 && candidate.kind==1 && candidate.player_key==owner.player_key+1
+            && sword_string_successor(boss_imports[next])>=0)
+            return int(next);
+        if (candidate.kind<2) continue;
         if (candidate.kind==3 ? (owner.kind==3 || boss_imports[slot].next_variant==int(next))
             : (owner.kind!=3 && candidate.player_key==owner.player_key)) return int(next);
     }
@@ -783,6 +787,11 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
         // Only the game's successful-contact transition may enter the paired
         // action. Button holding never creates a victim or starts its camera.
         int paired_slot=-1;
+        if (boss_adapters[boss_active_slot].kind==1
+            && key==boss_adapters[boss_active_slot].player_key+1) {
+            const int source_key=sword_string_successor(current);
+            if (source_key>0) paired_slot=boss_native_successor(boss_active_slot,uint32_t(source_key));
+        }
         if ((current.flags == 0x594C0000 || boss_adapters[boss_active_slot].kind == 2 || boss_adapters[boss_active_slot].kind == 4)
             && current.next_variant >= 0 && key == boss_imports[current.next_variant].key)
             paired_slot=current.next_variant;
@@ -804,7 +813,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
             command.vtable = boss_session.vtable; command.reserved[1] = paired_slot;
             command.expected_descriptor = next.descriptor; command.expected_payload = next.payload;
             command.desired_key = next.key; command.expected_motion = next.motion;
-            reason = Accepted; forwarded = key;
+            reason = Accepted; forwarded = next.key;
         } else
 #endif
         {
@@ -862,6 +871,8 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
 #endif
     context = private_banks;
 #ifdef RESEARCH_REPEAT
+    if (paired_transition && boss_adapters[boss_active_slot].kind==1)
+        InterlockedIncrement64(&dispatch->control.dispatch_count);
     boss_active_slot = private_slot;
     if (!paired_transition) boss_frost_playback=false;
     if (!continuing) {

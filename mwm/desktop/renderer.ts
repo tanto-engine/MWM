@@ -9,7 +9,7 @@ type Calibration = { device: Record<string, unknown>; controller_slot?: number |
 type ButtonKey = 'modifier_mask' | 'trigger_mask';
 type RouteButtonKey = ButtonKey | 'followup_mask';
 const routeTriggers = ['Circle / B', 'Triangle / Y', 'L2 / LT', 'Square / X'];
-type BindingInput = { modifier_mask: number; trigger_mask: number; followup_mask?: number; gesture: 'tap' | 'hold' | 'sequence' };
+type BindingInput = { modifier_mask: number; trigger_mask: number; followup_mask?: number; gesture: 'tap' | 'hold' | 'sequence' | 'after_strong' | 'after_quick' };
 type Binding = { source: string; stance: string; move: string; input?: BindingInput };
 type Preset = {
   schema_version: number; name: string; weapon: string; tap_move: string | null; hold_move: string | null;
@@ -24,13 +24,16 @@ type Snapshot = {
   binding_groups: { id: string; label: string }[]; load_warning?: string;
   capabilities: { moves: Move[]; native_sources: { id: string; label: string; description?: string; stances?: string[] }[]; chord_stances?: (Stance | 'any')[];
     stances: Stance[]; native_binding_limit?: number; custom_binding_limit?: number; custom_sequence?: { modifiers: string[]; buttons: string[]; window_seconds: number };
+    attack_followup?: { gestures: string[]; window_seconds: number };
     speed: { min: number; max: number } };
 };
 type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
-  priority: string | null; review_notes: string[]; steps: { source: { action_id: string; motion_id: number } }[];
+  priority: string | null; review_notes?: string[]; steps: { source: { action_id: string; motion_id: number } }[];
   evidence: { annotation_text: string }[] };
 type Collection = { manifest: { weapons: Record<string, { name: string }>; bosses: Record<string, { name: string }> };
   moves: ResearchMove[]; intake: { sessions: { status: string }[] };
+  unreviewed: { distinct_signatures: number; signatures: { boss_id: string; action_hex: string; motion_id: number; timing_id: number;
+    observations: number; recording_id: string; recording_ids: string[]; journal_line: number; payload_prefix_sha256: string }[] };
   design: { routes: { id: string; dataset_id: string; status: string; blockers: string[] }[] } };
 type PresetLibrary = { presets: { id: string; name: string; native_routes?: number; custom_routes?: number; speed_overrides?: number }[];
   selected_id: string | null; hotkey: { supported: boolean; label: string; reason?: string } };
@@ -368,6 +371,8 @@ function routeInput(binding: Binding) {
   const input = binding.input;
   return input ? input.gesture === 'sequence'
     ? `Hold ${buttonName(input.modifier_mask)} + ${buttonName(input.trigger_mask)} → ${buttonName(input.followup_mask!)}`
+    : input.gesture === 'after_strong' || input.gesture === 'after_quick'
+    ? `After ${input.gesture === 'after_strong' ? 'Strong' : 'Quick'} · ${buttonName(input.modifier_mask)} + ${buttonName(input.trigger_mask)}`
     : `Hold ${buttonName(input.modifier_mask)} · ${input.gesture} ${buttonName(input.trigger_mask)}` : sourceInput(binding.source);
 }
 function moveHelp(id: string | null, context: string): [string, string] {
@@ -461,8 +466,9 @@ function renderOverview() {
     return row;
   };
 
+  let refreshFollowups = () => {};
   if (activeStance === 'low') addRow('Strong string', 'Triangle / Y · Low', preset.low_heavy, 'heavy_string', 'low-heavy', value => {
-    preset.low_heavy = value || null; changed();
+    preset.low_heavy = value || null; changed(); refreshFollowups();
   });
   const order = ['guard_light', 'heavy_attack', 'light_attack', 'dodge_attack', 'high_heavy_followup', 'tiger_sprint'];
   const labels: Record<string, string> = { guard_light: 'Guard + Quick', heavy_attack: 'Strong attack', light_attack: 'Quick attack',
@@ -484,7 +490,7 @@ function renderOverview() {
             state.preset = (await window.mwm.request<Preview>('preview', { ...params(), preset: candidate })).preset;
             changed(); logEdit(`${source.label}: ${activeStance} split from shared route`); render();
           });
-          else if (value) { binding.move = value; changed(); }
+          else if (value) { binding.move = value; changed(); refreshFollowups(); }
           else { preset.skill_bindings.splice(preset.skill_bindings.indexOf(binding), 1); changed(); render(); }
         } else if (value) void action(async () => {
           state.preset = await window.mwm.request<Preset>('add_override', { ...params(), source: source.id, stance: activeStance, move: value });
@@ -493,7 +499,7 @@ function renderOverview() {
       });
   }
   addRow('Hold Strong', 'Hold Triangle / Y', preset.stance_holds[activeStance], 'held', `hold:${activeStance}`, value => {
-    preset.stance_holds[activeStance] = value || null; changed();
+    preset.stance_holds[activeStance] = value || null; changed(); refreshFollowups();
   });
   addRow('Stance switch', 'Ki Pulse · R1 / RB + stance twice', preset.frost_moon[activeStance], 'chord', `frost:${activeStance}`, value => {
     preset.frost_moon[activeStance] = value || null; changed();
@@ -507,7 +513,43 @@ function renderOverview() {
     rows.append(finisher);
   }
 
-  const customRows = preset.skill_bindings.filter(binding => binding.input && (binding.stance === activeStance || binding.stance === 'any'));
+  const followupRows: { row: HTMLElement; binding: Binding | undefined; gesture: string; note: HTMLElement }[] = [];
+  const blockedFollowup = (gesture: string) => {
+    const source = gesture === 'after_strong' ? 'heavy_attack' : 'light_attack';
+    return preset.skill_bindings.some(row => !row.input && row.source === source && (row.stance === activeStance || row.stance === 'any'))
+      || gesture === 'after_strong' && Boolean(activeStance === 'low' && preset.low_heavy || preset.stance_holds[activeStance]);
+  };
+  for (const [gesture, stanceSet, label, inputText, trigger] of [
+    ['after_strong', 'low mid', 'After Strong', 'Triangle / Y → L1 / LB + Square / X', 'Square / X'],
+    ['after_quick', 'low high', 'After Quick', 'Square / X → L1 / LB + Triangle / Y', 'Triangle / Y']
+  ] as const) {
+    if (!stanceSet.split(' ').includes(activeStance) || !state.capabilities.attack_followup?.gestures.includes(gesture)) continue;
+    const binding = preset.skill_bindings.find(row => row.input?.gesture === gesture && row.stance === activeStance);
+    const row = addRow(label, inputText, binding?.move || null, 'chord', `followup:${activeStance}:${gesture}`, value => {
+      if (binding) {
+        if (value) { binding.move = value; changed(); }
+        else { preset.skill_bindings.splice(preset.skill_bindings.indexOf(binding), 1); changed(); render(); }
+      } else if (value) void action(async () => {
+        const candidate = structuredClone(state.preset);
+        candidate.skill_bindings.push({ source: 'tiger_sprint', stance: activeStance, move: value,
+          input: { modifier_mask: state.buttons['L1 / LB'], trigger_mask: state.buttons[trigger], gesture } });
+        state.preset = (await window.mwm.request<Preview>('preview', { ...params(), preset: candidate })).preset;
+        changed(); render();
+      });
+    });
+    const note = element('small', `Available when this stance keeps its original ${gesture === 'after_strong' ? 'Strong' : 'Quick'} attack. Remove that replacement first.`, 'control-note');
+    row.append(note); followupRows.push({ row, binding, gesture, note });
+  }
+  refreshFollowups = () => {
+    for (const { row, binding, gesture, note } of followupRows) {
+      const blocked = blockedFollowup(gesture);
+      row.querySelector('select')!.disabled = blocked && !binding;
+      note.hidden = !blocked;
+    }
+  };
+  refreshFollowups();
+
+  const customRows = preset.skill_bindings.filter(binding => binding.input && !binding.input.gesture.startsWith('after_') && (binding.stance === activeStance || binding.stance === 'any'));
   if (customRows.length) rows.append(element('h3', 'Custom inputs', 'skill-subtitle'));
   for (const binding of customRows) {
     const key = `custom:${preset.skill_bindings.indexOf(binding)}`;
@@ -656,7 +698,7 @@ function renderNative() {
   // The same source can label several custom routes without consuming native slots.
   const p = state.preset;
   content.append(element('h2', 'Input overrides', 'section-title'),
-    element('p', 'Original routes replace a game action. Custom inputs add a controller route while leaving the original action active. Simple chords use L1/LB; sequential operators can use any of the reviewed buttons shown below.', 'hint'));
+    element('p', 'Original routes replace a game action. Custom inputs add a controller route while leaving the original action active. After-attack inputs appear by stance in Sword.', 'hint'));
   const toolbar = element('div', undefined, 'route-toolbar');
   const search = element('input'); search.type = 'search'; search.placeholder = 'Filter source, buttons, stance, or move'; search.setAttribute('aria-label', 'Filter input routes');
   search.oninput = () => { const query = search.value.trim().toLowerCase(); for (const row of content.querySelectorAll<HTMLElement>('.binding')) row.hidden = !row.dataset.search?.includes(query); };
@@ -683,11 +725,12 @@ function renderNative() {
     return { modifier_mask, trigger_mask: triggers[0], gesture: 'tap' };
   };
   for (const [index, binding] of state.preset.skill_bindings.entries()) {
+    const followup = binding.input?.gesture === 'after_strong' || binding.input?.gesture === 'after_quick';
     const row = element('div', undefined, 'binding');
     row.dataset.routeKey = binding.input ? `custom:${index}` : `native:${binding.stance}:${binding.source}`;
     row.classList.toggle('custom-route', Boolean(binding.input));
     row.dataset.search = `${routeInput(binding)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
-    annotate(row, 'Input route', binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press and release the first button, then press the follow-up to play the selected move.' : 'This custom chord plays a reviewed move without replacing a Nioh input.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
+    annotate(row, 'Input route', followup ? 'After a confirmed attack, press Guard with the shown button before its recovery window ends.' : binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press and release the first button, then press the follow-up to play the selected move.' : 'This custom chord plays a reviewed move without replacing a Nioh input.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
     const head = element('div', undefined, 'binding-head');
     head.append(element('span', `ROUTE ${String(index + 1).padStart(2, '0')}`, 'route-number'),
       element('span', routeInput(binding), 'route-notation'),
@@ -702,7 +745,8 @@ function renderNative() {
         render();
       }), row);
     }
-    const allowed = binding.input ? ['any', 'low', 'mid', 'high'] : state.capabilities.native_sources.find(source => source.id === binding.source)?.stances || ['any', 'low', 'mid', 'high'];
+    const allowed = followup ? binding.input!.gesture === 'after_strong' ? ['low', 'mid'] : ['low', 'high']
+      : binding.input ? ['any', 'low', 'mid', 'high'] : state.capabilities.native_sources.find(source => source.id === binding.source)?.stances || ['any', 'low', 'mid', 'high'];
     const stanceChoices: [string, string][] = allowed.map(stance => [stance, stance.toUpperCase()]);
     if (!binding.stance) stanceChoices.unshift(['', 'Choose stance…']);
     field('Stance', select(stanceChoices, binding.stance, value => {
@@ -711,7 +755,7 @@ function renderNative() {
       // No automatic conflict resolution silently removes another row.
       binding.stance = value; updateSlots();
     }), row);
-    field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller input']], binding.input ? 'custom' : 'original', value => {
+    if (!followup) field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller input']], binding.input ? 'custom' : 'original', value => {
       if (value === 'custom' && !binding.input) binding.input = suggestedInput(binding.stance);
       if (value === 'original') delete binding.input;
       const choices = moveOptions(binding.input ? 'chord' : 'native').slice(1);
@@ -731,6 +775,8 @@ function renderNative() {
     browseMove(replacementField, replacement, role, `route ${index + 1}`);
     if (binding.input) {
       const sequence = binding.input.gesture === 'sequence';
+      if (followup) row.append(element('p', `${routeInput(binding)} within ${state.capabilities.attack_followup?.window_seconds || .6}s of the original attack’s recovery.`, 'control-note'));
+      else {
       const buttons = sequence ? [['modifier_mask', 'Modifier'], ['trigger_mask', 'First press'], ['followup_mask', 'Then press']] as const
         : [['modifier_mask', 'Modifier'], ['trigger_mask', 'Trigger']] as const;
       for (const [key, label] of buttons) {
@@ -745,6 +791,7 @@ function renderNative() {
         row.append(element('p', 'Original Nioh inputs stay unchanged. Hold L1/LB, then use the selected Trigger gesture.', 'control-note'));
       }
       if (capture?.kind === 'route' && capture.binding === binding) captureStatus(row);
+      }
     }
     const remove = element('button', 'Remove'); remove.onclick = () => {
       void action(async () => {
@@ -1058,7 +1105,7 @@ function renderGuide() {
     element('p', 'Edits stay in a draft until Save changes. Each tab handles one part of the moveset.', 'hint'));
   const steps = element('div', undefined, 'guide-steps');
   for (const [number, title, body, destination] of [
-    ['01', 'Assign moves', 'In Moves, choose Low, Mid or High. Each input has one replacement menu. Original keeps Nioh’s action. The right guide explains the input you hover.', 'overview'],
+    ['01', 'Assign moves', 'In Moves, choose Low, Mid or High. Each input has one replacement menu. Original keeps Nioh’s action. After Strong and After Quick add stance-specific follow-ups where their Guard combinations are free.', 'overview'],
     ['02', 'Add a custom operator', 'In Moves, choose a modifier, first button, follow-up button, and reviewed move. Keep the modifier held, release the first button, then press the follow-up. Existing game inputs still work.', 'overview'],
     ['03', 'Tune and save', 'Speed changes playback for one move at a time; blank inherits from its sequence. Save a valid draft before enabling the mod.', 'speed'],
     ['04', 'Keep setups', 'Presets stores named movesets. Activate one in the app or double-tap the touchpad click on a supported controller to cycle live during gameplay.', 'presets']
@@ -1071,7 +1118,7 @@ function renderGuide() {
   content.append(steps);
   const glossary = element('details', undefined, 'guide-glossary');
   glossary.append(element('summary', 'What counts as a playable move?'));
-  glossary.append(element('p', 'The move picker contains reviewed moves the Engine can route to William. Move library also shows recorded candidates; those are research evidence until adapted and checked.'),
+  glossary.append(element('p', 'The move picker contains reviewed moves the Engine can route to William. Move library separately lists named recording candidates and unreviewed action signatures; neither becomes playable without William adaptation.'),
     element('p', 'A stance-switch move fires during a Ki Pulse window after R1/RB and two taps toward the destination stance. A held strong route uses a long Triangle/Y press. Input routes in More exposes the full route table and controller recording.'));
   content.append(glossary);
 }
@@ -1121,10 +1168,12 @@ function renderCollection() {
   const tabs = element('div', undefined, 'library-tabs');
   const playableTab = element('button', `Playable · ${state.capabilities.moves.length}`);
   const recordedTab = element('button', `Recorded candidates · ${collection.moves.length}`);
-  tabs.append(playableTab, recordedTab); content.append(tabs);
-  const search = element('input'); search.type = 'search'; search.placeholder = 'Search name, input, boss, or behavior'; search.setAttribute('aria-label', 'Search move library'); content.append(search);
+  const unreviewedTab = element('button', `Unreviewed actions · ${collection.unreviewed.distinct_signatures}`);
+  tabs.append(playableTab, recordedTab, unreviewedTab); content.append(tabs);
+  const search = element('input'); search.type = 'search'; search.placeholder = 'Search moves, boss, or action ID'; search.setAttribute('aria-label', 'Search move library'); content.append(search);
   const playablePane = element('div', undefined, 'library-list');
   const recordedPane = element('div', undefined, 'library-list');
+  const unreviewedPane = element('div', undefined, 'library-list');
   const playableCards: { node: HTMLElement; text: string }[] = [];
   for (const move of state.capabilities.moves) {
     const card = element('article', undefined, 'library-move');
@@ -1162,24 +1211,42 @@ function renderCollection() {
     card.append(element('p', `${move.mapping_status === 'partial' ? 'Partial mapping' : 'Candidate mapping'} · Priority: ${move.priority || 'unset'}`, 'hint'));
     for (const evidence of move.evidence) card.append(element('p', evidence.annotation_text, 'recorded-note'));
     card.append(element('p', move.steps.map(step => `${step.source.action_id} (${step.source.motion_id})`).join(' → '), 'source-ids'));
-    for (const note of move.review_notes) card.append(element('p', note, 'hint'));
+    for (const note of move.review_notes || []) card.append(element('p', note, 'hint'));
     recordedCards.push({ node: card, text: [title, ...move.evidence.map(evidence => evidence.annotation_text)].join(' ').toLowerCase() });
     recordedPane.append(card);
   }
-  const empty = element('p', 'No moves match this search.', 'hint'); empty.hidden = true; content.append(playablePane, recordedPane, empty);
-  let view: 'playable' | 'recorded' = 'playable';
+  unreviewedPane.append(element('p', 'These action signatures came from 55 sword recording sessions. The logs do not identify the actor reliably or prove William can play them. Search the evidence below; they cannot be assigned yet.', 'hint'));
+  const unreviewedCount = element('p', '', 'hint'); unreviewedPane.append(unreviewedCount);
+  const unreviewedResults = element('div'); unreviewedPane.append(unreviewedResults);
+  const indexed = collection.unreviewed.signatures.map(signature => ({ signature,
+    text: `${collection.manifest.bosses[signature.boss_id]?.name || signature.boss_id} ${signature.boss_id} ${signature.action_hex} ${signature.action_hex.replace(/^0+/, '')}`.toLowerCase() }));
+  const empty = element('p', 'No moves match this search.', 'hint'); empty.hidden = true; content.append(playablePane, recordedPane, unreviewedPane, empty);
+  let view: 'playable' | 'recorded' | 'unreviewed' = 'playable';
   const filter = () => {
     const query = search.value.trim().toLowerCase();
+    if (view === 'unreviewed') {
+      const matches = indexed.filter(item => item.text.includes(query));
+      unreviewedCount.textContent = `${matches.length} matching signatures${matches.length > 60 ? ' · showing first 60' : ''}`;
+      unreviewedResults.replaceChildren(...matches.slice(0, 60).map(({ signature }) => {
+        const card = element('article', undefined, 'library-move');
+        const boss = collection.manifest.bosses[signature.boss_id]?.name || signature.boss_id;
+        card.append(element('h3', `${boss} · action ${signature.action_hex}`),
+          element('p', `Motion ${signature.motion_id} · timing ${signature.timing_id} · ${signature.observations} observations in ${signature.recording_ids.length} recordings`, 'library-description'),
+          element('small', `Recording ${signature.recording_id} · journal line ${signature.journal_line} · payload ${signature.payload_prefix_sha256.slice(0, 12)}`, 'move-kinds'));
+        return card;
+      }));
+      empty.hidden = matches.length > 0; return;
+    }
     const cards = view === 'playable' ? playableCards : recordedCards;
     for (const card of cards) card.node.hidden = !card.text.includes(query);
     empty.hidden = cards.some(card => !card.node.hidden);
   };
-  const show = (next: 'playable' | 'recorded') => {
-    view = next; playablePane.hidden = view !== 'playable'; recordedPane.hidden = view !== 'recorded';
-    playableTab.classList.toggle('selected', view === 'playable'); recordedTab.classList.toggle('selected', view === 'recorded');
+  const show = (next: 'playable' | 'recorded' | 'unreviewed') => {
+    view = next; playablePane.hidden = view !== 'playable'; recordedPane.hidden = view !== 'recorded'; unreviewedPane.hidden = view !== 'unreviewed';
+    playableTab.classList.toggle('selected', view === 'playable'); recordedTab.classList.toggle('selected', view === 'recorded'); unreviewedTab.classList.toggle('selected', view === 'unreviewed');
     filter();
   };
-  playableTab.onclick = () => show('playable'); recordedTab.onclick = () => show('recorded'); search.oninput = filter;
+  playableTab.onclick = () => show('playable'); recordedTab.onclick = () => show('recorded'); unreviewedTab.onclick = () => show('unreviewed'); search.oninput = filter;
   show('playable');
 }
 

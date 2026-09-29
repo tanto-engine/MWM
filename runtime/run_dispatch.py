@@ -14,7 +14,7 @@ import struct
 import time
 
 from process_support import run, loader_report, CommandFailure, process_identity
-from gestures import ControllerGesture, RoutedGesture
+from gestures import ControllerGesture, RoutedGesture, ATTACK_KEYS
 from engine_config import atomic_json, read_json, validate_preset, binding_for_preset
 from trace_reader import Trace, CAPACITY
 from game_controller import GameController, game_binding, controller_selection
@@ -336,6 +336,7 @@ def main():
             last_input_event = None
             context_epoch = control.get('context_epoch', 0)
             context_valid = False
+            context_started = started
             changed_banks = None
             changed_since = started
             binding_stamp = args.binding.stat().st_mtime_ns
@@ -356,11 +357,19 @@ def main():
                     if control['context_epoch'] != context_epoch or playable != context_valid:
                         intent.reset()
                         context_epoch = control['context_epoch']
+                        context_started = begin
                         emit(dict(kind='gameplay_context', flags=flags, epoch=context_epoch, observed_qpc=begin))
                         if playable and last_input_event:
                             intent.process(dict(last_input_event, edge_basis='unknown'), begin)
                     context_valid = playable
                     if routed: intent.set_stance(I32(game.bytes(config['player']+0x470,4),0) if playable else None)
+                    if routed and context_valid and intent.attack_watch:
+                        try:
+                            current = U64(game.bytes(config['player']+0x58,8),0)
+                            frame = struct.unpack('<f',game.bytes(config['player']+0x28,4))[0]
+                            intent.advance_attack(begin,current,frame)
+                        except OSError:
+                            intent.advance_attack(begin,0,float('nan'))
                     for event in reader.poll():
                         if event.get('kind') == 'input' and (event.get('backend'), event.get('slot')) == (calibration['device']['backend'], calibration['device']['slot']):
                             last_input_event = event
@@ -418,6 +427,14 @@ def main():
                     for number in range(sequence, header['written'] + 1):
                         record = trace.record(number)
                         if record:
+                            if (routed and intent.attack_keys and context_valid and record['qpc'] >= context_started
+                                    and record['actor'] == hex(config['player']) and record['native_result'] == 1
+                                    and record['after_key'] in ATTACK_KEYS and record['valid_fields'] & 20 == 20):
+                                try:
+                                    recovery = struct.unpack('<h',game.bytes(int(record['payload'],16)+0x24,2))[0]
+                                    intent.observe_action(record, config['player'], command.qpc(), recovery)
+                                except OSError:
+                                    pass
                             record['forwarded_key'] = record.pop('reserved')
                             record['dispatch_reason'] = (record['valid_fields'] >> 8) & 255
                             record['substitution_intended'] = bool(record['valid_fields'] & (1 << 16))

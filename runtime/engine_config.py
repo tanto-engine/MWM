@@ -21,7 +21,7 @@ if os.name == 'nt':
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
 # Preset validation does not certify gameplay acceptance.
 from engine_policy import NATIVE_SKILLS
-from gestures import SEQUENCE_WINDOW_SECONDS
+from gestures import SEQUENCE_WINDOW_SECONDS, ATTACK_WINDOW_SECONDS, ATTACK_SOURCES
 from move_imports import BINDING_LIMIT
 from project_paths import DATA
 
@@ -72,7 +72,8 @@ def move_capabilities():
         native_binding_limit=BINDING_LIMIT, custom_binding_limit=CUSTOM_BINDING_LIMIT,
         custom_sequence=dict(modifiers=['L1 / LB','Circle / B','Triangle / Y','L2 / LT','Square / X'],
                              buttons=['L1 / LB','Circle / B','Triangle / Y','L2 / LT','Square / X'],
-                             window_seconds=SEQUENCE_WINDOW_SECONDS))
+                             window_seconds=SEQUENCE_WINDOW_SECONDS),
+        attack_followup=dict(gestures=list(ATTACK_SOURCES),window_seconds=ATTACK_WINDOW_SECONDS))
 
 
 def atomic_json(path, value):
@@ -212,6 +213,7 @@ def validate_preset(value):
         raise ValueError(f'Choose Low, Mid or High for the custom chord: {move_label(move)} needs one stance for its move sequence. Any stance is not supported for this move.')
     occupied={}
     routes=[]
+    attack_routes=[]
     for gesture,field in (('tap','tap_move'),('hold','hold_move')):
         if result[field] is not None:
             routes.append((result['chord_stance'],result['modifier_mask'],result['trigger_mask'],None,gesture))
@@ -230,11 +232,18 @@ def validate_preset(value):
             if not isinstance(custom,dict) or set(custom)!=required:
                 raise ValueError('Custom input requires modifier_mask, trigger_mask, gesture and followup_mask for a sequence')
             modifier,trigger,gesture=(custom[key] for key in ('modifier_mask','trigger_mask','gesture'))
+            attack=gesture in ATTACK_SOURCES
             followup=custom['followup_mask'] if sequence else None
             bits=(modifier,trigger,followup) if sequence else (modifier,trigger)
             if (any(type(bit) is not int or not 0<bit<=0x80000000 or bit&(bit-1) for bit in bits)
-                    or len(set(bits))!=len(bits) or gesture not in ('tap','hold','sequence')):
-                raise ValueError('Custom input requires distinct single button bits and tap, hold or sequence')
+                    or len(set(bits))!=len(bits) or gesture not in ('tap','hold','sequence',*ATTACK_SOURCES)):
+                raise ValueError('Custom input requires distinct single button bits and a supported gesture')
+            if attack and stance=='any':
+                raise ValueError('Attack follow-up requires Low, Mid or High stance')
+            if attack and ((gesture=='after_strong' and stance=='high') or (gesture=='after_quick' and stance=='mid')):
+                raise ValueError('This attack follow-up input is occupied by a Nioh 1 skill in this stance')
+            if attack:
+                attack_routes.append((gesture,stance))
             if move not in CHORD_MOVES:
                 raise ValueError(f'{move_label(move)} cannot use a custom input; choose its original source')
             if stance=='any' and move in HELD_MOVES:
@@ -245,6 +254,8 @@ def validate_preset(value):
                     raise ValueError('A sequence start overlaps another custom input in this stance; choose different buttons')
                 if overlap and not sequence and old_gesture!='sequence' and {modifier,trigger}=={old_modifier,old_trigger} and (modifier,trigger)!=(old_modifier,old_trigger):
                     raise ValueError('The reversed custom chord overlaps another route in this stance; choose different buttons')
+                if overlap and attack != (old_gesture in ATTACK_SOURCES) and {modifier,trigger}=={old_modifier,old_trigger}:
+                    raise ValueError('Attack follow-up overlaps another custom input in this stance')
                 if overlap and (modifier,trigger,followup,gesture)==(old_modifier,old_trigger,old_followup,old_gesture):
                     raise ValueError('This custom chord gesture already selects a move in this stance')
             routes.append((stance,modifier,trigger,followup,gesture))
@@ -262,6 +273,14 @@ def validate_preset(value):
                     raise ValueError(f'{scope.title()} {SOURCE_LABELS[source]} selects both {move_label(occupied[source,scope])} and {move_label(move)}. Only one override can own this input; remove one row or change its source or stance.')
                 occupied[source,scope]=move
         if move in HELD_MOVES or move in frost.values(): entries.append((stance,move,f'{stance.title()} {"custom input" if custom else SOURCE_LABELS[source]}'))
+    for gesture,stance in attack_routes:
+        source='heavy_attack' if gesture=='after_strong' else 'light_attack'
+        replaced=any('input' not in binding and binding['source']==source and binding['stance'] in (stance,'any')
+                     for binding in bindings)
+        if gesture=='after_strong':
+            replaced = replaced or stance=='low' and result['low_heavy'] is not None or holds[stance] is not None
+        if replaced:
+            raise ValueError(f'{stance.title()} {source.replace("_"," ")} is replaced; this attack follow-up needs the original Nioh attack. Clear its replacement or use another stance.')
     if custom_count>CUSTOM_BINDING_LIMIT:
         raise ValueError(f'Only {CUSTOM_BINDING_LIMIT} custom input rows are supported')
     owners={}

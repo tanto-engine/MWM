@@ -129,6 +129,28 @@ static bool repeat_current_allowed(uint64_t descriptor, uint32_t key) {
     }
     return false;
 }
+
+static bool attack_context_allowed(uint64_t player, uint64_t descriptor, uint32_t key, uint64_t policy) {
+    // A context chord may enter only the named native sword opener's recovery.
+    const unsigned kind=unsigned((policy>>36)&3);
+    if (!kind || kind==3) return false;
+    struct Attack { uint32_t key; int32_t motion; uint8_t stance; unsigned kind; };
+    constexpr Attack attacks[]={{0xCF5,4300,2,1},{0xC7A,2300,1,1},
+                                {0xCF0,4100,2,2},{0xCB3,3100,0,2}};
+    for (const auto& attack : attacks) if (attack.key==key && attack.kind==kind) {
+        uint64_t payload=0,flags=0;uint32_t stance=3;int32_t motion=-1;
+        int16_t recovery=-1;float frame=0;uint8_t enabled=0;
+        return (policy&(1ULL<<(34-attack.stance)))
+            && copy_field(player+0x470,stance) && stance==attack.stance
+            && copy_field(descriptor+0x40,enabled) && enabled
+            && copy_field(descriptor+0x20,payload)
+            && copy_field(payload+0x18,flags) && flags==0x8000000594C0000ULL
+            && copy_field(payload+0x20,motion) && motion==attack.motion
+            && copy_field(payload+0x24,recovery) && recovery>0
+            && copy_field(player+0x28,frame) && std::isfinite(frame) && frame>=float(recovery);
+    }
+    return false;
+}
 #endif
 
 static DispatchReason validate_actor(const DispatchCommand& c, void* actor) {
@@ -147,7 +169,8 @@ static DispatchReason validate_actor(const DispatchCommand& c, void* actor) {
     if (vtable != c.vtable) return VtableMismatch;
     if (memcmp(banks, c.banks, sizeof(banks))) return BankMismatch;
 #ifdef RESEARCH_REPEAT
-    if (!repeat_current_allowed(current, current_key)) return CurrentNotAllowed;
+    if (!repeat_current_allowed(current, current_key)
+        && !attack_context_allowed(address,current,current_key,c.reserved[0])) return CurrentNotAllowed;
 #else
     if (current_key != 0 && current_key != 3276 && current_key != 3303 && current_key != 3304)
         return CurrentNotAllowed;

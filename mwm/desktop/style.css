@@ -148,7 +148,7 @@ input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #
 .game-path .field { margin: 10px 0 0; }
 
 /* Large move catalogs stay searchable, while native selects remain keyboard usable. */
-.library-tabs { display: flex; gap: 5px; margin: 13px 0; border-bottom: 1px solid var(--line); }
+.library-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin: 13px 0; border-bottom: 1px solid var(--line); }
 .library-tabs button { border-radius: 6px 6px 0 0; color: var(--muted); }
 .library-tabs button.selected { color: #f0d49a; background: #352d21; box-shadow: inset 0 -2px #d4b87e; }
 .library-list { margin-top: 12px; }
