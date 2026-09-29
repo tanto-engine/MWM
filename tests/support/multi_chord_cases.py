@@ -53,6 +53,8 @@ class MultiChordCases(unittest.TestCase):
         self.assertFalse(gate.fields(251)['armed'])
         send(0x100,260);send(0x100|0x2000,300);send(0x100,340)
         self.assertEqual((gate.fields(341)['variant'],gate.chord_sequence),(2,2))
+        gate.set_stance(None)
+        self.assertEqual((gate.fields(342)['armed'],gate.fields(342)['chord_policy']),(False,0))
 
     def test_two_chords_publish_distinct_moves_and_global_sequence(self):
         value=preset()

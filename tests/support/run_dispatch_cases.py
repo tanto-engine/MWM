@@ -96,7 +96,7 @@ class DispatchTests(unittest.TestCase):
             dispatch.prepare(game, profile)
 
     def exercise_main(self, *, close_errors=False, dispatch_once=False, start_failure=None,
-                      calibration_change=None, prepared_selection=None):
+                      calibration_change=None, prepared_selection=None, suspended_routed=False):
         # Run dispatcher startup and cleanup against fake mappings and exports.
         # Optionally inject disposal failures or a dispatch observed late during shutdown.
         # Native Stop and recovery waiting must survive errors from other cleanup steps.
@@ -117,6 +117,8 @@ class DispatchTests(unittest.TestCase):
                 # Return false because there is no process handle to dispose.
                 # Unexpected cleanup exceptions must remain observable to the test runner.
                 return False
+            def bytes(self, address, size):
+                raise OSError('Player unavailable during suspension')
         class Command:
             def __init__(self, pid, tag):
                 # Create deterministic command control and publication history.
@@ -131,7 +133,8 @@ class DispatchTests(unittest.TestCase):
                 # Recovery grace must begin when the last accepted dispatch is observed.
                 self.controls += 1
                 return dict(enabled=1, frequency=1000, generation=7,
-                            dispatch_count=int(dispatch_once and self.controls > 1), context_flags=15, context_epoch=0)
+                            dispatch_count=int(dispatch_once and self.controls > 1),
+                            context_flags=0 if suspended_routed else 15, context_epoch=0)
             def qpc(self):
                 # Advance the mocked command counter by 50 ticks.
                 # Use the same 1000-Hz frequency exposed by control and trace.
@@ -180,7 +183,11 @@ class DispatchTests(unittest.TestCase):
             (folder/'boss-session.json').write_text(json.dumps(dict(BOSS,
                 controller_selection=0 if prepared_selection is None else prepared_selection)))
             calibration.write_text((MOD_ROOT/'data/controller-calibration.json').read_text())
-            (folder/'controller-binding.json').write_text((MOD_ROOT/'data/preset.json').read_text())
+            preset=json.loads((MOD_ROOT/'data/preset.json').read_text())
+            if suspended_routed:
+                preset['skill_bindings'].append(dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+                    input=dict(modifier_mask=16,trigger_mask=4,gesture='tap')))
+            (folder/'controller-binding.json').write_text(json.dumps(preset))
             argv = ['run_dispatch.py', '--profile', str(profile), '--calibration', str(calibration),
                     '--seconds', '.4', '--outdir', str(folder/'result')]
             changed=False
@@ -228,6 +235,12 @@ class DispatchTests(unittest.TestCase):
             self.assertEqual(calls,['start','stop'])
             self.assertFalse(command.published[-1]['armed'])
             self.assertEqual(any('Controller calibration changed' in error for error in status['errors']),change!='touch')
+
+    def test_routed_suspension_does_not_read_unavailable_player(self):
+        calls,status,command=self.exercise_main(suspended_routed=True)
+        self.assertEqual(calls,['start','stop'])
+        self.assertEqual(status['errors'],[])
+        self.assertTrue(command.published)
 
     def test_prepared_controller_selection_must_match_before_start(self):
         # Reject dispatch when the prepared session used a different controller selection.

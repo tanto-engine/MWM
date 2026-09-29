@@ -360,7 +360,7 @@ def main():
                         if playable and last_input_event:
                             intent.process(dict(last_input_event, edge_basis='unknown'), begin)
                     context_valid = playable
-                    if routed: intent.set_stance(I32(game.bytes(config['player']+0x470,4),0))
+                    if routed: intent.set_stance(I32(game.bytes(config['player']+0x470,4),0) if playable else None)
                     for event in reader.poll():
                         if event.get('kind') == 'input' and (event.get('backend'), event.get('slot')) == (calibration['device']['backend'], calibration['device']['slot']):
                             last_input_event = event
