@@ -37,8 +37,10 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         }
         const uint16_t bits=chord.buttons;
         const uint16_t remaining=uint16_t(bits&(bits-1));
-        if (!chord.stances || chord.stances>7 || chord.mode
+        if (!chord.stances || chord.stances>7
             || (bits&~uint16_t(0xE500)) || !remaining || (remaining&(remaining-1))) return false;
+        if (chord.mode && (chord.mode<2 || chord.mode>=12
+            || (bits&SEQUENCE_BUTTONS[(chord.mode-2)/2]))) return false;
         for (unsigned prior=0;prior<i;++prior)
             if (config.chord_reservations[prior].buttons==bits
                 && config.chord_reservations[prior].mode==chord.mode) return false;
@@ -69,9 +71,9 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         if (binding.kind>5 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
         if ((binding.kind==4 && binding.stances!=4)
             || (binding.kind==5 && binding.stances!=1 && binding.stances!=2 && binding.stances!=4 && binding.stances!=7)) return false;
-        for (unsigned stance=0;stance<3;++stance)
-            if (config.frost_variants[stance]==binding.variant && binding.stances!=(1u<<stance)) return false;
         const auto& adapter=config.adapters[binding.variant-1];
+        for (unsigned stance=0;stance<3;++stance)
+            if (config.frost_variants[stance]==binding.variant && binding.stances!=(1u<<stance) && adapter.kind) return false;
         if (binding.kind==3) {
             if (adapter.kind && adapter.kind!=2) return false;
             held_stances|=binding.stances;

@@ -32,6 +32,67 @@ def preset():
 
 
 class MultiChordCases(unittest.TestCase):
+    def test_charged_rush_shared_by_mid_frost_and_high_custom_input(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['frost_moon']['mid']='okatsu.charged_rush'
+        value['skill_bindings'].append(dict(source='tiger_sprint',stance='high',
+            move='okatsu.charged_rush',input=dict(modifier_mask=16,trigger_mask=8,gesture='tap')))
+        self.assertEqual(validate_preset(value)['skill_bindings'][-1]['move'],'okatsu.charged_rush')
+        self.assertIn('okatsu.charged_rush',Desktop().preview(dict(preset=value,calibration=DS4))['moves'])
+
+    def test_shared_graph_and_duplicate_frost_still_rejected(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['frost_moon']['mid']='jin_hayabusa.action_0bc0'
+        value['skill_bindings'].append(dict(source='tiger_sprint',stance='high',
+            move='jin_hayabusa.action_0bc0',input=dict(modifier_mask=16,trigger_mask=8,gesture='tap')))
+        with self.assertRaisesRegex(ValueError,'same stance across bindings'):
+            validate_preset(value)
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['frost_moon']['low']=value['frost_moon']['mid']='okatsu.charged_rush'
+        with self.assertRaisesRegex(ValueError,'different move in each stance'):
+            validate_preset(value)
+
+    def test_sequence_accepts_fresh_followup_while_first_is_held(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence'))]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,
+            [dict(id=value['tap_move']),dict(id='okatsu.charged_rush')]))
+        gate=RoutedGesture(calibration,binding,1000)
+        gate.set_stance(2);gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        def send(mask,now):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
+                              edge_basis='previous_observation'),now)
+        send(0,101);send(0x2100,200)
+        staged=gate.fields(201)
+        self.assertEqual((staged['reserve'],staged['chord_policy']),
+                         (True,(1<<32)|(1<<35)|(0xA100<<16)))
+        send(0xA100,250)
+        self.assertEqual((gate.fields(251)['armed'],gate.chord_sequence),(True,1))
+        gate.dispatched();send(0x2100,260);send(0xA100,270)
+        self.assertFalse(gate.fields(271)['armed'])
+        send(0,300);send(0x2100,400);send(0xA100,1001)
+        self.assertFalse(gate.fields(1002)['armed'])
+        send(0,1010);send(0x2100,1100);send(0xA100,1700)
+        self.assertEqual((gate.fields(1701)['armed'],gate.chord_sequence),(True,2))
+
+    def test_sequence_requires_a_later_observation_for_followup(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence'))]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,
+            [dict(id=value['tap_move']),dict(id='okatsu.charged_rush')]))
+        for release_first in (False,True):
+            gate=RoutedGesture(calibration,binding,1000)
+            gate.set_stance(2);gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+            def send(mask,now):
+                gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
+                                  edge_basis='previous_observation'),now)
+            send(0,101);send(0x2100,200)
+            if release_first: send(0x100,200)
+            send(0x8100 if release_first else 0xA100,200)
+            self.assertFalse(gate.fields(201)['armed'])
+
     def test_reservations_cover_every_route_before_its_first_input_frame(self):
         value=preset()
         value['tap_move']='okatsu.charged_rush'
@@ -52,7 +113,7 @@ class MultiChordCases(unittest.TestCase):
         reservations=compiled_chord_reservations(value,DS4,[dict(id=value['tap_move']),
             dict(id='okatsu.charged_rush')])
         self.assertEqual(reservations,[dict(buttons=0x500,stances=1,mode=0),
-            dict(buttons=0x2100,stances=1,mode=0)])
+            dict(buttons=0x2100,stances=1,mode=10)])
 
     def test_custom_hold_string_stays_held_and_unlatched_for_chain(self):
         value=copy.deepcopy(DEFAULT_PRESET)
@@ -104,12 +165,14 @@ class MultiChordCases(unittest.TestCase):
             gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
                               edge_basis='previous_observation'),now)
         send(0,101)
-        send(0x100|0x2000,200)
-        send(0x100|0x2000|0x8000,220)
+        send(0x100|0x2000|0x8000,200)
         self.assertFalse(gate.fields(221)['armed'])
-        send(0x100,230)
+        send(0,230)
         send(0x100|0x2000,240)
         send(0x100,250)
+        staged=gate.fields(251)
+        self.assertEqual((staged['reserve'],staged['chord_policy']),
+                         (True,(1<<32)|(1<<35)|(0x8100<<16)))
         send(0x100|0x8000,300)
         fields=gate.fields(301)
         self.assertEqual((fields['armed'],fields['variant']),(True,1))

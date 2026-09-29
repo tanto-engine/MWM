@@ -33,6 +33,7 @@ _trials = [json.loads(path.read_text(encoding='utf8')) for path in sorted((DATA/
 SOURCE_MANIFESTS = [_sword, *_trials]
 MOVE_VARIANTS = {move['id']: i for i, move in enumerate(_ordinary['moves'][:3] +
     [move for move in _sword['moves'] if move['adapter_kind']==5])}
+STANCE_FREE_MOVES = frozenset(move['id'] for move in _ordinary['moves'][:2])
 STRING_ENTRY = 'okatsu.action_0c61'
 HEAVY_STRINGS = {chain[0]: name for name, chain in _sword['candidates'].items()}
 HELD_MOVES = frozenset(root for source in SOURCE_MANIFESTS for root in source['hold_chains']) | frozenset(HEAVY_STRINGS)
@@ -205,6 +206,11 @@ def validate_preset(value):
     if any(identifier is not None and (not isinstance(identifier,str) or identifier not in CHORD_MOVES) for identifier in frost.values()):
         stance,move=next((stance,move) for stance,move in frost.items() if move is not None and (not isinstance(move,str) or move not in CHORD_MOVES))
         raise ValueError(f'{move_label(move)} cannot be assigned to {stance.title()} Frost Moon. Choose a move from the Frost Moon menu.')
+    seen_frost={}
+    for stance,move in frost.items():
+        if move in seen_frost:
+            raise ValueError(f'{move_label(move)} is assigned to {seen_frost[move].title()} Frost Moon and {stance.title()} Frost Moon. Choose a different move in each stance; clear {seen_frost[move].title()} Frost Moon or choose another.')
+        if move: seen_frost[move]=stance
     bindings=result['skill_bindings']
     if not isinstance(bindings,list):
         raise ValueError('Native overrides must contain source, stance and move rows. Reload a valid moveset.')
@@ -293,7 +299,7 @@ def validate_preset(value):
     for stance,move,label in entries:
         if move=='toyotomi_hideyori.action_0d30' and move in owners:
             raise ValueError('Hideyori four-hit string cannot use two inputs; choose one source for its continuation buttons')
-        if move in owners and owners[move][0]!=stance:
+        if move in owners and owners[move][0]!=stance and move not in STANCE_FREE_MOVES:
             raise ValueError(f'{move_label(move)} is assigned to {owners[move][1]} and {label}. This move must use the same stance across bindings. To use {label}, clear {owners[move][1]} or choose a different move there.')
         owners[move]=(stance,label)
     launcher,drop=(owners.get(move) for move in ('jin_hayabusa.action_0c79','jin_hayabusa.izuna_drop'))

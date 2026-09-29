@@ -148,7 +148,7 @@ class ControllerGesture:
 
 
 class SequenceGesture:
-    """Recognize modifier + first press, release, then a separate follow-up press."""
+    """Recognize a follow-up after the first press, with or without its release."""
     def __init__(self, calibration, binding, frequency):
         if binding['device'] != calibration['device'] or binding['lb_mask'] != calibration['lb_mask']:
             raise ValueError('Binding does not match the saved controller')
@@ -172,6 +172,13 @@ class SequenceGesture:
         self.ready=self.pending=False
         self.stage=self.started=self.deadline=self.edge=self.expires=0
         self.previous=(False,False,False)
+
+    def finish(self, now):
+        self.chord_sequence+=1
+        self.edge,self.expires=now,now+int(.4*self.frequency)
+        self.pending=True
+        self.stage=self.started=0
+        self.ready=False
 
     def process(self, event, now, context_valid=True):
         if not context_valid:
@@ -205,8 +212,11 @@ class SequenceGesture:
             pass
         elif self.stage==1:
             if followup:
-                self.stage=self.started=0
-                self.ready=False
+                if first and not previous_followup and self.started<now<=self.started+self.window:
+                    self.finish(now)
+                else:
+                    self.stage=self.started=0
+                    self.ready=False
             elif not first:
                 self.stage=2
                 self.deadline=now+self.window
@@ -215,11 +225,11 @@ class SequenceGesture:
                 self.stage=self.started=0
                 self.ready=not first and not followup
             elif followup and not previous_followup:
-                self.chord_sequence+=1
-                self.edge,self.expires=now,now+int(.4*self.frequency)
-                self.pending=True
-                self.stage=self.started=0
-                self.ready=False
+                if now>self.deadline-self.window:
+                    self.finish(now)
+                else:
+                    self.stage=self.started=0
+                    self.ready=False
         elif not first and not followup:
             self.ready=True
         elif first and not previous_first and not followup and self.ready:
@@ -239,6 +249,13 @@ class SequenceGesture:
         return dict(heartbeat=now,edge=self.edge,expires=self.expires,
                     chord_sequence=self.chord_sequence,armed=self.pending,
                     held=self.previous[0],latched=1,variant=self.variant,reserve=False)
+
+    def reserve_buttons(self, now):
+        if self.stage==1 and now-self.started<=self.window:
+            return self.modifier|self.first|self.followup
+        if self.stage==2 and now<=self.deadline:
+            return self.modifier|self.followup
+        return 0
 
     def dispatched(self, repeat=True):
         self.pending=False
@@ -457,11 +474,13 @@ class RoutedGesture:
             self.chord_sequence+=1
             self.seen[self.active]=gate.chord_sequence
         self.variant=fields['variant']
+        sequence_buttons=gate.reserve_buttons(now) if self.active in self.sequence_keys else 0
         policy=0 if self.active=='string' else (1<<(34-self.active[0])) | (
             (1 << (36 if self.active[3]=='after_strong' else 37)) if self.active in self.attack_keys else
-            1<<35 if self.active in self.sequence_keys else (self.active[1]|self.active[2])<<16)
+            (1<<35)|(sequence_buttons<<16) if self.active in self.sequence_keys else (self.active[1]|self.active[2])<<16)
         fields.update(chord_sequence=self.chord_sequence,chord_policy=policy,
-                      reserve=self.active!='string' and (gate.pending if self.active in self.sequence_keys or self.active in self.attack_keys else
+                      reserve=self.active!='string' and ((gate.pending or bool(sequence_buttons)) if self.active in self.sequence_keys else
+                               gate.pending if self.active in self.attack_keys else
                                bool(gate.started and not gate.fired) or gate.pending))
         return fields
 

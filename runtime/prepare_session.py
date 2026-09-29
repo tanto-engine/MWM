@@ -27,6 +27,7 @@ from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEM
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
 from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
 from game_controller import game_binding, controller_selection
+from runtime_session import SEQUENCE_BUTTONS
 
 IMPORT_MANIFEST = DATA/'imports/okatsu.json'
 CURRENT_CONFIG = HERE / 'controller-binding.json'
@@ -326,7 +327,9 @@ def compiled_chord_reservations(configuration, calibration, imports):
     pairs = {}
     for route in routes:
         if route['gesture'] not in ('tap','hold','sequence'): continue
-        key = (route['modifier_mask'] | route['trigger_mask'], 0)
+        mode = (2+2*SEQUENCE_BUTTONS.index(route['followup_mask'])
+                +int(route['modifier_mask']>route['trigger_mask'])) if route['gesture']=='sequence' else 0
+        key = (route['modifier_mask'] | route['trigger_mask'], mode)
         pairs[key] = pairs.get(key, 0) | (7 if route['stance']=='any' else 1<<list(STANCE_OPENERS).index(route['stance']))
     return [dict(buttons=buttons, stances=stances, mode=mode)
             for (buttons,mode),stances in pairs.items()]

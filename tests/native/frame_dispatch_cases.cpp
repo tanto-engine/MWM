@@ -293,6 +293,10 @@ int main() {
     // Gameplay acceptance still requires live evidence beyond these deterministic invariants.
     LARGE_INTEGER f; QueryPerformanceFrequency(&f); frequency=f.QuadPart;
     handgun_visibility_cases();
+    reset(); boss_frost_variants[1]=1; // Mid Frost shares ordinary C64 with a High custom input.
+    put(player.data(),0x470,uint32_t(0)); publish(); tick();
+    assert(boss_active && boss_private_actions[0].payload[0x0B]==4); ++checks;
+    boss_frost_variants[1]=0;
     reset();
     dispatch->control.last_reason=CurrentNotAllowed;
     SetLastError(INCOMING); assert(observed_action(player.data(),25,nullptr));
@@ -352,6 +356,9 @@ int main() {
         assert(boss_active && dispatch->control.dispatch_count==1); exit_move(); ++checks;
     }
     assert(!valid_chord_policy(1ULL|(1ULL<<36)|(1ULL<<37)|(1ULL<<32)));
+    assert(valid_chord_policy(1ULL|(1ULL<<35)|(1ULL<<32)|(0xA100ULL<<16)));
+    assert(valid_chord_policy(1ULL|(1ULL<<35)|(1ULL<<32)|(0x8100ULL<<16)));
+    assert(!valid_chord_policy(1ULL|(1ULL<<35)|(1ULL<<32)|(0x100ULL<<16)));
 
     reset(); command.held=0; publish(); tick(); assert(!action_calls && dispatch->control.last_reason==Released); ++checks;
     command.reserved[0]=1; publish(); tick(); assert(action_calls==1 && boss_active); exit_move(); ++checks;

@@ -31,6 +31,12 @@ class RuntimeSessionTests(unittest.TestCase):
         self.pid = self.config['session']['pid']
         self.born = int(self.config['session']['creation_filetime'])
 
+    def test_ordinary_frost_import_can_serve_another_stance_binding(self):
+        self.config['frost_variants']=[0,1,0]
+        self.config['skill_bindings']=[dict(kind=1,stances=4,variant=1,key=0xCB7,
+            motion=3300,transition_count=40,flags=0x8000000594C0000)]
+        self.assertEqual(len(encode_session(self.config,self.pid,self.born)),SESSION_CONFIG.size)
+
     def test_pointer_order_matches_native_abi(self):
         # Keep Python session packing identical to the native ABI field order.
         # Encode a complete session and unpack its fixed header and pointer sequence.
@@ -72,6 +78,15 @@ class RuntimeSessionTests(unittest.TestCase):
                      [dict(buttons=0x8100,stances=1,mode=2)]):
             with self.subTest(rows=rows),self.assertRaisesRegex(ValueError,'chord reservation'):
                 encode_session(dict(self.config,chord_reservations=rows),self.pid,self.born)
+
+    def test_sequence_reservation_encodes_ordered_followup(self):
+        self.config['chord_reservations']=[dict(buttons=0x2100,stances=1,mode=10)]
+        self.assertEqual(encode_session(self.config,self.pid,self.born)[12416:12420],
+                         bytes.fromhex('0021010a'))
+        for buttons,mode in ((0x8100,10),(0x2100,1),(0x2100,12)):
+            with self.subTest(buttons=buttons,mode=mode),self.assertRaisesRegex(ValueError,'chord reservation'):
+                encode_session(dict(self.config,chord_reservations=[dict(buttons=buttons,stances=1,mode=mode)]),
+                               self.pid,self.born)
 
     def test_full_import_capacity_and_overflow(self):
         # The former 32-phase cap rejected otherwise valid authored movesets.

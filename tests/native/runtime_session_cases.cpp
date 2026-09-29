@@ -52,6 +52,10 @@ int main() {
     // Mutate the seven-import ABI and drive owned frame recovery scenarios.
     // Stale process identities and reused actor pointers must not authorize native writes.
     auto incoming = config();
+    auto shared_ordinary=incoming;
+    shared_ordinary.frost_variants[1]=1; // Mid Frost, High native binding, one stance-neutral C64 import.
+    shared_ordinary.skill_bindings[0]={1,4,1,0xCB7,3300,40,0x8000000594C0000ULL};
+    assert(runtime_imports_valid(shared_ordinary));
     for (unsigned field=0;field<9;++field) {
         auto changed=incoming;changed.move_settings[0]={1.5f,65,18,35,0};
         if (field==0) {assert(runtime_imports_valid(changed));continue;}
@@ -115,12 +119,15 @@ int main() {
         && offsetof(RuntimeSessionConfig,chord_reservations)==12416);
     auto chords=incoming;chords.chord_reservation_count=2;
     chords.chord_reservations[0]={0x8100,1,0}; // Low LB+Y.
-    chords.chord_reservations[1]={0x2100,7,0}; // LB+B in every stance.
+    chords.chord_reservations[1]={0x2100,7,10}; // LB+B, then Y.
+    assert(runtime_imports_valid(chords));
+    chords.chord_reservations[1].mode=0;
     assert(runtime_imports_valid(chords));
     auto bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8000;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8300;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[0].stances=8;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[1].mode=2;assert(!runtime_imports_valid(bad_chord));
+    bad_chord=chords;bad_chord.chord_reservations[1].mode=12;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[1].buttons=0xC01;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[2].buttons=0x8100;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservation_count=33;assert(!runtime_imports_valid(bad_chord));

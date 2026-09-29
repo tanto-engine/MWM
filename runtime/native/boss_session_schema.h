@@ -76,6 +76,7 @@ static_assert(sizeof(SkillBinding)==32,"Skill binding ABI size");
 
 struct ChordReservation { uint16_t buttons; uint8_t stances, mode; };
 static_assert(sizeof(ChordReservation)==4,"Chord reservation ABI size");
+static constexpr uint16_t SEQUENCE_BUTTONS[5]={0x100,0x400,0x2000,0x4000,0x8000};
 
 // Thresholds choose a launch policy by resistance; weight_scale and vertical_impulse affect separate native fields.
 struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };

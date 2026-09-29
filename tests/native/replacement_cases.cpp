@@ -493,6 +493,28 @@ static void chord_reservation_cases() {
     assert(!configured_chord_buttons());
 }
 
+static void sequence_reservation_cases() {
+    // An unarmed triple press stays native. Only a fresh published first-pair
+    // stage may reserve the held-first or released-first follow-up frame.
+    replacement_reset();state(3303,2061,2);publish_player_context(.25f);
+    constexpr WORD lb=XINPUT_GAMEPAD_LEFT_SHOULDER,b=XINPUT_GAMEPAD_B,y=XINPUT_GAMEPAD_Y;
+    boss_chord_reservations[0]={uint16_t(lb|b),1,10}; // LB+B, then Y.
+    boss_chord_reservation_count=1;command.reserved[0]=0;publish();
+    pad_buttons=lb|b|y;observe_game_input(trace->header);
+    assert(!configured_chord_buttons() && !custom_chord_blocks(0xFB8));
+    command.reserved[0]=1|(uint64_t(lb|b|y)<<16)|(1ULL<<32)|(1ULL<<35);publish();
+    assert(configured_chord_buttons()==pad_buttons && custom_chord_blocks(0xFB8));
+    const auto heartbeat=dispatch->command.heartbeat_qpc;
+    dispatch->command.heartbeat_qpc-=frequency;
+    assert(!configured_chord_buttons());
+    dispatch->command.heartbeat_qpc=heartbeat;
+    pad_buttons=lb|y;observe_game_input(trace->header);
+    command.reserved[0]=1|(uint64_t(lb|y)<<16)|(1ULL<<32)|(1ULL<<35);publish();
+    assert(configured_chord_buttons()==pad_buttons && custom_chord_blocks(0xFB8));
+    command.reserved[0]=0;publish();
+    assert(!configured_chord_buttons() && !custom_chord_blocks(0xFB8));
+}
+
 static void hold_reset(unsigned stance=2, bool select_heavy=true) {
     // Isolate pending-input selection from the separately tested paired-action adapter.
     // Reuse the valid CF5 import at a distinct hold slot and keep the exact250ms deadline.
@@ -1211,6 +1233,7 @@ int main() {
     low_quick_string_cases();
     mid_hideyori_string_cases();
     chord_reservation_cases();
+    sequence_reservation_cases();
     held_slot_cases();
     weapon_policy_cases();
     airborne_cases();

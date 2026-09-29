@@ -7,8 +7,10 @@
 - Okatsu's quick/kick sequence is named accurately and can use a held controller chord. The player confirmed the full sequence on L1+L2. Removed the hidden LT+RT activation because it briefly entered the game's aim animation. The option now includes the sequence for explicit binding.
 - Cataloged all 67 annotated sword recordings, including twelve older candidates previously absent from the move library. Edward Kelley remains excluded. Research-only candidates are clearly unavailable until their action ownership, complete graph, resources and William adaptation are established.
 - Kept the desktop regression worker isolated from a live Engine registration and clarified that custom chords take priority over game actions on the same buttons.
+- Allowed the same stance-neutral Okatsu action on Mid Frost Moon and a High custom input; multi-phase graphs still have one stance owner.
+- Custom operators now accept a follow-up while the first button stays held, as well as after its release. Native interception follows the observed sequence stage so unarmed three-button input remains with Nioh.
 
-Source-runtime observations do not certify the new EXE. Mission-entry crashes #2/#10, the Hideyori Dodge Heavy root-motion snap #16, live touchpad preset cycling #12, and further native input source expansion #11 remain open.
+Source-runtime observations do not certify the new EXE. Mission-entry crashes #2/#10, the Hideyori first-hit root-motion snap #16, live touchpad preset cycling #12, and further native input source expansion #11 remain open. The newer recording candidates remain research-only until their actor, phases, resources, and William adapter are verified.
 
 ## 0.3.0-alpha.13
 

@@ -96,8 +96,8 @@ const fieldHelp: Record<string, [string, string]> = {
   'Game executable': ['Choose nioh.exe for launching the game from this app.', 'Changing the path does not launch the game.'],
   'Show unused moves': ['Include speed controls for moves outside this moveset.', 'Saved overrides on unused moves remain available.'],
   'Hold modifier': ['Hold this controller button through both steps of a custom operator.', 'The first and follow-up buttons must differ from it.'],
-  'First press': ['Press this button while the modifier is held, then release this button.', 'Keep holding the modifier for the follow-up.'],
-  'Then press': ['Press this follow-up button while still holding the modifier.', 'Complete it within the sequence window shown above.'],
+  'First press': ['Press this button while holding the modifier. Keep it held or release it before the follow-up.', 'The Engine must observe this press before the follow-up; simultaneous presses do not activate the route.'],
+  'Then press': ['Press this follow-up while still holding the modifier.', 'Press within 0.6s while the first button is held, or within 0.6s after releasing it.'],
   Source: ['The game-selected sword input replaced by this original route.', 'A custom chord leaves this named source unchanged but takes priority if its buttons overlap another game action.'],
   Activation: ['Original Nioh input replaces the selected game action. Custom controller chord starts from the buttons in this row.', 'A configured chord takes priority over a game action on those same buttons.'],
   Gesture: ['Tap starts on a short Trigger press. Hold starts after the custom chord hold threshold.', 'A tap and hold can use the same buttons for separate routes.'],
@@ -564,7 +564,7 @@ function renderOverview() {
   operator.append(element('summary', '+ Add custom operator'));
   const sequence = state.capabilities.custom_sequence;
   if (sequence) {
-    operator.append(element('p', `Hold a modifier and press a button, then press a follow-up within ${sequence.window_seconds}s. The original game buttons still work.`, 'hint'));
+    operator.append(element('p', `Hold a modifier, press the first button, then press the follow-up within ${sequence.window_seconds}s. You may keep the first button held or release it. Presses must be separate.`, 'hint'));
     const builder = element('div', undefined, 'operator-fields');
     const choices = (names: string[]): [string, string][] => names.filter(name => state.buttons[name] !== undefined).map(name => [name, name]);
     const modifier = select(choices(sequence.modifiers), sequence.modifiers[0], () => {}, false);
@@ -731,7 +731,7 @@ function renderNative() {
     row.dataset.routeKey = binding.input ? `custom:${index}` : `native:${binding.stance}:${binding.source}`;
     row.classList.toggle('custom-route', Boolean(binding.input));
     row.dataset.search = `${routeInput(binding)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
-    annotate(row, 'Input route', followup ? 'After a confirmed attack, press Guard with the shown button before its recovery window ends.' : binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press and release the first button, then press the follow-up. The first pair does not also perform its game action.' : 'This custom chord takes priority over a game action on the same buttons.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
+    annotate(row, 'Input route', followup ? 'After a confirmed attack, press Guard with the shown button before its recovery window ends.' : binding.input ? binding.input.gesture === 'sequence' ? 'Hold the modifier, press the first button, then press the follow-up while keeping or releasing the first. The first pair takes priority over its game action.' : 'This custom chord takes priority over a game action on the same buttons.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
     const head = element('div', undefined, 'binding-head');
     head.append(element('span', `ROUTE ${String(index + 1).padStart(2, '0')}`, 'route-number'),
       element('span', routeInput(binding), 'route-notation'),
@@ -784,7 +784,7 @@ function renderNative() {
         const input = binding.input;
         buttonPicker(row, label, input[key]!, value => { input[key] = value; }, { kind: 'route', binding, key });
       }
-      if (sequence) row.append(element('p', `Hold Modifier + First press, release First press, then press the follow-up within ${state.capabilities.custom_sequence?.window_seconds || .6}s. The configured start pair takes priority over its game action.`, 'control-note'));
+      if (sequence) row.append(element('p', `Hold Modifier + First press, then press the follow-up within ${state.capabilities.custom_sequence?.window_seconds || .6}s while keeping First press held, or within that window after releasing it. Presses must be separate. The start pair takes priority over its game action.`, 'control-note'));
       else {
         field('Gesture', select([['tap', 'Tap / release'], ['hold', `Hold · ${p.hold_seconds}s`]], binding.input.gesture, value => {
           binding.input!.gesture = value as 'tap' | 'hold';
@@ -1110,7 +1110,7 @@ function renderGuide() {
   const steps = element('div', undefined, 'guide-steps');
   for (const [number, title, body, destination] of [
     ['01', 'Assign moves', 'In Moves, choose Low, Mid or High. Each input has one replacement menu. Original keeps Nioh’s action. After Strong and After Quick add stance-specific follow-ups where their Guard combinations are free.', 'overview'],
-    ['02', 'Add a custom operator', 'In Moves, choose a modifier, first button, follow-up button, and reviewed move. Keep the modifier held, release the first button, then press the follow-up. Existing game inputs still work.', 'overview'],
+    ['02', 'Add a custom operator', 'In Moves, choose a modifier, first button, follow-up button, and reviewed move. Keep the modifier held; press the follow-up after the first button is observed, with or without releasing it. Simultaneous presses do not activate the route.', 'overview'],
     ['03', 'Tune and save', 'Speed changes playback for one move at a time; blank inherits from its sequence. Save a valid draft before enabling the mod.', 'speed'],
     ['04', 'Keep setups', 'Presets stores named movesets. Activate one in the app or double-tap the touchpad click on a supported controller to cycle live during gameplay.', 'presets']
   ]) {

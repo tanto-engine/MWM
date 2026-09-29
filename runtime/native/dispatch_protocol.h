@@ -68,7 +68,13 @@ static inline bool valid_chord_policy(uint64_t policy) {
     if (policy&~(1ULL|(0xFFFFULL<<16)|(0x3FULL<<32))) return false;
     if (attack) return attack!=3 && !buttons && !sequence && (policy&1)
         && stances && !(stances&(stances-1));
-    return sequence ? !buttons && bool(stances) : bool(buttons)==bool(stances)
+    if (sequence) {
+        unsigned count=0;
+        for (uint16_t bits=buttons;bits;bits=uint16_t(bits&(bits-1))) ++count;
+        return bool(stances) && (!buttons || ((policy&1) && !(buttons&~uint16_t(0xE500))
+            && (count==2 || count==3)));
+    }
+    return bool(buttons)==bool(stances)
         && (!buttons || (remainder && !(remainder&(remainder-1))));
 }
 

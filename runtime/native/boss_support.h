@@ -427,7 +427,7 @@ static bool boss_prepare_private_action(unsigned slot = 0) {
     if (!boss_preserve_weapon(slot,payload)) return false;
     payload[0x0B] = 4; // Native0x70F3A3: keep current+0x470, retain+0x47C=1 behavior.
     for (unsigned stance=0;stance<3;++stance)
-        if (boss_frost_variants[stance]==slot+1) payload[0x0B]=uint8_t(2-stance);
+        if (boss_adapters[slot].kind && boss_frost_variants[stance]==slot+1) payload[0x0B]=uint8_t(2-stance);
     int16_t recovery_start = 0, base_ki_cost = 0;
     memcpy(&recovery_start, payload + 0x24, sizeof(recovery_start));
     memcpy(&base_ki_cost, payload + 0x16, sizeof(base_ki_cost));

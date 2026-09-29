@@ -16,6 +16,7 @@ MOVE_ADAPTER = struct.Struct('<6QIiHhI')
 ADAPTER_POINTERS = ('action_resource', 'timing_resource', 'bank', 'motion_bank', 'timing_wrapper', 'player_descriptor')
 MOVE_SETTINGS = struct.Struct('<f4H')
 CHORD_RESERVATION_LIMIT = 32
+SEQUENCE_BUTTONS = (0x100,0x400,0x2000,0x4000,0x8000)
 SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*BINDING_LIMIT + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I' + 'HBB'*CHORD_RESERVATION_LIMIT + '2I')
 MAGIC, VERSION = 0x3153454e, 13
 assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 12552
@@ -178,7 +179,7 @@ def encode_session(config, pid, creation_filetime):
     if len([slot for slot in frost if slot])!=len({slot for slot in frost if slot}):
         raise ValueError('Frost Moon variants must be distinct')
     for stance,slot in enumerate(frost):
-        if slot and any(binding['variant']==slot and binding['stances']!=1<<stance for binding in bindings):
+        if slot and adapters[slot-1] is not None and any(binding['variant']==slot and binding['stances']!=1<<stance for binding in bindings):
             raise ValueError('Frost Moon and native binding stance ownership differs')
     settings=config.get('move_settings')
     if settings is None: settings=[dict(speed=1,**KI_PULSE) for _ in moves]
@@ -209,7 +210,8 @@ def encode_session(config, pid, creation_filetime):
             raise ValueError('Invalid chord reservation')
         buttons,stances,mode=(row[key] for key in ('buttons','stances','mode'))
         if (any(type(value) is not int for value in (buttons,stances,mode)) or not 0<stances<=7
-                or mode!=0 or buttons & ~0xE500 or buttons.bit_count()!=2
+                or buttons & ~0xE500 or buttons.bit_count()!=2
+                or mode!=0 and (not 2<=mode<12 or buttons & SEQUENCE_BUTTONS[(mode-2)//2])
                 or (buttons,mode) in seen):
             raise ValueError('Invalid chord reservation')
         seen.add((buttons,mode));encoded_reservations.extend((buttons,stances,mode))

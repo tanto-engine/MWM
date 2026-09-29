@@ -150,14 +150,14 @@ class CapabilityTests(unittest.TestCase):
         # Reject two bindings that would give the same imported graph contradictory stance ownership.
         # Check both public preset validation and the lower-level session encoder.
         # A matching single stance is allowed; widening its encoded mask afterward must still be rejected.
-        preset=empty_preset();move='okatsu.charged_rush'
+        preset=empty_preset();move='jin_hayabusa.action_0c79'
         preset['frost_moon']['high']=move
-        preset['skill_bindings']=[dict(source='tiger_sprint',stance='any',move=move)]
+        preset['skill_bindings']=[dict(source='tiger_sprint',stance='low',move=move)]
         with self.assertRaisesRegex(ValueError,'same stance'): config.validate_preset(preset)
         preset['skill_bindings'][0]['stance']='high'
         fixture,_=self.fixture(preset)
         fixture.config['skill_bindings'][0]['stances']=7
-        with self.assertRaisesRegex(ValueError,'stance ownership'):
+        with self.assertRaisesRegex(ValueError,'graph stance differ'):
             encode_session(fixture.config,fixture.pid,fixture.born)
 
     def test_graph_chords_and_izuna_roles_require_distinct_concrete_stances(self):
@@ -199,7 +199,7 @@ class CapabilityTests(unittest.TestCase):
         preset=empty_preset();preset['stance_holds'].update(low=launcher,high=launcher)
         cases.append((preset,(config.move_label(launcher),'Low hold Triangle / Y','High hold Triangle / Y','clear Low')))
         preset=empty_preset();preset['frost_moon'].update(low=launcher,mid=launcher)
-        cases.append((preset,('Low Frost Moon','Mid Frost Moon','same stance','clear Low')))
+        cases.append((preset,('Low Frost Moon','Mid Frost Moon','different move','clear Low')))
         preset=empty_preset();preset['stance_holds']['low']=launcher
         preset['skill_bindings']=[dict(source='heavy_attack',stance='high',move=launcher)]
         cases.append((preset,('Low hold Triangle / Y','High Heavy attack','same stance','clear Low')))

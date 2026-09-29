@@ -334,7 +334,7 @@ static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, 
             const auto& adapter=boss_adapters[c.reserved[1]];
             uint32_t stance=0;
             uint32_t expected=adapter.kind==2 ? (adapter.player_key==0xCF5 ? 2 : adapter.player_key==0xC7A ? 1 : 0) : 3;
-            for (unsigned i=0;i<3;++i) if (boss_frost_variants[i]==c.reserved[1]+1) expected=2-i;
+            for (unsigned i=0;i<3;++i) if (adapter.kind && boss_frost_variants[i]==c.reserved[1]+1) expected=2-i;
             if (expected<3 && (!copy_field(c.player+0x470,stance) || stance!=expected)) reason=IneligibleRequest;
         }
 #endif

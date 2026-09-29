@@ -69,7 +69,7 @@ static WORD configured_chord_buttons() {
             | (input.right_trigger[slot]>=128 ? 0x800 : 0);
         for (unsigned i=0;i<boss_chord_reservation_count;++i) {
             const auto& chord=boss_chord_reservations[i];
-            if (!chord.mode && (chord.stances&(1u<<(2-stance))) && down==chord.buttons) return down;
+            if (chord.mode!=1 && (chord.stances&(1u<<(2-stance))) && down==chord.buttons) return down;
         }
     }
     if (!dispatch || !snapshot_command(command) || !valid_chord_policy(command.reserved[0])) return 0;
@@ -83,6 +83,20 @@ static WORD configured_chord_buttons() {
         LARGE_INTEGER now; QueryPerformanceCounter(&now);
         if (command.chord_sequence<=uint64_t(InterlockedCompareExchange64(&dispatch->control.consumed_sequence,0,0))
             || now.QuadPart>=command.expires_qpc) return 0;
+    }
+    if ((policy&(1ULL<<35)) && buttons) {
+        if (command.armed) return 0;
+        bool configured=false;
+        for (unsigned i=0;i<boss_chord_reservation_count;++i) {
+            const auto& chord=boss_chord_reservations[i];
+            if (chord.mode<2 || chord.mode>=12 || !(chord.stances&(1u<<(2-stance)))) continue;
+            const WORD followup=SEQUENCE_BUTTONS[(chord.mode-2)/2];
+            const WORD lower=WORD(chord.buttons&(0u-chord.buttons));
+            const WORD modifier=(chord.mode-2)&1 ? WORD(chord.buttons^lower) : lower;
+            configured=configured || buttons==(chord.buttons|followup)
+                || buttons==(modifier|followup);
+        }
+        if (!configured) return 0;
     }
     const WORD down=(input.buttons[slot]&0xF3FF) | (input.left_trigger[slot]>=128 ? 0x400 : 0)
         | (input.right_trigger[slot]>=128 ? 0x800 : 0);
