@@ -517,7 +517,7 @@ function renderOverview() {
   const blockedFollowup = (gesture: string) => {
     const source = gesture === 'after_strong' ? 'heavy_attack' : 'light_attack';
     return preset.skill_bindings.some(row => !row.input && row.source === source && (row.stance === activeStance || row.stance === 'any'))
-      || gesture === 'after_strong' && Boolean(activeStance === 'low' && preset.low_heavy || preset.stance_holds[activeStance]);
+      || gesture === 'after_strong' && activeStance === 'low' && Boolean(preset.low_heavy);
   };
   for (const [gesture, stanceSet, label, inputText, trigger] of [
     ['after_strong', 'low mid', 'After Strong', 'Triangle / Y → L1 / LB + Square / X', 'Square / X'],

@@ -10,6 +10,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwordConfigurationTests(unittest.TestCase):
+    def test_capture_failure_keeps_worker_available(self):
+        import subprocess
+        import sys
+        with tempfile.TemporaryDirectory(prefix='mwm-capture-') as folder:
+            requests = '\n'.join(json.dumps(dict(id=index, method=method, params={}))
+                                 for index, method in enumerate(('capture_start', 'capture_start', 'test_bad_reply', 'snapshot'), 1)) + '\n'
+            result = subprocess.run([sys.executable, '-B', str(ROOT/'tests/desktop_worker_fixture.py'), folder],
+                                    input=requests, capture_output=True, text=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            replies = [json.loads(line) for line in result.stdout.splitlines()]
+            self.assertEqual([reply['id'] for reply in replies], [1, 2, 3, 4])
+            self.assertIn('Controller listener fixture failure', replies[0]['error']['message'])
+            self.assertEqual(replies[1]['result']['status'], 'Press one input')
+            self.assertIn('Out of range float values', replies[2]['error']['message'])
+            self.assertIn('preset', replies[3]['result'])
+            self.assertIn('AssertionError', result.stderr)
+
     def test_press_to_bind_detects_xinput_without_preselecting_a_mapping(self):
         import importlib.util
         import sys
@@ -118,7 +135,7 @@ class SwordConfigurationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='mwm-ui-') as folder:
             result = subprocess.run([str(ROOT/'node_modules/electron/dist/electron.exe'),
                                      str(ROOT/'tests/desktop_ui.cjs'), folder, sys.executable],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=75,
+                                    cwd=ROOT, capture_output=True, text=True, timeout=95,
                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             report = Path(folder)/'ui-result.json'
             details = report.read_text(encoding='utf8') if report.exists() else result.stdout+result.stderr

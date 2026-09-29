@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.3.0-alpha.13
+
+- Fixed After Strong availability when ordinary Strong remains original but Hold Strong has a separate move. The Mid stance screenshot case now selects and saves both routes.
+- Keep the moveset editor available after an unexpected controller capture or response-encoding error. The worker returns an error, records a capture traceback, and accepts another capture attempt without resetting the app.
+
+Offline and packaged checks pass. Physical controller binding, live gameplay, the reported crashes and Hideyori dodge movement remain under investigation.
+
 ## 0.3.0-alpha.12
 
 - Fixed the Move library crash that hid the 55 newer sword recording candidates. Added a searchable index of 918 distinct action signatures from those sessions, with source recording and journal line. All 70 eligible sessions remain indexed; Edward Kelley is excluded. Unassigned actor data remains research only until William adaptation is verified.

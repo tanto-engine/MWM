@@ -18,7 +18,14 @@ def dispatch(self, method, params):
     # Limit this fixture to configuration and file roundtrips.
     # A lifecycle/capture request reaching Python is a failed test, never a real side effect.
     # All allowed requests execute production validation and persistence code.
-    if method in ('enable', 'disable', 'capture_start', 'capture_poll'):
+    if method == 'capture_start':
+        if not getattr(self, 'fixture_capture_failed', False):
+            self.fixture_capture_failed = True
+            raise AssertionError('Controller listener fixture failure')
+        return dict(status='Press one input')
+    if method == 'test_bad_reply':
+        return float('nan')
+    if method in ('enable', 'disable', 'capture_poll'):
         raise ValueError('Live operation forbidden in desktop fixture')
     return original(self, method, params)
 

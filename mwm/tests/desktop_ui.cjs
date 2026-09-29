@@ -408,6 +408,15 @@ app.whenReady().then(async () => {
       await stance('low');
       change(document.querySelector('[data-assignment="followup:low:after_strong"]'),'okatsu.charged_rush');await ready();
       assert(document.querySelector('[data-assignment="followup:low:after_strong"]')?.value==='okatsu.charged_rush','After Strong route did not appear in Low');
+      document.querySelector('#baseline').click();await ready();await stance('mid');
+      change(document.querySelector('[data-assignment="native:mid:heavy_attack"]'),'');await ready();
+      change(document.querySelector('[data-assignment="hold:mid"]'),'oda_nobunaga.action_0c6e');await ready();
+      const midFollowup=document.querySelector('[data-assignment="followup:mid:after_strong"]');
+      assert(midFollowup && !midFollowup.disabled && midFollowup.closest('.skill-row').querySelector('.control-note').hidden,'Mid original Strong was blocked by its separate Hold Strong move');
+      change(midFollowup,'okatsu.charged_rush');await ready();
+      document.querySelector('#apply').click();await ready();
+      const midSaved=(await window.mwm.request('snapshot')).preset;
+      assert(midSaved.stance_holds.mid==='oda_nobunaga.action_0c6e' && midSaved.skill_bindings.some(row=>row.stance==='mid' && row.input?.gesture==='after_strong'),'Mid Hold Strong and After Strong did not save together');
       await tab('collection');
       const research=[...document.querySelectorAll('.library-tabs button')].find(button=>button.textContent.includes('Unreviewed actions'));
       const unreviewed=(await window.mwm.request('collection')).unreviewed;
@@ -472,4 +481,4 @@ app.whenReady().then(async () => {
     worker.kill();app.exit(1);
   }
 });
-setTimeout(()=>{fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({timeout:true,phase,lastMethods:methods.slice(-20),worker:errors}));worker.kill();app.exit(2);},60000).unref();
+setTimeout(()=>{fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({timeout:true,phase,lastMethods:methods.slice(-20),worker:errors}));worker.kill();app.exit(2);},80000).unref();

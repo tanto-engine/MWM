@@ -278,7 +278,7 @@ def validate_preset(value):
         replaced=any('input' not in binding and binding['source']==source and binding['stance'] in (stance,'any')
                      for binding in bindings)
         if gesture=='after_strong':
-            replaced = replaced or stance=='low' and result['low_heavy'] is not None or holds[stance] is not None
+            replaced = replaced or stance=='low' and result['low_heavy'] is not None
         if replaced:
             raise ValueError(f'{stance.title()} {source.replace("_"," ")} is replaced; this attack follow-up needs the original Nioh attack. Clear its replacement or use another stance.')
     if custom_count>CUSTOM_BINDING_LIMIT:

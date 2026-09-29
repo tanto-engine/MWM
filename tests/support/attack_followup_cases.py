@@ -132,6 +132,20 @@ class AttackFollowupCases(unittest.TestCase):
             with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'replaced'):
                 validate_preset(value)
 
+    def test_held_strong_preserves_original_tap_followup(self):
+        value = copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings'] = [row for row in value['skill_bindings']
+                                   if (row['source'], row['stance']) != ('heavy_attack', 'mid')]
+        value['stance_holds']['mid'] = 'oda_nobunaga.action_0c6e'
+        value['skill_bindings'].append(dict(source='tiger_sprint', stance='mid',
+            move='okatsu.leaping_slash', input=dict(modifier_mask=0x100,
+            trigger_mask=0x4000, gesture='after_strong')))
+        self.assertEqual(validate_preset(value), value)
+        calibration = dict(device=GAME_DEVICE, lb_mask=0x100)
+        _, binding = game_binding(calibration, binding_for_preset(calibration, value,
+            [dict(id='oda_nobunaga.action_0c6e'), dict(id='okatsu.leaping_slash')]))
+        self.assertEqual(binding['routes'][-1]['gesture'], 'after_strong')
+
 
 if __name__ == '__main__':
     unittest.main()

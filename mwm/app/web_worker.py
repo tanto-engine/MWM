@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import time
+import traceback
 from uuid import uuid4
 
 import trainer
@@ -596,11 +597,15 @@ def main():
                 request = json.loads(line)
                 result = desktop.dispatch(request['method'], request.get('params', {}))
                 reply = dict(id=request['id'], result=result)
-            except (ValueError, KeyError, TypeError, OSError, RuntimeError) as error:
+                encoded = json.dumps(reply, allow_nan=False)
+            except Exception as error:
+                if request.get('method') in ('capture_start', 'capture_poll'):
+                    traceback.print_exc(file=sys.stderr)
                 validation = isinstance(error, BindingError) or (isinstance(error, ValueError) and not isinstance(error, json.JSONDecodeError)
                     and request.get('method') in ('preview', 'validate', 'add_override', 'binding_import', 'import', 'controller', 'preset_save', 'preset_load'))
-                reply = dict(id=request.get('id'), error=dict(kind='validation' if validation else 'operation', message=str(error)))
-            print(json.dumps(reply, allow_nan=False), flush=True)
+                encoded = json.dumps(dict(id=request.get('id'), error=dict(kind='validation' if validation else 'operation',
+                    message=str(error) or type(error).__name__)), allow_nan=False)
+            print(encoded, flush=True)
     finally:
         desktop.cancel_capture()
 
