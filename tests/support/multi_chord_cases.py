@@ -32,6 +32,28 @@ def preset():
 
 
 class MultiChordCases(unittest.TestCase):
+    def test_same_pair_routes_by_stance_and_change_drops_pending_tap(self):
+        value=preset()
+        value['skill_bindings'][1]['stance']='mid'
+        value['skill_bindings'][1]['input'].update(trigger_mask=4,gesture='tap')
+        value=validate_preset(value)
+        imports=[dict(id=value['tap_move']),dict(id='okatsu.charged_rush'),dict(id='okatsu.leaping_slash')]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,imports))
+        gate=RoutedGesture(calibration,binding,1000)
+        gate.set_stance(2)
+        gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        def send(mask,now):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
+                              edge_basis='previous_observation'),now)
+        send(0,101);send(0x100|0x2000,200);send(0x100,240)
+        self.assertEqual((gate.fields(241)['variant'],gate.chord_sequence),(1,1))
+        gate.set_stance(1)
+        self.assertFalse(gate.fields(242)['armed'])
+        send(0x100|0x2000,250)
+        self.assertFalse(gate.fields(251)['armed'])
+        send(0x100,260);send(0x100|0x2000,300);send(0x100,340)
+        self.assertEqual((gate.fields(341)['variant'],gate.chord_sequence),(2,2))
+
     def test_two_chords_publish_distinct_moves_and_global_sequence(self):
         value=preset()
         value['hold_move']='okatsu.leaping_slash'
