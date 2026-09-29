@@ -2,10 +2,9 @@
 // Engine's release gate must stage and pin the worker before portable packaging.
 // Keep generated Chromium code outside tracked source so reviews show authored changes.
 import { build } from 'esbuild';
-import { mkdir, copyFile, readFile, writeFile, readdir } from 'node:fs/promises';
+import { mkdir, copyFile, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 await mkdir('desktop-dist', { recursive: true });
-await mkdir('desktop-dist/assets', { recursive: true });
-await copyFile('desktop/assets/background.png', 'desktop-dist/assets/background.png');
+await rm('desktop-dist/assets/background.png', { force: true });
 for (const file of ['main.cjs', 'preload.cjs', 'portable_worker.cjs', 'smoke.cjs', 'index.html', 'style.css']) await copyFile('desktop/' + file, 'desktop-dist/' + file);
 await build({ entryPoints: ['desktop/renderer.ts'], bundle: true, outfile: 'desktop-dist/renderer.js', target: 'chrome140' });
 // Bundle the complete readable collection; raw evidence ZIPs stay in the private repository.

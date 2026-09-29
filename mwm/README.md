@@ -6,7 +6,7 @@ A portable Nioh moveset editor, starting with single katana. Choose the moves as
 
 ## Start playing
 
-Download **MWM.exe** from [Releases](https://github.com/neuriv/tanto-engine/releases). The EXE contains its own interface, Engine worker, move definitions and artwork; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
+Download **MWM.exe** from [Releases](https://github.com/neuriv/tanto-engine/releases). The EXE contains its own interface, Engine worker and move definitions; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
 
 Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. Disable the mod before saving edits; invalid drafts stay in the editor and never change the running moveset. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. After an Engine update, restart Nioh before enabling the new EXE. Stop retains native code until the game exits; mixing builds is blocked.
 

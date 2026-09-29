@@ -3,7 +3,7 @@ const path = require('node:path');
 
 async function runSmoke(window, call, report) {
   // Exercise the actual packaged renderer and worker without enabling any game feature.
-  // A copied EXE must supply its own Python, preset data, artwork and research collection.
+  // A copied EXE must supply its own Python, preset data and research collection.
   // Saved settings and the report stay beside the explicitly supplied smoke output path.
   const screen = await window.webContents.executeJavaScript(`(async () => {
     const wait = () => new Promise(resolve => setTimeout(resolve, 50));
@@ -12,10 +12,9 @@ async function runSmoke(window, call, report) {
       await wait();
     }
     if (document.querySelector('#validation').dataset.state!=='valid') throw new Error(document.querySelector('#notice').textContent);
-    const artwork=new Image(); artwork.src=new URL('assets/background.png',location.href).href; await artwork.decode();
     const collection=await window.mwm.request('collection');
     if (!collection.moves.length) throw new Error('Packaged move collection missing');
-    return {artwork:[artwork.naturalWidth,artwork.naturalHeight],datasetMoves:collection.moves.length};
+    return {datasetMoves:collection.moves.length};
   })()`);
   // Capture the actual first-open app before test edits; the release keeps this image with its receipt.
   await window.webContents.executeJavaScript('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');

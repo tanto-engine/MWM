@@ -90,7 +90,6 @@ app.whenReady().then(async () => {
   try {
     const ui = path.join(folder,'ui'); fs.mkdirSync(ui);
     for (const name of ['index.html','style.css']) fs.copyFileSync(path.join(root,'desktop',name),path.join(ui,name));
-    fs.cpSync(path.join(root,'desktop/assets'),path.join(ui,'assets'),{recursive:true});
     fs.writeFileSync(path.join(ui,'renderer.js'),require('esbuild').transformSync(fs.readFileSync(path.join(root,'desktop/renderer.ts'),'utf8'),{loader:'ts',format:'iife'}).code);
     await window.loadFile(path.join(ui,'index.html'));
     const result = await window.webContents.executeJavaScript(`(async () => {

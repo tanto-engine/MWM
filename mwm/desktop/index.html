@@ -11,13 +11,13 @@
 <body>
   <div class="app">
     <header>
-      <div class="identity"><span class="wordmark">MWM</span><div><h1>Single katana</h1><p id="profile-name">Reading moveset…</p></div></div>
+      <div class="identity"><span class="wordmark">MWM</span><div><h1>Sword workshop</h1><p id="profile-name">Reading moveset…</p></div></div>
       <div class="runtime"><div class="runtime-copy"><span id="runtime">Connecting…</span><p id="runtime-detail" role="status"></p></div><button id="enable" data-action="enable">Enable mod</button><button id="disable" data-action="disable" hidden>Disable mod</button></div>
     </header>
     <nav aria-label="Moveset editor">
-      <button data-tab="overview" class="selected">Moves</button><button data-tab="speed">Tuning</button><button data-tab="controls">Controller</button>
+      <button data-tab="overview" class="selected">Sword</button><button data-tab="native">Input routes</button><button data-tab="speed">Tuning</button><button data-tab="controls">Controller</button><button data-tab="collection">Move library</button>
       <details id="tools"><summary>More <span aria-hidden="true">⌄</span></summary><div class="tools-menu">
-        <button data-tab="native">Other inputs &amp; options</button><button data-tab="frost">Stance-switch moves</button><button data-tab="collection">Recorded moves</button><button data-tab="guide">Help</button>
+        <button data-tab="frost">Stance-switch moves</button><button data-tab="guide">How to use</button>
         <hr><button id="trial" data-action="trial">Load Sword Rebuild 1</button><button id="starter" data-action="starter">Load Rebuild subset</button><button id="baseline" data-action="baseline">Load original moveset</button>
         <hr><button id="load" data-action="load">Import moveset…</button><button id="save" data-action="save">Export moveset…</button><button id="reload" data-action="reload">Discard edits</button>
       </div></details>
@@ -26,11 +26,11 @@
       <main id="content" aria-busy="true"></main>
       <aside class="inspector" aria-label="Context guide">
         <div class="inspector-guide">
-          <p class="eyebrow">Field notes <span aria-hidden="true">✦</span></p>
+          <p class="eyebrow">Input guide <span aria-hidden="true">✦</span></p>
           <div class="guide-copy">
-            <h2 id="help-title">Move assignments</h2>
-            <p id="help-body">Choose an input to see what it changes. Every selection stays in your draft until you save.</p>
-            <p id="help-tip">Tip · Leave a move set to No replacement to keep Nioh’s original action.</p>
+            <h2 id="help-title">Sword skill map</h2>
+            <p id="help-body">Focus or hover an input to see when it fires and what the selected move does.</p>
+            <p id="help-tip">Leave a route on Original to keep Nioh’s action.</p>
           </div>
         </div>
         <div class="inspector-feedback">
@@ -46,6 +46,11 @@
     <h2 id="error-title">Incompatible bind</h2>
     <p id="error-reason"></p><p id="error-guidance"></p>
     <form method="dialog"><button autofocus>Return to editor</button></form>
+  </dialog>
+  <dialog id="move-picker" aria-labelledby="picker-title">
+    <div class="picker-heading"><div><p class="eyebrow">Reviewed moves</p><h2 id="picker-title">Choose replacement</h2></div><button id="picker-close" aria-label="Close move picker">✕</button></div>
+    <input id="picker-search" type="search" placeholder="Search move, input, or behavior" aria-label="Search playable moves">
+    <div id="picker-results" class="picker-results"></div>
   </dialog>
 </body>
 </html>
