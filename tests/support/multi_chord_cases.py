@@ -32,6 +32,20 @@ def preset():
 
 
 class MultiChordCases(unittest.TestCase):
+    def test_two_button_custom_route_accepts_non_lb_modifier(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=4,trigger_mask=1,gesture='tap'))]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,
+            [dict(id=value['tap_move']),dict(id='okatsu.charged_rush')]))
+        self.assertEqual((binding['routes'][-1]['modifier_mask'],binding['routes'][-1]['trigger_mask']),(0x2000,0x4000))
+        gate=RoutedGesture(calibration,binding,1000)
+        gate.set_stance(2);gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        for buttons,now in ((0,101),(0x6000,200),(0x2000,220)):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=buttons,
+                              edge_basis='previous_observation'),now)
+        self.assertEqual((gate.fields(221)['armed'],gate.fields(221)['variant']),(True,1))
+
     def test_charged_rush_shared_by_mid_frost_and_high_custom_input(self):
         value=copy.deepcopy(DEFAULT_PRESET)
         value['frost_moon']['mid']='okatsu.charged_rush'
@@ -350,8 +364,8 @@ class MultiChordCases(unittest.TestCase):
         self.assertEqual(validate_preset(value),value)
         self.assertEqual(move_capabilities()['custom_binding_limit'],24)
         unsupported=copy.deepcopy(value)
-        unsupported['skill_bindings'][0]['input'].update(modifier_mask=1,trigger_mask=4)
-        with self.assertRaisesRegex(ValueError,'require L1'):
+        unsupported['skill_bindings'][0]['input'].update(modifier_mask=2,trigger_mask=4)
+        with self.assertRaisesRegex(ValueError,'two distinct'):
             game_binding(DS4,binding_for_preset(DS4,unsupported))
 
     def test_portable_custom_masks_in_moveset_and_skill_group(self):

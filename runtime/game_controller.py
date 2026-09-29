@@ -108,8 +108,8 @@ def game_binding(calibration, binding):
                 expected=0x4000 if route['gesture']=='after_strong' else 0x8000
                 if route['modifier_mask']!=0x100 or route['trigger_mask']!=expected:
                     raise ValueError('Attack follow-up requires L1 / LB with Square / X after Strong or Triangle / Y after Quick')
-            elif route['modifier_mask']!=0x100 or route['trigger_mask'] not in supported[1:]:
-                raise ValueError('Custom inputs require L1 / LB with Circle / B, Triangle / Y, L2 / LT or Square / X')
+            elif route['modifier_mask'] not in supported or route['trigger_mask'] not in supported or route['modifier_mask']==route['trigger_mask']:
+                raise ValueError('Custom inputs require two distinct L1 / LB, Circle / B, Triangle / Y, L2 / LT or Square / X buttons')
             routes.append(route)
         compiled['routes']=routes
     return dict(calibration, device=GAME_DEVICE, lb_mask=lb), compiled

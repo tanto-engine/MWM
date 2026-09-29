@@ -95,7 +95,9 @@ const fieldHelp: Record<string, [string, string]> = {
   'Game controller slot': ['Choose which game controller is used when several are connected.', 'Auto works when exactly one eligible controller is active.'],
   'Game executable': ['Choose nioh.exe for launching the game from this app.', 'Changing the path does not launch the game.'],
   'Show unused moves': ['Include speed controls for moves outside this moveset.', 'Saved overrides on unused moves remain available.'],
-  'Hold modifier': ['Hold this controller button through both steps of a custom operator.', 'The first and follow-up buttons must differ from it.'],
+  'Hold modifier': ['Hold this controller button while pressing the trigger or first button.', 'A follow-up, when chosen, must use a different button.'],
+  'Input pattern': ['Choose a two-button tap or hold, or add a separate follow-up press.', 'A follow-up needs the first press to be observed before it.'],
+  'Trigger / first press': ['Press this button while holding the modifier.', 'With a follow-up pattern, keep it held or release it before pressing the follow-up.'],
   'First press': ['Press this button while holding the modifier. Keep it held or release it before the follow-up.', 'The Engine must observe this press before the follow-up; simultaneous presses do not activate the route.'],
   'Then press': ['Press this follow-up while still holding the modifier.', 'Press within 0.6s while the first button is held, or within 0.6s after releasing it.'],
   Source: ['The game-selected sword input replaced by this original route.', 'A custom chord leaves this named source unchanged but takes priority if its buttons overlap another game action.'],
@@ -362,8 +364,8 @@ function buttonName(mask: number) {
   return Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
 }
 function routeMaskAllowed(binding: Binding, key: RouteButtonKey, mask: number) {
-  const sequence = binding.input?.gesture === 'sequence' ? state.capabilities.custom_sequence : null;
-  const names = sequence ? key === 'modifier_mask' ? sequence.modifiers : sequence.buttons
+  const custom = !binding.input?.gesture.startsWith('after_') ? state.capabilities.custom_sequence : null;
+  const names = custom ? key === 'modifier_mask' ? custom.modifiers : custom.buttons
     : key === 'modifier_mask' ? ['L1 / LB'] : routeTriggers;
   return names.some(name => state.buttons[name] === mask);
 }
@@ -561,28 +563,35 @@ function renderOverview() {
     row.append(edit);
   }
   const operator = element('details', undefined, 'custom-operator');
-  operator.append(element('summary', '+ Add custom operator'));
+  operator.append(element('summary', '+ Add custom input'));
   const sequence = state.capabilities.custom_sequence;
   if (sequence) {
-    operator.append(element('p', `Hold a modifier, press the first button, then press the follow-up within ${sequence.window_seconds}s. You may keep the first button held or release it. Presses must be separate.`, 'hint'));
+    operator.append(element('p', `Choose a two-button tap or hold. Add a follow-up only when you want a three-button sequence.`, 'hint'));
     const builder = element('div', undefined, 'operator-fields');
     const choices = (names: string[]): [string, string][] => names.filter(name => state.buttons[name] !== undefined).map(name => [name, name]);
+    const pattern = select([['tap', 'Tap · two buttons'], ['hold', 'Hold · two buttons'], ['sequence', 'Follow-up · three buttons']], 'tap', value => {
+      followupField.hidden = value !== 'sequence';
+    }, false);
     const modifier = select(choices(sequence.modifiers), sequence.modifiers[0], () => {}, false);
     const first = select(choices(sequence.buttons), sequence.buttons.find(name => name !== modifier.value) || '', () => {}, false);
     const followup = select(choices(sequence.buttons), sequence.buttons.find(name => name !== modifier.value && name !== first.value) || '', () => {}, false);
     const move = select(moveOptions('chord', 'Choose a move'), '', () => {}, false);
-    field('Hold modifier', modifier, builder); field('First press', first, builder);
-    field('Then press', followup, builder); field('Move', move, builder);
+    field('Input pattern', pattern, builder);
+    field('Hold modifier', modifier, builder); field('Trigger / first press', first, builder);
+    const followupField = field('Then press', followup, builder); followupField.hidden = true;
+    field('Move', move, builder);
     const add = element('button', 'Add operator', 'add-route');
     add.onclick = () => void action(async () => {
       if (!move.value) throw new Error('Choose a reviewed move for this operator.');
-      if (new Set([modifier.value, first.value, followup.value]).size !== 3) throw new Error('Use three different controller buttons.');
+      const three = pattern.value === 'sequence';
+      if (new Set(three ? [modifier.value, first.value, followup.value] : [modifier.value, first.value]).size !== (three ? 3 : 2))
+        throw new Error(`Use ${three ? 'three' : 'two'} different controller buttons.`);
       const candidate = structuredClone(state.preset);
       candidate.skill_bindings.push({ source: 'tiger_sprint', stance: activeStance, move: move.value,
         input: { modifier_mask: state.buttons[modifier.value], trigger_mask: state.buttons[first.value],
-          followup_mask: state.buttons[followup.value], gesture: 'sequence' } });
+          ...(three ? { followup_mask: state.buttons[followup.value] } : {}), gesture: three ? 'sequence' : pattern.value as 'tap' | 'hold' } });
       state.preset = (await window.mwm.request<Preview>('preview', { ...params(), preset: candidate })).preset;
-      changed(); logEdit(`${activeStance.toUpperCase()} operator added: ${modifier.value} + ${first.value} → ${followup.value}`); render();
+      changed(); logEdit(`${activeStance.toUpperCase()} input added: ${modifier.value} + ${first.value}${three ? ` → ${followup.value}` : ''}`); render();
     });
     operator.append(builder, add);
   } else operator.append(element('p', 'This Engine does not expose sequential controller inputs.', 'hint'));
@@ -1071,7 +1080,7 @@ function buttonPicker(parent: HTMLElement, label: string, mask: number, update: 
   if (!buttons.some(([value]) => value === String(mask))) buttons.unshift([String(mask), `${buttonName(mask)} · choose a supported button`]);
   const wrapper = field(label, select(buttons, String(mask), value => { update(Number(value)); void action(cancelCapture); }), parent);
   if (target.kind === 'route') annotate(wrapper, label,
-    target.binding.input?.gesture === 'sequence' ? 'Choose or record one distinct button in this three-step operator.' : target.key === 'modifier_mask' ? 'Per-route custom chords use L1/LB as Modifier.' : 'Per-route custom chords support B, Y, LT or X as Trigger.',
+    target.binding.input?.gesture === 'sequence' ? 'Choose or record one distinct button in this three-step operator.' : 'Choose a distinct supported button for this custom input.',
     'Press to bind records a supported button on the connected controller.');
   const bind = element('button', isCapturing(target) ? 'Listening…' : 'Press to bind');
   bind.setAttribute('aria-label', target.kind === 'route' ? `Record ${label.toLowerCase()} for route ${state.preset.skill_bindings.indexOf(target.binding) + 1}` : `Record global ${label.toLowerCase()}`);
@@ -1110,7 +1119,7 @@ function renderGuide() {
   const steps = element('div', undefined, 'guide-steps');
   for (const [number, title, body, destination] of [
     ['01', 'Assign moves', 'In Moves, choose Low, Mid or High. Each input has one replacement menu. Original keeps Nioh’s action. After Strong and After Quick add stance-specific follow-ups where their Guard combinations are free.', 'overview'],
-    ['02', 'Add a custom operator', 'In Moves, choose a modifier, first button, follow-up button, and reviewed move. Keep the modifier held; press the follow-up after the first button is observed, with or without releasing it. Simultaneous presses do not activate the route.', 'overview'],
+    ['02', 'Add a custom input', 'In Moves, choose a two-button tap or hold and a reviewed move. Add a follow-up only if you want a three-button sequence; press it after the first button is observed.', 'overview'],
     ['03', 'Tune and save', 'Speed changes playback for one move at a time; blank inherits from its sequence. Save a valid draft before enabling the mod.', 'speed'],
     ['04', 'Keep setups', 'Presets stores named movesets. Activate one in the app or double-tap the touchpad click on a supported controller to cycle live during gameplay.', 'presets']
   ]) {

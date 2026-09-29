@@ -199,7 +199,7 @@ class PresetRuntimeTests(unittest.TestCase):
                  input_event(0, 0, None, None, 'unknown')],
                 [input_event(.1, 0x2000, 0x2000, 0)],
                 [input_event(.2, 0, 0, 0x2000)],
-                [input_event(.3, 0x2000, 0x2000, 0)],
+                [input_event(.3, 0x2000, 0x2000, 0)], [],
             ]
             class Reader:
                 def __init__(self, duplicate):
@@ -213,12 +213,78 @@ class PresetRuntimeTests(unittest.TestCase):
                     return self.events.pop(0)
             with patch.object(worker.Desktop, 'location', return_value=runtime), \
                  patch.object(worker, 'process_matches', return_value=True):
+                clock={'t':0.}
                 for duplicate in ('button', 'trigger', None):
                     reader = Reader(duplicate)
-                    with patch.object(worker, 'ControllerReader', return_value=reader):
+                    with patch.object(worker, 'ControllerReader', return_value=reader), \
+                         patch.object(worker.time, 'perf_counter', side_effect=lambda:clock['t']):
                         desktop = worker.Desktop()
-                        self.assertEqual([desktop.preset_hotkey_poll() for _ in range(4)],
-                                         [False, False, False, duplicate is None])
+                        results=[]
+                        for t in (0,.1,.2,.3,.41):
+                            clock['t']=t;results.append(desktop.preset_hotkey_poll())
+                        self.assertEqual(results,[False, False, False, False, duplicate is None])
+
+    def test_hotkey_waits_for_late_xinput_mirror_before_switch(self):
+        with tempfile.TemporaryDirectory() as folder:
+            runtime=Path(folder)
+            worker.atomic_json(runtime/'controller-calibration.json',self.calibration)
+            worker.atomic_json(runtime/'play-status.json',dict(state='enabled'))
+            device=self.calibration['device']
+            def input_event(t,buttons,pressed,released):
+                return dict(kind='input',backend='winmm',slot=device['slot'],
+                            observed_monotonic=t,buttons=buttons,pressed_mask=pressed,
+                            released_mask=released,edge_basis='previous_observation')
+            batches=[[dict(kind='input_device',backend='winmm',slot=device['slot'],
+                           manufacturer=device['manufacturer'],product=device['product'],num_buttons=14)],
+                     [input_event(.1,0x2000,0x2000,0)],
+                     [input_event(.2,0,0,0x2000)],
+                     [input_event(.3,0x2000,0x2000,0)],
+                     [dict(kind='input',backend='xinput',slot=0,observed_monotonic=.35,
+                           buttons=0x20,pressed_mask=0x20,logical_buttons=0x20)],[]]
+            class Reader:
+                def poll(self): return batches.pop(0)
+            clock={'t':0.}
+            with patch.object(worker.Desktop,'location',return_value=runtime), \
+                 patch.object(worker,'process_matches',return_value=True), \
+                 patch.object(worker,'ControllerReader',return_value=Reader()), \
+                 patch.object(worker.time,'perf_counter',side_effect=lambda:clock['t']):
+                desktop=worker.Desktop()
+                results=[]
+                for t in (0,.1,.2,.3,.35,.5):
+                    clock['t']=t;results.append(desktop.preset_hotkey_poll())
+                self.assertEqual(results,[False]*6)
+
+    def test_hotkey_disconnect_cannot_join_two_touchpad_presses(self):
+        with tempfile.TemporaryDirectory() as folder:
+            runtime=Path(folder)
+            worker.atomic_json(runtime/'controller-calibration.json',self.calibration)
+            worker.atomic_json(runtime/'play-status.json',dict(state='enabled'))
+            device=self.calibration['device']
+            ident=dict(backend='winmm',slot=device['slot'])
+            def input_event(t,buttons,pressed,released):
+                return dict(kind='input',observed_monotonic=t,buttons=buttons,
+                            pressed_mask=pressed,released_mask=released,
+                            edge_basis='previous_observation',**ident)
+            batches=[[dict(kind='input_device',manufacturer=device['manufacturer'],
+                           product=device['product'],num_buttons=14,**ident)],
+                     [input_event(.1,0x2000,0x2000,0)],
+                     [input_event(.2,0,0,0x2000)],
+                     [dict(kind='input_unavailable',**ident)],
+                     [dict(kind='input_device',manufacturer=device['manufacturer'],
+                           product=device['product'],num_buttons=14,**ident)],
+                     [input_event(.3,0x2000,0x2000,0)],[]]
+            class Reader:
+                def poll(self): return batches.pop(0)
+            clock={'t':0.}
+            with patch.object(worker.Desktop,'location',return_value=runtime), \
+                 patch.object(worker,'process_matches',return_value=True), \
+                 patch.object(worker,'ControllerReader',return_value=Reader()), \
+                 patch.object(worker.time,'perf_counter',side_effect=lambda:clock['t']):
+                desktop=worker.Desktop()
+                results=[]
+                for t in (0,.1,.2,.25,.26,.3,.45):
+                    clock['t']=t;results.append(desktop.preset_hotkey_poll())
+                self.assertEqual(results,[False]*7)
 
 
 if __name__ == '__main__':

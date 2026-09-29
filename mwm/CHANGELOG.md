@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.3.0-alpha.15
+
+- The Moves tab now creates two-button tap or hold custom inputs directly; a three-button follow-up is optional. Per-route inputs accept any distinct pair among the five reviewed controller buttons. The desktop roundtrip saves both patterns.
+- Touchpad preset cycling waits briefly for a delayed mirrored XInput press before switching and discards a partial double-tap on controller disconnect. Offline tests reproduce both false-switch paths and verify the fix.
+
+The three-button runtime and cross-stance ordinary move fixes from alpha.14 remain included. Live DS4 preset cycling, Hideyori's first-hit movement snap, and additional native input source selection still need gameplay evidence. Recorded candidates without a William-safe action graph remain research-only.
+
 ## 0.3.0-alpha.14
 
 - Custom controller chords now reserve their configured button pair before Nioh selects a competing skill. A fresh publisher heartbeat is required, so a stopped editor cannot keep consuming native inputs. Live Low L1+Triangle taps played Charged Rush instead of Nioh's Guard+Strong skill; L1+Circle and L1+L2 also worked in source trials.

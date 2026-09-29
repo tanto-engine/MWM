@@ -24,6 +24,7 @@ class BindingError(ValueError):
 
 
 HOTKEY_MASK = 0x2000  # Direct WinMM DS4 button 14 (touchpad click); XInput has no touchpad bit.
+HOTKEY_MIRROR_DELAY = .1  # Leave two 50-ms UI polls for a delayed XInput mirror.
 
 
 class TouchpadDoubleTap:
@@ -93,6 +94,7 @@ class Desktop:
         self.hotkey_reader = None
         self.hotkey_device = None
         self.hotkey_gesture = TouchpadDoubleTap()
+        self.hotkey_pending = None
         self.capabilities = move_capabilities()
 
     def location(self):
@@ -303,12 +305,16 @@ class Desktop:
         runtime = self.location()
         if not process_matches(read_json(runtime/'play-process.json')):
             self.hotkey_gesture = TouchpadDoubleTap()
+            self.hotkey_pending = None
             return False
         if read_json(runtime/'play-status.json', {}).get('state') != 'enabled':
             self.hotkey_gesture = TouchpadDoubleTap()
+            self.hotkey_pending = None
             return False
         calibration = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
         if not self.hotkey_capability(calibration)['supported']:
+            self.hotkey_gesture = TouchpadDoubleTap()
+            self.hotkey_pending = None
             return False
         device = calibration['device']
         if self.hotkey_device != device:
@@ -317,6 +323,7 @@ class Desktop:
             self.hotkey_gesture = TouchpadDoubleTap()
             self.hotkey_verified = False
             self.hotkey_xinput_press = float('-inf')
+            self.hotkey_pending = None
         events = self.hotkey_reader.poll()
         for event in events:
             if event['backend'] == 'xinput' and event['kind'] == 'input' and (event.get('pressed_mask') or event.get('logical_buttons', 0) & 0x0c00):
@@ -325,12 +332,24 @@ class Desktop:
             if (event['backend'], event['slot']) != ('winmm', device['slot']):
                 continue
             if event['kind'] == 'input_device':
+                self.hotkey_gesture = TouchpadDoubleTap()
+                self.hotkey_pending = None
                 self.hotkey_verified = ((event.get('manufacturer'), event.get('product'))
                                         == (device['manufacturer'], device['product']) and event.get('num_buttons', 0) >= 14)
             if event['kind'] == 'input_unavailable':
                 self.hotkey_verified = False
+                self.hotkey_gesture = TouchpadDoubleTap()
+                self.hotkey_pending = None
             if self.hotkey_verified and self.hotkey_gesture.feed(event):
-                return event['observed_monotonic'] - self.hotkey_xinput_press > .6
+                if event['observed_monotonic'] - self.hotkey_xinput_press > .6:
+                    self.hotkey_pending = (time.perf_counter(), event['observed_monotonic'])
+        if self.hotkey_pending is not None:
+            started, pressed = self.hotkey_pending
+            if self.hotkey_xinput_press >= pressed - .6:
+                self.hotkey_pending = None
+            elif time.perf_counter() - started >= HOTKEY_MIRROR_DELAY:
+                self.hotkey_pending = None
+                return True
         return False
 
     def preset_switch(self, params):
