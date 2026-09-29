@@ -152,3 +152,14 @@ class BindingGroupTests(unittest.TestCase):
         bad = deepcopy(self.calibration); bad['controller_slot'] = True
         with self.assertRaisesRegex(ValueError, 'Controller slot'):
             worker.Desktop().validate(dict(self.params, calibration=bad))
+
+    def test_add_override_can_target_skill_map_node(self):
+        original = deepcopy(worker.DEFAULT_PRESET)
+        original['skill_bindings'] = []
+        result = worker.Desktop().add_override(dict(self.params, preset=original,
+            source='light_attack', stance='high'))
+        self.assertEqual((result['skill_bindings'][-1]['source'], result['skill_bindings'][-1]['stance']),
+                         ('light_attack', 'high'))
+        with self.assertRaisesRegex(ValueError, 'No compatible override'):
+            worker.Desktop().add_override(dict(self.params, preset=original,
+                source='light_attack', stance='high', move='missing.move'))

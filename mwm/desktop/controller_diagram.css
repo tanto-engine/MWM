@@ -7,7 +7,7 @@
 .controller-diagram__switch button[aria-pressed="true"] { background: #394c5a; color: #fff; }
 .controller-diagram__switch button:focus-visible,.cd-callout:focus-visible { outline: 2px solid #e3c787; outline-offset: 2px; }
 .controller-diagram__stage { overflow-x: auto; margin: 8px -4px 0; }
-.controller-diagram__stage svg { display: block; width: 100%; min-width: 520px; height: auto; font-family: inherit; }
+.controller-diagram__stage svg { display: block; width: 100%; min-width: 520px; max-width: 560px; height: auto; margin: auto; font-family: inherit; }
 .controller-diagram__note { margin: 4px 0 0; color: #b7c7ca; font-size: 11px; line-height: 1.4; }
 .cd-shadow { fill: #0c171f; transform: translateY(7px); opacity: .7; }
 .cd-trigger { fill: #2b4050; stroke: #7893a1; stroke-width: 2; }

@@ -5,7 +5,7 @@ import { build } from 'esbuild';
 import { mkdir, copyFile, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 await mkdir('desktop-dist', { recursive: true });
 await rm('desktop-dist/assets/background.png', { force: true });
-for (const file of ['main.cjs', 'preload.cjs', 'portable_worker.cjs', 'smoke.cjs', 'index.html', 'style.css']) await copyFile('desktop/' + file, 'desktop-dist/' + file);
+for (const file of ['main.cjs', 'preload.cjs', 'portable_worker.cjs', 'smoke.cjs', 'index.html', 'style.css', 'controller_diagram.css']) await copyFile('desktop/' + file, 'desktop-dist/' + file);
 await build({ entryPoints: ['desktop/renderer.ts'], bundle: true, outfile: 'desktop-dist/renderer.js', target: 'chrome140' });
 // Bundle the complete readable collection; raw evidence ZIPs stay in the private repository.
 // Paths are derived from the curated taxonomy, never from renderer-supplied filenames.

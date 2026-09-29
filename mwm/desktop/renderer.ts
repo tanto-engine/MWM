@@ -1,3 +1,4 @@
+import { createControllerDiagram } from './controller_diagram';
 // The form stores only pending choices; Engine validates the complete preset on Apply.
 // Stable move IDs travel over IPC while readable names remain presentation data.
 export {};
@@ -35,6 +36,7 @@ type CaptureTarget = { kind: 'global'; key: ButtonKey } | { kind: 'route'; bindi
 let tab = 'overview', dirty = false, busy = false, capture: CaptureTarget | null = null;
 let controllerChoice = 'saved';
 let bindingGroup = 'chord';
+let treeSelection = 'low:low-heavy';
 let timer: ReturnType<typeof setTimeout> | undefined;
 let captureGeneration = 0, draftGeneration = 0;
 let actionGeneration = 0;
@@ -58,7 +60,7 @@ soundToggle.checked = localStorage.getItem('mwm.sound') !== 'off';
 hapticToggle.checked = localStorage.getItem('mwm.haptic') === 'on';
 
 const pageHelp: Record<string, [string, string, string]> = {
-  overview: ['Sword skill map', 'Original routes replace a Nioh input; custom routes use their own controller buttons.', 'Open Input routes to choose the activation for each replacement.'],
+  overview: ['Sword skill map', 'Pick a stance and a named input to inspect its move. Original routes replace a Nioh action; custom routes use their own controller buttons.', 'Open Input routes to choose the activation for each replacement.'],
   speed: ['Move tuning', 'Set the playback speed of a move or one phase of a string.', 'Blank inherits its string speed. Enter 1 for native speed.'],
   controls: ['Controller', 'Set the device mapping and the buttons for the global custom chord.', 'Input routes can use additional chords with separate buttons.'],
   native: ['Input routes', 'Choose Original Nioh input or Custom controller chord for each reviewed move.', 'Custom routes add a new input and leave original game actions alone.'],
@@ -357,7 +359,7 @@ function moveHelp(id: string | null, context: string): [string, string] {
     `${move.input ? `Expected input: ${move.input}. ` : ''}The replacement is pending until saved.`]
     : [context, 'Original keeps Nioh’s game-selected action.'];
 }
-function openMovePicker(role: MoveRole, target: HTMLSelectElement, title: string) {
+function openMovePicker(role: MoveRole, target: HTMLSelectElement, title: string, returnFocus?: () => HTMLElement | null, choose?: (id: string) => void) {
   document.querySelector('#picker-title')!.textContent = title;
   pickerSearch.value = ''; pickerResults.replaceChildren();
   const choices = moveOptions(role, 'Original').filter(([id]) => id || [...target.options].some(option => option.value === ''));
@@ -368,7 +370,11 @@ function openMovePicker(role: MoveRole, target: HTMLSelectElement, title: string
     if (move) button.append(element('span', move.input || 'Input follows the selected route', 'picker-input'),
       element('small', move.description || 'Reviewed action; additional source notes are available in Move library.'));
     else button.append(element('small', 'Keep Nioh’s original action on this input.'));
-    button.onclick = () => { picker.close(); target.value = id; target.dispatchEvent(new Event('change', { bubbles: true })); target.focus(); };
+    button.onclick = () => {
+      picker.close();
+      if (choose) { choose(id); return; }
+      target.value = id; target.dispatchEvent(new Event('change', { bubbles: true })); (returnFocus?.() || target).focus();
+    };
     if (target.value === id) button.classList.add('current');
     pickerResults.append(button);
     rows.push({ node: button, search: `${label} ${move?.input || ''} ${move?.description || ''}`.toLowerCase() });
@@ -407,6 +413,93 @@ function assignment(parent: HTMLElement, label: string, key: string, role: MoveR
   const updateHelp = () => { const [body, tip] = moveHelp(control.value, `Game input: ${expected}`); annotate(wrapper, label, body, tip); };
   updateHelp(); control.addEventListener('change', () => { updateHelp(); explainTarget(control); });
   browseMove(wrapper, control, role, label);
+}
+
+type TreeSlot = { key: string; assignment: string; stance: Stance; label: string; input: string; role: MoveRole; source?: string };
+function renderSkillTree() {
+  const slots: TreeSlot[] = [];
+  for (const stance of state.capabilities.stances) {
+    const add = (key: string, assignment: string, label: string, input: string, role: MoveRole, source?: string) =>
+      slots.push({ key: `${stance}:${key}`, assignment, stance, label, input, role, source });
+    if (stance === 'low') add('low-heavy', 'low-heavy', 'Heavy attack string', 'Low stance · Strong attack / Triangle / Y', 'heavy_string');
+    for (const source of state.capabilities.native_sources) {
+      if (source.stances && !source.stances.includes(stance)) continue;
+      const binding = state.preset.skill_bindings.find(row => !row.input && row.source === source.id && (row.stance === stance || row.stance === 'any'));
+      add(source.id, binding ? `native:${binding.stance}:${source.id}` : '', source.label, sourceInput(source.id), 'native', source.id);
+    }
+    add('hold', `hold:${stance}`, 'Held strong', `${stance} stance · hold Strong attack / Triangle / Y`, 'held');
+    add('frost', `frost:${stance}`, 'Stance-switch move', `Ki Pulse window · R1 / RB + ${stance} stance twice`, 'chord');
+  }
+  const map = element('section', undefined, 'skill-map');
+  map.append(element('p', 'Pick a stance, then an input. Each row shows its current move; selecting it explains when it fires.', 'skill-map-intro'));
+  const stances = element('div', undefined, 'skill-stances');
+  stances.append(element('span', 'SWORD', 'skill-root'));
+  const stanceButtons = new Map<Stance, HTMLButtonElement>();
+  let selectedStance = (treeSelection.split(':')[0] as Stance);
+  for (const stance of state.capabilities.stances) {
+    const button = element('button', `${stance[0].toUpperCase() + stance.slice(1)} stance`, 'skill-stance');
+    button.type = 'button'; button.onclick = () => { selectedStance = stance; refresh(); };
+    stanceButtons.set(stance, button); stances.append(button);
+  }
+  const branches = element('div', undefined, 'skill-branches');
+  const routes = element('div', undefined, 'skill-routes');
+  const detail = element('div', undefined, 'skill-detail');
+  branches.append(routes, detail); map.append(stances, branches);
+  const shortcuts = element('div', undefined, 'skill-shortcuts');
+  const custom = state.preset.skill_bindings.filter(row => row.input).length;
+  const editRoutes = element('button', `Edit input routes · ${custom} custom`, 'inline-button'); editRoutes.onclick = () => navigate('native');
+  const guide = element('button', 'How to use →', 'inline-button'); guide.onclick = () => navigate('guide');
+  shortcuts.append(editRoutes, guide); map.append(shortcuts);
+  const getSelect = (slot: TreeSlot) => slot.assignment ? content.querySelector<HTMLSelectElement>(`[data-assignment="${slot.assignment}"]`) : null;
+  function refresh() {
+    const group = slots.filter(slot => slot.stance === selectedStance);
+    if (!group.some(slot => slot.key === treeSelection)) treeSelection = group[0].key;
+    for (const [stance, button] of stanceButtons) {
+      button.classList.toggle('chosen', stance === selectedStance);
+      button.setAttribute('aria-pressed', String(stance === selectedStance));
+    }
+    routes.replaceChildren();
+    for (const slot of group) {
+      const move = playable(getSelect(slot)?.value || null);
+      const button = element('button', undefined, 'skill-node'); button.type = 'button';
+      button.dataset.treeKey = slot.key;
+      button.classList.toggle('active', Boolean(move));
+      button.classList.toggle('chosen', slot.key === treeSelection);
+      button.setAttribute('aria-pressed', String(slot.key === treeSelection));
+      const empty = slot.key.endsWith(':frost') ? 'Disabled' : 'Original action';
+      button.append(element('strong', slot.label), element('small', move?.name || empty));
+      button.onclick = () => { treeSelection = slot.key; refresh(); routes.querySelector<HTMLElement>(`[data-tree-key="${slot.key}"]`)?.focus(); };
+      annotate(button, `${slot.stance.toUpperCase()} · ${slot.label}`, `Input: ${slot.input}. ${move?.description || (empty === 'Disabled' ? 'No stance-switch move is assigned.' : 'Nioh keeps its original action.')}`, 'Select this input to change its move.');
+      routes.append(button);
+    }
+    const slot = slots.find(item => item.key === treeSelection)!;
+    const control = getSelect(slot), move = playable(control?.value || null);
+    const disabled = slot.key.endsWith(':frost');
+    detail.replaceChildren();
+    const copy = element('div');
+    copy.append(element('span', `${slot.stance.toUpperCase()} STANCE · ${slot.input}`, 'skill-detail-input'),
+      element('h3', slot.label), element('strong', move?.name || (disabled ? 'Disabled' : 'Original Nioh action')),
+      element('p', move?.description || (disabled ? 'No stance-switch move is assigned.' : 'No replacement is assigned. The original game action still runs.')));
+    const buttons = element('div', undefined, 'skill-detail-actions');
+    const change = element('button', control ? 'Choose move' : 'Add replacement', 'primary');
+    change.onclick = () => {
+      if (control) openMovePicker(slot.role, control, `${slot.stance} · ${slot.label}`, () => content.querySelector<HTMLElement>(`[data-tree-key="${slot.key}"]`));
+      else openMovePicker('native', select(moveOptions('native').slice(1), null, () => {}, false), `${slot.stance} · ${slot.label}`, undefined, move => {
+        void action(async () => {
+          state.preset = await window.mwm.request<Preset>('add_override', { ...params(), source: slot.source, stance: slot.stance, move });
+          changed(); render(); content.querySelector<HTMLElement>(`[data-tree-key="${slot.key}"]`)?.focus();
+        });
+      });
+    };
+    const edit = element('button', slot.source ? control ? 'Edit input route →' : 'View input options →' : 'See route settings →');
+    edit.onclick = () => navigate(disabled ? 'frost' : 'native', disabled ? `#frost-${slot.stance}` : slot.key.endsWith(':low-heavy') ? '#special-low-heavy'
+      : slot.key.endsWith(':hold') ? `#special-held-${slot.stance}` : slot.assignment ? `[data-route-key="${slot.assignment}"]` : undefined);
+    buttons.append(change, edit); detail.append(copy, buttons);
+    explain(`${slot.stance.toUpperCase()} · ${slot.label}`, `Input: ${slot.input}. ${move?.description || (disabled ? 'No stance-switch move is assigned.' : 'The original action stays until a replacement is assigned.')}`, 'Choose a reviewed move, then Save changes before enabling the mod.');
+  }
+  for (const control of content.querySelectorAll<HTMLSelectElement>('[data-assignment]')) control.addEventListener('change', refresh);
+  refresh();
+  return map;
 }
 
 function renderOverview() {
@@ -462,6 +555,10 @@ function renderOverview() {
   }
   const more = element('button', 'Edit other inputs →', 'inline-button'); more.onclick = () => navigate('native'); fields.append(more);
   content.append(extra);
+  const list = element('details', undefined, 'skill-list');
+  list.append(element('summary', 'All bindings · list view'), cards, shared, extra);
+  content.append(list);
+  content.insertBefore(renderSkillTree(), list);
 }
 
 function renderMoves() {
@@ -520,6 +617,7 @@ function renderOverrides() {
     p.low_heavy = value || null;
   });
   const heavyField = field('Low heavy string', heavy, grid);
+  heavyField.id = 'special-low-heavy';
   browseMove(heavyField, heavy, 'heavy_string', 'Low heavy string');
   for (const stance of state.capabilities.stances) {
     const held = select(moveOptions('graph'), p.stance_holds[stance], value => {
@@ -529,6 +627,7 @@ function renderOverrides() {
       p.stance_holds[stance] = value || null;
     });
     const heldField = field(stance.toUpperCase() + ' · hold Triangle / Y', held, grid);
+    heldField.id = `special-held-${stance}`;
     annotate(heldField, `${stance.toUpperCase()} held strong`, `Hold Triangle / Y in ${stance} stance to start the selected reviewed sequence.`, 'The Izuna Drop continuation requires a successful launcher and contact.');
     browseMove(heldField, held, 'graph', `${stance} held strong`);
   }
@@ -578,6 +677,7 @@ function renderNative() {
   };
   for (const [index, binding] of state.preset.skill_bindings.entries()) {
     const row = element('div', undefined, 'binding');
+    row.dataset.routeKey = binding.input ? `custom:${index}` : `native:${binding.stance}:${binding.source}`;
     row.classList.toggle('custom-route', Boolean(binding.input));
     row.dataset.search = `${routeInput(binding)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
     annotate(row, 'Input route', binding.input ? 'This custom chord plays a reviewed move without replacing a Nioh input.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
@@ -664,6 +764,7 @@ function renderFrost() {
     state.preset.frost_moon[stance] = value || null;
     });
     const route = field(stance.toUpperCase(), move, grid);
+    route.id = `frost-${stance}`;
     const updateHelp = () => { const [body, tip] = moveHelp(move.value, `During a Ki Pulse window, hold R1 / RB and tap ${stance} stance twice`); annotate(route, `${stance.toUpperCase()} Frost Moon`, body, tip); };
     updateHelp(); move.addEventListener('change', () => { updateHelp(); explainTarget(move); });
     browseMove(route, move, 'chord', `${stance} Frost Moon`);
@@ -820,34 +921,37 @@ function renderChordButtons(grid: HTMLElement) {
 }
 
 function renderControllerMap() {
-  const diagram = element('section', undefined, 'controller-map');
-  const heading = element('div', undefined, 'map-heading');
-  heading.append(element('h2', 'Game input reference'), element('span', 'Default controller actions'));
-  diagram.append(heading);
-  const layout = element('div', undefined, 'pad-layout');
-  const left = element('div', undefined, 'pad-legend');
-  const center = element('div', undefined, 'pad-face');
-  const right = element('div', undefined, 'pad-legend');
-  for (const [key, label] of [['LT / L2', 'Aim'], ['LB / L1', 'Guard'], ['D-pad', 'Item shortcuts'], ['Left stick', 'Move']]) {
-    const item = element('div', undefined, 'pad-key'); item.append(element('kbd', key), element('span', label)); left.append(item);
+  content.append(createControllerDiagram(state.calibration.device.backend === 'xinput' ? 'xbox' : 'playstation'));
+}
+
+function renderGuide() {
+  content.append(element('h2', 'Build a sword moveset', 'section-title'),
+    element('p', 'Your choices remain a draft until you save. Follow these four steps; you can return to any tab without losing edits.', 'hint'));
+  const steps = element('div', undefined, 'guide-steps');
+  for (const [number, title, body, destination] of [
+    ['01', 'Choose a sword input', 'On Sword, select Low, Mid or High, then an input. Each row shows the move it currently plays. Choose a reviewed replacement or keep Original.', 'overview'],
+    ['02', 'Choose how it starts', 'In Input routes, Original Nioh input replaces an existing action. Custom controller chord uses its own Modifier, Trigger and Tap or Hold gesture, leaving that game action alone.', 'native'],
+    ['03', 'Check the controller', 'The diagram shows default button meanings. Choose your actual controller mapping, then use Press to bind to record buttons from the controller. Tuning changes playback speed only.', 'controls'],
+    ['04', 'Save, then enable', 'Check the status beside Save changes. If the mod is running, disable it before saving. Enable the mod after a valid save; an unsaved draft never changes the running game.', 'overview']
+  ]) {
+    const card = element('section', undefined, 'guide-step');
+    card.append(element('span', number, 'guide-number'), element('h3', title), element('p', body));
+    const button = element('button', `Open ${destination === 'overview' ? 'Sword' : destination === 'native' ? 'Input routes' : 'Controller'} →`, 'inline-button');
+    button.onclick = () => navigate(destination); card.append(button); steps.append(card);
   }
-  center.append(element('span', 'MWM', 'pad-mark'));
-  for (const [key, label] of [['Y / △', 'Strong'], ['X / □', 'Quick'], ['B / ○', 'Interact'], ['A / ✕', 'Dodge']]) {
-    const item = element('div', undefined, 'face-key'); item.append(element('kbd', key), element('span', label)); center.append(item);
-  }
-  for (const [key, label] of [['RT / R2', 'Shoot while aiming'], ['RB / R1', 'Stance / Ki Pulse'], ['Right stick', 'Camera'], ['Guard + Quick', 'Native skill input']]) {
-    const item = element('div', undefined, 'pad-key'); item.append(element('kbd', key), element('span', label)); right.append(item);
-  }
-  layout.append(left, center, right); diagram.append(layout);
-  diagram.append(element('p', 'MWM adds custom chords and selected sword routes. Nioh keeps its other controller inputs.', 'hint'));
-  content.append(diagram);
+  content.append(steps);
+  const glossary = element('details', undefined, 'guide-glossary');
+  glossary.append(element('summary', 'What counts as a playable move?'));
+  glossary.append(element('p', 'The move picker contains reviewed moves the Engine can route to William. Move library also shows recorded candidates; those are research evidence until adapted and checked.'),
+    element('p', 'A stance-switch move fires during a Ki Pulse window after R1/RB and two taps toward the destination stance. A held strong route uses a long Triangle/Y press. Their timing belongs to the Engine.'));
+  content.append(glossary);
 }
 
 function renderControls() {
   // Present calibrated button meanings and supported OS controller backends.
   // Remapping goes through Engine so changing hardware preserves logical button choices.
   // Physical controller acceptance is not inferred from successfully editing this form.
-  const grid = section('Device & game', 'Choose the controller layout used for every custom chord. Press to bind on this page or Input routes detects a supported controller while Nioh is open or closed.');
+  const grid = section('Controller mapping', 'Choose the controller Nioh uses. The diagram below shows its default buttons; custom inputs can be recorded while the game is open or closed.');
   const devices = select([['saved', 'Saved mapping'], ['ds4', 'DS4 mapping'], ['1', 'XInput controller 1'], ['2', 'XInput controller 2'], ['3', 'XInput controller 3'], ['4', 'XInput controller 4']], controllerChoice, value => {
     // Cancel the previous controller listener before translating button masks.
     // Failed remapping preserves the current pending preset.
@@ -866,6 +970,7 @@ function renderControls() {
     // Changing this cancels a listener created under the previous selection.
     state.calibration.controller_slot = value === '' ? null : Number(value); void action(cancelCapture);
   }), grid);
+  const game = element('details', undefined, 'game-path'); game.append(element('summary', 'Game launch · optional'));
   const path = element('button', state.nioh_exe || 'Choose nioh.exe (optional)'); path.onclick = () => {
     // Delegate executable selection to a native dialog in the main process.
     // Choosing a path changes the next explicit Enable request only.
@@ -876,7 +981,7 @@ function renderControls() {
       // No renderer-supplied path is trusted by the native dialog channel.
       const value = await window.mwm.request<string | null>('game_path'); if (value) { state.nioh_exe = value; changed(); render(); }
     });
-  }; field('Game executable', path, grid);
+  }; field('Game executable', path, game); return game;
 }
 
 function renderCollection() {
@@ -991,18 +1096,11 @@ function render() {
   for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.classList.toggle('selected', button.dataset.tab === tab);
   if (tab === 'overview') renderOverview();
   else if (tab === 'collection') renderCollection();
-  else if (tab === 'controls') { renderControllerMap(); renderMoves(); renderControls(); renderBindingModules(); }
+  else if (tab === 'controls') { const game = renderControls(); renderControllerMap(); content.append(game); renderMoves(); renderBindingModules(); }
   else if (tab === 'native') { renderNative(); renderOverrides(); renderBindingModules(); }
   else if (tab === 'frost') { renderFrost(); renderBindingModules(); }
   else if (tab === 'speed') renderSpeed();
-  else {
-    const guide = element('article', undefined, 'guide');
-    guide.append(element('h2', 'Edit, save, enable.'));
-    for (const text of ['1. Choose moves in Sword. Input routes lets each override use its original Nioh input or separate custom buttons.', '2. Set a stance, then set Modifier, Trigger and Tap or Hold for each custom route. Controller keeps the global chord and device mapping.', '3. Disable the mod before Save changes; enable it after saving. Review the status above.']) guide.append(element('p', text));
-    guide.append(element('h2', 'Sword Rebuild 1 defaults'));
-    for (const text of ['Low Triangle / Y and dodge + heavy use Jin’s cyclone string. Mid Triangle / Y and dodge + heavy use Jin’s five strikes. Low Square / X uses Hideyori’s four-hit string.', 'Low LB + LT tap uses bloodborne gun shot. High heavy → LB + Square / X uses Tachibana’s Omnislice.', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice. Low uses Flying Swallow, Mid uses Oda’s final two slashes, High uses the downward slash.', 'Choose Hold Triangle / Y separately in each stance. Launcher only and Launcher + Izuna Drop must use different stances; the drop requires contact.', 'Use Reuse a binding group under Controller or More → Other inputs & options to export or load one group. Other groups and speed settings stay unchanged.']) guide.append(element('p', text));
-    content.append(guide);
-  }
+  else renderGuide();
   schedulePreview();
 }
 
@@ -1031,11 +1129,16 @@ async function perform(name: string) {
   if (name === 'disable') { await window.mwm.request('disable'); showRuntime(await window.mwm.request<Snapshot>('snapshot')); message(''); }
 }
 
-function navigate(name: string) {
+function navigate(name: string, focus?: string) {
   // Navigation retains the pending model while cancelling any physical binding listener.
   // Closing More keeps its secondary commands out of the workspace.
   // A page change never saves or starts gameplay.
-  void action(async () => { await cancelCapture(); tab = name; document.querySelector<HTMLDetailsElement>('#tools')!.open = false; render(); content.scrollTop = 0; });
+  void action(async () => {
+    await cancelCapture(); tab = name; document.querySelector<HTMLDetailsElement>('#tools')!.open = false; render(); content.scrollTop = 0;
+  }).then(() => {
+    const target = focus ? content.querySelector<HTMLElement>(focus) : null;
+    target?.scrollIntoView({ block: 'center' }); target?.querySelector<HTMLElement>('select')?.focus();
+  });
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('nav [data-tab]')) button.onclick = () => navigate(button.dataset.tab!);

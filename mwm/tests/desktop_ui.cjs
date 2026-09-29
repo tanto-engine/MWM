@@ -14,6 +14,7 @@ let delaySnapshot = false, waitSnapshot, snapshotStarted, releaseSnapshot;
 const methods = [];
 let phase = 'startup';
 let simulatedRunning = false, failExport = false, failController = false, savedGroup;
+let uiWindow;
 const worker = spawn(python, ['-B', path.join(__dirname, 'desktop_worker_fixture.py'), folder], { windowsHide: true, stdio: ['pipe','pipe','pipe'] });
 process.on('uncaughtException', error => {
   // A test failure must never open Electron's blocking error dialog.
@@ -43,6 +44,15 @@ async function request(_event, method, params={}) {
   // Deliberately deliver one cancelled binding late to exercise the generation guard.
   // All preview, remapping, import, export and Apply operations use the real worker.
   methods.push(method);
+  if (method==='test_screenshot') {
+    if (process.env.MWM_SCREENSHOT_DIR) {
+      fs.mkdirSync(process.env.MWM_SCREENSHOT_DIR,{recursive:true});
+      await uiWindow.webContents.capturePage();
+      await new Promise(resolve=>setTimeout(resolve,150));
+      fs.writeFileSync(path.join(process.env.MWM_SCREENSHOT_DIR,params+'.png'),(await uiWindow.webContents.capturePage()).toPNG());
+    }
+    return true;
+  }
   if (method==='test_runtime_running') { simulatedRunning=params; return true; }
   if (method==='test_fail_controller') { failController=true; return true; }
   if (method==='test_delay_snapshot') { delaySnapshot=true; waitSnapshot=new Promise(resolve=>{snapshotStarted=resolve;}); return true; }
@@ -89,10 +99,11 @@ ipcMain.handle('mwm:request', async (...args) => {
 });
 app.whenReady().then(async () => {
   const window = new BrowserWindow({show:false,width:1120,height:800,webPreferences:{preload:path.join(root,'desktop/preload.cjs'),contextIsolation:true,sandbox:false,backgroundThrottling:false}});
+  uiWindow=window;
   try {
     const ui = path.join(folder,'ui'); fs.mkdirSync(ui);
-    for (const name of ['index.html','style.css']) fs.copyFileSync(path.join(root,'desktop',name),path.join(ui,name));
-    fs.writeFileSync(path.join(ui,'renderer.js'),require('esbuild').transformSync(fs.readFileSync(path.join(root,'desktop/renderer.ts'),'utf8'),{loader:'ts',format:'iife'}).code);
+    for (const name of ['index.html','style.css','controller_diagram.css']) fs.copyFileSync(path.join(root,'desktop',name),path.join(ui,name));
+    require('esbuild').buildSync({entryPoints:[path.join(root,'desktop/renderer.ts')],bundle:true,platform:'browser',format:'iife',outfile:path.join(ui,'renderer.js')});
     await window.loadFile(path.join(ui,'index.html'));
     const result = await window.webContents.executeJavaScript(`(async () => {
       const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -103,9 +114,38 @@ app.whenReady().then(async () => {
       const dismiss=()=>document.querySelector('#binding-error button').click();
       await ready();
       assert(document.querySelectorAll('.stance-card').length===3,'Default view is not grouped by stance');
+      assert(document.querySelectorAll('.skill-node').length>=6 && document.querySelector('.skill-detail'),'Sword stance branch lacks named routes');
+      document.querySelectorAll('.skill-stance')[1].click();
+      assert(document.querySelector('.skill-stance.chosen').textContent==='Mid stance' && document.querySelector('[data-tree-key="mid:light_attack"]'),'Mid stance branch did not open');
+      document.querySelectorAll('.skill-stance')[0].click();
+      document.querySelector('[data-tree-key="low:light_attack"]').click();
+      assert(document.querySelector('.skill-detail h3').textContent==='Quick attack','Skill map selection did not explain the route');
+      assert(document.activeElement?.dataset.treeKey==='low:light_attack','Selecting a route lost keyboard focus');
+      await wait(350);await window.mwm.request('test_screenshot','sword');
+      document.querySelector('[data-tree-key="low:tiger_sprint"]').click();
+      assert(document.querySelector('.skill-detail-actions .primary').textContent==='Add replacement','Empty route cannot be added from Sword');
+      document.querySelector('.skill-detail-actions .primary').click();
+      for(let i=0;i<100 && !document.querySelector('#move-picker').open;i++)await wait(30);
+      assert(document.querySelector('#move-picker').open && !document.body.inert,'Adding a named route did not open an operable move picker');
+      assert(!document.querySelector('[data-assignment="native:low:tiger_sprint"]'),'Opening the picker changed the draft before a move was chosen');
+      document.querySelector('#picker-close').click();
+      assert(!document.querySelector('[data-assignment="native:low:tiger_sprint"]') && document.querySelector('#apply').disabled,'Cancelling a new route changed the draft');
+      document.querySelector('.skill-detail-actions .primary').click();
+      document.querySelector('#picker-results .picker-choice').click();await ready();
+      assert(document.querySelector('[data-assignment="native:low:tiger_sprint"]'),'Named route was not added to the requested source and stance');
+      document.querySelector('#reload').click();await ready();
+      document.querySelector('[data-tree-key="low:light_attack"]').click();
+      document.querySelector('.skill-detail-actions button:last-child').click();await ready();
+      for(let i=0;i<30 && document.activeElement!==document.querySelector('[data-route-key="native:low:light_attack"] select');i++)await wait(30);
+      assert(document.querySelector('[data-tab="native"].selected') && document.activeElement===document.querySelector('[data-route-key="native:low:light_attack"] select'),'Edit route did not focus its input controls');
+      await tab('guide');
+      assert(document.querySelectorAll('.guide-step').length===4,'Visible guide lacks the four-step workflow');
+      await wait(350);await window.mwm.request('test_screenshot','guide');
       assert(document.querySelector('#disable').hidden && !document.querySelector('#enable').hidden,'Disabled runtime shows both actions');
       assert(document.querySelector('#apply').disabled,'Saved moveset still offers redundant save');
       await tab('controls');
+      assert(document.querySelector('.controller-diagram svg') && document.querySelectorAll('.cd-callout').length===12,'Controller page lacks labeled pad diagram');
+      await wait(350);await window.mwm.request('test_screenshot','controller');
       const failedDevice=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Controller mapping').querySelector('select');
       await window.mwm.request('test_fail_controller');change(failedDevice,'1');await wait(350);
       assert(document.querySelector('#binding-error').open,'Failed controller translation was not reported');

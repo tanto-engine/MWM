@@ -4,6 +4,8 @@ A portable Nioh moveset editor, starting with single katana. Choose the moves as
 
 ![MWM moveset editor](docs/mwm-ui.png)
 
+The **How to use** tab walks through the four-step edit, route, controller, and save workflow.
+
 ## Start playing
 
 Download **MWM.exe** from [Releases](https://github.com/neuriv/tanto-engine/releases). The EXE contains its own interface, Engine worker and move definitions; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
@@ -27,13 +29,15 @@ bloodborne gun shot uses tap-and-release; holding is unassigned by default. A ne
 
 ## Change your bindings
 
-**Sword** shows assignments by stance, including **Hold Triangle / Y**. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or original inputs. For example, use Low held Triangle for the launcher and High held Triangle for Izuna. The drop still needs native enemy contact.
+**Sword** shows one stance branch at a time. Select a named input to read its trigger and current move, then choose a reviewed replacement. The detailed list view is available below. **Input routes** contains every original and custom route. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or original inputs. For example, use Low held Triangle for the launcher and High held Triangle for Izuna. The drop still needs native enemy contact.
 
 **Input routes** lists overrides for reviewed sword moves. Each row can use its **Original Nioh input** or a **Custom controller chord** with its own Modifier, Trigger and tap/hold choice. Custom mode adds an input without replacing an original action. Per-route chords support L1/LB + Circle/B, Triangle/Y, L2/LT or Square/X; up to 24 custom rows are available separately from 32 native slots. **Controller** retains the original global custom chord and its shared hold threshold. Press to bind on either page, release the controls, then press one button on the connected pad. The recorded button and detected mapping remain pending until Save. R1/RB stays reserved for Ki Pulse and Frost Moon. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations open a popup naming the conflicting move, controls and stances, with a correction.
 
-**Tuning** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests its native speed. The right-hand guide explains hovered or focused controls. Soft editor sounds can be muted there; short XInput binding haptics are optional and off by default. **More** provides Frost Moon destinations, Help, the original moveset, and moveset import/export. Binding groups let you reuse one part without replacing the rest. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
+**Tuning** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests its native speed. The right-hand guide explains hovered or focused controls. Soft editor sounds can be muted there; short XInput binding haptics are optional and off by default. **More** provides Frost Moon destinations, the original moveset, and moveset import/export. Binding groups let you reuse one part without replacing the rest. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
 
 ## Controllers
+
+![Controller mapping and game input reference](docs/controller-ui.png)
 
 Xbox uses XInput. For PS5, enable Steam Input for Nioh so it appears as XInput; the saved PS4 mapping remains available. Press to bind detects a supported controller even when Nioh is closed or its frames are paused. Disable the mod before saving a new mapping, then enable it again. With multiple pads connected, the recorded XInput slot becomes the pending game slot; choose another slot explicitly if needed. Raw, uncalibrated DualSense input is unsupported. Left-stick movement is separate from button binding and Frost Moon edge detection.
 

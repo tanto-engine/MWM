@@ -75,10 +75,6 @@ main > * { animation: panel-in .28s ease backwards; }
 .stance-card:hover { border-color: #8f9da3; background: #202d35; transform: translateY(-2px); box-shadow: 0 10px 22px #0003; }
 .stance-card h3 { margin: 0 0 7px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .stance-card h3:before { content: ""; height: 6px; width: 6px; border: 1px solid #7f939e; border-radius: 50%; }
-.assignment { display: block; padding: 8px 0; border-top: 1px solid #ffffff0a; }
-.assignment>span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-.assignment select { padding: 4px 20px 4px 0; border: 0; background: transparent; font-size: 13px; min-height: 25px; border-radius: 0; color: #e2e8ed; }
-.assignment select:hover { background: #ffffff05; }
 .shared-routes { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; margin-top: 13px; padding: 14px; border: 1px solid #77643f; border-radius: 8px; background: #26281f; animation: panel-in .38s .12s ease backwards; }
 .shared-routes.has-global-bindings { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .shared-routes h3 { margin: 0 0 5px; font-size: 13px; font-weight: 550; }
@@ -125,13 +121,13 @@ input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #
 .route-diagnostic.error { color: #e7a59d; }
 .add-route { border: 1px solid #947f52; color: #eed59f; background: #312d24; }
 .add-route:hover { background: #483b29; }
-.assignment { position: relative; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 7px; padding: 11px 0 11px 16px; border-top-color: #35434a; }
+.assignment { position: relative; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 7px; padding: 11px 0 11px 16px; border-top: 1px solid #35434a; }
 .assignment::before { content: ""; position: absolute; left: 0; top: 19px; width: 6px; height: 6px; border: 1px solid #c8ae78; border-radius: 50%; background: #2c3029; box-shadow: 0 0 0 4px #3c3a2c; }
 .assignment::after { content: ""; position: absolute; left: 3px; top: 31px; bottom: -6px; width: 1px; background: #776b50; }
 .assignment:last-child::after { display: none; }
-.assignment>span { grid-column: 1/-1; margin: 0; font-weight: 600; color: #edf0ed; }
+.assignment>span { display: block; grid-column: 1/-1; margin: 0; font-size: 12px; font-weight: 600; color: #edf0ed; }
 .assignment .route-notation { color: #9eb2b9; font-size: 10px; font-weight: 450; }
-.assignment select { grid-column: 1; padding: 5px 9px; min-height: 31px; border: 1px solid #4b5c64; border-radius: 5px; background: #101a22; font-size: 13px; }
+.assignment select { grid-column: 1; padding: 5px 9px; min-height: 31px; border: 1px solid #4b5c64; border-radius: 5px; background: #101a22; color: #e2e8ed; font-size: 13px; }
 .assignment select:hover { background: #1d3039; }
 .browse-move { color: #dfc58d; border: 1px solid #6e6249; background: #2c2a24; font-size: 11px; padding: 5px 9px; }
 .browse-move:hover { background: #443a2a; }
@@ -150,20 +146,34 @@ input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #
 .overview-heading p { font-size: 11px; }
 .hint { color: #acb9bd; }
 
-/* The game pad is a solid reference card; its base controls remain Nioh-owned. */
-.controller-map { padding: 16px 19px 12px; margin-bottom: 20px; border: 1px solid #475760; border-radius: 8px; background: #1d2a33; }
-.map-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
-.map-heading h2 { margin: 0; font-size: 16px; }
-.map-heading span { color: #d6bd89; font-size: 11px; }
-.pad-layout { display: grid; grid-template-columns: minmax(145px,1fr) minmax(150px,1.1fr) minmax(145px,1fr); gap: 12px; margin: 15px 0 12px; align-items: center; }
-.pad-legend { display: grid; gap: 7px; }
-.pad-key { display: flex; align-items: center; gap: 8px; min-width: 0; color: #bdc8cb; font-size: 11px; }
-.pad-key kbd { flex: none; min-width: 72px; padding: 5px; border: 1px solid #63717a; border-radius: 5px; background: #111b24; color: #eff2eb; text-align: center; font: 600 10px/1.2 inherit; }
-.pad-face { position: relative; display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; border: 2px solid #63717a; border-radius: 42% 42% 32% 32%; background: #25333d; padding: 26px 15px 14px; transform: perspective(300px) rotateX(4deg); box-shadow: inset 0 2px #ffffff15,0 8px 20px #0004; }
-.pad-mark { position: absolute; top: 7px; left: 0; right: 0; text-align: center; color: #d7bc87; font-size: 9px; font-weight: 800; letter-spacing: .15em; }
-.face-key { display: flex; align-items: center; gap: 4px; color: #ced5d5; font-size: 10px; }
-.face-key kbd { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid #9d8558; border-radius: 50%; color: #ecd6a2; background: #3c3528; font-size: 10px; font-family: inherit; }
-.controller-map>.hint { margin-bottom: 0; font-size: 11px; }
+/* One stance branch at a time keeps every input named and easy to scan. */
+.skill-map { border: 1px solid #46545b; border-radius: 8px; background: #17232b; padding: 15px; }
+.skill-map-intro { margin: 0 0 14px; color: #bac8c9; font-size: 12px; line-height: 1.45; }
+.skill-stances { display: flex; align-items: center; gap: 8px; margin-bottom: 13px; }
+.skill-root { flex: none; margin-right: 12px; padding: 8px 12px; border: 1px solid #8c7955; border-radius: 5px; color: #e8d2a5; font-size: 11px; font-weight: 800; letter-spacing: .11em; }
+.skill-stance { flex: 1; min-width: 0; border: 1px solid #52616a; background: #1d2c35; color: #cbd5d5; font-size: 12px; font-weight: 650; }
+.skill-stance.chosen { border-color: #c7ac78; background: #353124; color: #f6ddb0; }
+.skill-branches { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.05fr); gap: 14px; }
+.skill-routes { display: grid; align-content: start; gap: 4px; padding: 0 5px 0 12px; border-left: 1px solid #68746b; }
+.skill-node { position: relative; display: grid; gap: 3px; width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid #35454d; background: #1a2932; text-align: left; white-space: normal; }
+.skill-node::before { content: ''; position: absolute; left: -17px; top: 18px; width: 6px; height: 6px; border: 1px solid #87989b; border-radius: 50%; background: #17232b; }
+.skill-node.active::before { border-color: #d7bd88; background: #d7bd88; }
+.skill-node.chosen { border-color: #bdab82; background: #2b302e; }
+.skill-node strong { overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 650; }
+.skill-node small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #a9b9bd; font-size: 10px; }
+.skill-node.active small { color: #ddcda8; }
+.skill-detail { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 18px; border: 1px solid #48575e; border-radius: 6px; background: #1b2a33; }
+.skill-detail-input { color: #d7bd89; font-size: 10px; font-weight: 750; line-height: 1.5; text-transform: uppercase; }
+.skill-detail h3 { margin: 13px 0 9px; font-size: 18px; }.skill-detail strong { font-size: 13px; color: #e5ebea; }
+.skill-detail p { margin: 10px 0 0; color: #b9c9cb; font-size: 12px; line-height: 1.55; }
+.skill-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 20px; }
+.skill-detail-actions button { font-size: 11px; }
+.skill-shortcuts { display: flex; justify-content: space-between; gap: 10px; margin-top: 13px; border-top: 1px solid #3d4d51; }
+.skill-list { margin-top: 12px; padding: 12px; border: 1px solid #3d4d51; border-radius: 8px; background: #17232c; }
+.skill-list>summary { color: #d4c194; font-size: 12px; font-weight: 650; }
+.skill-list[open] .stance-grid { margin-top: 15px; }
+.game-path { margin: -7px 0 18px; color: #bbc8ca; font-size: 11px; }
+.game-path .field { margin: 10px 0 0; }
 
 /* Large move catalogs stay searchable, while native selects remain keyboard usable. */
 .library-tabs { display: flex; gap: 5px; margin: 13px 0; border-bottom: 1px solid var(--line); }
@@ -203,9 +213,12 @@ input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #
 .speed-row .field { display: grid; grid-template-columns: minmax(0,1fr) 70px; align-items: center; }
 .speed-row output { grid-column: 1/-1; color: var(--muted); font-size: 11px; }
 .speed-row button { font-size: 11px; }
-.guide { max-width: 730px; }
-.guide h2 { font-size: 18px; font-weight: 550; }
-.guide p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.guide-steps { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.guide-step { min-height: 175px; display: flex; flex-direction: column; align-items: flex-start; padding: 17px; border: 1px solid #56616a; border-left: 3px solid #c9af7c; border-radius: 7px; background: #1d2a32; }
+.guide-number { color: #d7bd89; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+.guide-step h3 { margin: 7px 0; font-size: 16px; }.guide-step p { flex: 1; margin: 0 0 12px; color: #becacd; font-size: 12px; line-height: 1.55; }
+.guide-glossary { margin-top: 15px; padding: 13px 16px; border: 1px solid #4b5961; border-radius: 7px; background: #19252e; }
+.guide-glossary summary { color: #dfc993; font-size: 12px; font-weight: 650; }.guide-glossary p { color: #bac9cc; font-size: 12px; line-height: 1.6; }
 .route-list { display: grid; grid-template-columns: minmax(120px,1fr) 3fr; gap: 10px 20px; font-size: 12px; line-height: 1.5; margin: 16px 0 25px; }
 .route-list dt { color: var(--muted); }
 .route-list dd { margin: 0; }
@@ -260,9 +273,6 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .shared-routes { padding: 9px 11px; margin-top: 10px; }
   .overview-heading { margin-bottom: 10px; }
   .binding .field:has(.browse-move) { grid-column: 1/-1; }
-  .pad-layout { grid-template-columns: minmax(120px,1fr) minmax(140px,1.1fr) minmax(120px,1fr); gap: 7px; }
-  .pad-key { gap: 4px; font-size: 10px; }
-  .pad-key kbd { min-width: 56px; }
 }
 @media (max-width: 700px) {
   .app { height: auto; min-height: 100vh; padding: 12px; }
@@ -275,6 +285,10 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .binding { grid-template-columns: minmax(0,1fr); }
   .binding .field:has(.browse-move) { grid-column: 1; }
   .route-toolbar input { max-width: none; }
+  .skill-detail { align-items: flex-start; flex-direction: column; }
+  .skill-detail-actions { flex-direction: row; }
+  .guide-steps { grid-template-columns: 1fr; }
+  .skill-branches { grid-template-columns: 1fr; }
 }
 @media (max-height: 680px) {
   .app { padding-block: 13px 10px; gap: 9px; }

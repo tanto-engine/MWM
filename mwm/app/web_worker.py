@@ -162,11 +162,13 @@ class Desktop:
                             except ValueError: continue
             raise ValueError('No compatible custom input route is available with these bindings.')
         for source in self.capabilities['native_sources']:
+            if params.get('source') and source['id'] != params['source']: continue
             for stance in self.capabilities['stances']:
+                if params.get('stance') and stance != params['stance']: continue
                 if any('input' not in row and row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):
                     continue
                 for move in self.capabilities['moves']:
-                    if not move['native']:
+                    if not move['native'] or params.get('move') and move['id'] != params['move']:
                         continue
                     candidate = deepcopy(preset)
                     candidate['skill_bindings'].append(dict(source=source['id'], stance=stance, move=move['id']))
