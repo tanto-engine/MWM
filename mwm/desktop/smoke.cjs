@@ -52,6 +52,7 @@ async function runSmoke(window, call, report) {
         const unchanged=await window.mwm.request('snapshot');
         if (unchanged.preset.stance_holds.low || unchanged.preset.stance_holds.high) throw new Error('Invalid edit changed saved bindings');
         document.querySelector('#binding-error button').click();
+        high.value='';high.dispatchEvent(new Event('change',{bubbles:true}));await ready();
       }
     }
     document.querySelector('#apply').click();await wait();await ready();
