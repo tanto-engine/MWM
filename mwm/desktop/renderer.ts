@@ -477,7 +477,7 @@ function renderSkillTree() {
     const disabled = slot.key.endsWith(':frost');
     detail.replaceChildren();
     const copy = element('div');
-    copy.append(element('span', `${slot.stance.toUpperCase()} STANCE · ${slot.input}`, 'skill-detail-input'),
+    copy.append(element('span', slot.input.toUpperCase(), 'skill-detail-input'),
       element('h3', slot.label), element('strong', move?.name || (disabled ? 'Disabled' : 'Original Nioh action')),
       element('p', move?.description || (disabled ? 'No stance-switch move is assigned.' : 'No replacement is assigned. The original game action still runs.')));
     const buttons = element('div', undefined, 'skill-detail-actions');

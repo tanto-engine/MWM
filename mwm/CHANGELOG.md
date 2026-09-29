@@ -1,10 +1,11 @@
 # Release notes
 
-## 0.3.0-alpha.8
+## 0.3.0-alpha.9
 
 - Replaced the crowded Sword overview with one stance branch at a time. Named inputs show their current moves; selecting one shows its exact trigger, behavior, and move picker. Detailed assignments remain available in the list view and Input routes.
 - Added a labeled, opaque controller diagram and moved the actual mapping controls above it. How to use is now a visible tab with a four-step workflow.
 - Adding a Sword route now waits for a move choice. Closing the picker leaves the draft unchanged. Route selection keeps keyboard focus, and Edit input route focuses the matching controls.
+- Removed a repeated stance label from the selected route's input line.
 
 Offline and packaged UI checks do not establish live gameplay or physical-controller acceptance. The two reported crashes remain open.
 
