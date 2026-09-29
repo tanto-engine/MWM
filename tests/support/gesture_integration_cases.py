@@ -88,6 +88,33 @@ class IntegrationReview(unittest.TestCase):
         self.assertFalse(g.fields(2000)['armed'])
         self.assertEqual(g.chord_sequence, 1)
 
+    def test_finished_or_unbound_hold_releases_native_input_reservation(self):
+        # The modifier may remain held after a custom move. Its old chord must
+        # no longer suppress guard or attacks when no intent can dispatch.
+        g=self.make();self.input(g,20,200)
+        self.assertTrue(g.fields(400)['reserve'])
+        self.assertTrue(g.fields(650)['armed'])
+        g.dispatched()
+        self.assertFalse(g.fields(651)['reserve'])
+        self.input(g,16,700)
+        self.assertTrue(g.fields(701)['reserve'])
+        unbound=ControllerGesture(CALIBRATION,dict(BINDING,variants=[0,None]),1000)
+        unbound.process(dict(kind='input_device',**DEVICE),100)
+        self.input(unbound,0,101);self.input(unbound,20,200)
+        self.assertFalse(unbound.fields(650)['armed'])
+        self.assertFalse(unbound.fields(650)['reserve'])
+
+    def test_publisher_clears_chord_policy_after_intent_is_finished(self):
+        from run_dispatch_cases import CONFIG
+        owned=C.create_string_buffer(224)
+        command=CommandMap.__new__(CommandMap)
+        command.address,command.sequence=C.addressof(owned),0
+        config=dict(CONFIG,chord_policy=(0x8100<<16)|(1<<32))
+        for reserve,expected in ((True,config['chord_policy']),(False,0)):
+            command.publish(config,heartbeat=1000,edge=900,expires=1200,
+                chord_sequence=1,armed=False,held=False,reserve=reserve)
+            self.assertEqual(struct.unpack_from('<Q',owned.raw,64+128)[0],expected)
+
     def test_variant_pack_preserves_config_and_selects_exact_source_fields(self):
         # Pack the requested move variant without mutating its saved configuration.
         # Pack both baseline gesture variants from the same immutable session configuration.

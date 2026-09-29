@@ -84,7 +84,7 @@ class CommandMap:
             raise C.WinError(C.get_last_error())
         return value.value
 
-    def publish(self, config, *, heartbeat, edge, expires, chord_sequence, armed, held, latched=0, variant=0, context_epoch=0):
+    def publish(self, config, *, heartbeat, edge, expires, chord_sequence, armed, held, latched=0, variant=0, context_epoch=0, reserve=True):
         # Write one selected move and its input lease into shared memory.
         # Commit matching sequence markers after the payload copy.
         # The native reader rejects partial publication without blocking the game thread.
@@ -93,7 +93,7 @@ class CommandMap:
         body = COMMAND.pack(self.sequence, heartbeat, edge, expires, chord_sequence,
                             config['generation'], config['player'], config['owner'], config['vtable'],
                             *config['banks'], selected['descriptor'], selected['payload'], selected['key'],
-                            selected['motion'], int(armed), int(held), latched | config.get('chord_policy',0), variant, context_epoch, self.sequence)
+                            selected['motion'], int(armed), int(held), latched | (config.get('chord_policy',0) if reserve else 0), variant, context_epoch, self.sequence)
         address = self.address + CONTROL.size
         # Single publisher, aligned 64-bit stores on Windows x64. Native reads
         # both markers with interlocked barriers and never waits on the writer.

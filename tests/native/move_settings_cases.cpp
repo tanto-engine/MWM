@@ -7,6 +7,12 @@ int main() {
     // Check private Ki Pulse fields and playback deltas while shared payload and frame cursor stay unchanged.
     // Paired actions and a neutral player retain native delta; ordinary Frost playback honors configured speed.
     LARGE_INTEGER f;QueryPerformanceFrequency(&f);frequency=f.QuadPart;
+    reset();
+    boss_imports[0].key=0xD8D;boss_imports[0].motion=5011;
+    boss_imports[0].flags=0x594C0000;boss_imports[0].transition_count=27;
+    boss_imports[0].recovery_frame=120;boss_adapters[0].kind=2;
+    assert(boss_move_timing(0).recovery==72); // Source leaves before its frame-120 Pulse onset.
+    ++boss_imports[0].motion;assert(boss_move_timing(0).recovery==120);
     for (float rate : {.5f,1.5f}) {
         reset();boss_move_settings[0]={rate,65,18,35,0};
         const auto source=payload;

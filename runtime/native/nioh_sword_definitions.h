@@ -124,6 +124,9 @@ static constexpr SwordTimingDefinition sword_timing_definitions[]={
     {{0xD33,2030,0x184C0000,4,42,-1},{95,0,1}},
     {{0xC6E,1010,0x19400000,2,10,-1},{40,0,1}},
     {{0xC6F,1011,0x19400000,4,6,-1},{60,0,1}},
+    // D8D leaves after about 108 frames in repeated recordings; its source Pulse onset at 120 is unreachable.
+    // Open William's recovery after the strike at 72 so the 30-frame fill can complete before exit.
+    {{0xD8D,5011,0x594C0000,2,27,120},{72,0,1}},
     {{0xC6A,1130,0x40019480000ULL,2,9,-1},{128,0,1}}
 };
 static_assert([]() constexpr {

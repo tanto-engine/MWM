@@ -69,6 +69,11 @@ static WORD configured_chord_buttons() {
         || !trace || !read_game_input(trace->header,input) || !selected_game_controller(input,slot)
         || !copy_field(command.player+0x470,stance) || stance>2
         || !(command.reserved[0]&(uint64_t(1)<<(34-stance)))) return 0;
+    if (command.armed) {
+        LARGE_INTEGER now; QueryPerformanceCounter(&now);
+        if (command.chord_sequence<=uint64_t(InterlockedCompareExchange64(&dispatch->control.consumed_sequence,0,0))
+            || now.QuadPart>=command.expires_qpc) return 0;
+    }
     const WORD down=(input.buttons[slot]&0xF3FF) | (input.left_trigger[slot]>=128 ? 0x400 : 0)
         | (input.right_trigger[slot]>=128 ? 0x800 : 0);
     return down==buttons ? buttons : 0;
@@ -360,6 +365,7 @@ static bool custom_chord_blocks(uint32_t key) {
     if (!buttons || boss_active || !copy_field(boss_session.player+0x58,current)
         || !copy_field(current,current_key) || !repeat_current_allowed(current,current_key)) return false;
     if (key==24 || key==25) return true;
+    if ((buttons&XINPUT_GAMEPAD_B) && key==9) return true; // Circle/B otherwise enters native dodge before chord dispatch.
     if ((buttons&XINPUT_GAMEPAD_Y) && (key==0xBC0 || key==0xCF5 || key==0xC7A || key==0xCB7 || key==0xD4A)) return true;
     uint8_t row[0x30];
     if (!selected_sword_row(key,row)) return false;

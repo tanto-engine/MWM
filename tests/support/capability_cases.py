@@ -106,11 +106,30 @@ class CapabilityTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 encode_session(dict(fixture.config,controller_selection=selection),fixture.pid,fixture.born)
 
+    def test_quick_attack_source_reaches_each_stance_and_any(self):
+        # One native Square source must retain the chosen stance. Graphs require
+        # a concrete stance so their William continuation template agrees.
+        source=next(s for s in config.move_capabilities()['native_sources'] if s['id']=='light_attack')
+        self.assertEqual(source['stances'],['low','mid','high','any'])
+        for stance,mask in (('low',1),('mid',2),('high',4),('any',7)):
+            with self.subTest(stance=stance):
+                preset=empty_preset();preset['skill_bindings']=[dict(source='light_attack',stance=stance,move='okatsu.charged_rush')]
+                fixture,_=self.fixture(preset)
+                binding=fixture.config['skill_bindings'][0]
+                self.assertEqual((binding['kind'],binding['stances'],binding['variant']),(5,mask,1))
+        for stance in ('low','mid','high'):
+            with self.subTest(graph_stance=stance):
+                preset=empty_preset();preset['skill_bindings']=[dict(source='light_attack',stance=stance,move='jin_hayabusa.action_0bbf')]
+                fixture,_=self.fixture(preset)
+                root=next(m for m in fixture.config['imports'] if m['id']=='jin_hayabusa.action_0bbf')
+                self.assertEqual(root['replacement']['player_key'],{'low':0xCF5,'mid':0xC7A,'high':0xCB7}[stance])
+
     def test_capabilities_exclude_unreviewed_recordings_and_migration_keeps_bindings(self):
         # Keep unimplemented catalogue entries out of the trainer's playable choices.
         # Check supported role flags and migrate an older preset with obsolete public Frost tuning.
         # Migration must reproduce the baseline without modifying the caller's original dictionary.
         caps=config.move_capabilities();moves={m['id']:m for m in caps['moves']}
+        self.assertEqual(caps['native_binding_limit'],config.BINDING_LIMIT)
         self.assertEqual({m['id'] for m in caps['moves'] if m['chord']},set(config.CHORD_MOVES))
         self.assertFalse(moves['jin_hayabusa.action_03b2']['speed'])
         self.assertTrue(moves['jin_hayabusa.action_0c6f']['native'])
@@ -184,7 +203,7 @@ class CapabilityTests(unittest.TestCase):
         preset=empty_preset();preset['skill_bindings']=[dict(source='heavy_attack',stance='any',move='okatsu.charged_rush'),
             dict(source='heavy_attack',stance='high',move='okatsu.leaping_slash')]
         cases.append((preset,('High Heavy attack','Only one override','remove one row')))
-        for source,stance,required in (('light_attack','mid','Low stance'),('high_heavy_followup','low','High stance')):
+        for source,stance,required in (('high_heavy_followup','low','High stance'),):
             preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance=stance,move=sanada)]
             cases.append((preset,(config.SOURCE_LABELS[source],config.move_label(sanada),required,'Choose')))
         preset=empty_preset();preset['low_heavy']='jin_hayabusa.action_0c6e'

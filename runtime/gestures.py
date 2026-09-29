@@ -157,7 +157,8 @@ class ControllerGesture:
         return dict(heartbeat=now, edge=self.edge, expires=self.expires,
                     chord_sequence=self.chord_sequence, armed=self.pending,
                     held=self.string_held if self.variant == self.string_variant else self.lb and self.circle,
-                    latched=0 if self.variant == self.string_variant else 1, variant=self.variant)
+                    latched=0 if self.variant == self.string_variant else 1, variant=self.variant,
+                    reserve=not (self.fired and not self.pending))
 
     def dispatched(self, repeat=True):
         # Consume the pending gesture after native acceptance.

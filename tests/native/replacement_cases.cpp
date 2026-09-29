@@ -397,12 +397,14 @@ static void held_slot_cases() {
         command.reserved[0]=1 | (uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|trigger)<<16) | (uint64_t(1)<<32);
         pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|trigger;observe_game_input(trace->header);publish();
         assert(!custom_chord_blocks(0x3E8) && !custom_chord_blocks(0xD5F));
+        if (trigger==XINPUT_GAMEPAD_B) assert(custom_chord_blocks(9));
         const auto before=action_calls;
         assert(!observed_action(player.data(),trigger==XINPUT_GAMEPAD_Y ? 0xBC0 : 24,nullptr));
         assert(!pending_heavy.active && !boss_active && action_calls==before);
         command.armed=1;command.held=held;command.reserved[1]=0;
         pad_buttons=held ? WORD(XINPUT_GAMEPAD_LEFT_SHOULDER|trigger) : WORD(XINPUT_GAMEPAD_LEFT_SHOULDER);
         publish();tick();assert(boss_active && boss_active_slot==0 && dispatch->control.dispatch_count==1);
+        if (held) assert(!configured_chord_buttons()); // A consumed hold cannot keep reserving guard/attack.
         put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());bindings(false);
     }
     boss_hold_stances=7;hold_reset(2,false);
@@ -411,6 +413,11 @@ static void held_slot_cases() {
     assert(!observed_action(player.data(),0xBC0,nullptr) && pending_heavy.active);
     pending_heavy.started-=frequency/4;publish();tick();assert(boss_active && boss_active_slot==5);
     put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());bindings(false);
+    hold_reset(2,false);
+    command.reserved[0]=(uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y)<<16)|(uint64_t(1)<<32);
+    pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;observe_game_input(trace->header);publish();
+    dispatch->command.armed=1;dispatch->command.expires_qpc=dispatch->command.heartbeat_qpc-1;
+    assert(!configured_chord_buttons()); // An expired, unaccepted intent must release native input.
     for (unsigned failure=0;failure<6;++failure) {
         hold_reset(2,false);command.reserved[0]=(uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y)<<16)|(uint64_t(1)<<32);
         pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_Y;observe_game_input(trace->header);publish();

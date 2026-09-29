@@ -97,6 +97,25 @@ static void guard_binding_cases() {
     }
 }
 
+static void quick_binding_cases() {
+    constexpr uint32_t keys[]={0xCF0,0xC76,0xCB3};
+    constexpr int32_t motions[]={4100,2100,3100};
+    for (unsigned stance=0;stance<3;++stance) {
+        sword_reset(0);boss_native_bindings=0;
+        boss_skill_bindings[0]={5,1u<<stance,1,0,0,0,0};
+        put(player.data(),0x470,2-stance);
+        put(light.data(),0,keys[stance]);put(light_payload.data(),0x20,motions[stance]);
+        DispatchCommand selected{};
+        assert(native_bound_slot(keys[stance],address(light.data()),selected)==0);
+        put(player.data(),0x470,(3-stance)%3);
+        assert(native_bound_slot(keys[stance],address(light.data()),selected)==-1);
+        put(player.data(),0x470,2-stance);put(light_payload.data(),0x20,motions[stance]+1);
+        assert(native_bound_slot(keys[stance],address(light.data()),selected)==-1);
+        boss_skill_bindings[0].stances=7;put(light_payload.data(),0x20,motions[stance]);
+        assert(native_bound_slot(keys[stance],address(light.data()),selected)==0);
+    }
+}
+
 static void tiger_entry_cases() {
     // Reproduce the two preparation entries before the recorded FAA attack.
     // Test native input ownership, stance assignment and disabled/stale contexts.
@@ -145,6 +164,7 @@ int main() {
     // These checks establish descriptor behavior; actual combat playback still needs the player.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     guard_binding_cases();
+    quick_binding_cases();
     tiger_entry_cases();
     for (unsigned stance=0;stance<3;++stance) {
         constexpr uint32_t keys[]={0xCF5,0xC7A,0xCB7};

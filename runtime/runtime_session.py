@@ -146,7 +146,7 @@ def encode_session(config, pid, creation_filetime):
         signatures=(*NATIVE_SKILLS.values(),*((key,*PLAYER_TEMPLATES[key][:2],0x8000000594C0000) for key in STANCE_OPENERS.values()))
         if kind==1 and (key,motion,rows,flags) not in signatures or kind>=2 and any((key,motion,rows,flags)):
             raise ValueError('Unverified native skill signature')
-        if kind==4 and stances!=4 or kind==5 and stances!=1:
+        if kind==4 and stances!=4 or kind==5 and stances not in (1,2,4,7):
             raise ValueError('Trial native source differs from its reviewed stance')
         if kind==1 and key in STANCE_OPENERS.values() and stances!=1<<list(STANCE_OPENERS.values()).index(key):
             raise ValueError('Native heavy source differs from its stance')
