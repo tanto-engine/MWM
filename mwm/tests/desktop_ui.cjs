@@ -9,7 +9,7 @@ const { createInterface } = require('node:readline');
 const root = path.resolve(__dirname, '..');
 const folder = process.argv[2], python = process.argv[3];
 app.setPath('userData', path.join(folder, 'electron-state'));
-const pending = new Map(); let sequence = 0, capture = 0, oldCapture, delayPreview = false, cancelGroup = false;
+const pending = new Map(); let sequence = 0, capture = 0, oldCapture, lateRouteCapture, delayPreview = false, cancelGroup = false;
 let delaySnapshot = false, waitSnapshot, snapshotStarted, releaseSnapshot;
 const methods = [];
 let phase = 'startup';
@@ -64,6 +64,7 @@ async function request(_event, method, params={}) {
   if (method==='controller' && failController) { failController=false; throw new Error('Fixture: controller unavailable'); }
   if (method==='test_delay_preview') { delayPreview=true; return true; }
   if (method==='test_cancel_group') { cancelGroup=true; return true; }
+  if (method==='test_release_route_capture') { lateRouteCapture({mask:0x40000000,label:'stale route press'}); return true; }
   if (method==='preview' && delayPreview) {
     delayPreview=false; const result=await call(method,params);
     await new Promise(resolve=>setTimeout(resolve,500)); return result;
@@ -71,8 +72,9 @@ async function request(_event, method, params={}) {
   if (method==='collection') return JSON.parse(fs.readFileSync(path.join(root,'desktop-dist/collection.json'),'utf8'));
   if (method==='capture_cancel') return true;
   if (method==='capture_start') { capture++; if (capture===2 && oldCapture) setTimeout(()=>oldCapture({mask:1,label:'stale Square'}),25); return {status:'Waiting'}; }
-  if (method==='capture_poll') return capture===1 ? new Promise(resolve=>{oldCapture=resolve;}) : capture===3
-    ? {mask:0x2000,label:'Circle / B',calibration:{schema:1,device:{backend:'xinput',slot:1},lb_mask:0x100,lt:{axis:'lt',neutral:0,full:255},controller_slot:1}}
+  if (method==='capture_poll') return capture===1 ? new Promise(resolve=>{oldCapture=resolve;}) : capture===3 || capture===4
+    ? {mask:capture===3 ? 0x2000 : 0x8000,label:capture===3 ? 'Circle / B' : 'Triangle / Y',calibration:{schema:1,device:{backend:'xinput',slot:1},lb_mask:0x100,lt:{axis:'lt',neutral:0,full:255},controller_slot:1}}
+    : capture===5 ? new Promise(resolve=>{lateRouteCapture=resolve;})
     : {status:'Waiting for new input'};
   if (method==='haptic') return false;
   if (method==='export' || method==='import') params={...params,path:path.join(folder,'roundtrip.json')};
@@ -200,9 +202,28 @@ app.whenReady().then(async () => {
       change(pulseTrigger,previousTrigger);await ready();
       document.querySelector('#baseline').click();await ready();
       await tab('native');
+      assert([...document.querySelectorAll('.binding')].every(row=>[...row.querySelectorAll('label')].some(label=>label.querySelector('span')?.textContent==='Activation')),'Existing route has no per-row activation selector');
       const originalRows=document.querySelectorAll('.binding').length;
-      [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add replacement').click();await ready();
+      [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add original route').click();await ready();
       assert(document.querySelectorAll('.binding').length===originalRows+1,'Add override failed to choose a free slot');
+      const newOriginal=[...document.querySelectorAll('.binding')].at(-1);
+      const activation=[...newOriginal.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Activation').querySelector('select');
+      change(activation,'custom');await ready();
+      const converted=[...document.querySelectorAll('.binding')].at(-1);
+      assert(converted.querySelector('.control-note').textContent.includes('stay unchanged'),'Custom mode does not explain original input');
+      assert(![...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Source'),'Custom route exposes an inert source selector');
+      assert([...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Modifier' && x.querySelector('button')?.textContent==='Press to bind'),'Custom route has no button capture');
+      assert([...converted.querySelectorAll('label')].some(x=>x.querySelector('span')?.textContent==='Gesture'),'Custom route has no tap/hold choice');
+      [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add custom input').click();await ready();
+      assert(document.querySelectorAll('.binding').length===originalRows+2,'Custom add did not permit another route');
+      assert(document.querySelector('.slot-count').textContent.includes('custom routes'),'Separate custom capacity is missing');
+      document.querySelector('#apply').click();await ready();
+      const savedRoutes=(await window.mwm.request('snapshot')).preset.skill_bindings;
+      assert(savedRoutes.filter(row=>row.input).length===2,'Custom routes did not persist');
+      await tab('overview');
+      assert(document.querySelector('.overview-heading').textContent.includes('2 custom button routes'),'Sword overview hides custom routes');
+      const customKeys=[...document.querySelectorAll('[data-assignment^="custom:"]')].map(x=>x.dataset.assignment);
+      assert(customKeys.length===2 && new Set(customKeys).size===2,'Custom overview routes share an assignment key');
       document.querySelector('#starter').click();await ready();await tab('controls');
       const profileName='Sword – テスト';
       const profile=[...document.querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent==='Moveset name').querySelector('input');
@@ -279,9 +300,51 @@ app.whenReady().then(async () => {
       await tab('frost');
       const frost=[...document.querySelectorAll('main .fields select')].map(x=>x.value);
       assert(frost[0]==='jin_hayabusa.action_0c71' && frost[2]==='jin_hayabusa.action_0c75','Binding edits changed Frost routes');
+      await tab('native');
+      [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add custom input').click();await ready();
+      const routeField=text=>[...[...document.querySelectorAll('.binding')].at(-1).querySelectorAll('label')].find(x=>x.querySelector('span')?.textContent===text);
+      assert(/route \\d+/.test(routeField('Trigger').querySelector('button').getAttribute('aria-label')),'Route capture lacks an accessible target');
+      assert([...routeField('Modifier').querySelector('select').options].every(x=>x.value==='256'),'Unsupported custom modifier was offered');
+      assert([...routeField('Trigger').querySelector('select').options].length===4,'Unsupported custom triggers were offered');
+      routeField('Trigger').querySelector('button').click();
+      for(let i=0;i<100 && routeField('Trigger').querySelector('select').value!=='32768';i++)await wait(30);
+      await ready();
+      assert(routeField('Trigger').querySelector('select').value==='32768','Per-route physical capture missed its target');
+      assert(routeField('Modifier').querySelector('select').value==='256','Per-route capture changed the other button');
+      change(routeField('Gesture').querySelector('select'),'hold');await ready();
+      document.querySelector('#apply').click();await ready();
+      const savedCustom=(await window.mwm.request('snapshot')).preset.skill_bindings.at(-1);
+      assert(savedCustom.input.trigger_mask===32768 && savedCustom.input.modifier_mask===256 && savedCustom.input.gesture==='hold','Captured custom chord did not persist');
+      routeField('Trigger').querySelector('button').click();await wait(80);
+      assert(document.querySelector('#capture-status')?.textContent.includes('Route') && document.querySelector('#capture-status')?.textContent.includes('Waiting'),'Route capture did not identify its active row');
+      [...[...document.querySelectorAll('.binding')].at(-1).querySelectorAll(':scope > button')].find(x=>x.textContent==='Remove').click();await ready();
+      [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add custom input').click();await ready();
+      const replacementTrigger=routeField('Trigger').querySelector('select').value;
+      await window.mwm.request('test_release_route_capture');await wait(150);
+      assert(routeField('Trigger').querySelector('select').value===replacementTrigger && document.querySelector('#validation').dataset.state==='valid','Late route capture changed a replacement row');
       await tab('controls');
-      return {externalSaveSynced:true,dirtyDraftProtected:true,pollingFocusPreserved:true,overviewEditsPersisted:true,singleSaveAction:true,runtimeSeparated:true,humanMoveNames:true,bindingGroups:true,freeOverrideSlots:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true};
+      return {externalSaveSynced:true,dirtyDraftProtected:true,pollingFocusPreserved:true,overviewEditsPersisted:true,singleSaveAction:true,runtimeSeparated:true,humanMoveNames:true,bindingGroups:true,freeOverrideSlots:true,customRoutes:true,customCapture:true,speedInheritance:true,explicitNativeSpeed:true,unicodeRoundtrip:true,roundtrip:true,conflictsRejected:true,staleCaptureRejected:true,controllerRemap:true,frostPreserved:true};
     })()`);
+    if (process.env.MWM_UI_SHOT) {
+      await window.webContents.executeJavaScript(`(async()=>{
+        const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+        document.querySelector('[data-tab="native"]').click();
+        for(let i=0;i<100 && (document.body.inert || document.querySelector('#validation').dataset.state!=='valid');i++)await wait(30);
+        [...document.querySelectorAll('button')].find(x=>x.textContent==='+ Add custom input').click();
+        for(let i=0;i<100 && (document.body.inert || document.querySelector('#validation').dataset.state!=='valid');i++)await wait(30);
+        if(document.querySelectorAll('.binding.custom-route').length<2)throw new Error('Screenshot setup lacks two custom routes');
+        const search=document.querySelector('[aria-label="Filter input routes"]');search.value='tap';search.dispatchEvent(new Event('input'));
+      })()`);
+      window.showInactive(); window.setSize(1104,1200); await new Promise(resolve=>setTimeout(resolve,250));
+      fs.writeFileSync(process.env.MWM_UI_SHOT,(await window.webContents.capturePage()).toPNG());
+    }
+    await window.webContents.executeJavaScript(`(async()=>{
+      document.querySelector('[data-tab="native"]').click();
+      for(let i=0;i<100 && (document.body.inert || document.querySelector('#validation').dataset.state!=='valid');i++)await new Promise(resolve=>setTimeout(resolve,30));
+    })()`);
+    window.setSize(700,800);await new Promise(resolve=>setTimeout(resolve,150));
+    const narrow=await window.webContents.executeJavaScript(`({overflow:document.documentElement.scrollWidth>innerWidth,fields:[...document.querySelectorAll('.binding .field')].every(x=>x.getBoundingClientRect().right<=innerWidth)})`);
+    if(narrow.overflow || !narrow.fields)throw new Error('Narrow custom routes overflow: '+JSON.stringify(narrow));
     await window.webContents.executeJavaScript(`(async()=>{
       document.querySelector('[data-tab="overview"]').click();
       await new Promise(resolve=>setTimeout(resolve,250));

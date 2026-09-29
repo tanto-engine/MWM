@@ -5,7 +5,9 @@ type Stance = 'low' | 'mid' | 'high';
 type MoveRole = 'chord' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
 type Move = { id: string; name: string; input?: string; description?: string } & Record<MoveRole, boolean>;
 type Calibration = { device: Record<string, unknown>; controller_slot?: number | null; [key: string]: unknown };
-type Binding = { source: string; stance: string; move: string };
+type ButtonKey = 'modifier_mask' | 'trigger_mask';
+const routeTriggers = ['Circle / B', 'Triangle / Y', 'L2 / LT', 'Square / X'];
+type Binding = { source: string; stance: string; move: string; input?: { modifier_mask: number; trigger_mask: number; gesture: 'tap' | 'hold' } };
 type Preset = {
   schema_version: number; name: string; weapon: string; tap_move: string | null; hold_move: string | null;
   modifier_mask: number; trigger_mask: number; hold_seconds: number; chord_stance: Stance | 'any';
@@ -17,7 +19,7 @@ type Snapshot = {
   runtime: string; preset: Preset; calibration: Calibration; buttons: Record<string, number>; nioh_exe: string;
   running: boolean; status: string; detail: string;
   binding_groups: { id: string; label: string }[]; load_warning?: string;
-  capabilities: { moves: Move[]; native_sources: { id: string; label: string; description?: string; stances?: string[] }[]; stances: Stance[]; chord_stances?: (Stance | 'any')[]; native_binding_limit?: number; speed: { min: number; max: number } };
+  capabilities: { moves: Move[]; native_sources: { id: string; label: string; description?: string; stances?: string[] }[]; stances: Stance[]; chord_stances?: (Stance | 'any')[]; native_binding_limit?: number; custom_binding_limit?: number; speed: { min: number; max: number } };
 };
 type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
   priority: string | null; review_notes: string[]; steps: { source: { action_id: string; motion_id: number } }[];
@@ -29,7 +31,8 @@ declare global { interface Window { mwm: { request<T>(method: string, params?: u
 
 let state: Snapshot;
 let collection: Collection;
-let tab = 'overview', dirty = false, busy = false, capture: 'modifier_mask' | 'trigger_mask' | null = null;
+type CaptureTarget = { kind: 'global'; key: ButtonKey } | { kind: 'route'; binding: Binding; key: ButtonKey };
+let tab = 'overview', dirty = false, busy = false, capture: CaptureTarget | null = null;
 let controllerChoice = 'saved';
 let bindingGroup = 'chord';
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -55,10 +58,10 @@ soundToggle.checked = localStorage.getItem('mwm.sound') !== 'off';
 hapticToggle.checked = localStorage.getItem('mwm.haptic') === 'on';
 
 const pageHelp: Record<string, [string, string, string]> = {
-  overview: ['Sword skill map', 'Each row begins with a real game input. Choose a reviewed replacement only for routes you want to change.', 'Original keeps Nioh’s action. Save your draft before enabling the mod.'],
+  overview: ['Sword skill map', 'Original routes replace a Nioh input; custom routes use their own controller buttons.', 'Open Input routes to choose the activation for each replacement.'],
   speed: ['Move tuning', 'Set the playback speed of a move or one phase of a string.', 'Blank inherits its string speed. Enter 1 for native speed.'],
-  controls: ['Controller', 'Set your device and the two buttons that form your custom input.', 'Save changes before enabling the mod.'],
-  native: ['Input routes', 'Add a source input, choose the stance where it applies, then select a reviewed replacement.', 'Remove a route to restore that original game input.'],
+  controls: ['Controller', 'Set the device mapping and the buttons for the global custom chord.', 'Input routes can use additional chords with separate buttons.'],
+  native: ['Input routes', 'Choose Original Nioh input or Custom controller chord for each reviewed move.', 'Custom routes add a new input and leave original game actions alone.'],
   frost: ['Stance-switch moves', 'Choose the move used when Frost Moon reaches each stance.', 'Trigger during a Ki Pulse window with R1 / RB and two stance taps.'],
   collection: ['Move library', 'Playable moves can be assigned in Sword or Input routes. Recorded candidates remain research until adapted and reviewed.', 'A video or action ID alone does not establish that William can play a move.'],
   guide: ['Help', 'Choose moves, save the draft, then enable the mod.', 'Disable the mod before saving further changes.']
@@ -75,9 +78,11 @@ const fieldHelp: Record<string, [string, string]> = {
   'Game controller slot': ['Choose which game controller is used when several are connected.', 'Auto works when exactly one eligible controller is active.'],
   'Game executable': ['Choose nioh.exe for launching the game from this app.', 'Changing the path does not launch the game.'],
   'Show unused moves': ['Include speed controls for moves outside this moveset.', 'Saved overrides on unused moves remain available.'],
-  Source: ['The game-selected sword input that starts this route. MWM replaces that action after Nioh recognizes it.', 'This does not globally remap the physical controller button.'],
-  Stance: ['The stance in which this replacement applies.', 'Any applies only where the chosen source supports it.'],
-  Replacement: ['The reviewed move that replaces the original input.', 'Remove the row to restore the native action.'],
+  Source: ['The game-selected sword input replaced by this original route.', 'Switch Activation to custom buttons to leave the original input unchanged.'],
+  Activation: ['Original Nioh input replaces the selected game action. Custom controller chord starts from the buttons in this row.', 'A custom route adds an input without changing original game actions.'],
+  Gesture: ['Tap starts on a short Trigger press. Hold starts after the custom chord hold threshold.', 'A tap and hold can use the same buttons for separate routes.'],
+  Stance: ['The stance in which this route applies.', 'Any works where the selected move and original source permit it.'],
+  Move: ['The reviewed move played by this route.', 'Remove the row to clear the route.'],
   'Okatsu grapple': ['When a sword grapple succeeds and its native contact condition is met, use the imported Okatsu grapple sequence.', 'This does not turn normal attacks into grapples.'],
   'Mid quick-attack finisher': ['While a native Mid quick-attack string is active, hold Guard (LB/L1) and press Strong attack (Y/Triangle) in its combo window for William’s native finisher.', 'It adds a finisher to three Mid quick strings; it does not replace every quick press.'],
   'Okatsu dual-trigger string': ['After both analog triggers return to neutral, hold LT+RT (L2+R2) past their threshold to start the optional Okatsu imported string.', 'This is separate from replacing Nioh’s ordinary Quick attack source.'],
@@ -336,6 +341,16 @@ const sourceInputs: Record<string, string> = {
 function sourceInput(source: string) {
   return sourceInputs[source] || state.capabilities.native_sources.find(item => item.id === source)?.label || source;
 }
+function buttonName(mask: number) {
+  return Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
+}
+function routeMaskAllowed(key: ButtonKey, mask: number) {
+  return (key === 'modifier_mask' ? ['L1 / LB'] : routeTriggers).some(name => state.buttons[name] === mask);
+}
+function routeInput(binding: Binding) {
+  const input = binding.input;
+  return input ? `Hold ${buttonName(input.modifier_mask)} · ${input.gesture} ${buttonName(input.trigger_mask)}` : sourceInput(binding.source);
+}
 function moveHelp(id: string | null, context: string): [string, string] {
   const move = playable(id);
   return move ? [`${context}. ${move.description || 'Reviewed move; see its source notes in Move library.'}`,
@@ -400,7 +415,8 @@ function renderOverview() {
   // Editing a choice remains a draft until the single Save changes action succeeds.
   const p = state.preset;
   const heading = element('div', undefined, 'overview-heading');
-  heading.append(element('h2', 'Sword skill map'), element('p', 'Game input → reviewed move · Original keeps the game action'));
+  const custom = p.skill_bindings.filter(binding => binding.input).length;
+  heading.append(element('h2', 'Sword skill map'), element('p', `${p.skill_bindings.length - custom} original input routes · ${custom} custom button routes`));
   content.append(heading);
   const cards = element('div', undefined, 'stance-grid'); content.append(cards);
   const labels: Record<string, string> = { light_attack: 'Quick attack', heavy_attack: 'Heavy attack',
@@ -410,10 +426,11 @@ function renderOverview() {
     // Removing an assignment restores that source through the ordinary validator.
     // A structural removal rebuilds the overview without touching unrelated routes.
     const label = labels[binding.source] || state.capabilities.native_sources.find(source => source.id === binding.source)?.label || binding.source;
-    assignment(parent, label, `native:${binding.stance}:${binding.source}`, 'native', binding.move, value => {
+    const key = binding.input ? `custom:${p.skill_bindings.indexOf(binding)}` : `native:${binding.stance}:${binding.source}`;
+    assignment(parent, binding.input ? 'Custom chord' : label, key, binding.input ? 'chord' : 'native', binding.move, value => {
       if (value) binding.move = value;
       else { p.skill_bindings.splice(p.skill_bindings.indexOf(binding), 1); render(); }
-    }, sourceInput(binding.source));
+    }, routeInput(binding));
   };
   for (const stance of state.capabilities.stances) {
     const card = element('section', undefined, 'stance-card'); card.dataset.stance = stance;
@@ -425,10 +442,9 @@ function renderOverview() {
     assignment(card, 'Frost Moon · stance switch', `frost:${stance}`, 'chord', p.frost_moon[stance], value => { p.frost_moon[stance] = value || null; }, `Ki Pulse window · RB/R1 + ${stance} stance twice`);
   }
   const shared = element('section', undefined, 'shared-routes');
-  annotate(shared, 'Custom input', 'Two buttons can play one move on a tap and another on a hold.', 'Open Controller to record or change the buttons.');
+  annotate(shared, 'Global custom chord', 'The original two-button chord can play one move on tap and another on hold.', 'Open Controller to record or change its buttons.');
   const description = element('div');
-  const buttonName = (mask: number) => Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
-  description.append(element('h3', `${buttonName(p.modifier_mask)} + ${buttonName(p.trigger_mask)}`), element('p', p.chord_stance === 'any' ? 'Custom input · all stances' : `Custom input · ${p.chord_stance} stance`));
+  description.append(element('h3', `${buttonName(p.modifier_mask)} + ${buttonName(p.trigger_mask)}`), element('p', p.chord_stance === 'any' ? 'Global chord · all stances' : `Global chord · ${p.chord_stance} stance`));
   const setup = element('button', 'Edit buttons →', 'inline-button'); setup.onclick = () => navigate('controls'); description.append(setup); shared.append(description);
   assignment(shared, 'Tap / release', 'chord:tap', 'chord', p.tap_move, value => { p.tap_move = value || null; }, `${buttonName(p.modifier_mask)} + tap ${buttonName(p.trigger_mask)}`);
   assignment(shared, `Hold · ${p.hold_seconds}s`, 'chord:hold', 'chord', p.hold_move, value => { p.hold_move = value || null; }, `${buttonName(p.modifier_mask)} + hold ${buttonName(p.trigger_mask)}`);
@@ -452,7 +468,7 @@ function renderMoves() {
   // Present the existing sword preset's custom chord and native hold choices.
   // Each move menu uses its own capability flag rather than a universal catalogue list.
   // Weapon selection stays sword-only until Engine implements reviewed weapon routing.
-  const p = state.preset, grid = section('Custom chord', 'Hold Modifier, then press Trigger. Choose separate moves for a tap and a hold. Use Press to bind to record either button directly from your controller.');
+  const p = state.preset, grid = section('Global custom chord', 'Hold Modifier, then press Trigger. Choose separate moves for a tap and a hold. Input routes can use additional chords.');
   field('Moveset name', input(p.name, value => {
     // Preserve a readable profile name apart from its stable move IDs.
     // Engine enforces its length and nonempty value during Apply.
@@ -530,43 +546,56 @@ function renderOverrides() {
 }
 
 function renderNative() {
-  // Edit a list of explicit source/stance replacements instead of guessing from move names.
-  // Engine rejects duplicate, overlapping or incompatible bindings on Apply.
-  // Removing a row restores that source's native behavior after Apply.
-  content.append(element('h2', 'Input routes', 'section-title'),
-    element('p', 'Route a game-selected sword input to a reviewed move in Low, Mid, High, or an allowed shared scope. The game still owns the base controller buttons.', 'hint'));
+  // A route either replaces Nioh's source or starts from its own controller chord.
+  // The same source can label several custom routes without consuming native slots.
+  const p = state.preset;
+  content.append(element('h2', 'Input overrides', 'section-title'),
+    element('p', 'Choose how each reviewed move starts. Original Nioh input replaces a game action. Custom controller chord adds a new input without changing original actions. Per-route chords use L1/LB + B, Y, LT or X; hold uses the global chord threshold on Controller.', 'hint'));
   const toolbar = element('div', undefined, 'route-toolbar');
-  const search = element('input'); search.type = 'search'; search.placeholder = 'Filter source, stance, or move'; search.setAttribute('aria-label', 'Filter input routes');
+  const search = element('input'); search.type = 'search'; search.placeholder = 'Filter source, buttons, stance, or move'; search.setAttribute('aria-label', 'Filter input routes');
   search.oninput = () => { const query = search.value.trim().toLowerCase(); for (const row of content.querySelectorAll<HTMLElement>('.binding')) row.hidden = !row.dataset.search?.includes(query); };
   const slots = element('span', undefined, 'slot-count');
   const updateSlots = () => {
     const used = Object.values(state.preset.stance_holds).filter(Boolean).length
-      + state.preset.skill_bindings.reduce((sum, binding) => sum + (binding.source === 'heavy_attack' && binding.stance === 'any' ? 3 : 1), 0);
-    slots.textContent = `${used}${state.capabilities.native_binding_limit ? ` / ${state.capabilities.native_binding_limit}` : ''} native slots used`;
+      + state.preset.skill_bindings.reduce((sum, binding) => sum + (binding.input ? 0 : binding.source === 'heavy_attack' && binding.stance === 'any' ? 3 : 1), 0);
+    const custom = state.preset.skill_bindings.filter(binding => binding.input).length;
+    slots.textContent = `${used} / ${state.capabilities.native_binding_limit || 32} original slots · ${custom} / ${state.capabilities.custom_binding_limit || 24} custom routes`;
   };
   updateSlots(); toolbar.append(search, slots); content.append(toolbar);
   const diagnostic = element('p', 'Checking route conflicts…', 'route-diagnostic'); diagnostic.id = 'route-diagnostic'; diagnostic.setAttribute('role', 'status'); content.append(diagnostic);
+  const overlap = (a: string, b: string) => a === 'any' || b === 'any' || a === b;
+  const suggestedInput = (stance: string): NonNullable<Binding['input']> => {
+    const modifier_mask = state.buttons['L1 / LB'];
+    const triggers = routeTriggers.map(name => state.buttons[name]).filter((mask): mask is number => mask !== undefined);
+    const occupied = (modifier: number, trigger: number, gesture: 'tap' | 'hold') => {
+      const conflict = (a: number, b: number, kind: string) => a === trigger && b === modifier || a === modifier && b === trigger && kind === gesture;
+      return p.skill_bindings.some(row => row.input && overlap(stance, row.stance) && conflict(row.input.modifier_mask, row.input.trigger_mask, row.input.gesture))
+        || overlap(stance, p.chord_stance) && Boolean(p.tap_move && conflict(p.modifier_mask, p.trigger_mask, 'tap') || p.hold_move && conflict(p.modifier_mask, p.trigger_mask, 'hold'));
+    };
+    for (const gesture of ['tap', 'hold'] as const) for (const trigger_mask of triggers)
+      if (!occupied(modifier_mask, trigger_mask, gesture)) return { modifier_mask, trigger_mask, gesture };
+    return { modifier_mask, trigger_mask: triggers[0], gesture: 'tap' };
+  };
   for (const [index, binding] of state.preset.skill_bindings.entries()) {
     const row = element('div', undefined, 'binding');
-    row.dataset.search = `${sourceInput(binding.source)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
-    annotate(row, 'Input replacement', 'This row routes an original controller input to a reviewed move.', 'Remove the row to restore the native input.');
+    row.classList.toggle('custom-route', Boolean(binding.input));
+    row.dataset.search = `${routeInput(binding)} ${binding.stance} ${playable(binding.move)?.name || binding.move}`.toLowerCase();
+    annotate(row, 'Input route', binding.input ? 'This custom chord plays a reviewed move without replacing a Nioh input.' : 'This route replaces the named Nioh input with a reviewed move.', 'Remove the row to clear this route.');
     const head = element('div', undefined, 'binding-head');
     head.append(element('span', `ROUTE ${String(index + 1).padStart(2, '0')}`, 'route-number'),
-      element('span', sourceInput(binding.source), 'route-notation'),
+      element('span', routeInput(binding), 'route-notation'),
       element('span', binding.stance.toUpperCase(), 'stance-tag'));
     row.append(head);
-    const sources: [string, string][] = [];
-    for (const source of state.capabilities.native_sources) sources.push([source.id, source.label]);
-    field('Source', select(sources, binding.source, value => {
-      // Change the native entry point for this pending override.
-      // Source IDs come from Engine's maintained list.
-      // Semantic overlap is checked with the entire preset.
-      binding.source = value;
-      const stances = state.capabilities.native_sources.find(source => source.id === value)?.stances;
-       if (stances && !stances.includes(binding.stance)) binding.stance = stances.length === 1 ? stances[0] : '';
-      render();
-    }), row);
-    const allowed = state.capabilities.native_sources.find(source => source.id === binding.source)?.stances || ['any', 'low', 'mid', 'high'];
+    if (!binding.input) {
+      const sources: [string, string][] = state.capabilities.native_sources.map(source => [source.id, source.label]);
+      field('Source', select(sources, binding.source, value => {
+        binding.source = value;
+        const stances = state.capabilities.native_sources.find(source => source.id === value)?.stances;
+        if (stances && !stances.includes(binding.stance)) binding.stance = stances.length === 1 ? stances[0] : '';
+        render();
+      }), row);
+    }
+    const allowed = binding.input ? ['any', 'low', 'mid', 'high'] : state.capabilities.native_sources.find(source => source.id === binding.source)?.stances || ['any', 'low', 'mid', 'high'];
     const stanceChoices: [string, string][] = allowed.map(stance => [stance, stance.toUpperCase()]);
     if (!binding.stance) stanceChoices.unshift(['', 'Choose stance…']);
     field('Stance', select(stanceChoices, binding.stance, value => {
@@ -575,34 +604,51 @@ function renderNative() {
       // No automatic conflict resolution silently removes another row.
       binding.stance = value; updateSlots();
     }), row);
-    const replacement = select(moveOptions('native').slice(1), binding.move, value => {
+    field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller chord']], binding.input ? 'custom' : 'original', value => {
+      if (value === 'custom' && !binding.input) binding.input = suggestedInput(binding.stance);
+      if (value === 'original') delete binding.input;
+      const choices = moveOptions(binding.input ? 'chord' : 'native').slice(1);
+      if (!choices.some(([id]) => id === binding.move)) binding.move = choices[0][0];
+      void action(async () => { await cancelCapture(); render(); });
+    }), row);
+    const role = binding.input ? 'chord' : 'native';
+    const replacement = select(moveOptions(role).slice(1), binding.move, value => {
       // Expose only actions reviewed for native-source replacement.
       // This stores an ID, never a raw game address.
       // Apply still checks source-specific restrictions.
       binding.move = value;
     });
-    const replacementField = field('Replacement', replacement, row);
-    const updateHelp = () => { const [body, tip] = moveHelp(replacement.value, `Game input: ${sourceInput(binding.source)}`); annotate(replacementField, 'Replacement', body, tip); };
+    const replacementField = field('Move', replacement, row);
+    const updateHelp = () => { const [body, tip] = moveHelp(replacement.value, `Input: ${routeInput(binding)}`); annotate(replacementField, 'Move', body, tip); };
     updateHelp(); replacement.addEventListener('change', () => { updateHelp(); explainTarget(replacement); });
-    browseMove(replacementField, replacement, 'native', `route ${index + 1}`);
+    browseMove(replacementField, replacement, role, `route ${index + 1}`);
+    if (binding.input) {
+      for (const [key, label] of [['modifier_mask', 'Modifier'], ['trigger_mask', 'Trigger']] as const) {
+        const input = binding.input;
+        buttonPicker(row, label, input[key], value => { input[key] = value; }, { kind: 'route', binding, key });
+      }
+      field('Gesture', select([['tap', 'Tap / release'], ['hold', `Hold · ${p.hold_seconds}s`]], binding.input.gesture, value => {
+        binding.input!.gesture = value as 'tap' | 'hold';
+      }), row);
+      row.append(element('p', 'Original Nioh inputs stay unchanged. Hold L1/LB, then use the selected Trigger gesture.', 'control-note'));
+      if (capture?.kind === 'route' && capture.binding === binding) captureStatus(row);
+    }
     const remove = element('button', 'Remove'); remove.onclick = () => {
-      // Delete exactly the row whose Remove action was pressed.
-      // Rerender reassigns displayed indices after deletion.
-      // The saved Engine preset remains untouched until Apply.
-      state.preset.skill_bindings.splice(index, 1); changed(); render();
+      void action(async () => {
+        await cancelCapture(); state.preset.skill_bindings.splice(state.preset.skill_bindings.indexOf(binding), 1); changed(); render();
+      });
     };
     row.append(remove); content.append(row);
   }
-  const add = element('button', '+ Add replacement', 'add-route'); add.onclick = () => {
-    // Ask the worker for an unoccupied source/stance with a compatible reviewed move.
-    // Capacity and graph restrictions are checked before a row reaches the form.
-    // The returned row remains editable and is not applied automatically.
-    void action(async () => {
-      await cancelCapture(); state.preset = await window.mwm.request<Preset>('add_override', params());
-      changed(); render();
-    });
-  };
-  toolbar.append(add);
+  for (const [mode, label] of [['original', '+ Add original route'], ['custom', '+ Add custom input']] as const) {
+    const add = element('button', label, 'add-route'); add.onclick = () => {
+      void action(async () => {
+        await cancelCapture(); state.preset = await window.mwm.request<Preset>('add_override', { ...params(), mode });
+        changed(); render();
+      });
+    };
+    toolbar.append(add);
+  }
 }
 
 function renderFrost() {
@@ -677,20 +723,29 @@ async function pollCapture() {
     if (!capture || generation !== captureGeneration) return;
     if (result.mask !== undefined) {
       if (result.calibration && JSON.stringify(result.calibration) !== JSON.stringify(state.calibration)) {
+        const index = target.kind === 'route' ? state.preset.skill_bindings.indexOf(target.binding) : -1;
+        if (target.kind === 'route' && index < 0) { await cancelCapture(); return; }
         const mapped = await window.mwm.request<Pick<Snapshot, 'calibration' | 'preset' | 'buttons'>>('controller',
           { ...params(), choice: 'detected', detected_calibration: result.calibration });
         if (!capture || generation !== captureGeneration) return;
         Object.assign(state, mapped);
+        if (target.kind === 'route') target.binding = state.preset.skill_bindings[index];
         controllerChoice = state.calibration.device.backend === 'xinput' ? String(Number(state.calibration.device.slot) + 1) : 'ds4';
       }
-      state.preset[target] = result.mask; capture = null; changed(); render();
+      if (target.kind === 'route' && !routeMaskAllowed(target.key, result.mask)) {
+        await cancelCapture(); render(); message('Per-route custom inputs use L1/LB as Modifier and B, Y, LT or X as Trigger.', true); return;
+      }
+      if (target.kind === 'global') state.preset[target.key] = result.mask;
+      else if (state.preset.skill_bindings.includes(target.binding) && target.binding.input) target.binding.input[target.key] = result.mask;
+      else { await cancelCapture(); return; }
+      capture = null; changed(); render();
       message('Bound ' + result.label + '. Choose Save changes to use it.');
       window.dispatchEvent(new CustomEvent('mwm:bound', { detail: { slot: state.calibration.controller_slot ?? null } }));
     }
     else {
       const status = result.status || 'Waiting for input';
       message(status);
-      document.querySelector('#capture-status')!.textContent = status;
+      document.querySelector('#capture-status')!.textContent = captureLabel(target) + status;
       timer = setTimeout(pollCapture, 70);
     }
   } catch (error) { if (generation === captureGeneration) { capture = null; render(); message(errorText(error), true); } }
@@ -703,33 +758,51 @@ async function cancelCapture() {
   ++captureGeneration; capture = null; clearTimeout(timer); await window.mwm.request('capture_cancel');
 }
 
+function isCapturing(target: CaptureTarget) {
+  if (!capture || capture.kind !== target.kind || capture.key !== target.key) return false;
+  return capture.kind === 'global' || target.kind === 'route' && capture.binding === target.binding;
+}
+function captureLabel(target: CaptureTarget) {
+  return target.kind === 'route' ? `Route ${state.preset.skill_bindings.indexOf(target.binding) + 1} ${target.key === 'modifier_mask' ? 'Modifier' : 'Trigger'} · ` : '';
+}
+function startCapture(target: CaptureTarget) {
+  void action(async () => {
+    await cancelCapture();
+    const started = await window.mwm.request<{ status: string }>('capture_start', { calibration: state.calibration });
+    capture = target; render(); document.querySelector('#capture-status')!.textContent = captureLabel(target) + started.status; void pollCapture();
+  });
+}
+function captureStatus(parent: HTMLElement, always = false) {
+  if (!capture && !always) return;
+  const status = element('p', 'Listening for a button…', 'capture-status');
+  status.id = 'capture-status'; status.setAttribute('role', 'status'); status.hidden = !capture; parent.append(status);
+  if (capture) {
+    const cancel = element('button', 'Cancel binding');
+    cancel.onclick = () => { void action(async () => { await cancelCapture(); render(); message('Binding cancelled.'); }); };
+    parent.append(cancel);
+  }
+}
+
+function buttonPicker(parent: HTMLElement, label: string, mask: number, update: (mask: number) => void, target: CaptureTarget) {
+  const buttons: [string, string][] = Object.entries(state.buttons)
+    .filter(([name]) => target.kind === 'global' || (target.key === 'modifier_mask' ? name === 'L1 / LB' : routeTriggers.includes(name)))
+    .map(([name, bit]) => [String(bit), name]);
+  if (!buttons.some(([value]) => value === String(mask))) buttons.unshift([String(mask), `${buttonName(mask)} · choose a supported button`]);
+  const wrapper = field(label, select(buttons, String(mask), value => { update(Number(value)); void action(cancelCapture); }), parent);
+  if (target.kind === 'route') annotate(wrapper, label,
+    target.key === 'modifier_mask' ? 'Per-route custom chords use L1/LB as Modifier.' : 'Per-route custom chords support B, Y, LT or X as Trigger.',
+    'Press to bind records a supported button on the connected controller.');
+  const bind = element('button', isCapturing(target) ? 'Listening…' : 'Press to bind');
+  bind.setAttribute('aria-label', target.kind === 'route' ? `Record ${label.toLowerCase()} for route ${state.preset.skill_bindings.indexOf(target.binding) + 1}` : `Record global ${label.toLowerCase()}`);
+  bind.onclick = () => startCapture(target); wrapper.append(bind);
+}
+
 function renderChordButtons(grid: HTMLElement) {
   // Keep the chord's actual buttons beside its tap/hold actions.
   // Binding captures target one pending field and never change runtime input directly.
   // Controller-specific labels come from the same calibration used by validation.
-  const buttons: [string, string][] = [];
-  for (const [label, mask] of Object.entries(state.buttons)) buttons.push([String(mask), label]);
   for (const [key, label] of [['modifier_mask', 'Modifier'], ['trigger_mask', 'Trigger']] as const) {
-    const wrapper = field(label, select(buttons, String(state.preset[key]), value => {
-      // Store the selected calibrated bit rather than a display label.
-      // Engine rejects identical modifier and trigger buttons.
-      // Both roles remain draft values until Apply.
-      state.preset[key] = Number(value);
-      void action(cancelCapture);
-    }), grid);
-    const bind = element('button', capture === key ? 'Listening…' : 'Press to bind'); bind.onclick = () => {
-      // Arm this specific pending field after cancelling any earlier request.
-      // Engine requires neutral input before returning a single supported button.
-      // Binding never enables the mod by itself.
-      void action(async () => {
-        // Keep listener creation ordered with previous cancellation.
-        // Start polling only after the worker confirms its listener exists.
-        // The UI target names the field that receives a completed mask.
-        await cancelCapture(); const started = await window.mwm.request<{ status: string }>('capture_start', { calibration: state.calibration });
-        capture = key; render(); document.querySelector('#capture-status')!.textContent = started.status; void pollCapture();
-      });
-    };
-    wrapper.append(bind);
+    buttonPicker(grid, label, state.preset[key], value => { state.preset[key] = value; }, { kind: 'global', key });
   }
   const swap = element('button', 'Swap buttons');
   swap.onclick = () => {
@@ -743,19 +816,7 @@ function renderChordButtons(grid: HTMLElement) {
     });
   };
   swap.className = 'swap-buttons'; grid.append(swap);
-  const captureStatus = element('p', 'Listening for a button…', 'capture-status');
-  captureStatus.id = 'capture-status'; captureStatus.setAttribute('role', 'status'); captureStatus.hidden = !capture;
-  grid.append(captureStatus);
-  if (capture) {
-    const cancel = element('button', 'Cancel binding');
-    cancel.onclick = () => {
-      // Cancel this listener explicitly without saving a captured value.
-      // The generation check also rejects any reply already in transit.
-      // Return the controls to their normal editable state.
-      void action(async () => { await cancelCapture(); render(); message('Binding cancelled.'); });
-    };
-    grid.append(cancel);
-  }
+  captureStatus(grid, true);
 }
 
 function renderControllerMap() {
@@ -778,7 +839,7 @@ function renderControllerMap() {
     const item = element('div', undefined, 'pad-key'); item.append(element('kbd', key), element('span', label)); right.append(item);
   }
   layout.append(left, center, right); diagram.append(layout);
-  diagram.append(element('p', 'MWM adds a custom chord and selected sword routes. It does not remap Nioh’s entire controller layout.', 'hint'));
+  diagram.append(element('p', 'MWM adds custom chords and selected sword routes. Nioh keeps its other controller inputs.', 'hint'));
   content.append(diagram);
 }
 
@@ -786,7 +847,7 @@ function renderControls() {
   // Present calibrated button meanings and supported OS controller backends.
   // Remapping goes through Engine so changing hardware preserves logical button choices.
   // Physical controller acceptance is not inferred from successfully editing this form.
-  const grid = section('Device & game', 'Choose the controller layout used to read your chord. Press to bind on the custom chord above can detect the active supported controller while Nioh is open or closed.');
+  const grid = section('Device & game', 'Choose the controller layout used for every custom chord. Press to bind on this page or Input routes detects a supported controller while Nioh is open or closed.');
   const devices = select([['saved', 'Saved mapping'], ['ds4', 'DS4 mapping'], ['1', 'XInput controller 1'], ['2', 'XInput controller 2'], ['3', 'XInput controller 3'], ['4', 'XInput controller 4']], controllerChoice, value => {
     // Cancel the previous controller listener before translating button masks.
     // Failed remapping preserves the current pending preset.
@@ -937,7 +998,7 @@ function render() {
   else {
     const guide = element('article', undefined, 'guide');
     guide.append(element('h2', 'Edit, save, enable.'));
-    for (const text of ['1. Choose moves for your inputs. Disable the mod before Save changes; your draft stays in the editor.', '2. Open Controller to set your device and custom buttons if needed.', '3. Enable mod after saving. Check its status above; use Disable mod before further saves.']) guide.append(element('p', text));
+    for (const text of ['1. Choose moves in Sword. Input routes lets each override use its original Nioh input or separate custom buttons.', '2. Set a stance, then set Modifier, Trigger and Tap or Hold for each custom route. Controller keeps the global chord and device mapping.', '3. Disable the mod before Save changes; enable it after saving. Review the status above.']) guide.append(element('p', text));
     guide.append(element('h2', 'Sword Rebuild 1 defaults'));
     for (const text of ['Low Triangle / Y and dodge + heavy use Jin’s cyclone string. Mid Triangle / Y and dodge + heavy use Jin’s five strikes. Low Square / X uses Hideyori’s four-hit string.', 'Low LB + LT tap uses bloodborne gun shot. High heavy → LB + Square / X uses Tachibana’s Omnislice.', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice. Low uses Flying Swallow, Mid uses Oda’s final two slashes, High uses the downward slash.', 'Choose Hold Triangle / Y separately in each stance. Launcher only and Launcher + Izuna Drop must use different stances; the drop requires contact.', 'Use Reuse a binding group under Controller or More → Other inputs & options to export or load one group. Other groups and speed settings stay unchanged.']) guide.append(element('p', text));
     content.append(guide);

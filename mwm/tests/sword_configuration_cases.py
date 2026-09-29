@@ -124,7 +124,8 @@ class SwordConfigurationTests(unittest.TestCase):
             details = report.read_text(encoding='utf8') if report.exists() else result.stdout+result.stderr
             self.assertEqual(result.returncode, 0, details)
             outcome = json.loads(details)
-            self.assertTrue(outcome['explicitNativeSpeed'] and outcome['staleCaptureRejected'] and outcome['frostPreserved'])
+            self.assertTrue(outcome['explicitNativeSpeed'] and outcome['staleCaptureRejected'] and outcome['frostPreserved']
+                            and outcome['customRoutes'] and outcome['customCapture'])
 
     def test_full_dataset_and_design_references(self):
         # Verify the evidence shipped in this private repository, not a Downloads dependency.

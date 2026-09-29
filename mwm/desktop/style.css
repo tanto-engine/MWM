@@ -104,8 +104,15 @@ input:invalid { border-color: #c78b85; }
 input[type=checkbox] { width: 15px; height: 15px; min-height: 0; accent-color: #a8bdca; }
 .toggle { flex-direction: row; align-items: center; }
 .wide { grid-column: 1/-1; }
-.binding { display: grid; grid-template-columns: minmax(140px,1.2fr) minmax(90px,.6fr) minmax(190px,2fr) auto; gap: 12px; align-items: end; padding: 13px 15px; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; background: #1b252d; animation: panel-in .25s ease both; }
+.binding { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; align-items: end; padding: 13px 15px; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; background: #1b252d; animation: panel-in .25s ease both; }
 .binding button { align-self: center; font-size: 12px; }
+.binding .field>button { align-self: flex-start; padding: 5px 9px; border-color: #696349; background: #302d24; color: #e6d19f; }
+.binding>button { grid-column: 1/-1; justify-self: end; }
+.binding .capture-status { grid-column: 1/-1; }
+.binding.custom-route { border-color: #736747; background: #242920; }
+.binding.custom-route>.field:has(.browse-move) { grid-column: 1/-1; }
+.binding:has(.capture-status) { border-color: #bdd7da; box-shadow: 0 0 0 2px #9fc4c233; }
+.binding .control-note { grid-column: 1/-1; }
 .binding-head { grid-column: 1/-1; display: flex; align-items: center; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
 .route-number { color: #d6bb83; font-size: 10px; font-weight: 750; letter-spacing: .12em; white-space: nowrap; }
 .route-notation { color: #b7cbd0; font-size: 11px; letter-spacing: .015em; line-height: 1.45; }
@@ -252,12 +259,22 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .assignment select { min-height: 25px; }
   .shared-routes { padding: 9px 11px; margin-top: 10px; }
   .overview-heading { margin-bottom: 10px; }
-  .binding { grid-template-columns: minmax(0,1.2fr) minmax(95px,.5fr) auto; }
-  .binding .field:has(.browse-move) { grid-column: 1/3; }
-  .binding>button { grid-column: 3; grid-row: 3; }
+  .binding .field:has(.browse-move) { grid-column: 1/-1; }
   .pad-layout { grid-template-columns: minmax(120px,1fr) minmax(140px,1.1fr) minmax(120px,1fr); gap: 7px; }
   .pad-key { gap: 4px; font-size: 10px; }
   .pad-key kbd { min-width: 56px; }
+}
+@media (max-width: 700px) {
+  .app { height: auto; min-height: 100vh; padding: 12px; }
+  header { align-items: flex-start; }
+  nav { overflow-x: auto; }
+  nav>button { flex: none; }
+  .workspace { display: block; }
+  main { overflow: visible; }
+  .inspector { margin-top: 14px; }
+  .binding { grid-template-columns: minmax(0,1fr); }
+  .binding .field:has(.browse-move) { grid-column: 1; }
+  .route-toolbar input { max-width: none; }
 }
 @media (max-height: 680px) {
   .app { padding-block: 13px 10px; gap: 9px; }
