@@ -78,6 +78,7 @@ async function runSmoke(window, call, report) {
   const mapped = xbox.preset.skill_bindings.filter(row => row.input).map(row => [row.input.modifier_mask,row.input.trigger_mask]);
   if (JSON.stringify(mapped) !== JSON.stringify([[0x100,0x2000],[0x100,0x8000]])) throw new Error('Custom route buttons did not follow the controller mapping');
   xbox.preset.modifier_mask=0x100;xbox.preset.trigger_mask=0x2000;
+  xbox.preset.chord_stance='high'; // Keep the global LB+B tap separate from custom Low/Mid routes.
   const rebound={...params,...xbox};
   await call('preview',rebound);
   const reboundSaved=await call('apply',rebound);
