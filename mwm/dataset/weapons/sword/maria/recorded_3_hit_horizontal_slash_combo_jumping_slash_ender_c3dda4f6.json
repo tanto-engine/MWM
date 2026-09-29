@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_3_hit_horizontal_slash_combo_jumping_slash_ender_c3dda4f6",
+  "name": "3 Hit Horizontal Slash Combo (Jumping Slash Ender)",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "3 Hit Horizontal Slash Combo (Jumping Slash Ender)",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "cb7c1c3650668f9ed2729def8bede4c1f2e0adf7d92bca24b7fd54b997b121db",
+      "files": {
+        "encounter.json": "4afcd26e6a26635f28a487c6a505359776ee6d5d893adcb9730667da7f835c66",
+        "events.jsonl": "0c804c22803781c377a008c2967c928d5165187c3008646e4a0e0fd2ce0940e4"
+      },
+      "recording_id": "2a2c1f26-0999-47f6-a741-412100507c83",
+      "take_id": "687941ff-446f-46ec-8c78-e43ae277070d",
+      "annotation_id": "c3dda4f6-27c6-4da2-b9e8-22af2b6b923e",
+      "annotation_text": "Sword/3 Hit Horizontal Slash Combo (Jumping Slash Ender)",
+      "annotation_end_seconds": 64.297,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_low_stance_low_sweep_3_hit_heavy_combo_bfc9ac68",
+  "name": "Low Stance Low Sweep 3 Hit Heavy Combo",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Low Stance Low Sweep 3 Hit Heavy Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "c3c8cd280ce6cdefb16ead03c097fa255e9edc8a115ec12eb8b25f3006bf34d2",
+      "files": {
+        "encounter.json": "70a15e959de9a9eb66c8947aa2afdfeb874b3576dbc7e7373a82d7af8b087cbd",
+        "events.jsonl": "ba4cc21b79faff0d69b0fd7a72825b6983419883ae8503e8bc96300aa2b288b3"
+      },
+      "recording_id": "b09b2de3-b4bd-469b-8872-85097d87ee4a",
+      "take_id": "772652be-99fb-4b50-be1c-bbb23efdd3e7",
+      "annotation_id": "bfc9ac68-536a-4f71-9830-89c47cea1138",
+      "annotation_text": "Sword/Low Stance Low Sweep 3 Hit Heavy Combo",
+      "annotation_end_seconds": 126.468,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

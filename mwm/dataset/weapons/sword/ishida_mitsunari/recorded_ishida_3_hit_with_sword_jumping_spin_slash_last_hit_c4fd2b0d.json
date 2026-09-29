@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_ishida_3_hit_with_sword_jumping_spin_slash_last_hit_c4fd2b0d",
+  "name": "Ishida 3 Hit With Sword Jumping Spin Slash Last Hit",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ishida 3 Hit With Sword Jumping Spin Slash Last Hit",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "70334744347a9e41a0b4608d8940821e95dec8179ecd970421cfa538277757d6",
+      "files": {
+        "encounter.json": "980dcfcc61c55bce20bdd6682ee7715f61364fe051735d3610815d6ef5e8593f",
+        "events.jsonl": "af28649ae2eaeeb034a82c6a5ecaa9077933bb281b89b77422663b0d26172ae2"
+      },
+      "recording_id": "0db3f5de-501a-431f-949c-1d36a863fb2e",
+      "take_id": "f1e588be-201b-4e35-b6cb-49e031dba5c0",
+      "annotation_id": "c4fd2b0d-3209-4464-8feb-76a617e23dfb",
+      "annotation_text": "Sword/Ishida 3 Hit With Sword Jumping Spin Slash Last Hit",
+      "annotation_end_seconds": 11.719,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

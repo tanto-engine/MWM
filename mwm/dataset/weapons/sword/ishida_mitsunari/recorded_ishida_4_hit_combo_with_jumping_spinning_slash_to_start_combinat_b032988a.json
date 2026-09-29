@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_ishida_4_hit_combo_with_jumping_spinning_slash_to_start_combinat_b032988a",
+  "name": "Ishida 4 Hit Combo With Jumping Spinning Slash To Start Combination",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ishida 4 Hit Combo With Jumping Spinning Slash To Start Combination",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "1c0b671a78aa1f6f26a32c1fc14ed64f52979fcd4b227d9d8b6322cec748efa1",
+      "files": {
+        "encounter.json": "30c9f036e2286c51804a11f35d9248005269120ad06b89a7ed7594ac3a4e8827",
+        "events.jsonl": "154fd59d30a25659ae5ece970a3cbbd5a8392d663f8da8dee4627b5f503adcb7"
+      },
+      "recording_id": "0ef3dc77-901f-4e26-8ef9-55063ffa4629",
+      "take_id": "e2aafad9-88e0-40f7-a578-a9cbf3132c37",
+      "annotation_id": "b032988a-b067-45b0-859b-d5cea13f92a6",
+      "annotation_text": "Sword/Ishida 4 Hit Combo With Jumping Spinning Slash To Start Combination",
+      "annotation_end_seconds": 7.875,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_lightning_summoning_attack_6b963e6d",
+  "name": "Lightning Summoning Attack",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Lightning Summoning Attack",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "f72e419b7b13dcb3f3d718e4ff7fb2f4a0513fb7afa15871fad1c75fa36e4eb5",
+      "files": {
+        "encounter.json": "a17d05e564ffb894d848b53b5bcf1c413dab675540b29892d6fac80617977a63",
+        "events.jsonl": "61d00838f6a2e0f75a506176a6b70b804d0e1885c9cee7b4a3fd44355d5d0cac"
+      },
+      "recording_id": "a6aea70e-4c0a-4d95-b5e8-f740fbb31e3f",
+      "take_id": "abf7dd25-f937-4b3b-9874-5a19a56f4358",
+      "annotation_id": "6b963e6d-d95d-4db7-9d9d-0029e1b82a20",
+      "annotation_text": "Sword/Lightning Summoning Attack",
+      "annotation_end_seconds": 90.922,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

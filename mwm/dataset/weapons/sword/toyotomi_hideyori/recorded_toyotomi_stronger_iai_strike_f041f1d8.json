@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_toyotomi_stronger_iai_strike_f041f1d8",
+  "name": "Toyotomi Stronger Iai Strike",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Toyotomi Stronger Iai Strike",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "881d9f7da3d163d229373de3db569a8aa08b8cf3ac6f4379ac5b0c4a4a5d050a",
+      "files": {
+        "encounter.json": "19c7af5bb845e6071343289d897eb964ca9a8c78e481cbf03639f7d0cf6868f7",
+        "events.jsonl": "8624771a170b82fd04b816ec42de66f4dec414df06bc85cd1c673fe5fa174b15"
+      },
+      "recording_id": "8a4da33f-72a2-4398-bc64-a76b8569dd14",
+      "take_id": "b9ab4095-9d0d-4c61-a048-e22b3346c6c9",
+      "annotation_id": "f041f1d8-368d-4dd0-8066-c2594e81230b",
+      "annotation_text": "Sword/Toyotomi Stronger Iai Strike",
+      "annotation_end_seconds": 118.594,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

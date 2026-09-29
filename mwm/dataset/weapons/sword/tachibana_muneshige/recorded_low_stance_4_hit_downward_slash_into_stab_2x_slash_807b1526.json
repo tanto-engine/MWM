@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_low_stance_4_hit_downward_slash_into_stab_2x_slash_807b1526",
+  "name": "Low Stance 4 Hit (Downward Slash, Into Stab, 2X Slash)",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Low Stance 4 Hit (Downward Slash, Into Stab, 2X Slash)",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "169c1166768c7d1c7f9c6b12b06396be96726b860b1bf5ceeb407ea7c17e4d89",
+      "files": {
+        "encounter.json": "2e1f8a4ae61511e808d9e87d0da3719b7224cf8e4b686677befeff8e937d4cf0",
+        "events.jsonl": "736237944fa4313775079a49b415b580211db0b72fd58b533014bed9f8db521b"
+      },
+      "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+      "take_id": "03e23660-472b-4a52-9727-8b1439d9c947",
+      "annotation_id": "807b1526-878f-423d-9fdd-604c9520ab66",
+      "annotation_text": "Sword/Low Stance 4 Hit (Downward Slash, Into Stab, 2X Slash)",
+      "annotation_end_seconds": 21.625,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

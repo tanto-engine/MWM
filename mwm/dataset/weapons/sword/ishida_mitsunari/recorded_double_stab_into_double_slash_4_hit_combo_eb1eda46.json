@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_double_stab_into_double_slash_4_hit_combo_eb1eda46",
+  "name": "Double Stab Into Double Slash 4 Hit Combo",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Double Stab Into Double Slash 4 Hit Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "f97e5f8d6395a05824093244a0896c95edc8d4145677913fed5da290d6a0b64a",
+      "files": {
+        "encounter.json": "ad2bba59b4925d67742e534e8030b3f2786ffd1d686ffa2efb70cc0307616eab",
+        "events.jsonl": "38ae9665879cd2158c77962624c3a6e0b0d914156871ed0b44a0b112c9e065db"
+      },
+      "recording_id": "b9c31616-7172-4a1c-b3d6-0ea81ea7e635",
+      "take_id": "6cbb161d-9540-4b99-b379-bb7b79ec3c7a",
+      "annotation_id": "eb1eda46-fe56-45f1-bdd2-639267685beb",
+      "annotation_text": "Sword/Double Stab Into Double Slash 4 Hit Combo",
+      "annotation_end_seconds": 5.593,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

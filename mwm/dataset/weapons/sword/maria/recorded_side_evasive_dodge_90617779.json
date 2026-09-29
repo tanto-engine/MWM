@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_side_evasive_dodge_90617779",
+  "name": "Side Evasive Dodge",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Side Evasive Dodge",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "7f668a279bd6ef4fdc484f1554e9f10f497515c83e8fa61e12a8e7f0bc747dcc",
+      "files": {
+        "encounter.json": "5b25acfcd4ca59dc37c37398c65c2c8a70aaef8d1093c2dc953c1841859c6899",
+        "events.jsonl": "f9be795f8521b5792e75e707491e6cfe8b590646ac0b875a60424f0b49217f92"
+      },
+      "recording_id": "ddd4c8c7-3186-443f-ad1e-19cbc4495959",
+      "take_id": "1fa649ff-66bb-4567-8abf-190c37765e79",
+      "annotation_id": "90617779-46fd-47fd-b6ef-3b9f120a466e",
+      "annotation_text": "Sword/ Side Evasive Dodge",
+      "annotation_end_seconds": 69.938,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

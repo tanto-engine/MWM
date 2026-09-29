@@ -31,13 +31,18 @@ def load_dataset(root):
         require(move.get('schema_version') == 1 and move.get('id') == identifier, f'{path}: identity/version mismatch')
         require(identifier not in records, f'Duplicate identity: {identifier}')
         require(weapon in manifest['weapons'] and boss in manifest['bosses'], f'{identifier}: unknown weapon/boss')
+        require(boss != 'edward_kelley', f'{identifier}: excluded boss')
         require(move['weapon_id'] == weapon and move['boss_id'] == boss, f'{identifier}: folder classification mismatch')
         require(move['kind'] == 'move_string' and bool(move['name'].strip()), f'{identifier}: unnamed move string')
         require(move['review_status'] in ('candidate', 'reviewed', 'rejected'), f'{identifier}: invalid review status')
         require(move['priority'] in (None, 'low', 'mid', 'high'), f'{identifier}: invalid priority')
-        require(move.get('mapping_status', 'candidate') in ('candidate', 'partial'), f'{identifier}: invalid mapping status')
+        mapping = move.get('mapping_status', 'candidate')
+        require(mapping in ('candidate', 'partial', 'unmapped'), f'{identifier}: invalid mapping status')
         steps = move['steps']
-        require(bool(steps) and len({step['id'] for step in steps}) == len(steps), f'{identifier}: missing/duplicate steps')
+        require((mapping == 'unmapped' and move['review_status'] == 'candidate' and not steps and not move['observed_links']
+                 and bool(move.get('blocked_reasons'))) or
+                (mapping != 'unmapped' and bool(steps) and len({step['id'] for step in steps}) == len(steps)),
+                f'{identifier}: missing/duplicate steps or unsafe unmapped candidate')
         for step in steps:
             source = step['source']
             require(re.fullmatch(r'0x[0-9A-F]{8}', source['action_id']) is not None, f'{identifier}: expected full DWORD action ID')
@@ -49,7 +54,9 @@ def load_dataset(root):
                     f'{identifier}: link must join consecutive steps')
         require(bool(move['evidence']), f'{identifier}: evidence reference required')
         for evidence in move['evidence']:
-            hashes = [evidence['archive_sha256'], evidence['game_build_sha256'], *evidence['files'].values()]
+            hashes = [evidence['archive_sha256'], *evidence['files'].values()]
+            if evidence['game_build_sha256'] is not None:
+                hashes.append(evidence['game_build_sha256'])
             require(all(re.fullmatch(r'[0-9a-f]{64}', value) for value in hashes), f'{identifier}: invalid SHA256')
             require(set(evidence['files']) == {'encounter.json', 'events.jsonl'}, f'{identifier}: unexpected evidence files')
             require([step['step_id'] for step in evidence['steps']] == list(positions), f'{identifier}: evidence step order mismatch')
@@ -57,7 +64,10 @@ def load_dataset(root):
             require({(link['from'], link['to']) for link in evidence['native_links']} == expected, f'{identifier}: native link references mismatch')
             require(len(evidence['native_links']) == len(expected) and all(type(link['transition_entry_index']) is int and
                     link['transition_entry_index'] >= 0 for link in evidence['native_links']), f'{identifier}: invalid native link index')
+            require(evidence['identity_line'] is not None or mapping == 'unmapped' and
+                    'recorded_take_missing' in move['blocked_reasons'], f'{identifier}: missing build identity')
             lines = [evidence['identity_line'], *[row[key] for row in evidence['steps'] for key in ('action_line', 'metadata_line')]]
+            lines = [line for line in lines if line is not None]
             require(all(type(line) is int and line > 0 for line in lines), f'{identifier}: invalid evidence line')
         records[identifier] = move
     return records
@@ -78,7 +88,7 @@ def verify_evidence(records, evidence_root):
             while block := file.read(1024 * 1024):
                 hasher.update(block)
         require(hasher.hexdigest() == digest, f'{path.name}: archive hash mismatch')
-        wanted = {ref['identity_line'] for _, ref in references}
+        wanted = {ref['identity_line'] for _, ref in references if ref['identity_line'] is not None}
         wanted.update(row[key] for _, ref in references for row in ref['steps'] for key in ('action_line', 'metadata_line'))
         selected = {}
         with zipfile.ZipFile(path) as archive:
@@ -98,8 +108,9 @@ def verify_evidence(records, evidence_root):
             note = next((row for row in encounter['annotations'] if row['id'] == ref['annotation_id']), None)
             require(note and (note['take'], note['text'], note['end_t']) ==
                     (ref['take_id'], ref['annotation_text'], ref['annotation_end_seconds']), f"{move['id']}: annotation mismatch")
-            identity = selected[ref['identity_line']]
-            require(identity['take'] == ref['take_id'] and identity['build_sha256'] == ref['game_build_sha256'], f"{move['id']}: build mismatch")
+            if ref['identity_line'] is not None:
+                identity = selected[ref['identity_line']]
+                require(identity['take'] == ref['take_id'] and identity['build_sha256'] == ref['game_build_sha256'], f"{move['id']}: build mismatch")
             observed = {}
             for step, location in zip(move['steps'], ref['steps']):
                 action, metadata = selected[location['action_line']], selected[location['metadata_line']]
@@ -134,6 +145,7 @@ def verify_intake(root, records, evidence_root):
     require(inventory['schema_version'] == 1, 'Unsupported intake version')
     sessions, covered = set(), set()
     for session in inventory['sessions']:
+        require(session['boss_id'] != 'edward_kelley', 'Excluded boss entered intake')
         digest = session['archive_sha256']
         require(re.fullmatch(r'[0-9a-f]{64}', digest), 'Invalid intake archive hash')
         raw = (Path(evidence_root) / (digest + '.zip')).read_bytes()
@@ -163,6 +175,30 @@ def verify_intake(root, records, evidence_root):
     return len(sessions)
 
 
+def verify_catalogue(records, path):
+    # A raw recording may be discoverable, but cannot silently become a runnable import.
+    # Keep every unmapped candidate mirrored in the product catalogue with no action ID.
+    # A later reviewed adapter must pass the normal resource and William checks separately.
+    catalogue = json.loads(Path(path).read_text(encoding='utf8'))
+    rows = {move['id']: move for move in catalogue['moves']}
+    candidates = {key: value for key, value in records.items() if value.get('mapping_status') == 'unmapped'}
+    for identifier, record in candidates.items():
+        require(identifier in rows, f'{identifier}: absent from product catalogue')
+        require(all(ref['game_build_sha256'] in (None, catalogue['supported_build_sha256']) for ref in record['evidence']),
+                f'{identifier}: recording belongs to a different game build')
+        move = rows[identifier]
+        require(move['boss_id'] == record['boss_id'] and move['name'] == record['name'] and
+                move['weapon'] == 'sword' and not move['implementation']['selectable'] and
+                not move['implementation'].get('engine_profile') and
+                all(move['source'].get(key) is None for key in ('action_id', 'motion_id', 'timing_id')) and
+                move['blocked_reasons'] == record['blocked_reasons'],
+                f'{identifier}: unreviewed candidate became playable or changed identity')
+    require({key for key, value in rows.items() if value['id'].startswith('sword.') and
+             value['implementation'].get('engine_profile') is None} == set(candidates),
+            'Product catalogue has an orphan recorded candidate')
+    return len(candidates)
+
+
 def main():
     # Validate structure by default, with optional full provenance checks against an external archive store.
     # Print a compact index grouped by weapon and boss for humans and future tools.
@@ -175,10 +211,12 @@ def main():
     store = args.evidence_root or args.root / 'evidence'
     verified = verify_evidence(records, store) if args.evidence_root is not None or store.is_dir() else None
     intake_count = verify_intake(args.root, records, store) if verified is not None and (args.root / 'intake.json').exists() else None
+    candidate_count = verify_catalogue(records, args.root.parent / 'data/moves.json') if (args.root.parent / 'data/moves.json').exists() else None
     groups = {}
     for move in records.values():
         groups.setdefault(move['weapon_id'], {}).setdefault(move['boss_id'], []).append({'id': move['id'], 'name': move['name'], 'status': move['review_status']})
-    print(json.dumps({'moves': len(records), 'evidence_archives_verified': verified, 'intake_sessions_verified': intake_count, 'weapons': groups}, indent=2))
+    print(json.dumps({'moves': len(records), 'evidence_archives_verified': verified, 'intake_sessions_verified': intake_count,
+                      'unplayable_candidates_verified': candidate_count, 'weapons': groups}, indent=2))
 
 
 if __name__ == '__main__':

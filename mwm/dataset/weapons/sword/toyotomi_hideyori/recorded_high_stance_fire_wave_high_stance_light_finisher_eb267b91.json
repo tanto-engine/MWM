@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_high_stance_fire_wave_high_stance_light_finisher_eb267b91",
+  "name": "High Stance Fire Wave High Stance Light Finisher",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "High Stance Fire Wave High Stance Light Finisher",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "c05a09a278041e3d6d9f1726417fd598f127a685c985e39f5d674edb49e7cefa",
+      "files": {
+        "encounter.json": "5cd35c12ad6b172b29895386bb4c7942bbb4be3725b64cbbd76e6ed291427c0c",
+        "events.jsonl": "75bbb7e4bdb9fe20626455d65d3c1d25f298a07d81058438c405b94f09718295"
+      },
+      "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+      "take_id": "b64a49bd-ca02-448c-9add-ddefd89da50e",
+      "annotation_id": "eb267b91-5fcb-4bc2-84f1-a03aa408ef81",
+      "annotation_text": "Sword/High Stance Fire Wave High Stance Light Finisher",
+      "annotation_end_seconds": 86.687,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

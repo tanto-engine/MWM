@@ -25,6 +25,15 @@
     },
     "toyotomi_hideyori": {
       "name": "Toyotomi Hideyori"
+    },
+    "hattori_hanzo": {
+      "name": "Hattori Hanzo"
+    },
+    "ishida_mitsunari": {
+      "name": "Ishida Mitsunari"
+    },
+    "maria": {
+      "name": "Maria"
     }
   },
   "evidence_archive_layout": "<archive_sha256>.zip",

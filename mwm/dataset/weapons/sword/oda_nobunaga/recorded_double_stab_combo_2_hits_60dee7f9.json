@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_double_stab_combo_2_hits_60dee7f9",
+  "name": "Double Stab Combo, 2 Hits",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Double Stab Combo, 2 Hits",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "40e0484065f96cddfa6e8c63abca5864be3420d0ecbbe2cd0b5966db9e20f231",
+      "files": {
+        "encounter.json": "ac6c9cff0938ac41494576baeacea069ad83c250044e3904fd5275cf6dd96146",
+        "events.jsonl": "19229bd4f0cec49832e301c68038def38e0d3e9222d405b9de7a2390f9684295"
+      },
+      "recording_id": "aa6808ae-f593-4dae-969c-71ac940b840b",
+      "take_id": "f48b2688-2b3e-4db0-a4ab-0b4eb4e86327",
+      "annotation_id": "60dee7f9-0882-4f29-bc29-3a7ae267ee17",
+      "annotation_text": "Sword/Double Stab Combo, 2 Hits",
+      "annotation_end_seconds": 23.844,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

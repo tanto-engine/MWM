@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_double_ground_stab_combo_1f4bf542",
+  "name": "Double Ground Stab Combo",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Double Ground Stab Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "64fc0abe4a8516af5e106e49b8d3e65154c07bc45610b83813746301d4346fb3",
+      "files": {
+        "encounter.json": "7118f8c95f17279dff573a8e020ce0343e914530f5fb7751e1b606b4b5dc3776",
+        "events.jsonl": "4f060e634649c72d90362c1272da44beaa7df9e3f1ec10f181393e565c7ff3cf"
+      },
+      "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+      "take_id": "44ac4979-20db-4707-9a96-28a41b638688",
+      "annotation_id": "1f4bf542-70fa-481d-9353-7415051b932c",
+      "annotation_text": "Sword/Double Ground Stab Combo",
+      "annotation_end_seconds": 54.39,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -15,12 +15,24 @@ from catalogue import iter_moves, load_catalogue, save_catalogue, validate_catal
 
 
 class CatalogueTests(unittest.TestCase):
+    def test_null_source_candidate_does_not_absorb_unrelated_low_word(self):
+        # Unmapped sword notes have no source action; they cannot match every null-key sample.
+        # A partial recorder observation from an unrelated action must leave Maria unchanged.
+        # This prevents candidate intake from polluting the reviewed action catalogue.
+        recording = {'schema_version': 1, 'kind': 'encounter_reconstruction', 'boss_id': 'maria',
+                     'actions': [{'role': 'boss_candidate', 'source': {'action_id': None,
+                                  'observed_word0_u16': 9999}, 'observations': 1, 'evidence': []}],
+                     'observed_successors': []}
+        self.assertEqual(merge_reconstruction(self.catalogue, recording), self.catalogue)
+
     def test_sword_strings_keep_distinct_source_identity_and_exclude_unadapted_choices(self):
         # Preserve each distinct sword string once while keeping ordered action evidence.
         # Inspect nested constituent identities and the retained sword import topology.
         # Unadapted Jin entries stay absent while eight archive-matched phases support the new trials.
         records = list(iter_moves(self.catalogue))
-        self.assertEqual((len(self.catalogue['moves']), len(records)), (22, 47))
+        self.assertEqual(len(records), len({move['id'] for move in records}))
+        self.assertTrue(all(not move['implementation']['selectable'] for move in self.catalogue['moves']
+                            if move['source'].get('action_id') is None))
         self.assertEqual({move['weapon'] for move in records}, {'sword'})
         groups = {move['id']: move for move in self.catalogue['moves']}
         for key, actions in ((0xBC0, [0xBC0,0xC6C,0xC6D]), (0xC6E, [0xC6E,0xC6F,0xC70]), (0xC75,[0xC75,0xC77,0xC78])):

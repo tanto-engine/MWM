@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_standing_grapple_3eacfef1",
+  "name": "Standing Grapple",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Standing Grapple",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "4a3d9eec61fef1a58fb85de4691c8c977fd770c0a53136965f39c031a51e9383",
+      "files": {
+        "encounter.json": "892252258dce5e24fa0df3840630df12ccd20619242f54779c2a54836b64cc08",
+        "events.jsonl": "9911c2fe73e93962d95fcb9e9e7c39541d8f3b7524757fec8d81c942a9880857"
+      },
+      "recording_id": "0bca8bb3-3634-4978-adf8-1a4e2f8497cd",
+      "take_id": "dde6e883-be1b-456b-9be2-2fd3fd3a8014",
+      "annotation_id": "3eacfef1-4089-4479-af9b-681dcbd42037",
+      "annotation_text": "Sword/Standing Grapple",
+      "annotation_end_seconds": 21.891,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

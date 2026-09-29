@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_double_stab_into_downward_upward_slash_combo_2425b665",
+  "name": "Double Stab Into Downward/Upward Slash Combo",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Double Stab Into Downward/Upward Slash Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "b77bef6e7ded5612f96fe8fb3c85604ab482e3512627f6dcd807a660fed6121c",
+      "files": {
+        "encounter.json": "878a3406e9dd2954b3a55ab52d214247b56c9ac1014e15746b1e98d17c22a2b4",
+        "events.jsonl": "d3d99f87a82c64299441b4d29a2c50b4d7a8a460a949c692c2e78a19b2e03a3d"
+      },
+      "recording_id": "656c6afb-f927-4061-a786-8b1afbdf38fc",
+      "take_id": "a6905ddc-834b-4f61-8dca-3cf4d07e4855",
+      "annotation_id": "2425b665-fce3-4795-a37c-882536225843",
+      "annotation_text": "Sword/ Double Stab Into Downward/Upward Slash Combo",
+      "annotation_end_seconds": 8.891,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

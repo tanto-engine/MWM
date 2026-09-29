@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_mid_stance_3_hit_horizontal_combo_3f8bdefa",
+  "name": "Mid Stance 3 Hit Horizontal Combo",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Mid Stance 3 Hit Horizontal Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "808dcf34ccaa60ddd005eaf5035ce8e2bdc5e9404033e0bd6c0204a3fa99a3ce",
+      "files": {
+        "encounter.json": "843e7e0f7bfc0078c2d55a7f6a91870bc9f72697e743d529a940e9801d602cb0",
+        "events.jsonl": "85240fadf2e08492c2bccaa39ec8f8a48f0c3aa633ec166a1a6d28f2073973e7"
+      },
+      "recording_id": "3a925a75-48db-47f8-adae-979dfc45a39e",
+      "take_id": "96a0d6fa-5f2e-4ef5-a135-fdb91343e26f",
+      "annotation_id": "3f8bdefa-17a7-4027-8e7a-7deaba126bfa",
+      "annotation_text": "Sword/Mid Stance 3 Hit Horizontal Combo",
+      "annotation_end_seconds": 54.047,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

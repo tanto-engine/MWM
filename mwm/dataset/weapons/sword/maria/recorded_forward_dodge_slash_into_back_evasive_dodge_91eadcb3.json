@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_forward_dodge_slash_into_back_evasive_dodge_91eadcb3",
+  "name": "Forward Dodge Slash Into Back Evasive Dodge",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Forward Dodge Slash Into Back Evasive Dodge",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "43abaf1718396ce3ab68e42e3153398a47e60667e2bd4af96636e118e70df97b",
+      "files": {
+        "encounter.json": "8b2c5382465a8221d9e1e679dd2cd57374fbd5e86476e3ba0bf0bda7657cbf17",
+        "events.jsonl": "03cf10aa0919eddd1b038ea2538459c7c834be2b4ecb4af58dd85dcb785b04c9"
+      },
+      "recording_id": "a028718a-9f23-4d2b-a777-57462a5a1665",
+      "take_id": "a8a4b3e6-2bc8-4546-9f5d-ec1a6c220324",
+      "annotation_id": "91eadcb3-bc6a-418d-a89b-9f15aa37511e",
+      "annotation_text": "Sword/Forward Dodge Slash Into Back Evasive Dodge",
+      "annotation_end_seconds": 79.359,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

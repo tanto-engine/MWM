@@ -1,6 +1,6 @@
 # Recording batch review
 
-All 13 saved notes are represented. Entries are candidate move strings, not confirmed imports. Weapon categories follow the user instruction: sword except Sanada's handgun. Priorities remain unset because these notes contain no explicit priority labels.
+This table reviews the original 13 saved notes. The 55 newer sword notes are indexed separately in [SWORD_INTAKE.md](SWORD_INTAKE.md). Entries are candidate move strings, not confirmed imports. Weapon categories follow the user instruction: sword except Sanada's handgun. Priorities remain unset because these notes contain no explicit priority labels.
 
 | Boss | Entry | Observed action IDs in order | Mapping |
 | --- | --- | --- | --- |

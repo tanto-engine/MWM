@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_hattori_4_hit_combo_rolling_uppercut_last_hit_7499d8e7",
+  "name": "Hattori 4 Hit Combo (Rolling Uppercut Last Hit)",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Hattori 4 Hit Combo (Rolling Uppercut Last Hit)",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "04d1efe9dc47cfc841f1c79289868899fe4e19e81244511ce738c5a3d286bc3f",
+      "files": {
+        "encounter.json": "1f03ba24d3fae4305a19b852bcdaa6722462c03fdedb4fbce280560a79d34892",
+        "events.jsonl": "73da80fbccc60c397f715df6cded56c1023f88de3fdb96e569631ac3165d7e3c"
+      },
+      "recording_id": "2d90bd35-c4fe-4b18-ba41-347ae77ef690",
+      "take_id": "4a76d376-233f-46bb-8718-256dd74627fd",
+      "annotation_id": "7499d8e7-ea76-4750-b90e-868dcf509313",
+      "annotation_text": "Sword/Hattori 4 Hit Combo (Rolling Uppercut Last Hit)",
+      "annotation_end_seconds": 21.859,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

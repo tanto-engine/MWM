@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_toyotomi_yokai_grapple_d2d8c3e9",
+  "name": "Toyotomi Yokai Grapple",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Toyotomi Yokai Grapple",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "9d266da2e591704138593f7f0d322b1380d7c9a02d13a5d34e1a1ec8ff7c15af",
+      "files": {
+        "encounter.json": "3f41da9bc86a3de27b04946efbf5f2951ca0f486f490875d990e41d4432e5e93",
+        "events.jsonl": "7b290cce85a73d4fe264302dec60cdb80f1db8c3950bf07b897a575a5ba6ab2a"
+      },
+      "recording_id": "ea414bdf-38c5-44ec-a5d7-b9dc2f4aca21",
+      "take_id": "4dcbad2d-5079-415b-839c-525fbc14da49",
+      "annotation_id": "d2d8c3e9-2e13-4e73-afa5-2546aa8d79a8",
+      "annotation_text": "Sword/ Toyotomi Yokai Grapple",
+      "annotation_end_seconds": 19.969,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

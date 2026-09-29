@@ -1,0 +1,1133 @@
+{
+  "schema_version": 1,
+  "scope": "named_encounter_context_not_proven_actor",
+  "distinct_boss_action_keys": 858,
+  "keys_with_multiple_signatures": 43,
+  "conflicts": [
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 88,
+      "action_hex": "00000058",
+      "signatures": [
+        {
+          "motion_id": 30005,
+          "timing_id": 30005,
+          "payload_prefix_sha256": "d4f51b6fce1bf85fc4caa0ce40ccf253edff6c4ba2db2f6fdb9395020b9cd539",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1102
+        },
+        {
+          "motion_id": 30005,
+          "timing_id": 30005,
+          "payload_prefix_sha256": "60c439a7e2665f4f4fdea24c326b8dcefafa139097865b78f99cb55e5fcd1ecc",
+          "observations": 1,
+          "recording_id": "a5df925f-4018-478f-9368-344544615a16",
+          "journal_line": 1057
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 1522,
+      "action_hex": "000005F2",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "6f80795ac62c48eebb54b531c3b70a877e67b6983da18bfdec35126bbdb8ec3e",
+          "observations": 27,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 4
+        },
+        {
+          "motion_id": 6001,
+          "timing_id": 6001,
+          "payload_prefix_sha256": "49e6b1955997544861c001817a9ae5fa49c678c87f18aa67e97f876c5dfff7b6",
+          "observations": 18,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 6
+        },
+        {
+          "motion_id": 6000,
+          "timing_id": 6000,
+          "payload_prefix_sha256": "378f03a93e64f19099ceba98e87743c71e18958d2f562f93b2f0acbce3a86905",
+          "observations": 27,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 34
+        },
+        {
+          "motion_id": 100,
+          "timing_id": 100,
+          "payload_prefix_sha256": "d7bddf4f558a4bc6ad6614040a206145339fbc187fbdd04dced988ce7684b5ba",
+          "observations": 18,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 54
+        },
+        {
+          "motion_id": 111,
+          "timing_id": 111,
+          "payload_prefix_sha256": "7efccb99099e850718c6e5cb7be84fd946dc6c72397f7ad87309348f8bf1823a",
+          "observations": 27,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 72
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "5ce540318a7c533c0f01b0bebc4cbe5483a533de56c5e9add40c12f803ee97fc",
+          "observations": 27,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 148
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3000,
+      "action_hex": "00000BB8",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "633edba5537806bb359cb4b619d9171e137e03bd3ff17ffb367fb8ad449be8f0",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 28
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "3a6bbc13961cfaf4e6bd8964c07da9e0bf2c84900b931a9d7267d41eea77f1be",
+          "observations": 63,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 40
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "352a31c12e20f003c4c57a7d704d5651ec1df0e5729eb543141f74ce04cdae2a",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 88
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3154,
+      "action_hex": "00000C52",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "cde28fc57882e61b5b286938c8276e0de34f89fab0ade859d97e3dee02004d14",
+          "observations": 27,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 10
+        },
+        {
+          "motion_id": 2000,
+          "timing_id": 2000,
+          "payload_prefix_sha256": "c96afb30929f0683fd1720fde2f9a7fb4a64fc9393a63438c2afaf5cfc87a189",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 174
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3156,
+      "action_hex": "00000C54",
+      "signatures": [
+        {
+          "motion_id": 32,
+          "timing_id": 32,
+          "payload_prefix_sha256": "d9151e68f5b7330a808fc765b5805ccf3cb7b27196f54917f7b76006c219abe5",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 52
+        },
+        {
+          "motion_id": 32,
+          "timing_id": 32,
+          "payload_prefix_sha256": "371a9a0999de085fc2b0e842a9567cb87482fbdd2319084095b20c67941c3c32",
+          "observations": 3,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1043
+        },
+        {
+          "motion_id": 2100,
+          "timing_id": 2100,
+          "payload_prefix_sha256": "2fb82c88229d70d1e9705e1357028bf0d463527ee942711d1c7ab2f90c36e8f2",
+          "observations": 3,
+          "recording_id": "a5df925f-4018-478f-9368-344544615a16",
+          "journal_line": 491
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3157,
+      "action_hex": "00000C55",
+      "signatures": [
+        {
+          "motion_id": 33,
+          "timing_id": 33,
+          "payload_prefix_sha256": "e20b817edbc97d6f33af4ac1e1c923a1b3c4cec958e5c03f8586382b80466843",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 64
+        },
+        {
+          "motion_id": 33,
+          "timing_id": 33,
+          "payload_prefix_sha256": "798ca6e47f44dad8fd999d0bff6f026615daeb74bbd6b9622f01f23d6281e13b",
+          "observations": 3,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1715
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3158,
+      "action_hex": "00000C56",
+      "signatures": [
+        {
+          "motion_id": 100,
+          "timing_id": 100,
+          "payload_prefix_sha256": "bbf6a26a8bbf5777604866f7a897ca6fa86a24c906edcf5ab6a0f79fb496a8b9",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 56
+        },
+        {
+          "motion_id": 1020,
+          "timing_id": 1020,
+          "payload_prefix_sha256": "e92b103b04970e12f94c857475985cc16c36159891b344ee1d4c9a825bfbb3c8",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1894
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3160,
+      "action_hex": "00000C58",
+      "signatures": [
+        {
+          "motion_id": 2030,
+          "timing_id": 2030,
+          "payload_prefix_sha256": "e22d6e6205dcbd8b361ed723f70bd0052442f87e2b8cae7e277cd2982086ca04",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 168
+        },
+        {
+          "motion_id": 1022,
+          "timing_id": 1022,
+          "payload_prefix_sha256": "adba11018be059d9bf43e0a14cc2c7caad979fbde4b7a89e1ed17d59704c965d",
+          "observations": 4,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1612
+        },
+        {
+          "motion_id": 2007,
+          "timing_id": 2007,
+          "payload_prefix_sha256": "fbc2f295426497741d8bf9eac9a7190cd48106f523c6f55d16b1e8051c6da95b",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 3102
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3175,
+      "action_hex": "00000C67",
+      "signatures": [
+        {
+          "motion_id": 1160,
+          "timing_id": 1160,
+          "payload_prefix_sha256": "20a4ab9af9275099d2849c7388190ef2a821648d20a3400dd194449f6d1fc73a",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 82
+        },
+        {
+          "motion_id": 1060,
+          "timing_id": 1060,
+          "payload_prefix_sha256": "ff89cc5322630f7ea0f23f3a9f3dc8d03e2a4c7875785e223bbddab730bff226",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1309
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3190,
+      "action_hex": "00000C76",
+      "signatures": [
+        {
+          "motion_id": 2100,
+          "timing_id": 2100,
+          "payload_prefix_sha256": "d092397ccd9476c1b8358ca4f9e63d22f1eee82c5993dc456a76124615f48dad",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 3165
+        },
+        {
+          "motion_id": 5010,
+          "timing_id": 5010,
+          "payload_prefix_sha256": "b13069acc02d9d07377d63d7f637da100b2e5e3136e940a868e9b901ad848b63",
+          "observations": 4,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 4674
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3191,
+      "action_hex": "00000C77",
+      "signatures": [
+        {
+          "motion_id": 2500,
+          "timing_id": 2500,
+          "payload_prefix_sha256": "67e5a1e711ae397d83fd859788a13c07fcfec3ab179603bd0ce1e8c4ac1b06e2",
+          "observations": 9,
+          "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+          "journal_line": 164
+        },
+        {
+          "motion_id": 2110,
+          "timing_id": 2110,
+          "payload_prefix_sha256": "98203e16275fcbde833f0d9c2cd19fac627998e795df08e95a3890806a031650",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 3182
+        },
+        {
+          "motion_id": 9100,
+          "timing_id": 9100,
+          "payload_prefix_sha256": "ff6f693354aeec68fc87f77239eefbe8a0c939d786b98db2a8bf6246ebd48c74",
+          "observations": 2,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 3599
+        }
+      ]
+    },
+    {
+      "boss_id": "ishida_mitsunari",
+      "action_id": 3192,
+      "action_hex": "00000C78",
+      "signatures": [
+        {
+          "motion_id": 1051,
+          "timing_id": 1051,
+          "payload_prefix_sha256": "c803b490c7a587b9207111381359a1ef8e2ad325e22c45e646c69741f63b5918",
+          "observations": 2,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 1182
+        },
+        {
+          "motion_id": 2120,
+          "timing_id": 2120,
+          "payload_prefix_sha256": "58cad0115f802423373e6e0fe6b295b818bcb7c0220487589398024d2e30e280",
+          "observations": 1,
+          "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+          "journal_line": 3201
+        }
+      ]
+    },
+    {
+      "boss_id": "maria",
+      "action_id": 3276,
+      "action_hex": "00000CCC",
+      "signatures": [
+        {
+          "motion_id": 4000,
+          "timing_id": 4000,
+          "payload_prefix_sha256": "86c6fbbdae25d909505d253c87feaeb8242fa18024a34455527c4ed139315809",
+          "observations": 35,
+          "recording_id": "86097d19-387e-4191-89d0-487c3e9a562e",
+          "journal_line": 38
+        },
+        {
+          "motion_id": 56,
+          "timing_id": 56,
+          "payload_prefix_sha256": "c628cd194c081e8becbaa73dd231f1142b11262a804452337c35a0b7ecd22421",
+          "observations": 1,
+          "recording_id": "a226dd5c-8fb8-4d0d-a7b5-7712291caf8a",
+          "journal_line": 2018
+        }
+      ]
+    },
+    {
+      "boss_id": "maria",
+      "action_id": 3291,
+      "action_hex": "00000CDB",
+      "signatures": [
+        {
+          "motion_id": 4030,
+          "timing_id": 4030,
+          "payload_prefix_sha256": "9c6a6d6071feca949e1ce5b8be58581cea9145ee6fbcead871cae651d432b147",
+          "observations": 32,
+          "recording_id": "86097d19-387e-4191-89d0-487c3e9a562e",
+          "journal_line": 73
+        },
+        {
+          "motion_id": 30402,
+          "timing_id": 30402,
+          "payload_prefix_sha256": "724d1b9bee3a81276df940af590bb5f0d88f281d7710b86282d5ee34139dfb15",
+          "observations": 1,
+          "recording_id": "a226dd5c-8fb8-4d0d-a7b5-7712291caf8a",
+          "journal_line": 1999
+        }
+      ]
+    },
+    {
+      "boss_id": "oda_nobunaga",
+      "action_id": 3165,
+      "action_hex": "00000C5D",
+      "signatures": [
+        {
+          "motion_id": 6001,
+          "timing_id": 6001,
+          "payload_prefix_sha256": "18d5e94fcae1a3e69d8eb0afaa9be3dcf8ade975a332abe345d0777d9265ff36",
+          "observations": 20,
+          "recording_id": "aa6808ae-f593-4dae-969c-71ac940b840b",
+          "journal_line": 8
+        },
+        {
+          "motion_id": 1003,
+          "timing_id": 1003,
+          "payload_prefix_sha256": "55b668f44441327cd15d557de3f5de5c7486e33ac1b351490ea3a16b0334ab80",
+          "observations": 7,
+          "recording_id": "aa6808ae-f593-4dae-969c-71ac940b840b",
+          "journal_line": 97
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 1522,
+      "action_hex": "000005F2",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "6f80795ac62c48eebb54b531c3b70a877e67b6983da18bfdec35126bbdb8ec3e",
+          "observations": 3,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 8
+        },
+        {
+          "motion_id": 6001,
+          "timing_id": 6001,
+          "payload_prefix_sha256": "49e6b1955997544861c001817a9ae5fa49c678c87f18aa67e97f876c5dfff7b6",
+          "observations": 2,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 10
+        },
+        {
+          "motion_id": 6000,
+          "timing_id": 6000,
+          "payload_prefix_sha256": "378f03a93e64f19099ceba98e87743c71e18958d2f562f93b2f0acbce3a86905",
+          "observations": 3,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 38
+        },
+        {
+          "motion_id": 100,
+          "timing_id": 100,
+          "payload_prefix_sha256": "d7bddf4f558a4bc6ad6614040a206145339fbc187fbdd04dced988ce7684b5ba",
+          "observations": 2,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 60
+        },
+        {
+          "motion_id": 111,
+          "timing_id": 111,
+          "payload_prefix_sha256": "7efccb99099e850718c6e5cb7be84fd946dc6c72397f7ad87309348f8bf1823a",
+          "observations": 3,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 78
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "5ce540318a7c533c0f01b0bebc4cbe5483a533de56c5e9add40c12f803ee97fc",
+          "observations": 3,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 155
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 3000,
+      "action_hex": "00000BB8",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "633edba5537806bb359cb4b619d9171e137e03bd3ff17ffb367fb8ad449be8f0",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 32
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "3a6bbc13961cfaf4e6bd8964c07da9e0bf2c84900b931a9d7267d41eea77f1be",
+          "observations": 7,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 46
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "352a31c12e20f003c4c57a7d704d5651ec1df0e5729eb543141f74ce04cdae2a",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 94
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 3154,
+      "action_hex": "00000C52",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "cde28fc57882e61b5b286938c8276e0de34f89fab0ade859d97e3dee02004d14",
+          "observations": 3,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 14
+        },
+        {
+          "motion_id": 2000,
+          "timing_id": 2000,
+          "payload_prefix_sha256": "c96afb30929f0683fd1720fde2f9a7fb4a64fc9393a63438c2afaf5cfc87a189",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 181
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 3156,
+      "action_hex": "00000C54",
+      "signatures": [
+        {
+          "motion_id": 32,
+          "timing_id": 32,
+          "payload_prefix_sha256": "d9151e68f5b7330a808fc765b5805ccf3cb7b27196f54917f7b76006c219abe5",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 58
+        },
+        {
+          "motion_id": 32,
+          "timing_id": 32,
+          "payload_prefix_sha256": "413e8347f93d203d931351d3addd7b90aee22fded8cbe8573b75a5c71c42709e",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 345
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 3157,
+      "action_hex": "00000C55",
+      "signatures": [
+        {
+          "motion_id": 33,
+          "timing_id": 33,
+          "payload_prefix_sha256": "e20b817edbc97d6f33af4ac1e1c923a1b3c4cec958e5c03f8586382b80466843",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 70
+        },
+        {
+          "motion_id": 33,
+          "timing_id": 33,
+          "payload_prefix_sha256": "354aaa34881a1c0a6919d4a9488335acb2bb3a83a2652e3fc2cca71b72caa18c",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 188
+        }
+      ]
+    },
+    {
+      "boss_id": "otani_yoshitsugu",
+      "action_id": 3158,
+      "action_hex": "00000C56",
+      "signatures": [
+        {
+          "motion_id": 100,
+          "timing_id": 100,
+          "payload_prefix_sha256": "bbf6a26a8bbf5777604866f7a897ca6fa86a24c906edcf5ab6a0f79fb496a8b9",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 62
+        },
+        {
+          "motion_id": 1001,
+          "timing_id": 1001,
+          "payload_prefix_sha256": "2741f9aa9cbf7ac8d22e3b7492f4682cd1e4b0f1d222c82e9488900592595662",
+          "observations": 1,
+          "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+          "journal_line": 1927
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3185,
+      "action_hex": "00000C71",
+      "signatures": [
+        {
+          "motion_id": 1050,
+          "timing_id": 1050,
+          "payload_prefix_sha256": "6ae946d6cb246a1dea4ac1a9ac9e24e9f230838aee9643d7ca8ab6916178819f",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 544
+        },
+        {
+          "motion_id": 1065,
+          "timing_id": 1065,
+          "payload_prefix_sha256": "023a0408fc78a6cfbc7d17bd4c5d9482996e531121dafc31baeb65686d42b810",
+          "observations": 1,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 232
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3186,
+      "action_hex": "00000C72",
+      "signatures": [
+        {
+          "motion_id": 1160,
+          "timing_id": 1160,
+          "payload_prefix_sha256": "21dbed0a3f377d670107b506d12f93bf58409400c743f32b6c114242d0aa609c",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 541
+        },
+        {
+          "motion_id": 5000,
+          "timing_id": 5000,
+          "payload_prefix_sha256": "5a912136da47a51cbdb00ae6028e5a47bb0d322b47a6e2502d020875179e5e96",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 551
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3187,
+      "action_hex": "00000C73",
+      "signatures": [
+        {
+          "motion_id": 5001,
+          "timing_id": 5001,
+          "payload_prefix_sha256": "69084696d52dce2e3b731f315cad2c694858f1935150c26de146b125c27942ac",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 554
+        },
+        {
+          "motion_id": 1161,
+          "timing_id": 1161,
+          "payload_prefix_sha256": "75086671bbfd76e69d2df89b41ec547d7e5561b642c4808c586cc2b156765502",
+          "observations": 1,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 221
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3188,
+      "action_hex": "00000C74",
+      "signatures": [
+        {
+          "motion_id": 5002,
+          "timing_id": 5002,
+          "payload_prefix_sha256": "148a8e960eff30a39a79d6b61b21e2bebb6be57c6b8e49b176d82a9e56bc550b",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 556
+        },
+        {
+          "motion_id": 1162,
+          "timing_id": 1162,
+          "payload_prefix_sha256": "59cb5df0518fc693d489df0b041ec563dbd672351f20465a5cf25393581a533e",
+          "observations": 1,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 223
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3303,
+      "action_hex": "00000CE7",
+      "signatures": [
+        {
+          "motion_id": 2061,
+          "timing_id": 2061,
+          "payload_prefix_sha256": "4d9f35f63d414da98e88983b9c7640041e92a13e210fc5deb88f850e03ed46fb",
+          "observations": 13,
+          "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+          "journal_line": 76
+        },
+        {
+          "motion_id": 1061,
+          "timing_id": 1061,
+          "payload_prefix_sha256": "349584893663f09da2f4a3bad467f7fd16b39f98a76ffdc19c27f5af2c633779",
+          "observations": 1,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 521
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3332,
+      "action_hex": "00000D04",
+      "signatures": [
+        {
+          "motion_id": 1082,
+          "timing_id": 1082,
+          "payload_prefix_sha256": "d022d422f47171a0d8d3e05276c705102d841a0cfc79e6355b1f7b97ada72354",
+          "observations": 2,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 145
+        },
+        {
+          "motion_id": 1092,
+          "timing_id": 1092,
+          "payload_prefix_sha256": "cb7b0010c7a722b0a18f776a5f54c829fdd1dfcbfe2ae63ffa31b68eb305383e",
+          "observations": 6,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 239
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3419,
+      "action_hex": "00000D5B",
+      "signatures": [
+        {
+          "motion_id": 5080,
+          "timing_id": 5080,
+          "payload_prefix_sha256": "6026ab9c724b7b5c3f87a511e4fee23b104d58aa301d03742a379ee465747a00",
+          "observations": 6,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 153
+        },
+        {
+          "motion_id": 1075,
+          "timing_id": 1075,
+          "payload_prefix_sha256": "89991fed5888dd2d4466e1561444974f6394f1af9e95169258f55c8552872d2c",
+          "observations": 2,
+          "recording_id": "b09b2de3-b4bd-469b-8872-85097d87ee4a",
+          "journal_line": 388
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3471,
+      "action_hex": "00000D8F",
+      "signatures": [
+        {
+          "motion_id": 4020,
+          "timing_id": 4020,
+          "payload_prefix_sha256": "072f367507e92bd14f728efe852edee4411918586068ff35ea32401fbce4cd36",
+          "observations": 11,
+          "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+          "journal_line": 39
+        },
+        {
+          "motion_id": 5100,
+          "timing_id": 5100,
+          "payload_prefix_sha256": "48bb9dc0b359af61fa8d4a8ca057942f9cea9287507abde21f7b36b7950cbd7c",
+          "observations": 8,
+          "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+          "journal_line": 12
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3472,
+      "action_hex": "00000D90",
+      "signatures": [
+        {
+          "motion_id": 4024,
+          "timing_id": 4024,
+          "payload_prefix_sha256": "adfe8aa5e408de5c99afb4b79e07cf7d6637de4785cd39ed3f9023eb49d7cbf3",
+          "observations": 13,
+          "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+          "journal_line": 53
+        },
+        {
+          "motion_id": 5110,
+          "timing_id": 5110,
+          "payload_prefix_sha256": "b949f437f277ff45a9066ad929ad732681c73411d3ac952c1108020d28c57baa",
+          "observations": 7,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 55
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3473,
+      "action_hex": "00000D91",
+      "signatures": [
+        {
+          "motion_id": 4026,
+          "timing_id": 4026,
+          "payload_prefix_sha256": "76a68ccf3e87241409176c759566a7c22cfeadce517602bf85ccf5f3f9838885",
+          "observations": 12,
+          "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+          "journal_line": 74
+        },
+        {
+          "motion_id": 5120,
+          "timing_id": 5120,
+          "payload_prefix_sha256": "cc46cf7cf4e09fa81e18da431df923cb68074dfc76c3573a93c4e44b54a16cd6",
+          "observations": 6,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 362
+        }
+      ]
+    },
+    {
+      "boss_id": "tachibana_muneshige",
+      "action_id": 3475,
+      "action_hex": "00000D93",
+      "signatures": [
+        {
+          "motion_id": 5001,
+          "timing_id": 5001,
+          "payload_prefix_sha256": "44457781057b913cf8f020ef97485171dd63cf2c7c9e46553e9c2ab18fbf5c95",
+          "observations": 1,
+          "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+          "journal_line": 201
+        },
+        {
+          "motion_id": 2910,
+          "timing_id": 2910,
+          "payload_prefix_sha256": "afb5cfd2cea80f8db60a7f4afc0d33573ec4f5dd59642edf91a8c8ea4d89d658",
+          "observations": 7,
+          "recording_id": "b09b2de3-b4bd-469b-8872-85097d87ee4a",
+          "journal_line": 572
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 1522,
+      "action_hex": "000005F2",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "6f80795ac62c48eebb54b531c3b70a877e67b6983da18bfdec35126bbdb8ec3e",
+          "observations": 24,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 4
+        },
+        {
+          "motion_id": 6001,
+          "timing_id": 6001,
+          "payload_prefix_sha256": "49e6b1955997544861c001817a9ae5fa49c678c87f18aa67e97f876c5dfff7b6",
+          "observations": 16,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 6
+        },
+        {
+          "motion_id": 6000,
+          "timing_id": 6000,
+          "payload_prefix_sha256": "378f03a93e64f19099ceba98e87743c71e18958d2f562f93b2f0acbce3a86905",
+          "observations": 24,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 34
+        },
+        {
+          "motion_id": 100,
+          "timing_id": 100,
+          "payload_prefix_sha256": "d7bddf4f558a4bc6ad6614040a206145339fbc187fbdd04dced988ce7684b5ba",
+          "observations": 24,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 54
+        },
+        {
+          "motion_id": 111,
+          "timing_id": 111,
+          "payload_prefix_sha256": "7efccb99099e850718c6e5cb7be84fd946dc6c72397f7ad87309348f8bf1823a",
+          "observations": 24,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 72
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3000,
+      "action_hex": "00000BB8",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "633edba5537806bb359cb4b619d9171e137e03bd3ff17ffb367fb8ad449be8f0",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 28
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "3a6bbc13961cfaf4e6bd8964c07da9e0bf2c84900b931a9d7267d41eea77f1be",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 52
+        },
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "352a31c12e20f003c4c57a7d704d5651ec1df0e5729eb543141f74ce04cdae2a",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 88
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3154,
+      "action_hex": "00000C52",
+      "signatures": [
+        {
+          "motion_id": 0,
+          "timing_id": 0,
+          "payload_prefix_sha256": "cde28fc57882e61b5b286938c8276e0de34f89fab0ade859d97e3dee02004d14",
+          "observations": 24,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 10
+        },
+        {
+          "motion_id": 1000,
+          "timing_id": 1000,
+          "payload_prefix_sha256": "67eac510384d7409f137bc9949a71145cbab00ca16901d3c01b7487131db2ef0",
+          "observations": 9,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 1123
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3160,
+      "action_hex": "00000C58",
+      "signatures": [
+        {
+          "motion_id": 2007,
+          "timing_id": 2007,
+          "payload_prefix_sha256": "fbc2f295426497741d8bf9eac9a7190cd48106f523c6f55d16b1e8051c6da95b",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 10356
+        },
+        {
+          "motion_id": 1030,
+          "timing_id": 1030,
+          "payload_prefix_sha256": "c3df7b7b3b4473dce8db687258b73360b6900601f5115641d5cba1336a2fdec7",
+          "observations": 3,
+          "recording_id": "7cb1d913-5886-47a5-a413-5f7a9d3bf16f",
+          "journal_line": 3566
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3170,
+      "action_hex": "00000C62",
+      "signatures": [
+        {
+          "motion_id": 1030,
+          "timing_id": 1030,
+          "payload_prefix_sha256": "6b8961d623139331ed037ca31f390851e8ee513c6e7986e36ba4a105bae88857",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 148
+        },
+        {
+          "motion_id": 2031,
+          "timing_id": 2031,
+          "payload_prefix_sha256": "3bbc7474a14368fb6fc2b610b84e5a82950ab595c0c202a2fa4e2a57949b3def",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 10334
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3176,
+      "action_hex": "00000C68",
+      "signatures": [
+        {
+          "motion_id": 1030,
+          "timing_id": 1030,
+          "payload_prefix_sha256": "80a24fb7cb174df6a162de5799ba6f842d96155b598a99b3fdf9fc5c5814fd12",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 30
+        },
+        {
+          "motion_id": 1005,
+          "timing_id": 1005,
+          "payload_prefix_sha256": "3f3802a585e8738ff85e4fd6e12f6dbf96691967bf461d9f2468e259c3e429ea",
+          "observations": 3,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 8087
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3186,
+      "action_hex": "00000C72",
+      "signatures": [
+        {
+          "motion_id": 4000,
+          "timing_id": 4000,
+          "payload_prefix_sha256": "6c6b9d94d1efd4e7680e3f42c20a5f0d1f2ac867c1963a5b37c8c718167de592",
+          "observations": 3,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 8277
+        },
+        {
+          "motion_id": 1160,
+          "timing_id": 1160,
+          "payload_prefix_sha256": "21dbed0a3f377d670107b506d12f93bf58409400c743f32b6c114242d0aa609c",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 7698
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3190,
+      "action_hex": "00000C76",
+      "signatures": [
+        {
+          "motion_id": 4020,
+          "timing_id": 4020,
+          "payload_prefix_sha256": "ab6b52f2004b7eabe781d13fec6e4d5589e49b6439d8bbaa3098c05cb394214f",
+          "observations": 3,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 9332
+        },
+        {
+          "motion_id": 2100,
+          "timing_id": 2100,
+          "payload_prefix_sha256": "d092397ccd9476c1b8358ca4f9e63d22f1eee82c5993dc456a76124615f48dad",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 6994
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3191,
+      "action_hex": "00000C77",
+      "signatures": [
+        {
+          "motion_id": 2110,
+          "timing_id": 2110,
+          "payload_prefix_sha256": "98203e16275fcbde833f0d9c2cd19fac627998e795df08e95a3890806a031650",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 7132
+        },
+        {
+          "motion_id": 4030,
+          "timing_id": 4030,
+          "payload_prefix_sha256": "a3f992302148e31207d6945391eadd585a100707ac8599a9b5d4e7c8edbc05e8",
+          "observations": 2,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 8287
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3193,
+      "action_hex": "00000C79",
+      "signatures": [
+        {
+          "motion_id": 3001,
+          "timing_id": 3001,
+          "payload_prefix_sha256": "4b074ff3897964e5000bf0c620c1c97ecad58f3dec47c85b05b7dcfd41480884",
+          "observations": 8,
+          "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+          "journal_line": 66
+        },
+        {
+          "motion_id": 4031,
+          "timing_id": 4031,
+          "payload_prefix_sha256": "05e4e05717755c556eebf58dc0fa7d539060c3c09341c19716ac30f270bcda1c",
+          "observations": 2,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 6442
+        }
+      ]
+    },
+    {
+      "boss_id": "toyotomi_hideyori",
+      "action_id": 3398,
+      "action_hex": "00000D46",
+      "signatures": [
+        {
+          "motion_id": 5100,
+          "timing_id": 5100,
+          "payload_prefix_sha256": "8b7c5d84b4b23475a84e8869075bba28c1e5cbe2c53c2ee4f0fa40cd796a2717",
+          "observations": 2,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 7623
+        },
+        {
+          "motion_id": 5000,
+          "timing_id": 5000,
+          "payload_prefix_sha256": "ee74355491d419272d1f26518ca08065194c2129c72e14bac643e264e3765591",
+          "observations": 1,
+          "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+          "journal_line": 9709
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_electric_morning_moon_feadc5eb",
+  "name": "Electric Morning Moon",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Electric Morning Moon",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "7f586808418f08eecadc05ff404def4f15c67af99fec7f48104d312a51047acb",
+      "files": {
+        "encounter.json": "1f5da01f9e7606bb68ec938c68b3e36fc68aad72805957f33b5b3fb3196723fa",
+        "events.jsonl": "a2ad13bd5ecc8b28510f6c916a6fffd4f6d02ae716cf446c027a8c7b64c76238"
+      },
+      "recording_id": "18decf67-2da5-4a37-b998-b18f86acb342",
+      "take_id": "85cad060-dea6-41c7-b753-1bae8a9de864",
+      "annotation_id": "feadc5eb-c94e-4f7b-9600-f88f112896ee",
+      "annotation_text": "Sword/Electric Morning Moon",
+      "annotation_end_seconds": 89.75,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

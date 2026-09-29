@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_long_dodge_forward_slash_into_2_hit_combo_b53349b6",
+  "name": "Long Dodge Forward Slash Into 2 Hit Combo",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Long Dodge Forward Slash Into 2 Hit Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "0d3a65c85d7d4e829522873aa46b9e5646ba4903be0b7810b128fefdd61742e5",
+      "files": {
+        "encounter.json": "630ac11e86bbcb50d32f98941feff06a4485b97e634d362ffb016c675eeebbdf",
+        "events.jsonl": "d8a63e01084559ec4c0f4bcf29b3313dbb2202e685bb20cf48ceaf7796d0b173"
+      },
+      "recording_id": "6988b272-c833-41dc-8343-a3d873561558",
+      "take_id": "5edf6d7f-6a73-41be-93cc-3eddf8d721db",
+      "annotation_id": "b53349b6-7970-4171-a667-455d0def56a0",
+      "annotation_text": "Sword/Long Dodge Forward Slash Into 2 Hit Combo",
+      "annotation_end_seconds": 45.688,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

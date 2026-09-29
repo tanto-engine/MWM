@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_living_weapon_5_hit_blade_beam_slash_d809de14",
+  "name": "Living Weapon 5 Hit Blade Beam Slash",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Living Weapon 5 Hit Blade Beam Slash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "535c1b2cfb25d47b5c8299187a003e4841f52890504cc49a4f9a7dd233c2ed1d",
+      "files": {
+        "encounter.json": "f9df12bc8f361ebea6ec748805e3dd9adc4cbb26b8a27f858ecb973a8b17be6e",
+        "events.jsonl": "d59b3c0dee41214daf5b136d30754ed230c3ffbb87c7eae01e8206edb362114c"
+      },
+      "recording_id": "ea86b658-6b87-4440-8ede-ceeb353f26b3",
+      "take_id": "006bedb5-3904-44e5-be16-ef5f49628ad4",
+      "annotation_id": "d809de14-f807-4473-8126-d0d23deace92",
+      "annotation_text": "Sword/Living Weapon 5 Hit Blade Beam Slash",
+      "annotation_end_seconds": 8.828,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

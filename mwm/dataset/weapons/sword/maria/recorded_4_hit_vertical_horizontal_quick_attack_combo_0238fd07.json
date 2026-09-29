@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_4_hit_vertical_horizontal_quick_attack_combo_0238fd07",
+  "name": "4 Hit Vertical/Horizontal Quick Attack Combo",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "4 Hit Vertical/Horizontal Quick Attack Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "2c7ddc5ce0ad0c3b0766afb12a2d50b263cd5cc09e118788c59056848ad26589",
+      "files": {
+        "encounter.json": "fdfe0f7acf07567ba8be6a457967350d18e77f775b02cae3e81eb40d94c24866",
+        "events.jsonl": "e0144b019aad36465c5ccbe44bfc24d9d52b82bd5b33e4f7c9e6766a4f483b56"
+      },
+      "recording_id": "5d1c5146-0273-4fc8-bf13-bfbc7ad2b666",
+      "take_id": "f3241ac5-58f7-4f6b-9018-ad4bc689b0f2",
+      "annotation_id": "0238fd07-2f8f-431b-857f-ede77c7f3b37",
+      "annotation_text": "Sword/4 Hit Vertical/Horizontal Quick Attack Combo",
+      "annotation_end_seconds": 37.547,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

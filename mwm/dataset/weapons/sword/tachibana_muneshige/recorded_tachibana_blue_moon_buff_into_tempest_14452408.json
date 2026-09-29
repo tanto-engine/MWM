@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_tachibana_blue_moon_buff_into_tempest_14452408",
+  "name": "Tachibana Blue Moon Buff Into Tempest",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Tachibana Blue Moon Buff Into Tempest",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "495ceba9579db847ba8cf11a63e7a97afefd4dbe1d06834e8719003d29f05f90",
+      "files": {
+        "encounter.json": "dc985d720d6ac5d1b73898dbaa95e0a20933bf648fd28e7c975458ed9d4c2d7b",
+        "events.jsonl": "b042e8334012fc71d37f1a35c58b954b35bf8ccd1c68adb7d03500f0e3b20e48"
+      },
+      "recording_id": "7c916462-17ba-469e-98e7-8fd39f1938f0",
+      "take_id": "baa3e080-bd7c-40d4-9876-40be5ddbf9ff",
+      "annotation_id": "14452408-8d52-4cae-a133-c72f204712df",
+      "annotation_text": "Sword/Tachibana Blue Moon Buff Into Tempest",
+      "annotation_end_seconds": 6.141,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 1280,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

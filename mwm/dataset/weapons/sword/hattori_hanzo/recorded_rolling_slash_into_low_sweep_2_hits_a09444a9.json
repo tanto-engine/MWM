@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_rolling_slash_into_low_sweep_2_hits_a09444a9",
+  "name": "Rolling Slash Into Low Sweep, 2 Hits",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Rolling Slash Into Low Sweep, 2 Hits",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "01181f81d74b492e216df088ebc281f09920fbe66d0d43274e526373cd5771ec",
+      "files": {
+        "encounter.json": "9bb7b611f81b7308a47163aeedd7a6093614fb919aac5cc835e77c51f78ff8bd",
+        "events.jsonl": "c12e5d1f110143c0cffe78884cf90d7b97aa569abc388d0055e3e7ea70840f1e"
+      },
+      "recording_id": "289a86a5-d402-4a9a-946e-b38e04074533",
+      "take_id": "b5d328fa-54b4-464d-89ce-877dd68b3003",
+      "annotation_id": "a09444a9-6e74-4f65-8a98-6e24359659ae",
+      "annotation_text": "Sword/Rolling Slash Into Low Sweep, 2 Hits",
+      "annotation_end_seconds": 92.391,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 1636,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

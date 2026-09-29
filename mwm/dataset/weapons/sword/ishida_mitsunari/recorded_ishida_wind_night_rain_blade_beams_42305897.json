@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_ishida_wind_night_rain_blade_beams_42305897",
+  "name": "Ishida Wind Night Rain Blade Beams",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ishida Wind Night Rain Blade Beams",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "77af03cadf01ab23c3b1cb3380ea835c97d141d05b409bc429e9322ca5b38a01",
+      "files": {
+        "encounter.json": "50136f72517daa66c93182f5fd03f8851508e8dcc2ab227ba56dda7c7149896b",
+        "events.jsonl": "f69c3dc3b3ed268607158fa1fea5900aa79e8533a1505af7946cf5af6a780d96"
+      },
+      "recording_id": "44677be9-d511-49a5-a761-e9191a1dbadf",
+      "take_id": "30c96fed-a459-4117-ad87-a9e1e71f3463",
+      "annotation_id": "42305897-ccd9-4b35-957a-546772c5f96d",
+      "annotation_text": "Sword/Ishida Wind Night Rain Blade Beams",
+      "annotation_end_seconds": 13.031,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

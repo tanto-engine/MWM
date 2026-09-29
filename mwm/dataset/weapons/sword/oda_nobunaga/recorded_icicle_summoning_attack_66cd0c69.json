@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_icicle_summoning_attack_66cd0c69",
+  "name": "Icicle Summoning Attack",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Icicle Summoning Attack",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "d1f20389e6e483077b0c15ac3e51ab85f1afd86834efcadc5e02a979272f62ab",
+      "files": {
+        "encounter.json": "a9b2d17d2c2a27236a8584f8a8c33a3891af9ca05e65dd28aadbd8023ebfcb78",
+        "events.jsonl": "4f88dd42a9d66d9fb56875159f3d4481a49a27511fa32e7a09aeb6c651a438dc"
+      },
+      "recording_id": "8ba2477e-c8d7-4b6f-a417-2990d450ddc5",
+      "take_id": "858e68e4-bf2d-4cf2-9eae-5d0654a63586",
+      "annotation_id": "66cd0c69-1d3d-4ee0-8734-a2bd4a6c2477",
+      "annotation_text": "Sword/Icicle Summoning Attack",
+      "annotation_end_seconds": 58.797,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

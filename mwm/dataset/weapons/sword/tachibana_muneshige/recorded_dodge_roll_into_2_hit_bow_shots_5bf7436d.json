@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_dodge_roll_into_2_hit_bow_shots_5bf7436d",
+  "name": "Dodge Roll Into 2 Hit Bow Shots",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Dodge Roll Into 2 Hit Bow Shots",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "c65965d2fefe1d133c334d9af77476c4f0729226c0fb4e324bc396af9c82ba6b",
+      "files": {
+        "encounter.json": "67a10b175334a5d59c99ee612d58ec003471bb65d015917ef115ec1d40d855ac",
+        "events.jsonl": "763527370929d92aec07752efbb7c06a2bf42bc0846c2077d65bb87bd478172f"
+      },
+      "recording_id": "e1f3060a-0a10-47a3-89cb-6aed0b6870b9",
+      "take_id": "1d18801b-0f40-42b6-b393-f94c44c5915f",
+      "annotation_id": "5bf7436d-c484-48f5-aee9-058ff74611c7",
+      "annotation_text": "Sword/ Dodge Roll Into 2 Hit Bow Shots",
+      "annotation_end_seconds": 18.969,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_triple_blade_beam_slash_b28ca9d0",
+  "name": "Triple Blade Beam Slash",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Triple Blade Beam Slash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "6e6414847a6ad731441867a4a132da31a44b51612071e484a63c38b0ff5da1d3",
+      "files": {
+        "encounter.json": "1676c3da719ec9fec6c0d997fcdb8798900bad323f85456ad29cabbbf3c39e2f",
+        "events.jsonl": "8f9b830e2a608a11ca4ee84c9df238c03a7b17e4cefd900a98abd4e173d845ea"
+      },
+      "recording_id": "a226dd5c-8fb8-4d0d-a7b5-7712291caf8a",
+      "take_id": "5d8736cd-dd6b-46dc-a1fd-74bf07f9c9da",
+      "annotation_id": "b28ca9d0-5987-4c06-bd6e-2d3a500954a7",
+      "annotation_text": "Sword/ Triple Blade Beam Slash",
+      "annotation_end_seconds": 131.312,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2108,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

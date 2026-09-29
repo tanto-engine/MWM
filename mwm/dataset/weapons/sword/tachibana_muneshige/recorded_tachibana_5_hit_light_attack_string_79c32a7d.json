@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_tachibana_5_hit_light_attack_string_79c32a7d",
+  "name": "Tachibana 5 Hit Light Attack String",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Tachibana 5 Hit Light Attack String",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "90c611ee2e75022d2955dedeb1dfa256a7ea08ef5648b20d00bb78d191194539",
+      "files": {
+        "encounter.json": "4416ee77b5b88ef607425160b4a808a4cabe488d47250d85533f71adcc9a202a",
+        "events.jsonl": "5c286685bc3ab6e1ba4c1ebaddb837bcb78e7cd21588b7527d82d773e824b4c5"
+      },
+      "recording_id": "6cf8650b-7e00-440f-b169-8d5ae808e8c2",
+      "take_id": "78acadc8-5fcc-4770-9d04-8a126fb706a5",
+      "annotation_id": "79c32a7d-6ea5-4b00-ac9b-b25f02bec833",
+      "annotation_text": "Sword/Tachibana 5 Hit Light Attack String",
+      "annotation_end_seconds": 7.218,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

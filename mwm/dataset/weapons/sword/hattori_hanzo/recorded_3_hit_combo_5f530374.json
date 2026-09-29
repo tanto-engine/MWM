@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_3_hit_combo_5f530374",
+  "name": "3 Hit Combo",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "3 Hit Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "953e572a56b9c2121491b652f627d5daa2b0953fa1420129ac85e9bc8ddd229a",
+      "files": {
+        "encounter.json": "1e7c427493d62966eb981d3d1b54c59b161fd4d4af737f27eaf8a46d3de06e19",
+        "events.jsonl": "29cb35a651a4c5f265aacf54f1aa81661fff7f4c8b6a741b754a3b4c869c1061"
+      },
+      "recording_id": "afdd363c-1328-4163-8a30-61632242fb5d",
+      "take_id": "0f68e68f-9d84-4524-b9cf-d830d736c42c",
+      "annotation_id": "5f530374-647a-4357-bfdb-b89a146337ac",
+      "annotation_text": "Sword/3 Hit Combo",
+      "annotation_end_seconds": 49.828,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -546,6 +546,2163 @@
       "draft": {
         "text": ""
       }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790640359358-2d90bd",
+      "recording_id": "2d90bd35-c4fe-4b18-ba41-347ae77ef690",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "04d1efe9dc47cfc841f1c79289868899fe4e19e81244511ce738c5a3d286bc3f",
+      "files": {
+        "encounter.json": "1f03ba24d3fae4305a19b852bcdaa6722462c03fdedb4fbce280560a79d34892",
+        "events.jsonl": "73da80fbccc60c397f715df6cded56c1023f88de3fdb96e569631ac3165d7e3c"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 111,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 22,
+        "action_state": 111,
+        "metadata": 41,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "7499d8e7-ea76-4750-b90e-868dcf509313",
+          "text": "Sword/Hattori 4 Hit Combo (Rolling Uppercut Last Hit)",
+          "take_id": "4a76d376-233f-46bb-8718-256dd74627fd",
+          "end_seconds": 21.859,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_hattori_4_hit_combo_rolling_uppercut_last_hit_7499d8e7"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790640437060-289a86",
+      "recording_id": "289a86a5-d402-4a9a-946e-b38e04074533",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "01181f81d74b492e216df088ebc281f09920fbe66d0d43274e526373cd5771ec",
+      "files": {
+        "encounter.json": "9bb7b611f81b7308a47163aeedd7a6093614fb919aac5cc835e77c51f78ff8bd",
+        "events.jsonl": "c12e5d1f110143c0cffe78884cf90d7b97aa569abc388d0055e3e7ea70840f1e"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 2092,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 11,
+        "action_state": 2092,
+        "metadata": 126,
+        "discovery_progress": 197,
+        "snapshot_race": 79,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "a09444a9-6e74-4f65-8a98-6e24359659ae",
+          "text": "Sword/Rolling Slash Into Low Sweep, 2 Hits",
+          "take_id": "b5d328fa-54b4-464d-89ce-877dd68b3003",
+          "end_seconds": 92.391,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_rolling_slash_into_low_sweep_2_hits_a09444a9"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790640751096-05bf8c",
+      "recording_id": "05bf8c83-90b4-4b3e-826b-e5aa06e7c1a3",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "d244749b61df67c8d3c9bf3187e2e707360f9253ae4f29e5145ccff411cccd29",
+      "files": {
+        "encounter.json": "de8546e5e3f9b8e913bf931125d67e02b7c37895d8076e1467ff353710c7bf42",
+        "events.jsonl": "5b4661993e2bd03ec743e0bd4e35b62d1dc2c73b6a88176c52ee52c8751e9536"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 255,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 255,
+        "metadata": 53,
+        "discovery_progress": 34,
+        "snapshot_race": 10,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "07b5c01f-8be9-4edc-b47f-fc3ff6aa1413",
+          "text": "Sword/ Jumping 2 Hit Slash Combo",
+          "take_id": "37a0d5f8-0be8-4b0a-b34c-ce7bed64a078",
+          "end_seconds": 37.282,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_jumping_2_hit_slash_combo_07b5c01f"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790640881131-8f9c61",
+      "recording_id": "8f9c61a0-dc8d-49dd-a667-479fc1603bc9",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "5fbf899eb1b7d3045b5f785cee574925c9bc54e6866891522135924e8f2cdaf0",
+      "files": {
+        "encounter.json": "4dc2f2bea00fcf632ca8b56436308eedbe7e25ad6756db2a5691d012e9dc7f89",
+        "events.jsonl": "1923c946c5328c8640099a531f2422017e8b9ee27fb66ea00efb7c5ba9598c51"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 2,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 5,
+        "action_state": 2,
+        "metadata": 2,
+        "discovery_progress": 81,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "6749edaa-e864-4afa-9474-dd693031dec4",
+          "text": "Sword/5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+          "take_id": "d66d798e-640c-4f3b-8a6f-b0d91bde18fb",
+          "end_seconds": 67.109,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_5_hit_sword_combination_last_hit_ryu_hayabusa_heavy_starter_slas_6749edaa"
+          ]
+        }
+      ],
+      "draft": {
+        "text": "Sword/5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+        "editing_id": "6749edaa-e864-4afa-9474-dd693031dec4"
+      }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790641027450-afdd36",
+      "recording_id": "afdd363c-1328-4163-8a30-61632242fb5d",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "953e572a56b9c2121491b652f627d5daa2b0953fa1420129ac85e9bc8ddd229a",
+      "files": {
+        "encounter.json": "1e7c427493d62966eb981d3d1b54c59b161fd4d4af737f27eaf8a46d3de06e19",
+        "events.jsonl": "29cb35a651a4c5f265aacf54f1aa81661fff7f4c8b6a741b754a3b4c869c1061"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 273,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 273,
+        "metadata": 61,
+        "discovery_progress": 35,
+        "snapshot_race": 6,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "5f530374-647a-4357-bfdb-b89a146337ac",
+          "text": "Sword/3 Hit Combo",
+          "take_id": "0f68e68f-9d84-4524-b9cf-d830d736c42c",
+          "end_seconds": 49.828,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_3_hit_combo_5f530374"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "hattori-hanzo-1790641114758-99d695",
+      "recording_id": "99d69547-e4ba-4604-8276-d1bb54a16eea",
+      "source_boss_name": "Hattori Hanzo",
+      "boss_id": "hattori_hanzo",
+      "weapon_id": "sword",
+      "archive_sha256": "cafc44d820069fe70f52abdd76c307f78515904720ed6f97c0409f105af011d1",
+      "files": {
+        "encounter.json": "f60519ac503b809da0d2c08d6dc128aca2a0fd62ed0ec79a8bcc548ec9e5d3be",
+        "events.jsonl": "fba243f818470c032d60786c6f4c21c630c76de5f41f9ecae9a1104a912d5a54"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 236,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 236,
+        "metadata": 59,
+        "discovery_progress": 34,
+        "snapshot_race": 4,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "bfe4ec74-514e-414c-ba25-617715ed5ae7",
+          "text": "Sword/Roll Into Uppercut Slash",
+          "take_id": "e6fc5ae4-3ae3-4f1a-a790-d754cd935d5c",
+          "end_seconds": 37.375,
+          "move_ids": [
+            "sword.hattori_hanzo.recorded_roll_into_uppercut_slash_bfe4ec74"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644566352-bd9074",
+      "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "db02803b771f6e02a795d8ba512dce29842a698aa9cb9876741c6aedbe91a012",
+      "files": {
+        "encounter.json": "1553938f8ead6046d71243324f26913afcf97752e5a0b32131433e1d47af6999",
+        "events.jsonl": "c23fb148a257eae711dfa9586ecf63de75961c7f3e1b38e05409e6ffa8ba9e6c"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 1404,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 1404,
+        "metadata": 127,
+        "snapshot_race": 243,
+        "discovery_progress": 16,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "6b6726a8-5d00-46c3-ab3c-494f62b2cd73",
+          "text": "Sword/Ishida 5 Hit Combo",
+          "take_id": "fc88dbe0-aeaa-481a-ac83-a3bd2a765516",
+          "end_seconds": 31.594,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_5_hit_combo_6b6726a8"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644621104-97e4e5",
+      "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "e5120896e8dad5565ba5dd3b7c9acdb1f00cea99956e30f4e68a640cf53267c2",
+      "files": {
+        "encounter.json": "371d1de1453ece742fe31783a8832059fa33b53163fa0be73d80fc17740b4a4b",
+        "events.jsonl": "ba859e236cfe06c77209a8633738f9ca03a778269b394109f870b1d598522cc4"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 4105,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 2,
+        "action_state": 4105,
+        "metadata": 281,
+        "snapshot_race": 740,
+        "discovery_progress": 47,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "913d99b2-9346-4a5d-9361-7df175873c7a",
+          "text": "Sword/Ishida Aerial Double Sword Stream Grapple",
+          "take_id": "70ab6dcb-ec7f-4185-8229-e626a1b3af77",
+          "end_seconds": 18.062,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_aerial_double_sword_stream_grapple_913d99b2"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644769577-44677b",
+      "recording_id": "44677be9-d511-49a5-a761-e9191a1dbadf",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "77af03cadf01ab23c3b1cb3380ea835c97d141d05b409bc429e9322ca5b38a01",
+      "files": {
+        "encounter.json": "50136f72517daa66c93182f5fd03f8851508e8dcc2ab227ba56dda7c7149896b",
+        "events.jsonl": "f69c3dc3b3ed268607158fa1fea5900aa79e8533a1505af7946cf5af6a780d96"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 479,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 479,
+        "metadata": 119,
+        "snapshot_race": 73,
+        "discovery_progress": 7,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "42305897-ccd9-4b35-957a-546772c5f96d",
+          "text": "Sword/Ishida Wind Night Rain Blade Beams",
+          "take_id": "30c96fed-a459-4117-ad87-a9e1e71f3463",
+          "end_seconds": 13.031,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_wind_night_rain_blade_beams_42305897"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644817006-a5df92",
+      "recording_id": "a5df925f-4018-478f-9368-344544615a16",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "afaffa1eb2992c889e59754959c45c15801fc0bb156fe7a28e2f402d459f832f",
+      "files": {
+        "encounter.json": "7c46bef09cb4813c2cfe13ae5615ba9c6ef640ba6dc1b308a1eef6a2b3350933",
+        "events.jsonl": "28b0d4e128119d8396f9ad68ed8837a4729b29ea8f0c4685c1157a8f35499892"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 3699,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 3699,
+        "metadata": 171,
+        "snapshot_race": 699,
+        "discovery_progress": 43,
+        "object_unreadable": 4,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "10fa8f86-4275-4331-aa6e-2012b539f165",
+          "text": "Sword/Ishida 3 Hit Combo",
+          "take_id": "578315c8-b611-4b50-921e-7ba783d6172e",
+          "end_seconds": 108.125,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_3_hit_combo_10fa8f86"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644947982-0db3f5",
+      "recording_id": "0db3f5de-501a-431f-949c-1d36a863fb2e",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "70334744347a9e41a0b4608d8940821e95dec8179ecd970421cfa538277757d6",
+      "files": {
+        "encounter.json": "980dcfcc61c55bce20bdd6682ee7715f61364fe051735d3610815d6ef5e8593f",
+        "events.jsonl": "af28649ae2eaeeb034a82c6a5ecaa9077933bb281b89b77422663b0d26172ae2"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 162,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 162,
+        "metadata": 122,
+        "discovery_progress": 7,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "c4fd2b0d-3209-4464-8feb-76a617e23dfb",
+          "text": "Sword/Ishida 3 Hit With Sword Jumping Spin Slash Last Hit",
+          "take_id": "f1e588be-201b-4e35-b6cb-49e031dba5c0",
+          "end_seconds": 11.719,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_3_hit_with_sword_jumping_spin_slash_last_hit_c4fd2b0d"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790644997087-0ef3dc",
+      "recording_id": "0ef3dc77-901f-4e26-8ef9-55063ffa4629",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "1c0b671a78aa1f6f26a32c1fc14ed64f52979fcd4b227d9d8b6322cec748efa1",
+      "files": {
+        "encounter.json": "30c9f036e2286c51804a11f35d9248005269120ad06b89a7ed7594ac3a4e8827",
+        "events.jsonl": "154fd59d30a25659ae5ece970a3cbbd5a8392d663f8da8dee4627b5f503adcb7"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 126,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 126,
+        "metadata": 111,
+        "discovery_progress": 3,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "b032988a-b067-45b0-859b-d5cea13f92a6",
+          "text": "Sword/Ishida 4 Hit Combo With Jumping Spinning Slash To Start Combination",
+          "take_id": "e2aafad9-88e0-40f7-a578-a9cbf3132c37",
+          "end_seconds": 7.875,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_ishida_4_hit_combo_with_jumping_spinning_slash_to_start_combinat_b032988a"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790645062671-b9c316",
+      "recording_id": "b9c31616-7172-4a1c-b3d6-0ea81ea7e635",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "f97e5f8d6395a05824093244a0896c95edc8d4145677913fed5da290d6a0b64a",
+      "files": {
+        "encounter.json": "ad2bba59b4925d67742e534e8030b3f2786ffd1d686ffa2efb70cc0307616eab",
+        "events.jsonl": "38ae9665879cd2158c77962624c3a6e0b0d914156871ed0b44a0b112c9e065db"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 124,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 124,
+        "metadata": 108,
+        "snapshot_race": 3,
+        "discovery_progress": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "eb1eda46-fe56-45f1-bdd2-639267685beb",
+          "text": "Sword/Double Stab Into Double Slash 4 Hit Combo",
+          "take_id": "6cbb161d-9540-4b99-b379-bb7b79ec3c7a",
+          "end_seconds": 5.593,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_double_stab_into_double_slash_4_hit_combo_eb1eda46"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "ishida-mitsunari-1790645095174-ea86b6",
+      "recording_id": "ea86b658-6b87-4440-8ede-ceeb353f26b3",
+      "source_boss_name": "Ishida Mitsunari",
+      "boss_id": "ishida_mitsunari",
+      "weapon_id": "sword",
+      "archive_sha256": "535c1b2cfb25d47b5c8299187a003e4841f52890504cc49a4f9a7dd233c2ed1d",
+      "files": {
+        "encounter.json": "f9df12bc8f361ebea6ec748805e3dd9adc4cbb26b8a27f858ecb973a8b17be6e",
+        "events.jsonl": "d59b3c0dee41214daf5b136d30754ed230c3ffbb87c7eae01e8206edb362114c"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 122,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 122,
+        "metadata": 105,
+        "discovery_progress": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "d809de14-f807-4473-8126-d0d23deace92",
+          "text": "Sword/Living Weapon 5 Hit Blade Beam Slash",
+          "take_id": "006bedb5-3904-44e5-be16-ef5f49628ad4",
+          "end_seconds": 8.828,
+          "move_ids": [
+            "sword.ishida_mitsunari.recorded_living_weapon_5_hit_blade_beam_slash_d809de14"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790636882662-86097d",
+      "recording_id": "86097d19-387e-4191-89d0-487c3e9a562e",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "3aed7753fd9dd02ea6f112d61a330d4a8f7093097c98f05f70513f33b19d7dfe",
+      "files": {
+        "encounter.json": "ec91bf197d196d10b0a93520de2ec6b632d78b8674bdf505e9a64fab490577cb",
+        "events.jsonl": "7470ba77d61b0274e0ae3eda4c4638f0dcb0b708b0bd3d0f2416f18f6356dcb8"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 283,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 3,
+        "action_state": 283,
+        "metadata": 134,
+        "discovery_progress": 59,
+        "snapshot_race": 10,
+        "actor_reset": 1,
+        "object_unreadable": 3,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "c0b87f1a-bd16-47a8-94a8-84642914b0c8",
+          "text": "Sword/Forward Dodging Grab",
+          "take_id": "3fa490f7-594d-474a-9a09-bddfa0ccd8d2",
+          "end_seconds": 20.39,
+          "move_ids": [
+            "sword.maria.recorded_forward_dodging_grab_c0b87f1a"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637001723-977353",
+      "recording_id": "97735321-fcf2-45d0-81f5-69de19355736",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "56659d342fe8585a9eea2bd3ebcbfe6a663f8972fff52fae9c4e45de881b129a",
+      "files": {
+        "encounter.json": "c5a97d4abf18f5ccf27030fcb328fbb54d1232b614a98c1bc1cab4a14ab1cee4",
+        "events.jsonl": "894c4f8e25123c27d714d2a66c2748269ef82a62c1d843459dce673dcf268cac"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 71,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 71,
+        "metadata": 38,
+        "discovery_progress": 18,
+        "object_unreadable": 1,
+        "snapshot_race": 5,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "aeee16bd-6705-435f-b1e2-a2a78e0a175c",
+          "text": "Sword/Short Dodge Forward Slash Into 2 Hit Combo",
+          "take_id": "45f124d3-d88c-4bfc-87a9-e9237619d985",
+          "end_seconds": 16.782,
+          "move_ids": [
+            "sword.maria.recorded_short_dodge_forward_slash_into_2_hit_combo_aeee16bd"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637066242-6988b2",
+      "recording_id": "6988b272-c833-41dc-8343-a3d873561558",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "0d3a65c85d7d4e829522873aa46b9e5646ba4903be0b7810b128fefdd61742e5",
+      "files": {
+        "encounter.json": "630ac11e86bbcb50d32f98941feff06a4485b97e634d362ffb016c675eeebbdf",
+        "events.jsonl": "d8a63e01084559ec4c0f4bcf29b3313dbb2202e685bb20cf48ceaf7796d0b173"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 193,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 193,
+        "metadata": 74,
+        "discovery_progress": 40,
+        "snapshot_race": 3,
+        "actor_reset": 1,
+        "object_unreadable": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "b53349b6-7970-4171-a667-455d0def56a0",
+          "text": "Sword/Long Dodge Forward Slash Into 2 Hit Combo",
+          "take_id": "5edf6d7f-6a73-41be-93cc-3eddf8d721db",
+          "end_seconds": 45.688,
+          "move_ids": [
+            "sword.maria.recorded_long_dodge_forward_slash_into_2_hit_combo_b53349b6"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637150165-dcd2d2",
+      "recording_id": "dcd2d2ca-1f99-4311-94fb-b105d2bb92dc",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "424cbe5b84ec01404115fbb0ebcfa37894311562f45366b79b7da0c41c615330",
+      "files": {
+        "encounter.json": "d401b04a4d2aa23a6383b60fa2db8b22befe5b7364e3f2fe1d38e0c8b13740d9",
+        "events.jsonl": "f365ac4182ccbe753918f80b0a6e481fe74e5f79e68bfb9091e8960592e5a9fd"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 100,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 100,
+        "metadata": 34,
+        "discovery_progress": 16,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "bce4d4fc-8392-4638-a760-ad67361623e6",
+          "text": "Sword/3 Hit Aerial Kick Combo",
+          "take_id": "2faebed1-9afc-452a-88d3-9c89630fa324",
+          "end_seconds": 14.797,
+          "move_ids": [
+            "sword.maria.recorded_3_hit_aerial_kick_combo_bce4d4fc"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637277178-2a2c1f",
+      "recording_id": "2a2c1f26-0999-47f6-a741-412100507c83",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "cb7c1c3650668f9ed2729def8bede4c1f2e0adf7d92bca24b7fd54b997b121db",
+      "files": {
+        "encounter.json": "4afcd26e6a26635f28a487c6a505359776ee6d5d893adcb9730667da7f835c66",
+        "events.jsonl": "0c804c22803781c377a008c2967c928d5165187c3008646e4a0e0fd2ce0940e4"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 431,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 431,
+        "metadata": 58,
+        "discovery_progress": 51,
+        "snapshot_race": 22,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "c3dda4f6-27c6-4da2-b9e8-22af2b6b923e",
+          "text": "Sword/3 Hit Horizontal Slash Combo (Jumping Slash Ender)",
+          "take_id": "687941ff-446f-46ec-8c78-e43ae277070d",
+          "end_seconds": 64.297,
+          "move_ids": [
+            "sword.maria.recorded_3_hit_horizontal_slash_combo_jumping_slash_ender_c3dda4f6"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637407570-5d1c51",
+      "recording_id": "5d1c5146-0273-4fc8-bf13-bfbc7ad2b666",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "2c7ddc5ce0ad0c3b0766afb12a2d50b263cd5cc09e118788c59056848ad26589",
+      "files": {
+        "encounter.json": "fdfe0f7acf07567ba8be6a457967350d18e77f775b02cae3e81eb40d94c24866",
+        "events.jsonl": "e0144b019aad36465c5ccbe44bfc24d9d52b82bd5b33e4f7c9e6766a4f483b56"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 262,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 262,
+        "metadata": 48,
+        "discovery_progress": 37,
+        "snapshot_race": 14,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "0238fd07-2f8f-431b-857f-ede77c7f3b37",
+          "text": "Sword/4 Hit Vertical/Horizontal Quick Attack Combo",
+          "take_id": "f3241ac5-58f7-4f6b-9018-ad4bc689b0f2",
+          "end_seconds": 37.547,
+          "move_ids": [
+            "sword.maria.recorded_4_hit_vertical_horizontal_quick_attack_combo_0238fd07"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637506614-ddd4c8",
+      "recording_id": "ddd4c8c7-3186-443f-ad1e-19cbc4495959",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "7f668a279bd6ef4fdc484f1554e9f10f497515c83e8fa61e12a8e7f0bc747dcc",
+      "files": {
+        "encounter.json": "5b25acfcd4ca59dc37c37398c65c2c8a70aaef8d1093c2dc953c1841859c6899",
+        "events.jsonl": "f9be795f8521b5792e75e707491e6cfe8b590646ac0b875a60424f0b49217f92"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 361,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 361,
+        "metadata": 91,
+        "discovery_progress": 56,
+        "snapshot_race": 20,
+        "object_unreadable": 2,
+        "actor_reset": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "90617779-46fd-47fd-b6ef-3b9f120a466e",
+          "text": "Sword/ Side Evasive Dodge",
+          "take_id": "1fa649ff-66bb-4567-8abf-190c37765e79",
+          "end_seconds": 69.938,
+          "move_ids": [
+            "sword.maria.recorded_side_evasive_dodge_90617779"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637617170-2a2f19",
+      "recording_id": "2a2f192a-aa71-4c88-9413-07e6d656be51",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "cf4e9ff44d9741b6575517f6c36d3d4930f762effc14f23ee7d40ed9863be503",
+      "files": {
+        "encounter.json": "446520d4f028c5d34916cfda1ef67e83c637483062a2c0e41074df3631ce1ec5",
+        "events.jsonl": "2c403d9e94e2a94187e58e4d431b9c43f983fe0bd2bb797dc720574e23ca3261"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 1277,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 10,
+        "action_state": 1277,
+        "metadata": 244,
+        "discovery_progress": 189,
+        "snapshot_race": 53,
+        "actor_reset": 5,
+        "object_unreadable": 6,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "f48eca22-6e17-4829-89f5-09a01b24d1e4",
+          "text": "Sword/ Backwards Evasive Dodge",
+          "take_id": "75c311d5-0bc6-47bf-9ef0-e5ded7afc095",
+          "end_seconds": 260.921,
+          "move_ids": [
+            "sword.maria.recorded_backwards_evasive_dodge_f48eca22"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790637909580-4a8e79",
+      "recording_id": "4a8e7944-f699-4054-a27a-618bdbea39c9",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "72d7a562554a4d3f052fd47749b50ba700ca7c8bb8d1ac702088bf3e1ce1915b",
+      "files": {
+        "encounter.json": "a9ffd386a282f91dc1e201d31aba64bc51d531430fe9c54548a95b4e808e87a0",
+        "events.jsonl": "c6921e1bf60643e7211ec6a2bb948c56eeae1492e24eb6c4d88a67f90b46775a"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 770,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 5,
+        "action_state": 770,
+        "metadata": 135,
+        "discovery_progress": 108,
+        "snapshot_race": 21,
+        "actor_reset": 2,
+        "object_unreadable": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "7889fc49-a467-433a-9553-2ccf5fe2820c",
+          "text": "Sword/Maria Teleport Slash",
+          "take_id": "1ccdd811-a6f6-464a-bdb5-a35fe88e25d6",
+          "end_seconds": 139.515,
+          "move_ids": [
+            "sword.maria.recorded_maria_teleport_slash_7889fc49"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790638086850-0bca8b",
+      "recording_id": "0bca8bb3-3634-4978-adf8-1a4e2f8497cd",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "4a3d9eec61fef1a58fb85de4691c8c977fd770c0a53136965f39c031a51e9383",
+      "files": {
+        "encounter.json": "892252258dce5e24fa0df3840630df12ccd20619242f54779c2a54836b64cc08",
+        "events.jsonl": "9911c2fe73e93962d95fcb9e9e7c39541d8f3b7524757fec8d81c942a9880857"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 138,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 138,
+        "metadata": 47,
+        "discovery_progress": 23,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "3eacfef1-4089-4479-af9b-681dcbd42037",
+          "text": "Sword/Standing Grapple",
+          "take_id": "dde6e883-be1b-456b-9be2-2fd3fd3a8014",
+          "end_seconds": 21.891,
+          "move_ids": [
+            "sword.maria.recorded_standing_grapple_3eacfef1"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790638137315-5ae4b5",
+      "recording_id": "5ae4b50f-390b-4bfa-944b-a4ad9847204e",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "47a704f06b91dbfa2b7203b47d34be3c33de57bcd3607443bfa91397f5c68a0c",
+      "files": {
+        "encounter.json": "bf842cea409fe6e926e2957311dc8f92954bf509153aa775b22060964e455e92",
+        "events.jsonl": "ed52676c754b8c7cc6f8d3cb4cc9db55fa1f4ec152e555e74d6bd2d68b489ecc"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 60,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 60,
+        "metadata": 46,
+        "discovery_progress": 31,
+        "snapshot_race": 1,
+        "object_unreadable": 3,
+        "actor_reset": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "063f4d96-03ec-4fd1-9ede-373dcca5b98b",
+          "text": "Sword/Maria Sword Buff",
+          "take_id": "60c0aaa2-e5a5-4c6c-b411-3914d2e4a3bd",
+          "end_seconds": 31.406,
+          "move_ids": [
+            "sword.maria.recorded_maria_sword_buff_063f4d96"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790638202421-a02871",
+      "recording_id": "a028718a-9f23-4d2b-a777-57462a5a1665",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "43abaf1718396ce3ab68e42e3153398a47e60667e2bd4af96636e118e70df97b",
+      "files": {
+        "encounter.json": "8b2c5382465a8221d9e1e679dd2cd57374fbd5e86476e3ba0bf0bda7657cbf17",
+        "events.jsonl": "03cf10aa0919eddd1b038ea2538459c7c834be2b4ecb4af58dd85dcb785b04c9"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 575,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 575,
+        "metadata": 62,
+        "discovery_progress": 65,
+        "snapshot_race": 16,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "91eadcb3-bc6a-418d-a89b-9f15aa37511e",
+          "text": "Sword/Forward Dodge Slash Into Back Evasive Dodge",
+          "take_id": "a8a4b3e6-2bc8-4546-9f5d-ec1a6c220324",
+          "end_seconds": 79.359,
+          "move_ids": [
+            "sword.maria.recorded_forward_dodge_slash_into_back_evasive_dodge_91eadcb3"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "maria-1790638320430-a226dd",
+      "recording_id": "a226dd5c-8fb8-4d0d-a7b5-7712291caf8a",
+      "source_boss_name": "Maria",
+      "boss_id": "maria",
+      "weapon_id": "sword",
+      "archive_sha256": "6e6414847a6ad731441867a4a132da31a44b51612071e484a63c38b0ff5da1d3",
+      "files": {
+        "encounter.json": "1676c3da719ec9fec6c0d997fcdb8798900bad323f85456ad29cabbbf3c39e2f",
+        "events.jsonl": "8f9b830e2a608a11ca4ee84c9df238c03a7b17e4cefd900a98abd4e173d845ea"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 2211,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 18,
+        "action_state": 2211,
+        "metadata": 410,
+        "discovery_progress": 332,
+        "snapshot_race": 107,
+        "actor_reset": 7,
+        "object_unreadable": 11,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "b28ca9d0-5987-4c06-bd6e-2d3a500954a7",
+          "text": "Sword/ Triple Blade Beam Slash",
+          "take_id": "5d8736cd-dd6b-46dc-a1fd-74bf07f9c9da",
+          "end_seconds": 131.312,
+          "move_ids": [
+            "sword.maria.recorded_triple_blade_beam_slash_b28ca9d0"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790641921872-aa6808",
+      "recording_id": "aa6808ae-f593-4dae-969c-71ac940b840b",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "40e0484065f96cddfa6e8c63abca5864be3420d0ecbbe2cd0b5966db9e20f231",
+      "files": {
+        "encounter.json": "ac6c9cff0938ac41494576baeacea069ad83c250044e3904fd5275cf6dd96146",
+        "events.jsonl": "19229bd4f0cec49832e301c68038def38e0d3e9222d405b9de7a2390f9684295"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 131,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 23,
+        "action_state": 131,
+        "metadata": 44,
+        "snapshot_race": 5,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "60dee7f9-0882-4f29-bc29-3a7ae267ee17",
+          "text": "Sword/Double Stab Combo, 2 Hits",
+          "take_id": "f48b2688-2b3e-4db0-a4ab-0b4eb4e86327",
+          "end_seconds": 23.844,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_double_stab_combo_2_hits_60dee7f9"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790641998338-508b77",
+      "recording_id": "508b77f2-fd86-4b49-94d0-3b9553b3d497",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "03a19dfd3d04dcc37c43818ccd47274312d190bac490e42d6ea3e17dc7f61f48",
+      "files": {
+        "encounter.json": "9a38ac8c1b7866877b65a9b86c03dcaf61aec6394e0bcd8a6671823bdaab73af",
+        "events.jsonl": "04828bf1a598ed590d80b05ff864e8e7984210a14f6da4006654d2000cb56b89"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 196,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 196,
+        "metadata": 50,
+        "discovery_progress": 34,
+        "snapshot_race": 11,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "488daffe-a382-4fdf-8d37-b39a232d68b7",
+          "text": "Sword/Corruption Ground Stab",
+          "take_id": "6e0c46ec-4555-4ce8-abb0-9acfe83dbcc5",
+          "end_seconds": 35.688,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_corruption_ground_stab_488daffe"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642302252-8bfb4b",
+      "recording_id": "8bfb4be3-e42b-46a4-bcd0-621589bdfd0d",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "2eba5970e740a84f1fc0958a367ee5cdb0a55c8215d0e9eee3c2e38763c325d8",
+      "files": {
+        "encounter.json": "6d2b76671cc46dd3abc495f17b40db754a47ea09817861b4a613447d1ba01822",
+        "events.jsonl": "1b78110076960cf967073200f6fb8e54ef803031488e092d4601e21771fd8b2e"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 53,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 53,
+        "metadata": 31,
+        "discovery_progress": 26,
+        "snapshot_race": 3,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "72ca30f1-14bb-4080-8e23-ebb44fe9affb",
+          "text": "Sword/5 Hit Oda Slash Combo",
+          "take_id": "91e8301b-b7ee-461f-a6e1-f7cd890e34ab",
+          "end_seconds": 27.547,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_5_hit_oda_slash_combo_72ca30f1"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642374162-2fb658",
+      "recording_id": "2fb658e7-a67d-4527-964d-6ac216f31ca6",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "dcae32ecc04ce051eb22fc29ba5ea57041a4ede30752811de52963b6f8e5b412",
+      "files": {
+        "encounter.json": "de851997ff06f56462329b5ade529c8fce4b6a23b7287311b54c11b8f278a2be",
+        "events.jsonl": "f7324b8aa40df2fe4ff564c089f15085636a9f85180cecc64e471ade2dff0f34"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 107,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 107,
+        "metadata": 49,
+        "discovery_progress": 18,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "a414000a-6d4a-4536-93de-c150b50f47fb",
+          "text": "Sword/Fire Teleport Ground Stab",
+          "take_id": "7eff0cdb-3a5d-40f7-88cc-e3da2d70db74",
+          "end_seconds": 18.578,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_fire_teleport_ground_stab_a414000a"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642437729-8ba247",
+      "recording_id": "8ba2477e-c8d7-4b6f-a417-2990d450ddc5",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "d1f20389e6e483077b0c15ac3e51ab85f1afd86834efcadc5e02a979272f62ab",
+      "files": {
+        "encounter.json": "a9b2d17d2c2a27236a8584f8a8c33a3891af9ca05e65dd28aadbd8023ebfcb78",
+        "events.jsonl": "4f88dd42a9d66d9fb56875159f3d4481a49a27511fa32e7a09aeb6c651a438dc"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 452,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 452,
+        "metadata": 67,
+        "discovery_progress": 40,
+        "snapshot_race": 21,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "66cd0c69-1d3d-4ee0-8734-a2bd4a6c2477",
+          "text": "Sword/Icicle Summoning Attack",
+          "take_id": "858e68e4-bf2d-4cf2-9eae-5d0654a63586",
+          "end_seconds": 58.797,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_icicle_summoning_attack_66cd0c69"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642546984-e2d98e",
+      "recording_id": "e2d98e0f-93ee-49e4-83e4-463c8642fc1f",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "991f226e01288d73c1e360f385d6fb8c965b82f89e8a4baa360fcad57fd65c3d",
+      "files": {
+        "encounter.json": "20dd37065c97e0c216811d4bfe5239314ad090fe6cdc495c87710b1702c82cf5",
+        "events.jsonl": "b8d7780665f4a5c5588e24cda2a5c99028bf27e1c1d7b8719e53b5279112219c"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 29,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 29,
+        "metadata": 23,
+        "discovery_progress": 7,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "be533ef5-859d-4144-af0b-e444b5e90d46",
+          "text": "Sword/Forward Super Sonic Dash",
+          "take_id": "99eeba7f-b2e1-4856-bbea-0125159e0cd9",
+          "end_seconds": 6.344,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_forward_super_sonic_dash_be533ef5"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642594369-a6aea7",
+      "recording_id": "a6aea70e-4c0a-4d95-b5e8-f740fbb31e3f",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "f72e419b7b13dcb3f3d718e4ff7fb2f4a0513fb7afa15871fad1c75fa36e4eb5",
+      "files": {
+        "encounter.json": "a17d05e564ffb894d848b53b5bcf1c413dab675540b29892d6fac80617977a63",
+        "events.jsonl": "61d00838f6a2e0f75a506176a6b70b804d0e1885c9cee7b4a3fd44355d5d0cac"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 660,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 660,
+        "metadata": 74,
+        "discovery_progress": 72,
+        "snapshot_race": 40,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "6b963e6d-d95d-4db7-9d9d-0029e1b82a20",
+          "text": "Sword/Lightning Summoning Attack",
+          "take_id": "abf7dd25-f937-4b3b-9874-5a19a56f4358",
+          "end_seconds": 90.922,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_lightning_summoning_attack_6b963e6d"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642711211-6c058f",
+      "recording_id": "6c058fbe-65da-44c5-bd22-58631933915e",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "5588148561a4749c03fc97d63cb732e7ff420f96058012b398fd4357668a3141",
+      "files": {
+        "encounter.json": "2d9596a43846c30c372d205f641502ba4ae7a946ddf6d5af2054f6c597ae8269",
+        "events.jsonl": "09971b2db12c51dc182df46054297abd9ac2b8f40b62c952c28f85627e563b56"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 102,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 102,
+        "metadata": 44,
+        "discovery_progress": 18,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "2f9b5332-7712-4903-845b-6d80ab552803",
+          "text": "Sword/In Place Wind Quadrasect Slashes",
+          "take_id": "afbeebcb-95c1-43ea-9b94-14319987b963",
+          "end_seconds": 18.578,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_in_place_wind_quadrasect_slashes_2f9b5332"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "oda-nobunaga-1790642867084-1963cd",
+      "recording_id": "1963cd91-0bb1-49a3-9759-172a2fef430f",
+      "source_boss_name": "Oda Nobunaga",
+      "boss_id": "oda_nobunaga",
+      "weapon_id": "sword",
+      "archive_sha256": "e07a5a9813793e4bb3c91cbf98c3ab11c435fc5d333176be803e0bdffceb09d0",
+      "files": {
+        "encounter.json": "4b4cef7b3c8781bb5cb07102db995b1e894a5e91d65ae6129c383ed1fa8d8021",
+        "events.jsonl": "ac89d00b887f92e6b807c0c6e51e25b9133e903fd56cd0e1eb44e30dc89accb6"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 413,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 4,
+        "action_state": 413,
+        "metadata": 113,
+        "discovery_progress": 53,
+        "snapshot_race": 18,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "2f595803-2388-4082-a9e1-a4376c89f3c1",
+          "text": "Sword/ Backward Super Sonic Dodge",
+          "take_id": "d0a21903-c501-406b-b41d-4c6248a0702d",
+          "end_seconds": 8.234,
+          "move_ids": [
+            "sword.oda_nobunaga.recorded_backward_super_sonic_dodge_2f595803"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "otani-yoshitsugu-1790644438376-d090ea",
+      "recording_id": "d090ea56-b0e6-41cb-99bd-104826051fce",
+      "source_boss_name": "Otani Yoshitsugu",
+      "boss_id": "otani_yoshitsugu",
+      "weapon_id": "sword",
+      "archive_sha256": "040f49388f81eed429561b3600895c79e3b7af9613da44b18df48b382f78e3fe",
+      "files": {
+        "encounter.json": "9e9a6b8bf9a52f3cb2474b103ab4fe528db76a1be412fb9c57472a559938b4c2",
+        "events.jsonl": "f0c5146be8d986a8415d283879c896ff38572bbf0ea495d94ed497aee9e0cb15"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 1729,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 25,
+        "action_state": 1729,
+        "metadata": 129,
+        "snapshot_race": 302,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639058258-b7cf11",
+      "recording_id": "b7cf11f9-796a-4c3a-a5ea-c96ee2e5dff2",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "169c1166768c7d1c7f9c6b12b06396be96726b860b1bf5ceeb407ea7c17e4d89",
+      "files": {
+        "encounter.json": "2e1f8a4ae61511e808d9e87d0da3719b7224cf8e4b686677befeff8e937d4cf0",
+        "events.jsonl": "736237944fa4313775079a49b415b580211db0b72fd58b533014bed9f8db521b"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 61,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery_progress": 21,
+        "action_state": 61,
+        "metadata": 33,
+        "snapshot_race": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "807b1526-878f-423d-9fdd-604c9520ab66",
+          "text": "Sword/Low Stance 4 Hit (Downward Slash, Into Stab, 2X Slash)",
+          "take_id": "03e23660-472b-4a52-9727-8b1439d9c947",
+          "end_seconds": 21.625,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_low_stance_4_hit_downward_slash_into_stab_2x_slash_807b1526"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639184872-a3375f",
+      "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "c5bded8845d0fb137216f62c509672d633627e4804f8424376fa8ab86c753d75",
+      "files": {
+        "encounter.json": "c17a379f7c7d6475970d148fd6b00c41fe1d8d476c3b9461159905c23bb4b86c",
+        "events.jsonl": "f5f2d1755d50d85480d3d3106dc46980d5ee5b9ff76f8e8ebbdb88e179729810"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 431,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 431,
+        "metadata": 90,
+        "discovery_progress": 40,
+        "snapshot_race": 19,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "980021cd-a016-4e2f-8857-3b5b5438643b",
+          "text": "Sword/Backward Sheathing Dash Into Quadrasect",
+          "take_id": "734d3ee8-67fa-4228-907e-179481683dbb",
+          "end_seconds": 56.328,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_backward_sheathing_dash_into_quadrasect_980021cd"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639281178-b60c76",
+      "recording_id": "b60c76b2-584e-4516-b968-413a03e5937e",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "64fc0abe4a8516af5e106e49b8d3e65154c07bc45610b83813746301d4346fb3",
+      "files": {
+        "encounter.json": "7118f8c95f17279dff573a8e020ce0343e914530f5fb7751e1b606b4b5dc3776",
+        "events.jsonl": "4f060e634649c72d90362c1272da44beaa7df9e3f1ec10f181393e565c7ff3cf"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 374,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 374,
+        "metadata": 114,
+        "discovery_progress": 39,
+        "snapshot_race": 15,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "1f4bf542-70fa-481d-9353-7415051b932c",
+          "text": "Sword/Double Ground Stab Combo",
+          "take_id": "44ac4979-20db-4707-9a96-28a41b638688",
+          "end_seconds": 54.39,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_double_ground_stab_combo_1f4bf542"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639372802-b09b2d",
+      "recording_id": "b09b2de3-b4bd-469b-8872-85097d87ee4a",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "c3c8cd280ce6cdefb16ead03c097fa255e9edc8a115ec12eb8b25f3006bf34d2",
+      "files": {
+        "encounter.json": "70a15e959de9a9eb66c8947aa2afdfeb874b3576dbc7e7373a82d7af8b087cbd",
+        "events.jsonl": "ba4cc21b79faff0d69b0fd7a72825b6983419883ae8503e8bc96300aa2b288b3"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 800,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 5,
+        "action_state": 800,
+        "metadata": 128,
+        "discovery_progress": 95,
+        "snapshot_race": 32,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "bfc9ac68-536a-4f71-9830-89c47cea1138",
+          "text": "Sword/Low Stance Low Sweep 3 Hit Heavy Combo",
+          "take_id": "772652be-99fb-4b50-be1c-bbb23efdd3e7",
+          "end_seconds": 126.468,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_low_stance_low_sweep_3_hit_heavy_combo_bfc9ac68"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639547741-e1f306",
+      "recording_id": "e1f3060a-0a10-47a3-89cb-6aed0b6870b9",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "c65965d2fefe1d133c334d9af77476c4f0729226c0fb4e324bc396af9c82ba6b",
+      "files": {
+        "encounter.json": "67a10b175334a5d59c99ee612d58ec003471bb65d015917ef115ec1d40d855ac",
+        "events.jsonl": "763527370929d92aec07752efbb7c06a2bf42bc0846c2077d65bb87bd478172f"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 105,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 105,
+        "metadata": 61,
+        "discovery_progress": 19,
+        "snapshot_race": 2,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "5bf7436d-c484-48f5-aee9-058ff74611c7",
+          "text": "Sword/ Dodge Roll Into 2 Hit Bow Shots",
+          "take_id": "1d18801b-0f40-42b6-b393-f94c44c5915f",
+          "end_seconds": 18.969,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_dodge_roll_into_2_hit_bow_shots_5bf7436d"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639602360-3a925a",
+      "recording_id": "3a925a75-48db-47f8-adae-979dfc45a39e",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "808dcf34ccaa60ddd005eaf5035ce8e2bdc5e9404033e0bd6c0204a3fa99a3ce",
+      "files": {
+        "encounter.json": "843e7e0f7bfc0078c2d55a7f6a91870bc9f72697e743d529a940e9801d602cb0",
+        "events.jsonl": "85240fadf2e08492c2bccaa39ec8f8a48f0c3aa633ec166a1a6d28f2073973e7"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 375,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 375,
+        "metadata": 90,
+        "discovery_progress": 39,
+        "snapshot_race": 18,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "3f8bdefa-17a7-4027-8e7a-7deaba126bfa",
+          "text": "Sword/Mid Stance 3 Hit Horizontal Combo",
+          "take_id": "96a0d6fa-5f2e-4ef5-a135-fdb91343e26f",
+          "end_seconds": 54.047,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_mid_stance_3_hit_horizontal_combo_3f8bdefa"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639693702-08f7bc",
+      "recording_id": "08f7bc81-7b35-4682-a20b-268158e75c37",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "610b9196015adf1be0060eaa6312aa2dba02bf9474806a860fbf0300d12b94fc",
+      "files": {
+        "encounter.json": "591aca9c515e0ef0579f101294d615556f3f46220302cd0ed140ddf49facaeef",
+        "events.jsonl": "be4cc40396fa1bbc7feb2ce6dd80715a36a79a105dad3fcf244a52a19470372e"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 163,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 163,
+        "metadata": 65,
+        "discovery_progress": 29,
+        "snapshot_race": 8,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "00587c9b-e587-437b-91bc-8c266eb43b3b",
+          "text": "Sword/Tachibana Sword Moon Buff Into Evasive Back Dodge Into Quardasect",
+          "take_id": "ca9073f4-14dd-4e49-ab83-6eb37aa42f24",
+          "end_seconds": 29.687,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_tachibana_sword_moon_buff_into_evasive_back_dodge_into_quardasec_00587c9b"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639781054-6cf865",
+      "recording_id": "6cf8650b-7e00-440f-b169-8d5ae808e8c2",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "90c611ee2e75022d2955dedeb1dfa256a7ea08ef5648b20d00bb78d191194539",
+      "files": {
+        "encounter.json": "4416ee77b5b88ef607425160b4a808a4cabe488d47250d85533f71adcc9a202a",
+        "events.jsonl": "5c286685bc3ab6e1ba4c1ebaddb837bcb78e7cd21588b7527d82d773e824b4c5"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 32,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 32,
+        "metadata": 23,
+        "discovery_progress": 7,
+        "snapshot_race": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "79c32a7d-6ea5-4b00-ac9b-b25f02bec833",
+          "text": "Sword/Tachibana 5 Hit Light Attack String",
+          "take_id": "78acadc8-5fcc-4770-9d04-8a126fb706a5",
+          "end_seconds": 7.218,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_tachibana_5_hit_light_attack_string_79c32a7d"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639816659-18decf",
+      "recording_id": "18decf67-2da5-4a37-b998-b18f86acb342",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "7f586808418f08eecadc05ff404def4f15c67af99fec7f48104d312a51047acb",
+      "files": {
+        "encounter.json": "1f5da01f9e7606bb68ec938c68b3e36fc68aad72805957f33b5b3fb3196723fa",
+        "events.jsonl": "a2ad13bd5ecc8b28510f6c916a6fffd4f6d02ae716cf446c027a8c7b64c76238"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 667,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 5,
+        "action_state": 667,
+        "metadata": 125,
+        "discovery_progress": 73,
+        "snapshot_race": 22,
+        "object_unreadable": 4,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "feadc5eb-c94e-4f7b-9600-f88f112896ee",
+          "text": "Sword/Electric Morning Moon",
+          "take_id": "85cad060-dea6-41c7-b753-1bae8a9de864",
+          "end_seconds": 89.75,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_electric_morning_moon_feadc5eb"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790639930010-b4e4b9",
+      "recording_id": "b4e4b95c-c320-4502-865b-bce1032b7d69",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "8e69bb01c110ac75ea5aeb843ffa6c359db90c192531411b19dd65ad20847d36",
+      "files": {
+        "encounter.json": "f27611499ac85292ad7467de51e7706016ad444f5a92de2d03bf4cd1752bf998",
+        "events.jsonl": "43173b5af7861a5002e218b90a1f7c48e730f96aa2927e9d231d4b13d13d619a"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 382,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 3,
+        "action_state": 382,
+        "metadata": 120,
+        "discovery_progress": 45,
+        "gap": 2,
+        "end": 2,
+        "snapshot_race": 12
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "1dabbace-0fb2-4d70-9bd5-4a60691bf586",
+          "text": "Sword/High Stance 2 Hit Light Combo, 2nd Hit Retreating",
+          "take_id": "bd331254-b9ad-4ba3-bb08-d41e36d84313",
+          "end_seconds": 43.781,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_high_stance_2_hit_light_combo_2nd_hit_retreating_1dabbace"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "tachibana-muneshige-1790640043344-7c9164",
+      "recording_id": "7c916462-17ba-469e-98e7-8fd39f1938f0",
+      "source_boss_name": "Tachibana Muneshige",
+      "boss_id": "tachibana_muneshige",
+      "weapon_id": "sword",
+      "archive_sha256": "495ceba9579db847ba8cf11a63e7a97afefd4dbe1d06834e8719003d29f05f90",
+      "files": {
+        "encounter.json": "dc985d720d6ac5d1b73898dbaa95e0a20933bf648fd28e7c975458ed9d4c2d7b",
+        "events.jsonl": "b042e8334012fc71d37f1a35c58b954b35bf8ccd1c68adb7d03500f0e3b20e48"
+      },
+      "take_count": 2,
+      "recorded_action_rows": 1006,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 7,
+        "action_state": 1006,
+        "metadata": 150,
+        "discovery_progress": 105,
+        "snapshot_race": 43,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "14452408-8d52-4cae-a133-c72f204712df",
+          "text": "Sword/Tachibana Blue Moon Buff Into Tempest",
+          "take_id": "baa3e080-bd7c-40d4-9876-40be5ddbf9ff",
+          "end_seconds": 6.141,
+          "move_ids": [
+            "sword.tachibana_muneshige.recorded_tachibana_blue_moon_buff_into_tempest_14452408"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646060589-d89d98",
+      "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "3461b88184f78b29abab875ce42258d27c79094a71993888c98a98f673902b37",
+      "files": {
+        "encounter.json": "bdc3fdfce1722861eb835645e65532b7fadd160d527d8ad41ba3b3f76df85e96",
+        "events.jsonl": "0cae014529ed5ba885fed11b32dcc6454f932cfc3b85c65822d918f54a77a377"
+      },
+      "take_count": 5,
+      "recorded_action_rows": 20302,
+      "journal_event_counts": {
+        "session": 2,
+        "discovery": 2,
+        "action_state": 11926,
+        "metadata": 235,
+        "discovery_progress": 26,
+        "snapshot_race": 373,
+        "gap": 2,
+        "end": 2
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "e8abd11d-7bd9-4d87-bb35-a4f1949ca80a",
+          "text": "Sword/Dodge Forward Double Stab Into Downward/Upward Double Slash",
+          "take_id": "3cf8b979-70c1-493a-920b-139abb7bcacf",
+          "end_seconds": 33.422,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_dodge_forward_double_stab_into_downward_upward_double_slash_e8abd11d"
+          ]
+        },
+        {
+          "id": "61c2ac98-89d7-4dc6-92d9-357dc25b615b",
+          "text": "Sword/ Dodging Stab Into Downward Upward Slash Into Kick 4 Hit Combo",
+          "take_id": "923a07a8-9f87-4805-b1c5-76a1098f6c6a",
+          "end_seconds": 9.656,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_4_hit_combo_61c2ac98"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646567339-656c6a",
+      "recording_id": "656c6afb-f927-4061-a786-8b1afbdf38fc",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "b77bef6e7ded5612f96fe8fb3c85604ab482e3512627f6dcd807a660fed6121c",
+      "files": {
+        "encounter.json": "878a3406e9dd2954b3a55ab52d214247b56c9ac1014e15746b1e98d17c22a2b4",
+        "events.jsonl": "d3d99f87a82c64299441b4d29a2c50b4d7a8a460a949c692c2e78a19b2e03a3d"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 2314,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 2314,
+        "metadata": 102,
+        "snapshot_race": 62,
+        "discovery_progress": 6,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "2425b665-fce3-4795-a37c-882536225843",
+          "text": "Sword/ Double Stab Into Downward/Upward Slash Combo",
+          "take_id": "a6905ddc-834b-4f61-8dca-3cf4d07e4855",
+          "end_seconds": 8.891,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_double_stab_into_downward_upward_slash_combo_2425b665"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646654782-d228d1",
+      "recording_id": "d228d1f8-9b24-4f15-af3e-73573bb35509",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "c05a09a278041e3d6d9f1726417fd598f127a685c985e39f5d674edb49e7cefa",
+      "files": {
+        "encounter.json": "5cd35c12ad6b172b29895386bb4c7942bbb4be3725b64cbbd76e6ed291427c0c",
+        "events.jsonl": "75bbb7e4bdb9fe20626455d65d3c1d25f298a07d81058438c405b94f09718295"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 29902,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 2,
+        "action_state": 29902,
+        "metadata": 176,
+        "snapshot_race": 874,
+        "discovery_progress": 41,
+        "metadata_unreadable": 1,
+        "object_unreadable": 1,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "eb267b91-5fcb-4bc2-84f1-a03aa408ef81",
+          "text": "Sword/High Stance Fire Wave High Stance Light Finisher",
+          "take_id": "b64a49bd-ca02-448c-9add-ddefd89da50e",
+          "end_seconds": 86.687,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_high_stance_fire_wave_high_stance_light_finisher_eb267b91"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646793775-ea414b",
+      "recording_id": "ea414bdf-38c5-44ec-a5d7-b9dc2f4aca21",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "9d266da2e591704138593f7f0d322b1380d7c9a02d13a5d34e1a1ec8ff7c15af",
+      "files": {
+        "encounter.json": "3f41da9bc86a3de27b04946efbf5f2951ca0f486f490875d990e41d4432e5e93",
+        "events.jsonl": "7b290cce85a73d4fe264302dec60cdb80f1db8c3950bf07b897a575a5ba6ab2a"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 6179,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 6179,
+        "metadata": 116,
+        "discovery_progress": 12,
+        "snapshot_race": 194,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "d2d8c3e9-2e13-4e73-afa5-2546aa8d79a8",
+          "text": "Sword/ Toyotomi Yokai Grapple",
+          "take_id": "4dcbad2d-5079-415b-839c-525fbc14da49",
+          "end_seconds": 19.969,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_toyotomi_yokai_grapple_d2d8c3e9"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646839770-7cb1d9",
+      "recording_id": "7cb1d913-5886-47a5-a413-5f7a9d3bf16f",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "68fe60262350e82c2fe3e9440dbb0634e14a011642ade941c999e8939aa964b5",
+      "files": {
+        "encounter.json": "efbb335d09acbdbba4e7b86ec209058429b8772cd3cf5a62fcc75359bd452fc1",
+        "events.jsonl": "63244b6cdb03bcef679587abe5ea6458ab2ec9dc498c373fc8f4a2f844e43bd9"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 16306,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 16306,
+        "metadata": 133,
+        "snapshot_race": 477,
+        "discovery_progress": 27,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "05268b25-3dcf-42b0-842c-d354b5c09b23",
+          "text": "Sword/Yokai Pool Summoning Attack",
+          "take_id": "175ef3f5-8aae-42a2-9ada-ee5085b3bb81",
+          "end_seconds": 47.407,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_yokai_pool_summoning_attack_05268b25"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790646983670-9a48e8",
+      "recording_id": "9a48e826-8b06-48b7-bebf-01312ba0bf37",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "a33b6e382dfba25c49085f7a817c48b640bd4824db2abdbcb3fdf15a95794ce0",
+      "files": {
+        "encounter.json": "f197f323740e726d8ea7e64005a1e323dab8ae6a84b9b7ede2575cc0e923f92c",
+        "events.jsonl": "8995b3762fd324021be756b1e175d813eea41bb38de0f0599d7bfaf30eb40c40"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 18667,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 1,
+        "action_state": 18667,
+        "metadata": 162,
+        "snapshot_race": 562,
+        "discovery_progress": 31,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "efd176e0-b815-42ec-92eb-b874805b1a9e",
+          "text": "Sword/ Dodging Stab Into, Downward/Upward Slash Into Kick Into Strong Horizontal Swing",
+          "take_id": "889651aa-8136-4969-84db-34529e2f3e49",
+          "end_seconds": 54.578,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_into_strong_ho_efd176e0"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
+    },
+    {
+      "source_folder": "toyotomi-hideyori-1790647101657-8a4da3",
+      "recording_id": "8a4da33f-72a2-4398-bc64-a76b8569dd14",
+      "source_boss_name": "Toyotomi Hideyori",
+      "boss_id": "toyotomi_hideyori",
+      "weapon_id": "sword",
+      "archive_sha256": "881d9f7da3d163d229373de3db569a8aa08b8cf3ac6f4379ac5b0c4a4a5d050a",
+      "files": {
+        "encounter.json": "19c7af5bb845e6071343289d897eb964ca9a8c78e481cbf03639f7d0cf6868f7",
+        "events.jsonl": "8624771a170b82fd04b816ec42de66f4dec414df06bc85cd1c673fe5fa174b15"
+      },
+      "take_count": 1,
+      "recorded_action_rows": 41886,
+      "journal_event_counts": {
+        "session": 1,
+        "discovery": 3,
+        "action_state": 41886,
+        "metadata": 150,
+        "snapshot_race": 1140,
+        "discovery_progress": 59,
+        "gap": 1,
+        "end": 1
+      },
+      "status": "unmapped_candidate",
+      "annotations": [
+        {
+          "id": "f041f1d8-368d-4dd0-8066-c2594e81230b",
+          "text": "Sword/Toyotomi Stronger Iai Strike",
+          "take_id": "b9ab4095-9d0d-4c61-a048-e22b3346c6c9",
+          "end_seconds": 118.594,
+          "move_ids": [
+            "sword.toyotomi_hideyori.recorded_toyotomi_stronger_iai_strike_f041f1d8"
+          ]
+        }
+      ],
+      "draft": {
+        "text": ""
+      }
     }
   ]
 }

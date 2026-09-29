@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_corruption_ground_stab_488daffe",
+  "name": "Corruption Ground Stab",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Corruption Ground Stab",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "03a19dfd3d04dcc37c43818ccd47274312d190bac490e42d6ea3e17dc7f61f48",
+      "files": {
+        "encounter.json": "9a38ac8c1b7866877b65a9b86c03dcaf61aec6394e0bcd8a6671823bdaab73af",
+        "events.jsonl": "04828bf1a598ed590d80b05ff864e8e7984210a14f6da4006654d2000cb56b89"
+      },
+      "recording_id": "508b77f2-fd86-4b49-94d0-3b9553b3d497",
+      "take_id": "6e0c46ec-4555-4ce8-abb0-9acfe83dbcc5",
+      "annotation_id": "488daffe-a382-4fdf-8d37-b39a232d68b7",
+      "annotation_text": "Sword/Corruption Ground Stab",
+      "annotation_end_seconds": 35.688,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

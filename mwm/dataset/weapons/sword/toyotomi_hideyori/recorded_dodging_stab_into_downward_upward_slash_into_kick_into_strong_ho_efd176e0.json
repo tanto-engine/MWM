@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_into_strong_ho_efd176e0",
+  "name": "Dodging Stab Into, Downward/Upward Slash Into Kick Into Strong Horizontal Swing",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Dodging Stab Into, Downward/Upward Slash Into Kick Into Strong Horizontal Swing",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "a33b6e382dfba25c49085f7a817c48b640bd4824db2abdbcb3fdf15a95794ce0",
+      "files": {
+        "encounter.json": "f197f323740e726d8ea7e64005a1e323dab8ae6a84b9b7ede2575cc0e923f92c",
+        "events.jsonl": "8995b3762fd324021be756b1e175d813eea41bb38de0f0599d7bfaf30eb40c40"
+      },
+      "recording_id": "9a48e826-8b06-48b7-bebf-01312ba0bf37",
+      "take_id": "889651aa-8136-4969-84db-34529e2f3e49",
+      "annotation_id": "efd176e0-b815-42ec-92eb-b874805b1a9e",
+      "annotation_text": "Sword/ Dodging Stab Into, Downward/Upward Slash Into Kick Into Strong Horizontal Swing",
+      "annotation_end_seconds": 54.578,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

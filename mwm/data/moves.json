@@ -49,13 +49,25 @@
     {
       "id": "sanada_yukimura",
       "name": "Sanada Yukimura"
+    },
+    {
+      "id": "hattori_hanzo",
+      "name": "Hattori Hanzo"
+    },
+    {
+      "id": "ishida_mitsunari",
+      "name": "Ishida Mitsunari"
+    },
+    {
+      "id": "maria",
+      "name": "Maria"
     }
   ],
   "moves": [
     {
       "id": "okatsu.charged_rush",
       "boss_id": "okatsu",
-      "name": "Okatsu · Charged Rush",
+      "name": "Okatsu \u00b7 Charged Rush",
       "name_status": "descriptive_mod_name",
       "category": "sword_rush",
       "weapon": "sword",
@@ -1365,7 +1377,7 @@
     {
       "id": "okatsu.leaping_slash",
       "boss_id": "okatsu",
-      "name": "Okatsu · Leaping Slash",
+      "name": "Okatsu \u00b7 Leaping Slash",
       "name_status": "descriptive_mod_name",
       "category": "sword_leaping_attack",
       "weapon": "sword",
@@ -1488,7 +1500,7 @@
     {
       "id": "okatsu.action_0c61",
       "boss_id": "okatsu",
-      "name": "Okatsu · Sword slash string",
+      "name": "Okatsu \u00b7 Sword slash string",
       "name_status": "descriptive_mod_name",
       "category": "sword_combo",
       "weapon": "sword",
@@ -3543,7 +3555,7 @@
     {
       "id": "okatsu.action_0c69",
       "boss_id": "okatsu",
-      "name": "Okatsu · Sword grab and finisher",
+      "name": "Okatsu \u00b7 Sword grab and finisher",
       "name_status": "descriptive_mod_name",
       "category": "grab_attempt",
       "weapon": "sword",
@@ -4479,7 +4491,7 @@
     {
       "id": "jin_hayabusa.action_0bbf",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Five-strike sword string",
+      "name": "Jin \u00b7 Five-strike sword string",
       "name_status": "inferred",
       "category": "normal",
       "weapon": "sword",
@@ -27580,7 +27592,7 @@
     {
       "id": "jin_hayabusa.action_0bc0",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Heavy sword string C",
+      "name": "Jin \u00b7 Heavy sword string C",
       "name_status": "inferred",
       "category": "normal",
       "weapon": "sword",
@@ -35250,7 +35262,7 @@
     {
       "id": "jin_hayabusa.action_0c6e",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Cyclone slash string",
+      "name": "Jin \u00b7 Cyclone slash string",
       "name_status": "user_confirmed",
       "category": "heavy_attack",
       "weapon": "sword",
@@ -43067,7 +43079,7 @@
     {
       "id": "jin_hayabusa.action_0c79",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Launcher only",
+      "name": "Jin \u00b7 Launcher only",
       "name_status": "player_confirmed",
       "category": "sword_launcher",
       "weapon": "sword",
@@ -43311,7 +43323,7 @@
     {
       "id": "jin_hayabusa.action_0c71",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Flying Swallow",
+      "name": "Jin \u00b7 Flying Swallow",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -48450,7 +48462,7 @@
     {
       "id": "jin_hayabusa.action_0c81",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Aerial somersault",
+      "name": "Jin \u00b7 Aerial somersault",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -52938,7 +52950,7 @@
     {
       "id": "jin_hayabusa.izuna_drop",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Launcher + Izuna Drop",
+      "name": "Jin \u00b7 Launcher + Izuna Drop",
       "name_status": "player_confirmed",
       "category": "skill",
       "weapon": "sword",
@@ -57500,7 +57512,7 @@
     {
       "id": "jin_hayabusa.action_0c75",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Downward sword slash",
+      "name": "Jin \u00b7 Downward sword slash",
       "name_status": "player_confirmed",
       "category": "sword_skill",
       "weapon": "sword",
@@ -66198,7 +66210,7 @@
     {
       "id": "jin_hayabusa.flying_swallow_jump",
       "boss_id": "jin_hayabusa",
-      "name": "Jin · Flying Swallow jump",
+      "name": "Jin \u00b7 Flying Swallow jump",
       "name_status": "player_confirmed",
       "category": "jump",
       "weapon": "sword",
@@ -66954,7 +66966,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d30",
-      "name": "Hideyori · Four-hit string",
+      "name": "Hideyori \u00b7 Four-hit string",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -66981,7 +66993,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d31",
-      "name": "Hideyori · Second strike",
+      "name": "Hideyori \u00b7 Second strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67008,7 +67020,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d32",
-      "name": "Hideyori · Third strike",
+      "name": "Hideyori \u00b7 Third strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67035,7 +67047,7 @@
     },
     {
       "id": "toyotomi_hideyori.action_0d33",
-      "name": "Hideyori · Final strike",
+      "name": "Hideyori \u00b7 Final strike",
       "boss_id": "toyotomi_hideyori",
       "weapon": "sword",
       "designation": "skill",
@@ -67062,7 +67074,7 @@
     },
     {
       "id": "oda_nobunaga.action_0c6e",
-      "name": "Oda · Final two slashes",
+      "name": "Oda \u00b7 Final two slashes",
       "boss_id": "oda_nobunaga",
       "weapon": "sword",
       "designation": "skill",
@@ -67089,7 +67101,7 @@
     },
     {
       "id": "oda_nobunaga.action_0c6f",
-      "name": "Oda · Final slash",
+      "name": "Oda \u00b7 Final slash",
       "boss_id": "oda_nobunaga",
       "weapon": "sword",
       "designation": "skill",
@@ -67116,7 +67128,7 @@
     },
     {
       "id": "tachibana_muneshige.action_0d8d",
-      "name": "Tachibana · Omnislice",
+      "name": "Tachibana \u00b7 Omnislice",
       "boss_id": "tachibana_muneshige",
       "weapon": "sword",
       "designation": "skill",
@@ -67166,6 +67178,1767 @@
       "verification": {
         "gameplay": "pending"
       },
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_hattori_4_hit_combo_rolling_uppercut_last_hit_7499d8e7",
+      "name": "Hattori 4 Hit Combo (Rolling Uppercut Last Hit)",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_hattori_4_hit_combo_rolling_uppercut_last_hit_7499d8e7.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_rolling_slash_into_low_sweep_2_hits_a09444a9",
+      "name": "Rolling Slash Into Low Sweep, 2 Hits",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_rolling_slash_into_low_sweep_2_hits_a09444a9.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_jumping_2_hit_slash_combo_07b5c01f",
+      "name": "Jumping 2 Hit Slash Combo",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_jumping_2_hit_slash_combo_07b5c01f.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_5_hit_sword_combination_last_hit_ryu_hayabusa_heavy_starter_slas_6749edaa",
+      "name": "5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_5_hit_sword_combination_last_hit_ryu_hayabusa_heavy_starter_slas_6749edaa.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_3_hit_combo_5f530374",
+      "name": "3 Hit Combo",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_3_hit_combo_5f530374.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.hattori_hanzo.recorded_roll_into_uppercut_slash_bfe4ec74",
+      "name": "Roll Into Uppercut Slash",
+      "boss_id": "hattori_hanzo",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/hattori_hanzo/recorded_roll_into_uppercut_slash_bfe4ec74.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_5_hit_combo_6b6726a8",
+      "name": "Ishida 5 Hit Combo",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_5_hit_combo_6b6726a8.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_aerial_double_sword_stream_grapple_913d99b2",
+      "name": "Ishida Aerial Double Sword Stream Grapple",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_aerial_double_sword_stream_grapple_913d99b2.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_wind_night_rain_blade_beams_42305897",
+      "name": "Ishida Wind Night Rain Blade Beams",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_wind_night_rain_blade_beams_42305897.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_3_hit_combo_10fa8f86",
+      "name": "Ishida 3 Hit Combo",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_3_hit_combo_10fa8f86.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_3_hit_with_sword_jumping_spin_slash_last_hit_c4fd2b0d",
+      "name": "Ishida 3 Hit With Sword Jumping Spin Slash Last Hit",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_3_hit_with_sword_jumping_spin_slash_last_hit_c4fd2b0d.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_ishida_4_hit_combo_with_jumping_spinning_slash_to_start_combinat_b032988a",
+      "name": "Ishida 4 Hit Combo With Jumping Spinning Slash To Start Combination",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_ishida_4_hit_combo_with_jumping_spinning_slash_to_start_combinat_b032988a.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_double_stab_into_double_slash_4_hit_combo_eb1eda46",
+      "name": "Double Stab Into Double Slash 4 Hit Combo",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_double_stab_into_double_slash_4_hit_combo_eb1eda46.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.ishida_mitsunari.recorded_living_weapon_5_hit_blade_beam_slash_d809de14",
+      "name": "Living Weapon 5 Hit Blade Beam Slash",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/ishida_mitsunari/recorded_living_weapon_5_hit_blade_beam_slash_d809de14.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_forward_dodging_grab_c0b87f1a",
+      "name": "Forward Dodging Grab",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_forward_dodging_grab_c0b87f1a.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_short_dodge_forward_slash_into_2_hit_combo_aeee16bd",
+      "name": "Short Dodge Forward Slash Into 2 Hit Combo",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_short_dodge_forward_slash_into_2_hit_combo_aeee16bd.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_long_dodge_forward_slash_into_2_hit_combo_b53349b6",
+      "name": "Long Dodge Forward Slash Into 2 Hit Combo",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_long_dodge_forward_slash_into_2_hit_combo_b53349b6.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_3_hit_aerial_kick_combo_bce4d4fc",
+      "name": "3 Hit Aerial Kick Combo",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_3_hit_aerial_kick_combo_bce4d4fc.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_3_hit_horizontal_slash_combo_jumping_slash_ender_c3dda4f6",
+      "name": "3 Hit Horizontal Slash Combo (Jumping Slash Ender)",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_3_hit_horizontal_slash_combo_jumping_slash_ender_c3dda4f6.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_4_hit_vertical_horizontal_quick_attack_combo_0238fd07",
+      "name": "4 Hit Vertical/Horizontal Quick Attack Combo",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_4_hit_vertical_horizontal_quick_attack_combo_0238fd07.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_side_evasive_dodge_90617779",
+      "name": "Side Evasive Dodge",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_side_evasive_dodge_90617779.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_backwards_evasive_dodge_f48eca22",
+      "name": "Backwards Evasive Dodge",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_backwards_evasive_dodge_f48eca22.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_maria_teleport_slash_7889fc49",
+      "name": "Maria Teleport Slash",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_maria_teleport_slash_7889fc49.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_standing_grapple_3eacfef1",
+      "name": "Standing Grapple",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_standing_grapple_3eacfef1.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_maria_sword_buff_063f4d96",
+      "name": "Maria Sword Buff",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_maria_sword_buff_063f4d96.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_forward_dodge_slash_into_back_evasive_dodge_91eadcb3",
+      "name": "Forward Dodge Slash Into Back Evasive Dodge",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_forward_dodge_slash_into_back_evasive_dodge_91eadcb3.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.maria.recorded_triple_blade_beam_slash_b28ca9d0",
+      "name": "Triple Blade Beam Slash",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/maria/recorded_triple_blade_beam_slash_b28ca9d0.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_double_stab_combo_2_hits_60dee7f9",
+      "name": "Double Stab Combo, 2 Hits",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_double_stab_combo_2_hits_60dee7f9.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_corruption_ground_stab_488daffe",
+      "name": "Corruption Ground Stab",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_corruption_ground_stab_488daffe.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_5_hit_oda_slash_combo_72ca30f1",
+      "name": "5 Hit Oda Slash Combo",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_5_hit_oda_slash_combo_72ca30f1.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_fire_teleport_ground_stab_a414000a",
+      "name": "Fire Teleport Ground Stab",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_fire_teleport_ground_stab_a414000a.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_icicle_summoning_attack_66cd0c69",
+      "name": "Icicle Summoning Attack",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_icicle_summoning_attack_66cd0c69.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_forward_super_sonic_dash_be533ef5",
+      "name": "Forward Super Sonic Dash",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_forward_super_sonic_dash_be533ef5.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_lightning_summoning_attack_6b963e6d",
+      "name": "Lightning Summoning Attack",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_lightning_summoning_attack_6b963e6d.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_in_place_wind_quadrasect_slashes_2f9b5332",
+      "name": "In Place Wind Quadrasect Slashes",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_in_place_wind_quadrasect_slashes_2f9b5332.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.oda_nobunaga.recorded_backward_super_sonic_dodge_2f595803",
+      "name": "Backward Super Sonic Dodge",
+      "boss_id": "oda_nobunaga",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/oda_nobunaga/recorded_backward_super_sonic_dodge_2f595803.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_low_stance_4_hit_downward_slash_into_stab_2x_slash_807b1526",
+      "name": "Low Stance 4 Hit (Downward Slash, Into Stab, 2X Slash)",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_low_stance_4_hit_downward_slash_into_stab_2x_slash_807b1526.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_backward_sheathing_dash_into_quadrasect_980021cd",
+      "name": "Backward Sheathing Dash Into Quadrasect",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_backward_sheathing_dash_into_quadrasect_980021cd.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_double_ground_stab_combo_1f4bf542",
+      "name": "Double Ground Stab Combo",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_double_ground_stab_combo_1f4bf542.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_low_stance_low_sweep_3_hit_heavy_combo_bfc9ac68",
+      "name": "Low Stance Low Sweep 3 Hit Heavy Combo",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_low_stance_low_sweep_3_hit_heavy_combo_bfc9ac68.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_dodge_roll_into_2_hit_bow_shots_5bf7436d",
+      "name": "Dodge Roll Into 2 Hit Bow Shots",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_dodge_roll_into_2_hit_bow_shots_5bf7436d.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_mid_stance_3_hit_horizontal_combo_3f8bdefa",
+      "name": "Mid Stance 3 Hit Horizontal Combo",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_mid_stance_3_hit_horizontal_combo_3f8bdefa.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_tachibana_sword_moon_buff_into_evasive_back_dodge_into_quardasec_00587c9b",
+      "name": "Tachibana Sword Moon Buff Into Evasive Back Dodge Into Quardasect",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_tachibana_sword_moon_buff_into_evasive_back_dodge_into_quardasec_00587c9b.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_tachibana_5_hit_light_attack_string_79c32a7d",
+      "name": "Tachibana 5 Hit Light Attack String",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_tachibana_5_hit_light_attack_string_79c32a7d.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_electric_morning_moon_feadc5eb",
+      "name": "Electric Morning Moon",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_electric_morning_moon_feadc5eb.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_high_stance_2_hit_light_combo_2nd_hit_retreating_1dabbace",
+      "name": "High Stance 2 Hit Light Combo, 2nd Hit Retreating",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_high_stance_2_hit_light_combo_2nd_hit_retreating_1dabbace.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.tachibana_muneshige.recorded_tachibana_blue_moon_buff_into_tempest_14452408",
+      "name": "Tachibana Blue Moon Buff Into Tempest",
+      "boss_id": "tachibana_muneshige",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/tachibana_muneshige/recorded_tachibana_blue_moon_buff_into_tempest_14452408.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_dodge_forward_double_stab_into_downward_upward_double_slash_e8abd11d",
+      "name": "Dodge Forward Double Stab Into Downward/Upward Double Slash",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified",
+        "recorded_take_missing"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_dodge_forward_double_stab_into_downward_upward_double_slash_e8abd11d.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_4_hit_combo_61c2ac98",
+      "name": "Dodging Stab Into Downward Upward Slash Into Kick 4 Hit Combo",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_dodging_stab_into_downward_upward_slash_into_kick_4_hit_combo_61c2ac98.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_double_stab_into_downward_upward_slash_combo_2425b665",
+      "name": "Double Stab Into Downward/Upward Slash Combo",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_double_stab_into_downward_upward_slash_combo_2425b665.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_high_stance_fire_wave_high_stance_light_finisher_eb267b91",
+      "name": "High Stance Fire Wave High Stance Light Finisher",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_high_stance_fire_wave_high_stance_light_finisher_eb267b91.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_toyotomi_yokai_grapple_d2d8c3e9",
+      "name": "Toyotomi Yokai Grapple",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_toyotomi_yokai_grapple_d2d8c3e9.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_yokai_pool_summoning_attack_05268b25",
+      "name": "Yokai Pool Summoning Attack",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_yokai_pool_summoning_attack_05268b25.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_into_strong_ho_efd176e0",
+      "name": "Dodging Stab Into, Downward/Upward Slash Into Kick Into Strong Horizontal Swing",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_dodging_stab_into_downward_upward_slash_into_kick_into_strong_ho_efd176e0.json",
+          "kind": "recorded_candidate"
+        }
+      ],
+      "default_binding": null
+    },
+    {
+      "id": "sword.toyotomi_hideyori.recorded_toyotomi_stronger_iai_strike_f041f1d8",
+      "name": "Toyotomi Stronger Iai Strike",
+      "boss_id": "toyotomi_hideyori",
+      "weapon": "sword",
+      "designation": "unclassified",
+      "source": {
+        "action_id": null,
+        "motion_id": null,
+        "timing_id": null
+      },
+      "implementation": {
+        "selectable": false,
+        "engine_profile": null
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "blocked_reasons": [
+        "actor_and_phase_mapping_unreviewed",
+        "william_adapter_unverified",
+        "motion_timing_resources_unverified",
+        "gameplay_unverified"
+      ],
+      "evidence": [
+        {
+          "path": "dataset/weapons/sword/toyotomi_hideyori/recorded_toyotomi_stronger_iai_strike_f041f1d8.json",
+          "kind": "recorded_candidate"
+        }
+      ],
       "default_binding": null
     }
   ],

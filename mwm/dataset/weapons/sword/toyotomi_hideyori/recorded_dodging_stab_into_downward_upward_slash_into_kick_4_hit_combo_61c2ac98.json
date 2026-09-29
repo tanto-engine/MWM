@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_dodging_stab_into_downward_upward_slash_into_kick_4_hit_combo_61c2ac98",
+  "name": "Dodging Stab Into Downward Upward Slash Into Kick 4 Hit Combo",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Dodging Stab Into Downward Upward Slash Into Kick 4 Hit Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "3461b88184f78b29abab875ce42258d27c79094a71993888c98a98f673902b37",
+      "files": {
+        "encounter.json": "bdc3fdfce1722861eb835645e65532b7fadd160d527d8ad41ba3b3f76df85e96",
+        "events.jsonl": "0cae014529ed5ba885fed11b32dcc6454f932cfc3b85c65822d918f54a77a377"
+      },
+      "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+      "take_id": "923a07a8-9f87-4805-b1c5-76a1098f6c6a",
+      "annotation_id": "61c2ac98-89d7-4dc6-92d9-357dc25b615b",
+      "annotation_text": "Sword/ Dodging Stab Into Downward Upward Slash Into Kick 4 Hit Combo",
+      "annotation_end_seconds": 9.656,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 9407,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

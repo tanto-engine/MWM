@@ -190,7 +190,8 @@ def merge_reconstruction(catalogue, reconstruction, evidence_path=None):
     boss_id = reconstruction['boss_id']
     if not ID.fullmatch(boss_id):
         raise ValueError('Invalid boss ID')
-    curated = {m['source']['action_id']: m for m in iter_moves(result) if m['boss_id'] == boss_id and m['weapon'] == 'sword'}
+    curated = {m['source']['action_id']: m for m in iter_moves(result) if m['boss_id'] == boss_id and m['weapon'] == 'sword'
+               and m['source'].get('action_id') is not None}
     words = {m['source'].get('observed_word0_u16') for m in curated.values()}
     actions = [a for a in reconstruction.get('actions', []) if a.get('role') == 'boss_candidate'
                and (a.get('source', {}).get('action_id') in curated

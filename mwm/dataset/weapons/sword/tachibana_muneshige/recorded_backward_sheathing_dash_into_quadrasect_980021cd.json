@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_backward_sheathing_dash_into_quadrasect_980021cd",
+  "name": "Backward Sheathing Dash Into Quadrasect",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Backward Sheathing Dash Into Quadrasect",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "c5bded8845d0fb137216f62c509672d633627e4804f8424376fa8ab86c753d75",
+      "files": {
+        "encounter.json": "c17a379f7c7d6475970d148fd6b00c41fe1d8d476c3b9461159905c23bb4b86c",
+        "events.jsonl": "f5f2d1755d50d85480d3d3106dc46980d5ee5b9ff76f8e8ebbdb88e179729810"
+      },
+      "recording_id": "a3375fa0-4f05-4163-b81c-0bbdb2a31f0e",
+      "take_id": "734d3ee8-67fa-4228-907e-179481683dbb",
+      "annotation_id": "980021cd-a016-4e2f-8857-3b5b5438643b",
+      "annotation_text": "Sword/Backward Sheathing Dash Into Quadrasect",
+      "annotation_end_seconds": 56.328,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

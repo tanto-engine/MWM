@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_ishida_aerial_double_sword_stream_grapple_913d99b2",
+  "name": "Ishida Aerial Double Sword Stream Grapple",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ishida Aerial Double Sword Stream Grapple",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "e5120896e8dad5565ba5dd3b7c9acdb1f00cea99956e30f4e68a640cf53267c2",
+      "files": {
+        "encounter.json": "371d1de1453ece742fe31783a8832059fa33b53163fa0be73d80fc17740b4a4b",
+        "events.jsonl": "ba859e236cfe06c77209a8633738f9ca03a778269b394109f870b1d598522cc4"
+      },
+      "recording_id": "97e4e5cc-980e-4bce-97d9-72c31dbd75aa",
+      "take_id": "70ab6dcb-ec7f-4185-8229-e626a1b3af77",
+      "annotation_id": "913d99b2-9346-4a5d-9361-7df175873c7a",
+      "annotation_text": "Sword/Ishida Aerial Double Sword Stream Grapple",
+      "annotation_end_seconds": 18.062,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 4119,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

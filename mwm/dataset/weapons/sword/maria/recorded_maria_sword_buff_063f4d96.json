@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_maria_sword_buff_063f4d96",
+  "name": "Maria Sword Buff",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Maria Sword Buff",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "47a704f06b91dbfa2b7203b47d34be3c33de57bcd3607443bfa91397f5c68a0c",
+      "files": {
+        "encounter.json": "bf842cea409fe6e926e2957311dc8f92954bf509153aa775b22060964e455e92",
+        "events.jsonl": "ed52676c754b8c7cc6f8d3cb4cc9db55fa1f4ec152e555e74d6bd2d68b489ecc"
+      },
+      "recording_id": "5ae4b50f-390b-4bfa-944b-a4ad9847204e",
+      "take_id": "60c0aaa2-e5a5-4c6c-b411-3914d2e4a3bd",
+      "annotation_id": "063f4d96-03ec-4fd1-9ede-373dcca5b98b",
+      "annotation_text": "Sword/Maria Sword Buff",
+      "annotation_end_seconds": 31.406,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

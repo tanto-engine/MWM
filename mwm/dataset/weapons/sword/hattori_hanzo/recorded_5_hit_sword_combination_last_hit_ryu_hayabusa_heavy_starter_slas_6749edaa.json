@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_5_hit_sword_combination_last_hit_ryu_hayabusa_heavy_starter_slas_6749edaa",
+  "name": "5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "5fbf899eb1b7d3045b5f785cee574925c9bc54e6866891522135924e8f2cdaf0",
+      "files": {
+        "encounter.json": "4dc2f2bea00fcf632ca8b56436308eedbe7e25ad6756db2a5691d012e9dc7f89",
+        "events.jsonl": "1923c946c5328c8640099a531f2422017e8b9ee27fb66ea00efb7c5ba9598c51"
+      },
+      "recording_id": "8f9c61a0-dc8d-49dd-a667-479fc1603bc9",
+      "take_id": "d66d798e-640c-4f3b-8a6f-b0d91bde18fb",
+      "annotation_id": "6749edaa-e864-4afa-9474-dd693031dec4",
+      "annotation_text": "Sword/5 Hit Sword Combination (Last Hit Ryu Hayabusa Heavy Starter Slash)",
+      "annotation_end_seconds": 67.109,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

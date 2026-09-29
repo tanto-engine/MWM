@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_tachibana_sword_moon_buff_into_evasive_back_dodge_into_quardasec_00587c9b",
+  "name": "Tachibana Sword Moon Buff Into Evasive Back Dodge Into Quardasect",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Tachibana Sword Moon Buff Into Evasive Back Dodge Into Quardasect",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "610b9196015adf1be0060eaa6312aa2dba02bf9474806a860fbf0300d12b94fc",
+      "files": {
+        "encounter.json": "591aca9c515e0ef0579f101294d615556f3f46220302cd0ed140ddf49facaeef",
+        "events.jsonl": "be4cc40396fa1bbc7feb2ce6dd80715a36a79a105dad3fcf244a52a19470372e"
+      },
+      "recording_id": "08f7bc81-7b35-4682-a20b-268158e75c37",
+      "take_id": "ca9073f4-14dd-4e49-ab83-6eb37aa42f24",
+      "annotation_id": "00587c9b-e587-437b-91bc-8c266eb43b3b",
+      "annotation_text": "Sword/Tachibana Sword Moon Buff Into Evasive Back Dodge Into Quardasect",
+      "annotation_end_seconds": 29.687,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

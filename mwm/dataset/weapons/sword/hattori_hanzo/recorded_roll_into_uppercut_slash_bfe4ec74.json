@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_roll_into_uppercut_slash_bfe4ec74",
+  "name": "Roll Into Uppercut Slash",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Roll Into Uppercut Slash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "cafc44d820069fe70f52abdd76c307f78515904720ed6f97c0409f105af011d1",
+      "files": {
+        "encounter.json": "f60519ac503b809da0d2c08d6dc128aca2a0fd62ed0ec79a8bcc548ec9e5d3be",
+        "events.jsonl": "fba243f818470c032d60786c6f4c21c630c76de5f41f9ecae9a1104a912d5a54"
+      },
+      "recording_id": "99d69547-e4ba-4604-8276-d1bb54a16eea",
+      "take_id": "e6fc5ae4-3ae3-4f1a-a790-d754cd935d5c",
+      "annotation_id": "bfe4ec74-514e-414c-ba25-617715ed5ae7",
+      "annotation_text": "Sword/Roll Into Uppercut Slash",
+      "annotation_end_seconds": 37.375,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

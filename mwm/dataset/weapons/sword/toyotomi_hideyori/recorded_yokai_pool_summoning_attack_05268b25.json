@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_yokai_pool_summoning_attack_05268b25",
+  "name": "Yokai Pool Summoning Attack",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Yokai Pool Summoning Attack",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "68fe60262350e82c2fe3e9440dbb0634e14a011642ade941c999e8939aa964b5",
+      "files": {
+        "encounter.json": "efbb335d09acbdbba4e7b86ec209058429b8772cd3cf5a62fcc75359bd452fc1",
+        "events.jsonl": "63244b6cdb03bcef679587abe5ea6458ab2ec9dc498c373fc8f4a2f844e43bd9"
+      },
+      "recording_id": "7cb1d913-5886-47a5-a413-5f7a9d3bf16f",
+      "take_id": "175ef3f5-8aae-42a2-9ada-ee5085b3bb81",
+      "annotation_id": "05268b25-3dcf-42b0-842c-d354b5c09b23",
+      "annotation_text": "Sword/Yokai Pool Summoning Attack",
+      "annotation_end_seconds": 47.407,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

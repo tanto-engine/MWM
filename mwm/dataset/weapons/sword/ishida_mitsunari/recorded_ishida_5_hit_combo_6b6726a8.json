@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.ishida_mitsunari.recorded_ishida_5_hit_combo_6b6726a8",
+  "name": "Ishida 5 Hit Combo",
+  "weapon_id": "sword",
+  "boss_id": "ishida_mitsunari",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Ishida 5 Hit Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "db02803b771f6e02a795d8ba512dce29842a698aa9cb9876741c6aedbe91a012",
+      "files": {
+        "encounter.json": "1553938f8ead6046d71243324f26913afcf97752e5a0b32131433e1d47af6999",
+        "events.jsonl": "c23fb148a257eae711dfa9586ecf63de75961c7f3e1b38e05409e6ffa8ba9e6c"
+      },
+      "recording_id": "bd9074ea-11b6-4225-90fe-9bedf733cabe",
+      "take_id": "fc88dbe0-aeaa-481a-ac83-a3bd2a765516",
+      "annotation_id": "6b6726a8-5d00-46c3-ab3c-494f62b2cd73",
+      "annotation_text": "Sword/Ishida 5 Hit Combo",
+      "annotation_end_seconds": 31.594,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.tachibana_muneshige.recorded_high_stance_2_hit_light_combo_2nd_hit_retreating_1dabbace",
+  "name": "High Stance 2 Hit Light Combo, 2nd Hit Retreating",
+  "weapon_id": "sword",
+  "boss_id": "tachibana_muneshige",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "High Stance 2 Hit Light Combo, 2nd Hit Retreating",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "8e69bb01c110ac75ea5aeb843ffa6c359db90c192531411b19dd65ad20847d36",
+      "files": {
+        "encounter.json": "f27611499ac85292ad7467de51e7706016ad444f5a92de2d03bf4cd1752bf998",
+        "events.jsonl": "43173b5af7861a5002e218b90a1f7c48e730f96aa2927e9d231d4b13d13d619a"
+      },
+      "recording_id": "b4e4b95c-c320-4502-865b-bce1032b7d69",
+      "take_id": "bd331254-b9ad-4ba3-bb08-d41e36d84313",
+      "annotation_id": "1dabbace-0fb2-4d70-9bd5-4a60691bf586",
+      "annotation_text": "Sword/High Stance 2 Hit Light Combo, 2nd Hit Retreating",
+      "annotation_end_seconds": 43.781,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 129,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_forward_super_sonic_dash_be533ef5",
+  "name": "Forward Super Sonic Dash",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Forward Super Sonic Dash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "991f226e01288d73c1e360f385d6fb8c965b82f89e8a4baa360fcad57fd65c3d",
+      "files": {
+        "encounter.json": "20dd37065c97e0c216811d4bfe5239314ad090fe6cdc495c87710b1702c82cf5",
+        "events.jsonl": "b8d7780665f4a5c5588e24cda2a5c99028bf27e1c1d7b8719e53b5279112219c"
+      },
+      "recording_id": "e2d98e0f-93ee-49e4-83e4-463c8642fc1f",
+      "take_id": "99eeba7f-b2e1-4856-bbea-0125159e0cd9",
+      "annotation_id": "be533ef5-859d-4144-af0b-e444b5e90d46",
+      "annotation_text": "Sword/Forward Super Sonic Dash",
+      "annotation_end_seconds": 6.344,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

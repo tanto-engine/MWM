@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_backwards_evasive_dodge_f48eca22",
+  "name": "Backwards Evasive Dodge",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Backwards Evasive Dodge",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "cf4e9ff44d9741b6575517f6c36d3d4930f762effc14f23ee7d40ed9863be503",
+      "files": {
+        "encounter.json": "446520d4f028c5d34916cfda1ef67e83c637483062a2c0e41074df3631ce1ec5",
+        "events.jsonl": "2c403d9e94e2a94187e58e4d431b9c43f983fe0bd2bb797dc720574e23ca3261"
+      },
+      "recording_id": "2a2f192a-aa71-4c88-9413-07e6d656be51",
+      "take_id": "75c311d5-0bc6-47bf-9ef0-e5ded7afc095",
+      "annotation_id": "f48eca22-6e17-4829-89f5-09a01b24d1e4",
+      "annotation_text": "Sword/ Backwards Evasive Dodge",
+      "annotation_end_seconds": 260.921,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

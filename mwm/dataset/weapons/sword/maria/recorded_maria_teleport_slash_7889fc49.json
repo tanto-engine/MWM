@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_maria_teleport_slash_7889fc49",
+  "name": "Maria Teleport Slash",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Maria Teleport Slash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "72d7a562554a4d3f052fd47749b50ba700ca7c8bb8d1ac702088bf3e1ce1915b",
+      "files": {
+        "encounter.json": "a9ffd386a282f91dc1e201d31aba64bc51d531430fe9c54548a95b4e808e87a0",
+        "events.jsonl": "c6921e1bf60643e7211ec6a2bb948c56eeae1492e24eb6c4d88a67f90b46775a"
+      },
+      "recording_id": "4a8e7944-f699-4054-a27a-618bdbea39c9",
+      "take_id": "1ccdd811-a6f6-464a-bdb5-a35fe88e25d6",
+      "annotation_id": "7889fc49-a467-433a-9553-2ccf5fe2820c",
+      "annotation_text": "Sword/Maria Teleport Slash",
+      "annotation_end_seconds": 139.515,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

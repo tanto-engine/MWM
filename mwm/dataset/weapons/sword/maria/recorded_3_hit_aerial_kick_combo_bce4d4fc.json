@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.maria.recorded_3_hit_aerial_kick_combo_bce4d4fc",
+  "name": "3 Hit Aerial Kick Combo",
+  "weapon_id": "sword",
+  "boss_id": "maria",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "3 Hit Aerial Kick Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "424cbe5b84ec01404115fbb0ebcfa37894311562f45366b79b7da0c41c615330",
+      "files": {
+        "encounter.json": "d401b04a4d2aa23a6383b60fa2db8b22befe5b7364e3f2fe1d38e0c8b13740d9",
+        "events.jsonl": "f365ac4182ccbe753918f80b0a6e481fe74e5f79e68bfb9091e8960592e5a9fd"
+      },
+      "recording_id": "dcd2d2ca-1f99-4311-94fb-b105d2bb92dc",
+      "take_id": "2faebed1-9afc-452a-88d3-9c89630fa324",
+      "annotation_id": "bce4d4fc-8392-4638-a760-ad67361623e6",
+      "annotation_text": "Sword/3 Hit Aerial Kick Combo",
+      "annotation_end_seconds": 14.797,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

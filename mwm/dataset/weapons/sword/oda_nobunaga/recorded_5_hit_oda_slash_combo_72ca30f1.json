@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.oda_nobunaga.recorded_5_hit_oda_slash_combo_72ca30f1",
+  "name": "5 Hit Oda Slash Combo",
+  "weapon_id": "sword",
+  "boss_id": "oda_nobunaga",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "5 Hit Oda Slash Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "2eba5970e740a84f1fc0958a367ee5cdb0a55c8215d0e9eee3c2e38763c325d8",
+      "files": {
+        "encounter.json": "6d2b76671cc46dd3abc495f17b40db754a47ea09817861b4a613447d1ba01822",
+        "events.jsonl": "1b78110076960cf967073200f6fb8e54ef803031488e092d4601e21771fd8b2e"
+      },
+      "recording_id": "8bfb4be3-e42b-46a4-bcd0-621589bdfd0d",
+      "take_id": "91e8301b-b7ee-461f-a6e1-f7cd890e34ab",
+      "annotation_id": "72ca30f1-14bb-4080-8e23-ebb44fe9affb",
+      "annotation_text": "Sword/5 Hit Oda Slash Combo",
+      "annotation_end_seconds": 27.547,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

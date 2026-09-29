@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "sword.toyotomi_hideyori.recorded_dodge_forward_double_stab_into_downward_upward_double_slash_e8abd11d",
+  "name": "Dodge Forward Double Stab Into Downward/Upward Double Slash",
+  "weapon_id": "sword",
+  "boss_id": "toyotomi_hideyori",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Dodge Forward Double Stab Into Downward/Upward Double Slash",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified",
+    "recorded_take_missing"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "3461b88184f78b29abab875ce42258d27c79094a71993888c98a98f673902b37",
+      "files": {
+        "encounter.json": "bdc3fdfce1722861eb835645e65532b7fadd160d527d8ad41ba3b3f76df85e96",
+        "events.jsonl": "0cae014529ed5ba885fed11b32dcc6454f932cfc3b85c65822d918f54a77a377"
+      },
+      "recording_id": "d89d98b6-6931-4aed-b818-dfe4342cf32d",
+      "take_id": "3cf8b979-70c1-493a-920b-139abb7bcacf",
+      "annotation_id": "e8abd11d-7bd9-4d87-bb35-a4f1949ca80a",
+      "annotation_text": "Sword/Dodge Forward Double Stab Into Downward/Upward Double Slash",
+      "annotation_end_seconds": 33.422,
+      "game_build_sha256": null,
+      "identity_line": null,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}

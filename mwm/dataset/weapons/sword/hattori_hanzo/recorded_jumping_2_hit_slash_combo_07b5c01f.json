@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "sword.hattori_hanzo.recorded_jumping_2_hit_slash_combo_07b5c01f",
+  "name": "Jumping 2 Hit Slash Combo",
+  "weapon_id": "sword",
+  "boss_id": "hattori_hanzo",
+  "kind": "move_string",
+  "review_status": "candidate",
+  "priority": null,
+  "description": "Jumping 2 Hit Slash Combo",
+  "mapping_status": "unmapped",
+  "steps": [],
+  "observed_links": [],
+  "capture_context": {
+    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "weapon_classification": "User-described sword destination; equipped weapon unverified."
+  },
+  "blocked_reasons": [
+    "actor_and_phase_mapping_unreviewed",
+    "william_adapter_unverified",
+    "motion_timing_resources_unverified",
+    "gameplay_unverified"
+  ],
+  "evidence": [
+    {
+      "archive_sha256": "d244749b61df67c8d3c9bf3187e2e707360f9253ae4f29e5145ccff411cccd29",
+      "files": {
+        "encounter.json": "de8546e5e3f9b8e913bf931125d67e02b7c37895d8076e1467ff353710c7bf42",
+        "events.jsonl": "5b4661993e2bd03ec743e0bd4e35b62d1dc2c73b6a88176c52ee52c8751e9536"
+      },
+      "recording_id": "05bf8c83-90b4-4b3e-826b-e5aa06e7c1a3",
+      "take_id": "37a0d5f8-0be8-4b0a-b34c-ce7bed64a078",
+      "annotation_id": "07b5c01f-8be9-4edc-b47f-fc3ff6aa1413",
+      "annotation_text": "Sword/ Jumping 2 Hit Slash Combo",
+      "annotation_end_seconds": 37.282,
+      "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+      "identity_line": 2,
+      "steps": [],
+      "native_links": []
+    }
+  ]
+}
