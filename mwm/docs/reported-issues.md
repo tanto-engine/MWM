@@ -1,6 +1,6 @@
 # Reported MWM issues
 
-These results describe source changes and offline checks for the alpha.6 candidate. They do not establish live Nioh acceptance. Close only issues whose reported editor or capacity defect is covered; keep the two crashes and gameplay-dependent reports open.
+These results describe source changes and offline checks through alpha.7. They do not establish live Nioh acceptance. The two crashes and gameplay-dependent reports remain open.
 
 | Issue | Mechanism and result |
 |---|---|
@@ -14,9 +14,9 @@ These results describe source changes and offline checks for the alpha.6 candida
 | #8 Custom inputs | Fixed the confirmed LB+B competition with native dodge. Alpha.7 also tests independent LB+B tap, LB+Y hold and the original LB+LT analog tap through one command sequence. Physical-controller and live Nioh retests remain necessary before closing the report. |
 | #9 Held custom input blocking | The button reservation remained armed after a chord fired or expired. Both the publisher and native consumer now release/reject that stale reservation; the native regression reproduces the prior blocking state. Physical controller and live combat acceptance remain pending. |
 
-The binary session contract is now version 12, 12,416 bytes. Build matching Python/native components together; this change does not update an already released EXE. Capacity increases do not add unsupported source actions or make conflicting stance ownership valid.
+The binary session contract is version 12, 12,416 bytes. Alpha.7 packages matching Python/native components. Capacity increases do not add unsupported source actions or make conflicting stance ownership valid.
 
-Verification of the integrated source: 263 workflow tests and 8 resource tests passed, including the isolated Electron editor test. The native DLLs built. Live gameplay was not assessed.
+Verification of alpha.7: 269 workflow tests, 8 resource tests, native DLL build and copied-EXE UI smoke passed. Live gameplay was not assessed.
 
 ## Mission-entry investigation
 
