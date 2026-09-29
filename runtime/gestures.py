@@ -2,6 +2,8 @@
 import math
 from move_imports import IMPORT_LIMIT
 
+SEQUENCE_WINDOW_SECONDS = .6
+
 
 def identity(event):
     # Select the stable capability fields retained in a mapping.
@@ -167,18 +169,123 @@ class ControllerGesture:
         self.pending = False
 
 
+class SequenceGesture:
+    """Recognize modifier + first press, release, then a separate follow-up press."""
+    def __init__(self, calibration, binding, frequency):
+        if binding['device'] != calibration['device'] or binding['lb_mask'] != calibration['lb_mask']:
+            raise ValueError('Binding does not match the saved controller')
+        self.device = calibration['device']
+        self.modifier, self.first, self.followup = (binding[key] for key in
+            ('modifier_mask','trigger_mask','followup_mask'))
+        if len({self.modifier,self.first,self.followup})!=3 or any(
+                type(bit) is not int or not 0<bit<=0x80000000 or bit&(bit-1)
+                for bit in (self.modifier,self.first,self.followup)):
+            raise ValueError('Sequence controls must be distinct single buttons')
+        self.variant=binding['variant']
+        if type(self.variant) is not int or not 0<=self.variant<IMPORT_LIMIT or frequency<=0:
+            raise ValueError('Invalid sequence binding')
+        self.frequency=frequency
+        self.window=int(SEQUENCE_WINDOW_SECONDS*frequency)
+        self.connected=False
+        self.chord_sequence=0
+        self.reset()
+
+    def reset(self):
+        self.ready=self.pending=False
+        self.stage=self.started=self.deadline=self.edge=self.expires=0
+        self.previous=(False,False,False)
+
+    def process(self, event, now, context_valid=True):
+        if not context_valid:
+            self.reset()
+        if (event.get('backend'),event.get('slot'))!=(self.device['backend'],self.device['slot']):
+            return None
+        if event['kind']=='input_device':
+            self.reset()
+            self.connected=identity(event)==self.device
+            return dict(kind='device_match',accepted=self.connected)
+        if event['kind']=='input_unavailable':
+            self.connected=False
+            self.reset()
+            return dict(kind='device_unavailable')
+        if event['kind']!='input':
+            return None
+        buttons=event.get('buttons')
+        if (not self.connected or not context_valid or type(buttons) is not int
+                or not 0<=buttons<=0xffffffff or buttons&~(self.modifier|self.first|self.followup)):
+            self.reset()
+            return None
+        if event.get('edge_basis')=='unknown':
+            self.reset()
+        modifier,first,followup=(bool(buttons&bit) for bit in (self.modifier,self.first,self.followup))
+        _,previous_first,previous_followup=self.previous
+        if not modifier:
+            self.stage=self.started=self.deadline=0
+            self.pending=False
+            self.ready=not first and not followup
+        elif self.pending:
+            pass
+        elif self.stage==1:
+            if followup:
+                self.stage=self.started=0
+                self.ready=False
+            elif not first:
+                self.stage=2
+                self.deadline=now+self.window
+        elif self.stage==2:
+            if now>self.deadline or first:
+                self.stage=self.started=0
+                self.ready=not first and not followup
+            elif followup and not previous_followup:
+                self.chord_sequence+=1
+                self.edge,self.expires=now,now+int(.4*self.frequency)
+                self.pending=True
+                self.stage=self.started=0
+                self.ready=False
+        elif not first and not followup:
+            self.ready=True
+        elif first and not previous_first and not followup and self.ready:
+            self.stage,self.started=1,now
+            self.ready=False
+        else:
+            self.ready=False
+        self.previous=(modifier,first,followup)
+        return dict(kind='logical_input',connected=self.connected,
+                    gesture_started=self.started,chord_sequence=self.chord_sequence)
+
+    def fields(self, now):
+        if self.stage==2 and now>self.deadline:
+            self.stage=self.started=0
+        if now>=self.expires:
+            self.pending=False
+        return dict(heartbeat=now,edge=self.edge,expires=self.expires,
+                    chord_sequence=self.chord_sequence,armed=self.pending,
+                    held=self.previous[0],latched=1,variant=self.variant,reserve=False)
+
+    def dispatched(self, repeat=True):
+        self.pending=False
+
+
 class RoutedGesture:
     """Select one validated physical chord and stance for the existing command slot."""
     def __init__(self, calibration, binding, frequency, string_variant=None):
         groups={}
+        sequences={}
         for route in binding['routes']:
             stances=range(3) if route['stance']=='any' else [('high','mid','low').index(route['stance'])]
             for stance in stances:
+                if route['gesture']=='sequence':
+                    key=(stance,route['modifier_mask'],route['trigger_mask'],route['followup_mask'])
+                    sequences[key]=route['variant']
+                    continue
                 key=(stance,route['modifier_mask'],route['trigger_mask'])
                 variants=groups.setdefault(key,[None,None])
                 variants[('tap','hold').index(route['gesture'])]=route['variant']
         self.gates={key:ControllerGesture(calibration,dict(binding,modifier_mask=key[1],trigger_mask=key[2],
                             variants=variants,string_enabled=False),frequency) for key,variants in groups.items()}
+        self.sequence_keys=set(sequences)
+        self.gates.update({key:SequenceGesture(calibration,dict(binding,modifier_mask=key[1],trigger_mask=key[2],
+                            followup_mask=key[3],variant=variant),frequency) for key,variant in sequences.items()})
         self.string=ControllerGesture(calibration,dict(binding,variants=[None,None]),frequency,string_variant)
         self.seen={key:0 for key in self.gates}
         self.seen['string']=0
@@ -188,6 +295,8 @@ class RoutedGesture:
 
     def reset(self):
         for gate in (*self.gates.values(),self.string): gate.reset()
+        for key,gate in self.gates.items(): self.seen[key]=gate.chord_sequence
+        self.seen['string']=self.string.chord_sequence
         self.active=None
 
     def set_stance(self, stance):
@@ -204,14 +313,25 @@ class RoutedGesture:
         result=self.string.process(event,now,context_valid)
         candidate='string' if self.string.string_held or self.string.pending else None
         if candidate=='string':
-            for gate in self.gates.values(): gate.reset()
+            for key,gate in self.gates.items():
+                gate.reset();self.seen[key]=gate.chord_sequence
         else:
+            sequence_candidate=None
             for key,gate in self.gates.items():
                 if event.get('kind')!='input' or key[0]==self.stance:
                     observed=gate.process(event,now,context_valid)
-                    if key[0]==self.stance and (gate.started or gate.chord_sequence>self.seen[key]):
+                    if key in self.sequence_keys and key[0]==self.stance and (gate.started or gate.pending or gate.chord_sequence>self.seen[key]):
+                        sequence_candidate=key
+                        result=observed
+                    elif key not in self.sequence_keys and key[0]==self.stance and (gate.started or gate.chord_sequence>self.seen[key]):
                         candidate=key
                         result=observed
+            if sequence_candidate is not None:
+                candidate=sequence_candidate
+                for key,gate in self.gates.items():
+                    if key!=candidate:
+                        gate.reset();self.seen[key]=gate.chord_sequence
+                self.string.reset()
         if candidate is not None and candidate!=self.active:
             if self.active is not None: self._gate(self.active).dispatched()
             self.active=candidate
@@ -238,9 +358,11 @@ class RoutedGesture:
             self.chord_sequence+=1
             self.seen[self.active]=gate.chord_sequence
         self.variant=fields['variant']
-        policy=0 if self.active=='string' else ((self.active[1]|self.active[2])<<16)|(1<<(34-self.active[0]))
+        policy=0 if self.active=='string' else (1<<(34-self.active[0])) | (
+            1<<35 if self.active in self.sequence_keys else (self.active[1]|self.active[2])<<16)
         fields.update(chord_sequence=self.chord_sequence,chord_policy=policy,
-                      reserve=self.active!='string' and (bool(gate.started and not gate.fired) or gate.pending))
+                      reserve=self.active!='string' and (gate.pending if self.active in self.sequence_keys else
+                               bool(gate.started and not gate.fired) or gate.pending))
         return fields
 
     def dispatched(self, repeat=True):

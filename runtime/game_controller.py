@@ -97,7 +97,14 @@ def game_binding(calibration, binding):
         for route in binding['routes']:
             route=dict(route,modifier_mask=game_button_mask(device,route['modifier_mask'],mapping),
                        trigger_mask=game_button_mask(device,route['trigger_mask'],mapping))
-            if route['modifier_mask']!=0x100 or route['trigger_mask'] not in (0x2000,0x8000,0x400,0x4000):
+            if route['gesture']=='sequence':
+                route['followup_mask']=game_button_mask(device,route['followup_mask'],mapping)
+            supported=(0x100,0x2000,0x8000,0x400,0x4000)
+            if route['gesture']=='sequence':
+                controls=[route[key] for key in ('modifier_mask','trigger_mask','followup_mask')]
+                if len(set(controls))!=3 or any(bit not in supported for bit in controls):
+                    raise ValueError('Sequences require L1 / LB, Circle / B, Triangle / Y, L2 / LT or Square / X')
+            elif route['modifier_mask']!=0x100 or route['trigger_mask'] not in supported[1:]:
                 raise ValueError('Custom inputs require L1 / LB with Circle / B, Triangle / Y, L2 / LT or Square / X')
             routes.append(route)
         compiled['routes']=routes

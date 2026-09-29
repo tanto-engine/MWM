@@ -392,6 +392,11 @@ static void held_slot_cases() {
     // Frost/guard entries share native heavy templates but do not own held Triangle.
     // Place optional entries before and after a real hold to reproduce both selection orders.
     // Ordinary heavy and empty-Ki grapple must resolve the same configured hold slot.
+    hold_reset(2,false);
+    command.reserved[0]=1|(1ULL<<35)|(1ULL<<32);
+    pad_buttons=XINPUT_GAMEPAD_LEFT_SHOULDER|XINPUT_GAMEPAD_B;
+    observe_game_input(trace->header);publish();
+    assert(!configured_chord_buttons() && !custom_chord_blocks(9));
     for (WORD trigger : {WORD(XINPUT_GAMEPAD_Y),WORD(XINPUT_GAMEPAD_B)}) for (bool held : {false,true}) {
         boss_hold_stances=7;hold_reset(2,false);
         command.reserved[0]=1 | (uint64_t(XINPUT_GAMEPAD_LEFT_SHOULDER|trigger)<<16) | (uint64_t(1)<<32);

@@ -32,6 +32,110 @@ def preset():
 
 
 class MultiChordCases(unittest.TestCase):
+    def test_sequence_requires_order_and_preserves_original_input(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence')),
+            dict(source='tiger_sprint',stance='low',move='okatsu.leaping_slash',
+            input=dict(modifier_mask=16,trigger_mask=8,gesture='tap'))]
+        imports=[dict(id=value['tap_move']),dict(id='okatsu.charged_rush'),dict(id='okatsu.leaping_slash')]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,imports))
+        self.assertEqual(binding['routes'][1]['followup_mask'],0x8000)
+        gate=RoutedGesture(calibration,binding,1000)
+        gate.set_stance(2)
+        gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        def send(mask,now):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,
+                              edge_basis='previous_observation'),now)
+        send(0,101)
+        send(0x100|0x2000,200)
+        send(0x100|0x2000|0x8000,220)
+        self.assertFalse(gate.fields(221)['armed'])
+        send(0x100,230)
+        send(0x100|0x2000,240)
+        send(0x100,250)
+        send(0x100|0x8000,300)
+        fields=gate.fields(301)
+        self.assertEqual((fields['armed'],fields['variant']),(True,1))
+        self.assertEqual(fields['chord_policy']>>16&0xffff,0)
+        self.assertEqual(fields['chord_policy'],(1<<35)|(1<<32))
+        send(0x100,320)
+        self.assertEqual((gate.fields(321)['variant'],gate.chord_sequence),(1,1))
+        owned=C.create_string_buffer(224)
+        command=CommandMap.__new__(CommandMap)
+        command.address,command.sequence=C.addressof(owned),0
+        config=dict(generation=7,player=0x100000,owner=0x200000,vtable=0x300000,
+                    banks=[0x400000,0x500000,0x600000],imports=[dict(descriptor=0x700000+i,
+                    payload=0x800000+i,key=0xC60+i,motion=1200+i) for i in range(3)])
+        command.publish(config,**fields)
+        self.assertEqual(struct.unpack_from('<3Q',owned.raw,64+128),
+                         (fields['chord_policy']|1,1,0))
+
+    def test_sequence_window_release_reconnect_and_stance_invalidation(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence'))]
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,value,
+            [dict(id=value['tap_move']),dict(id='okatsu.charged_rush')]))
+        def make():
+            gate=RoutedGesture(calibration,binding,1000)
+            gate.set_stance(2)
+            gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+            send(gate,0,101)
+            return gate
+        def send(gate,mask,now,edge='previous_observation'):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=mask,edge_basis=edge),now)
+        for followup,expected in ((850,True),(851,False)):
+            gate=make();send(gate,0x2100,200);send(gate,0x100,250)
+            send(gate,0x8100,followup)
+            self.assertEqual(gate.fields(followup+1)['armed'],expected)
+        gate=make();send(gate,0x2100,200);send(gate,0x100,250)
+        send(gate,0,300);send(gate,0x8100,320)
+        self.assertFalse(gate.fields(321)['armed'])
+        gate=make();send(gate,0x2100,200);send(gate,0x100,250)
+        gate.process(dict(kind='input_unavailable',backend='xinput',slot=0),300)
+        gate.process(dict(kind='input_device',**GAME_DEVICE),310)
+        send(gate,0x8100,320)
+        self.assertFalse(gate.fields(321)['armed'])
+        gate=make();send(gate,0x2100,200);send(gate,0x100,250)
+        gate.set_stance(1);gate.set_stance(2);send(gate,0x8100,320)
+        self.assertFalse(gate.fields(321)['armed'])
+        gate=make();send(gate,0x2100,200);send(gate,0x100,250);send(gate,0x8100,320)
+        self.assertTrue(gate.fields(321)['armed'])
+        send(gate,0,330)
+        self.assertFalse(gate.fields(331)['armed'])
+
+    def test_sequence_schema_conflicts_and_controller_mapping(self):
+        value=copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings']=[dict(source='tiger_sprint',stance='low',move='okatsu.charged_rush',
+            input=dict(modifier_mask=16,trigger_mask=4,followup_mask=8,gesture='sequence'))]
+        self.assertEqual(validate_preset(value),value)
+        mapped=remap_preset(value,DS4,XBOX)
+        self.assertEqual(mapped['skill_bindings'][0]['input'],dict(
+            modifier_mask=0x100,trigger_mask=0x2000,followup_mask=0x8000,gesture='sequence'))
+        alternative=copy.deepcopy(value)
+        alternative['skill_bindings'][0]['input'].update(modifier_mask=4,trigger_mask=8,followup_mask=16)
+        calibration,binding=game_binding(DS4,binding_for_preset(DS4,alternative,
+            [dict(id=value['tap_move']),dict(id='okatsu.charged_rush')]))
+        gate=RoutedGesture(calibration,binding,1000)
+        gate.set_stance(2);gate.process(dict(kind='input_device',**GAME_DEVICE),100)
+        for buttons,now in ((0,101),(0xA000,200),(0x2000,250),(0x2100,300)):
+            gate.process(dict(kind='input',backend='xinput',slot=0,buttons=buttons,
+                              edge_basis='previous_observation'),now)
+        self.assertEqual((gate.fields(301)['armed'],gate.fields(301)['variant']),(True,1))
+        for input in (dict(modifier_mask=16,trigger_mask=4,followup_mask=4,gesture='sequence'),
+                      dict(modifier_mask=16,trigger_mask=4,gesture='sequence')):
+            bad=copy.deepcopy(value);bad['skill_bindings'][0]['input']=input
+            with self.assertRaises(ValueError): validate_preset(bad)
+        bad=copy.deepcopy(value)
+        bad['skill_bindings'].append(dict(source='tiger_sprint',stance='low',move='okatsu.leaping_slash',
+            input=dict(modifier_mask=16,trigger_mask=4,gesture='tap')))
+        with self.assertRaisesRegex(ValueError,'sequence start'):
+            validate_preset(bad)
+        for key,mask in (('modifier_mask',32),('trigger_mask',32),('followup_mask',32),('followup_mask',2)):
+            bad=copy.deepcopy(value);bad['skill_bindings'][0]['input'][key]=mask
+            with self.assertRaises(ValueError): game_binding(DS4,binding_for_preset(DS4,bad))
+
     def test_same_pair_routes_by_stance_and_change_drops_pending_tap(self):
         value=preset()
         value['skill_bindings'][1]['stance']='mid'

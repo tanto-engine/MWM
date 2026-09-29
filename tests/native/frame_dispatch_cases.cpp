@@ -319,6 +319,14 @@ int main() {
     tick(); assert(action_calls==calls); exit_move(); tick(); assert(dispatch->control.dispatch_count==1); ++checks;
     publish(2); tick(); assert(dispatch->control.dispatch_count==2 && boss_active); exit_move(); ++checks;
 
+    // Sequence policy checks stance without reserving either original button.
+    reset(); command.reserved[0]=1|(1ULL<<35)|(1ULL<<34); publish(); tick();
+    assert(boss_active && dispatch->control.dispatch_count==1); exit_move(); ++checks;
+    reset(); command.reserved[0]=1|(1ULL<<35)|(1ULL<<32); publish(); tick();
+    assert(!boss_active && dispatch->control.last_reason==IneligibleRequest); ++checks;
+    reset(); command.reserved[0]=1|(1ULL<<35)|(1ULL<<34)|(0x100ULL<<16); publish(); tick();
+    assert(!boss_active && dispatch->control.last_reason==InvalidConfig); ++checks;
+
     reset(); command.held=0; publish(); tick(); assert(!action_calls && dispatch->control.last_reason==Released); ++checks;
     command.reserved[0]=1; publish(); tick(); assert(action_calls==1 && boss_active); exit_move(); ++checks;
     reset(); command.armed=0; publish(); tick(); assert(!action_calls); ++checks;

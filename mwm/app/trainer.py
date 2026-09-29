@@ -41,7 +41,8 @@ def remap_preset(preset, source, target, top_level=True):
         for key in ('modifier_mask','trigger_mask'): result[key]=remap(result[key])
     for row in result['skill_bindings']:
         if 'input' in row:
-            for key in ('modifier_mask','trigger_mask'): row['input'][key]=remap(row['input'][key])
+            for key in ('modifier_mask','trigger_mask','followup_mask'):
+                if key in row['input']: row['input'][key]=remap(row['input'][key])
     return validate_preset(result)
 
 

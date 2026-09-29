@@ -302,7 +302,7 @@ static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, 
 #endif
         if (reason == Accepted) reason = validate_actor(c, actor);
 #ifdef RESEARCH_REPEAT
-        if (reason == Accepted && (c.reserved[0]>>16&0xffff)) {
+        if (reason == Accepted && (c.reserved[0]>>32&7)) {
             uint32_t stance=0;
             if (!copy_field(c.player+0x470,stance) || stance>2
                 || !(c.reserved[0]&(uint64_t(1)<<(34-stance)))) reason=IneligibleRequest;
@@ -330,7 +330,7 @@ static DispatchReason choose_dispatch(void* actor, uint32_t key, void* context, 
         }
 #ifdef RESEARCH_REPEAT
         if (reason == Accepted) reason = player_context_status(c);
-        if (reason == Accepted && (c.reserved[0]>>16&0xffff)) {
+        if (reason == Accepted && (c.reserved[0]>>32&7)) {
             uint32_t stance=0;
             if (!copy_field(c.player+0x470,stance) || stance>2
                 || !(c.reserved[0]&(uint64_t(1)<<(34-stance)))) reason=IneligibleRequest;

@@ -21,6 +21,7 @@ if os.name == 'nt':
 # Native signatures and resource indices belong to imports, saved device masks to calibration.
 # Preset validation does not certify gameplay acceptance.
 from engine_policy import NATIVE_SKILLS
+from gestures import SEQUENCE_WINDOW_SECONDS
 from move_imports import BINDING_LIMIT
 from project_paths import DATA
 
@@ -68,7 +69,10 @@ def move_capabilities():
                              stances=['high'] if source=='high_heavy_followup' else ['low','mid','high','any'])
                         for source in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup')],
         speed=dict(min=.25,max=2.0), stances=['low','mid','high'],chord_stances=['low','mid','high','any'],
-        native_binding_limit=BINDING_LIMIT, custom_binding_limit=CUSTOM_BINDING_LIMIT)
+        native_binding_limit=BINDING_LIMIT, custom_binding_limit=CUSTOM_BINDING_LIMIT,
+        custom_sequence=dict(modifiers=['L1 / LB','Circle / B','Triangle / Y','L2 / LT','Square / X'],
+                             buttons=['L1 / LB','Circle / B','Triangle / Y','L2 / LT','Square / X'],
+                             window_seconds=SEQUENCE_WINDOW_SECONDS))
 
 
 def atomic_json(path, value):
@@ -210,7 +214,7 @@ def validate_preset(value):
     routes=[]
     for gesture,field in (('tap','tap_move'),('hold','hold_move')):
         if result[field] is not None:
-            routes.append((result['chord_stance'],result['modifier_mask'],result['trigger_mask'],gesture))
+            routes.append((result['chord_stance'],result['modifier_mask'],result['trigger_mask'],None,gesture))
     custom_count=0
     for binding in bindings:
         if not isinstance(binding,dict) or set(binding) not in ({'source','stance','move'}, {'source','stance','move','input'}):
@@ -221,23 +225,29 @@ def validate_preset(value):
             raise ValueError(f'Unsupported skill binding: {label} ({stance}) → {move_label(move)}. Choose a source, stance and move from the supported menus.')
         custom=binding.get('input')
         if custom is not None:
-            if not isinstance(custom,dict) or set(custom)!={'modifier_mask','trigger_mask','gesture'}:
-                raise ValueError('Custom input requires modifier_mask, trigger_mask and gesture')
+            sequence=isinstance(custom,dict) and custom.get('gesture')=='sequence'
+            required={'modifier_mask','trigger_mask','followup_mask','gesture'} if sequence else {'modifier_mask','trigger_mask','gesture'}
+            if not isinstance(custom,dict) or set(custom)!=required:
+                raise ValueError('Custom input requires modifier_mask, trigger_mask, gesture and followup_mask for a sequence')
             modifier,trigger,gesture=(custom[key] for key in ('modifier_mask','trigger_mask','gesture'))
-            if (any(type(bit) is not int or not 0<bit<=0x80000000 or bit&(bit-1) for bit in (modifier,trigger))
-                    or modifier==trigger or gesture not in ('tap','hold')):
-                raise ValueError('Custom input requires two distinct single button bits and tap or hold')
+            followup=custom['followup_mask'] if sequence else None
+            bits=(modifier,trigger,followup) if sequence else (modifier,trigger)
+            if (any(type(bit) is not int or not 0<bit<=0x80000000 or bit&(bit-1) for bit in bits)
+                    or len(set(bits))!=len(bits) or gesture not in ('tap','hold','sequence')):
+                raise ValueError('Custom input requires distinct single button bits and tap, hold or sequence')
             if move not in CHORD_MOVES:
                 raise ValueError(f'{move_label(move)} cannot use a custom input; choose its original source')
             if stance=='any' and move in HELD_MOVES:
                 raise ValueError(f'{move_label(move)} needs one stance for its move sequence')
-            for old_stance,old_modifier,old_trigger,old_gesture in routes:
+            for old_stance,old_modifier,old_trigger,old_followup,old_gesture in routes:
                 overlap=stance=='any' or old_stance=='any' or stance==old_stance
-                if overlap and {modifier,trigger}=={old_modifier,old_trigger} and (modifier,trigger)!=(old_modifier,old_trigger):
+                if overlap and (sequence or old_gesture=='sequence') and {modifier,trigger}=={old_modifier,old_trigger}:
+                    raise ValueError('A sequence start overlaps another custom input in this stance; choose different buttons')
+                if overlap and not sequence and old_gesture!='sequence' and {modifier,trigger}=={old_modifier,old_trigger} and (modifier,trigger)!=(old_modifier,old_trigger):
                     raise ValueError('The reversed custom chord overlaps another route in this stance; choose different buttons')
-                if overlap and (modifier,trigger,gesture)==(old_modifier,old_trigger,old_gesture):
+                if overlap and (modifier,trigger,followup,gesture)==(old_modifier,old_trigger,old_followup,old_gesture):
                     raise ValueError('This custom chord gesture already selects a move in this stance')
-            routes.append((stance,modifier,trigger,gesture))
+            routes.append((stance,modifier,trigger,followup,gesture))
             custom_count+=1
         if move=='jin_hayabusa.action_0c6f' and (source!='dodge_attack' or stance!='low' or result['low_heavy']!='jin_hayabusa.action_0c6e'):
             raise ValueError(f'{move_label(move)} requires Low Dodge attack and the {move_label("jin_hayabusa.action_0c6e")} Low Triangle / Y string. Enable that string and choose Low Dodge attack, or choose another move.')

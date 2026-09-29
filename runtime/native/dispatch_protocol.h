@@ -37,7 +37,7 @@ struct DispatchCommand {
     uint32_t desired_key;
     int32_t expected_motion;
     uint32_t armed, held;
-    uint64_t reserved[3]; // Bit0 latch, bits16..31 chord buttons, bits32..34 stances; variant; context epoch.
+    uint64_t reserved[3]; // Bit0 latch, bits16..31 chord buttons, bits32..34 stances, bit35 sequence; variant; context epoch.
     volatile LONG64 sequence_end;
 };
 // DLL writes this region only. A new generation requires a fresh explicit publish.
@@ -61,12 +61,13 @@ static_assert(offsetof(DispatchCommand, desired_key) == 112 && offsetof(Dispatch
 
 static inline bool valid_chord_policy(uint64_t policy) {
     // Reserve only a configured two-button chord in its explicitly selected stances.
-    // Keep bit zero as the existing latched-intent flag and preserve zero-policy publishers.
+    // A completed sequence carries stance without reserving either original game input.
     // Unknown bits or partial masks cannot suppress native input.
     const auto buttons=uint16_t(policy>>16), stances=uint16_t((policy>>32)&7);
     const unsigned remainder=buttons&(buttons-1);
-    return !(policy&~0x7FFFF0001ULL) && bool(buttons)==bool(stances)
-        && (!buttons || (remainder && !(remainder&(remainder-1))));
+    const bool sequence=bool(policy&(1ULL<<35));
+    return !(policy&~0xFFFFFF0001ULL) && (sequence ? !buttons && bool(stances) : bool(buttons)==bool(stances)
+        && (!buttons || (remainder && !(remainder&(remainder-1)))));
 }
 
 static inline DispatchReason command_status(const DispatchCommand& c, int64_t now,
