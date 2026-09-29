@@ -41,6 +41,7 @@ SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for sourc
 PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon chord_stance move_settings'.split())
 SOURCE_LABELS = dict(tiger_sprint='Tiger Sprint',dodge_attack='Dodge attack',heavy_attack='Heavy attack',
     guard_light='Guard + light attack',light_attack='Quick attack',high_heavy_followup='High-heavy follow-up')
+MOVE_HELP = json.loads((DATA/'move-help.json').read_text(encoding='utf8'))
 
 
 def move_label(identifier):
@@ -58,11 +59,12 @@ def move_capabilities():
     from catalogue import load_catalogue, iter_moves
     names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
     ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']])
-    return dict(moves=[dict(id=identifier, name=names[identifier], chord=identifier in CHORD_MOVES,
+    return dict(moves=[dict(id=identifier, name=names[identifier], **MOVE_HELP['moves'][identifier], chord=identifier in CHORD_MOVES,
         graph=identifier in HELD_MOVES, held=identifier in HELD_INPUT_MOVES, heavy_string=identifier in HEAVY_STRINGS,
         native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
         speed=identifier in SPEED_MOVES) for identifier in ids],
-        native_sources=[dict(id=source, label=SOURCE_LABELS[source],stances=['high'] if source=='high_heavy_followup' else ['low','mid','high','any'])
+        native_sources=[dict(id=source, label=SOURCE_LABELS[source], **MOVE_HELP['sources'][source],
+                             stances=['high'] if source=='high_heavy_followup' else ['low','mid','high','any'])
                         for source in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup')],
         speed=dict(min=.25,max=2.0), stances=['low','mid','high'],chord_stances=['low','mid','high','any'],
         native_binding_limit=BINDING_LIMIT)

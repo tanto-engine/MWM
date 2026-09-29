@@ -1,6 +1,6 @@
 # Reported MWM issues
 
-These results describe source changes and offline checks. They do not establish live Nioh acceptance; the GitHub issues remain open.
+These results describe source changes and offline checks for the alpha.6 candidate. They do not establish live Nioh acceptance. Close only issues whose reported editor or capacity defect is covered; keep the two crashes and gameplay-dependent reports open.
 
 | Issue | Mechanism and result |
 |---|---|
@@ -9,10 +9,14 @@ These results describe source changes and offline checks. They do not establish 
 | #3 Okatsu Charged Rush held input | The editor and validator limited held inputs to adapted graphs, while native deferral required a graph's William descriptor. Ordinary Okatsu moves now have an explicit held-input capability and use the existing validated source dispatcher after hold recognition. Native tests cover tap/hold in all three stances and rejecting a pending press after a stance change. |
 | #4 Override slots | Eight was a fixed serialization/storage limit. The session now carries 32 compiled override entries; the editor relies on compiler validation instead of its obsolete eight-row precheck. Native source/stance ownership constraints still apply. |
 | #5 Move phases | The session now carries 64 phases. Python validation, gesture variants, native storage and cycle validation use the expanded capacity. Tests exercise 33-phase real presets, all 64 serialized slots, and a native cycle above index 31. |
+| #6 Quick Attack stance | The old validator and capability list forced Quick Attack to Low. All three native stance signatures now compile and dispatch separately; the editor offers Low, Mid, High and Any where the move permits it. A graph still needs one concrete stance. |
+| #7 Omnislice Ki Pulse | The recorded action usually ends around frame 108, while Pulse onset was frame 120. Its exact recovery onset is now frame 72 and a native test checks this action. Live R1/RB and contact behavior remain unverified. |
+| #8 Custom inputs | Fixed the confirmed LB+B competition with native dodge. An older LB+LT trace fired, but the reported alpha.5 failures of LB+LT, LB+B and LB+Y are not all reproduced on current hardware. Do not claim the issue complete from synthetic tests. |
+| #9 Held custom input blocking | The button reservation remained armed after a chord fired or expired. Both the publisher and native consumer now release/reject that stale reservation; the native regression reproduces the prior blocking state. Physical controller and live combat acceptance remain pending. |
 
 The binary session contract is now version 12, 12,416 bytes. Build matching Python/native components together; this change does not update an already released EXE. Capacity increases do not add unsupported source actions or make conflicting stance ownership valid.
 
-Verification: 255 workflow tests and 8 resource tests passed, including the isolated Electron editor test. The final native hold-context change also passed the native replacement harness and production DLL build. No EXE release was produced.
+Verification of the integrated source: 263 workflow tests and 8 resource tests passed, including the isolated Electron editor test. The native DLLs built. Live gameplay was not assessed.
 
 ## Mission-entry investigation
 

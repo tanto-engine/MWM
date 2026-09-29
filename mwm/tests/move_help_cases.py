@@ -14,6 +14,9 @@ class MoveHelpTests(unittest.TestCase):
         capabilities = move_capabilities()
         self.assertEqual(set(help['moves']), {move['id'] for move in capabilities['moves']})
         self.assertEqual(set(help['sources']), {source['id'] for source in capabilities['native_sources']})
+        for collection, key in (('moves', 'moves'), ('sources', 'native_sources')):
+            for row in capabilities[key]:
+                self.assertEqual({field: row[field] for field in ('input', 'description')}, help[collection][row['id']])
         for collection in ('moves', 'sources'):
             for identifier, row in help[collection].items():
                 with self.subTest(identifier=identifier):

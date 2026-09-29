@@ -4,7 +4,7 @@
     "tiger_sprint": {"input": "Use the equipped Tiger Sprint sword-skill input in the chosen stance.", "description": "Replaces the game-selected Tiger Sprint sheathe/Iai entry after Nioh accepts its skill and loadout conditions."},
     "dodge_attack": {"input": "Dodge, then press Strong attack / Triangle / Y in the chosen stance.", "description": "Replaces the selected dodge attack; ordinary standing attacks remain native."},
     "heavy_attack": {"input": "Press Strong attack / Triangle / Y in the chosen stance.", "description": "Replaces that stance's normal heavy opener. Any covers all three stances and uses three native slots."},
-    "light_attack": {"input": "Press Quick attack / Square / X in the chosen stance.", "description": "Replaces the selected normal quick opener; running, dodging and stance-switch actions stay separate."},
+    "light_attack": {"input": "Press Quick attack / Square / X in Low, Mid, or High stance.", "description": "Replaces that stance's normal quick opener. Any covers all three stances and uses three native slots; running, dodging and stance-switch actions stay separate."},
     "guard_light": {"input": "Hold Guard / L1 / LB, then press Quick attack / Square / X.", "description": "Replaces the game-selected guard-and-quick sword skill in the chosen stance."},
     "high_heavy_followup": {"input": "After a High-stance heavy, hold Guard / L1 / LB and press Quick attack / Square / X in its follow-up window.", "description": "Replaces the selected High-heavy follow-up, not the opening heavy attack."}
   },

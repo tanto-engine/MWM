@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.3.0-alpha.6
+
+- Rebuilt the opaque Sword editor around a stance skill map, input routes, controller guide, searchable move picker and separate playable/research library. The persistent right guide now explains the hovered input and move with concrete expected controls and behavior.
+- Quick Attack overrides can target Low, Mid, High or all three stances. The source and stance selectors retain their choices when edited, and the native dispatcher matches each selected stance.
+- Raised the authored sequence capacity to 64 phases and the native override table to 32 entries. Okatsu's Charged Rush is available on held Strong attack in every stance. The custom chord releases its button reservation after dispatch or expiry; LB+B no longer loses to the native dodge route.
+- Opened Tachibana Omnislice's Ki Pulse recovery before its recorded action ends. Gameplay confirmation is still needed.
+- Indexed 55 additional named sword recordings as research candidates, excluding Edward Kelley. They are intentionally unavailable for binding until the actor, action phases, resources and William adapter are reviewed. The repeatable intake verifies source archives and records conflicting action and motion keys.
+
+Offline tests and packaged UI checks do not establish live gameplay, physical-controller or another-PC acceptance. The two reported crashes and remaining unsupported input sources are still under investigation.
+
 ## 0.3.0-alpha.5
 
 - Press-to-bind now reads connected OS controllers whether Nioh is running or closed. A supported pad's actual mapping and XInput slot become pending with its button; Save applies both together. Unsupported layouts show guidance instead of waiting silently.
