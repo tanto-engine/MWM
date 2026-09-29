@@ -114,7 +114,7 @@ def stage_product(project, destination):
     if spec['kind']=='recorder':
         shutil.copyfile(project/'data/bosses.json',data/'bosses.json')
     else:
-        for name in ('mod.json','moves.json','preset.json','controller-calibration.json'):
+        for name in ('mod.json','moves.json','move-help.json','preset.json','controller-calibration.json'):
             shutil.copyfile(project/'data'/name,data/name)
         for name in ('imports','resources'): shutil.copytree(project/'data'/name,data/name)
         if (project/'data/presets').is_dir():
