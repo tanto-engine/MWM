@@ -17,9 +17,19 @@ if (smokeReport) {
   process.env.MWM_UI_SMOKE = '1';
   process.env.NIOH_RUNTIME_HOME = path.join(state, 'runtime');
 }
-const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'trial', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'haptic', 'enable', 'disable']);
+const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'trial', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'haptic', 'enable', 'disable', 'preset_list', 'preset_save', 'preset_load', 'preset_delete', 'preset_switch', 'preset_cycle']);
 const pending = new Map();
-let window, worker, nextId = 0;
+let window, worker, nextId = 0, hotkeyTimer, hotkeyBusy = false, cycling = false, closeAfterCycle = false;
+
+async function switchPreset(method, params = {}) {
+  if (cycling) throw new Error('Preset switch already in progress');
+  cycling = true;
+  try { return await call(method, params); }
+  finally {
+    cycling = false;
+    if (closeAfterCycle && window && !window.isDestroyed()) window.close();
+  }
+}
 
 function failPending(error) {
   // Resolve every waiting screen operation when its worker is no longer available.
@@ -95,7 +105,7 @@ function call(method, params = {}) {
       // Other in-flight reads retain their own correlation IDs.
       // Report the method so the user knows which operation failed.
       pending.delete(id); reject(new Error('Engine timed out: ' + method));
-    }, 15000);
+    }, method === 'preset_cycle' || method === 'preset_switch' ? 60000 : 15000);
     pending.set(id, { resolve, reject, timer });
     worker.stdin.write(JSON.stringify({ id, method, params }) + '\n');
   });
@@ -119,6 +129,7 @@ async function request(event, method, params = {}) {
   }
   if (method === 'collection') return JSON.parse(fs.readFileSync(path.join(__dirname, 'collection.json'), 'utf8'));
   if (!methods.has(method)) throw new Error('Unsupported desktop operation');
+  if (method === 'preset_cycle' || method === 'preset_switch') return switchPreset(method, params);
   return call(method, params);
 }
 
@@ -128,6 +139,9 @@ async function openWindow() {
   // External navigation and popups cannot replace this trusted local renderer.
   startWorker();
   window = new BrowserWindow({ show: !smokeReport, width: 1120, height: 840, minWidth: 860, minHeight: 640, backgroundColor: '#11151c', title: 'MWM · Multi-Weapon Moveset Mod', autoHideMenuBar: true, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, backgroundThrottling: !smokeReport } });
+  window.on('close', event => {
+    if (cycling) { event.preventDefault(); closeAfterCycle = true; window.hide(); }
+  });
   window.webContents.setWindowOpenHandler(() => {
     // No application action requires a second browser window.
     // Block script-created windows before they receive navigation context.
@@ -141,6 +155,21 @@ async function openWindow() {
     event.preventDefault();
   });
   await window.loadFile(path.join(__dirname, 'index.html'));
+  if (!smokeReport) {
+    // Poll the distinct DS4 WinMM touchpad bit from the main process, including while unfocused.
+    // The worker serializes requests, so at most one cycle can run at a time.
+    hotkeyTimer = setInterval(async () => {
+      if (hotkeyBusy || !worker) return;
+      hotkeyBusy = true;
+      try {
+        if (await call('preset_hotkey_poll')) {
+          try { window.webContents.send('mwm:preset-cycle', { result: await switchPreset('preset_cycle') }); }
+          catch (error) { window.webContents.send('mwm:preset-cycle', { error: error.message }); }
+        }
+      } catch { /* A closed worker is reported by ordinary editor requests. */ }
+      finally { hotkeyBusy = false; }
+    }, 50);
+  }
   if (smokeReport) {
     await require('./smoke.cjs').runSmoke(window, call, smokeReport);
     const child = worker; worker = null;
@@ -182,6 +211,7 @@ app.on('window-all-closed', () => {
   // Close the window-owned worker by ending its input stream.
   // Its finalizer releases any temporary binding reader.
   // Explicit Disable remains the only UI request that stops enabled gameplay.
+  clearInterval(hotkeyTimer);
   if (worker) worker.stdin.end();
   app.quit();
 });
