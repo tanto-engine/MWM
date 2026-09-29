@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.3.0-alpha.7
+
+- Input overrides can now use an original Nioh source or a separate controller chord on each row. Custom rows leave the original game action unchanged and can select independent tap or hold moves by stance. The editor records Modifier and Trigger from a connected controller on each row, shows conflicts before saving, and keeps the original global chord for existing presets.
+- Reviewed custom chords use L1/LB with Circle/B, Triangle/Y, L2/LT or Square/X. The runtime supports up to 24 custom routes separately from 32 native override slots. Saved movesets and exported skill groups translate each row's buttons when the controller mapping changes.
+- Dispatch now shares one monotonic command sequence across routes, rejects overlapping bindings and stale presses, and stops reading player stance while gameplay context is suspended. The packaged EXE tests two distinct custom routes and their controller remapping.
+- Added an opaque sword icon to the portable EXE and tightened route labels, binding feedback, narrow layout and keyboard-accessible capture controls.
+
+The supported chord set is limited to input pairs with reviewed native interception. Live Nioh, physical-controller and another-PC acceptance remain pending. The two reported crashes are unchanged.
+
 ## 0.3.0-alpha.6
 
 - Rebuilt the opaque Sword editor around a stance skill map, input routes, controller guide, searchable move picker and separate playable/research library. The persistent right guide now explains the hovered input and move with concrete expected controls and behavior.

@@ -60,6 +60,11 @@ async function runSmoke(window, call, report) {
   const preset = snapshot.preset;
   preset.name = 'Packaged check – テスト';
   const params = {...snapshot, preset, nioh_exe:'C:\\Game path test\\nioh.exe'};
+  params.preset = await call('add_override', {...params, mode:'custom'});
+  params.preset = await call('add_override', {...params, mode:'custom'});
+  const custom = params.preset.skill_bindings.filter(row => row.input);
+  if (custom.length !== 2) throw new Error('Packaged worker did not add independent custom routes');
+  custom[1].input.trigger_mask = 8; // DS4 Triangle / XInput Y, distinct from the first Circle/B route.
   const compiled = await call('preview', params);
   const saved = await call('apply', params);
   if (saved.preset.name !== preset.name || saved.nioh_exe !== params.nioh_exe) throw new Error('Packaged settings roundtrip failed');
@@ -70,6 +75,8 @@ async function runSmoke(window, call, report) {
   // Translate the saved logical buttons into Xbox/XInput, then rebind the custom chord to LB+B.
   // Preview and persistence use the bundled Engine, with launcher and Frost bindings preserved.
   const xbox = await call('controller', {...params,choice:'1'});
+  const mapped = xbox.preset.skill_bindings.filter(row => row.input).map(row => [row.input.modifier_mask,row.input.trigger_mask]);
+  if (JSON.stringify(mapped) !== JSON.stringify([[0x100,0x2000],[0x100,0x8000]])) throw new Error('Custom route buttons did not follow the controller mapping');
   xbox.preset.modifier_mask=0x100;xbox.preset.trigger_mask=0x2000;
   const rebound={...params,...xbox};
   await call('preview',rebound);
@@ -80,7 +87,7 @@ async function runSmoke(window, call, report) {
   try { await call('enable', params); } catch (error) { blocked = String(error).includes('disabled during the packaged UI check'); }
   if (!blocked) throw new Error('Smoke game isolation failed');
   fs.writeFileSync(report, JSON.stringify({passed:true,...screen,compiledPhases:Object.keys(compiled.moves).length,
-    unicode:true,settings:true,bindings:true,uiRebinding,incompatiblePopup:true,invalidDraftPreserved:true,xinputRebinding:true,gameAccess:false}, null, 2));
+    unicode:true,settings:true,bindings:true,customRoutes:true,uiRebinding,incompatiblePopup:true,invalidDraftPreserved:true,xinputRebinding:true,gameAccess:false}, null, 2));
 }
 
 module.exports = {runSmoke};

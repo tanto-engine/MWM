@@ -6,7 +6,7 @@ from trainer import remap_preset
 GROUPS = {
     'chord': ('Custom chord', ('tap_move', 'hold_move', 'modifier_mask', 'trigger_mask', 'hold_seconds', 'chord_stance')),
     'stances': ('Stance overrides', ('low_heavy', 'stance_holds')),
-    'skills': ('Native overrides', ('skill_bindings',)),
+    'skills': ('Input overrides', ('skill_bindings',)),
     'frost': ('Frost Moon', ('frost_moon',)),
 }
 
