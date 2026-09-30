@@ -2,9 +2,9 @@
 
 Tanto Engine is the private workshop. MWM supplies the sword moveset and its menu; Recorder collects observations. A recording is evidence of what a boss did, not code that William can immediately execute. The Engine checks source identities, adapts reviewed moves, interprets your controls and manages the resources needed while those moves run.
 
-Start with `runtime/engine_config.py` for selectable moves and settings, then `runtime/prepare_session.py` for the checks required before enabling them. `build_product.py` decides what reaches each EXE. Each named function and small callback has a short explanation; comments inside larger functions explain ordering, ownership or byte-layout constraints.
+Start with `runtime/engine_config.py` for selectable moves and settings, then `runtime/prepare_session.py` for the checks required before enabling them. `build_product.py` decides what reaches each EXE. Comments explain ordering, ownership and byte-layout constraints where the code alone is insufficient.
 
-Maintain 3–5 direct opening comments per function/callback: explain its player-facing purpose, how it works and the important constraint. Add inline comments for non-obvious mechanisms; avoid guessing meanings for unknown game fields or repeating the function name as filler.
+Prefer small functions and concise comments for non-obvious mechanisms. Do not repeat the implementation in comments or guess meanings for unknown game fields.
 
 ## Vocabulary used in the comments
 
@@ -39,6 +39,36 @@ Unknown source words and raw byte arrays are retained as opaque evidence unless 
 `nioh_sword.py` and `native/nioh_sword_definitions.h` retain researched identities and recipes for this specific backend. `catalogue.py` maintains readable move definitions and validation. `project_paths.py` separates Engine code from product-owned data and writable runtime state. These source families do not yet implement ten arbitrary weapons.
 
 For the C/C++ details, continue with [the native walkthrough](runtime/native/NATIVE-WALKTHROUGH.md): hook entry/exit, private copies, shared layouts and thread/resource lifetime.
+
+## Sword inputs and casting
+
+`mwm/data/move-help.json` supplies source labels, input kinds, stance choices and skill/string roles to both validation and the Electron dropdowns. A press-through string replaces Quick or Strong attacks. A skill may contain automatic jump/strike/landing phases while still needing only one activation; Frost excludes press-through strings. Saved assignments outside the new menu filter remain visible for compatibility.
+
+The compiler tags imported string phases with their Quick/Strong input family. One graph cannot borrow both continuation-button families: its privately copied exit rows have one input policy. Native finishers use the current phase's recovery frame, stance and a fresh opposite-button edge: after Strong, L1 + Square; after Quick, L1 + Triangle. They take priority over the corresponding neutral guard skill during that window. Native strings use the same rule. Death, changed ownership, stance changes and controller gaps invalidate pending input.
+
+Casting needs two separate boundaries: the attack must permit a native item exit, and the cast must commit its effect before cancellation. Ordinary imported actions retain verified William shortcut exits where that complete row family is available. Downward slash has a longer developer-authored Pulse hold window; the percentage still applies to actual native Ki expenditure.
+
+Live Guardian Spirit Talisman captures identified native action `262`, motion `111`, whose 21 transition rows lack the sword's `D5F` Pulse exit. R1 presses left the cast running. `runtime/native/cast_pulse.h` now carries a real sword Pulse deadline through that exact cast signature. One fresh R1 may wait for a player-owned sound callback after the loaded timing stream's last non-sound event, then request William's existing Pulse action. It neither edits cast timing/events nor writes Ki, item counts or effects. Expired windows, controller gaps, stance/epoch changes and unmatched casts remain ineligible. The event stream is checked for ordered frames; no guessed wall-time commit delay is used. The adapter requires the existing native lookup hook, installed for sessions with a native skill binding or replacement.
+
+This source adapter has owned-memory regression coverage. Whether the Guardian Spirit survives the native interruption and how much Ki is recovered still require a fresh live test. Other cast signatures, including ninjutsu, remain unsupported until their native timing and ownership are captured.
+
+Default Type A controls reserve L2 for aiming, R2 for shortcut pages/shooting, and R1 for Pulse/stances. Nioh 2 moves shortcut-page switching to R1 + D-pad left/right and uses R2 for Yokai actions. Its trigger-based mod bindings cannot be copied into Nioh 1 as free controls. References: [Nioh 1 official PC manual](https://cdn.akamai.steamstatic.com/steam/apps/485510/manuals/Nioh_steam_EN.pdf), [Nioh 2 official controls](https://www.gamecity.ne.jp/manual/t2wNiSht/steam/bri/2000.html).
+
+## Damage and cross-game imports
+
+The current importer retains source combat rows; most damage fields remain opaque. Attaching an action to William does not prove that every boss contact coefficient scales correctly. There is no verified damage-coefficient setter yet.
+
+The smallest useful damage abstraction is a relative power budget per move, distributed across its contacts, with separate physical, elemental and Ki channels. Apply those weights at the verified native contact-power field before target mitigation, while letting the game resolve William's weapon, stats, buffs and the target's defense/resistance/difficulty. Do not replace final HP loss with a fixed number, guess an armor formula, or apply difficulty twice. Equal total power does not guarantee equal final damage: armor may affect each hit separately.
+
+Calibration requires matched native/imported sword hits against the same target and equipment, then checks across equipment levels, defenses and difficulties. Compare repeated observations rather than one damage number. A four-contact move gets an explicit total budget; four full-strength hits must not accidentally become four times the intended skill. Preserve contact/event identity so a phase transition cannot repeat damage or status buildup. Add configurable coefficients only after identifying their native fields and ownership.
+
+`resource_assets.py` validates installed archive entries by name, extent and hash; the native loader decodes and retains the required action/motion/timing/camera packages. Imports identify a source game build, bank, action, motion and payload, not a persistent address. The existing adapters are Nioh 1 recipes, not a cross-game converter or animation editor. Cross-game import would require archive decoding, skeleton/bone compatibility or retargeting, event translation, combat contacts and native object-factory compatibility before reusing the current execution layer. Shared package headers or action IDs alone establish none of these.
+
+## First character review: Maria
+
+All 13 Maria sessions in Downloads match the repository's archived evidence hashes. The notes distinguish five apparent attack strings, two grabs, two evasions, a buff and a teleport attack. Beam sequencing and the forward-slash/retreat combination remain unclassified. These are candidate categories, not approved bindings; Maria remains unmapped and absent from playable menus.
+
+The journal labels have end times without explicit start times, and actor roles are unassigned. A repeated action ID can belong to William or a different boss; action, motion, payload and owner must be checked together. For example, the four-hit quick note contains the observed C80 → C81 → C82 path: four hits are not four descriptors, and three descriptors do not prove three button presses. Before authoring its import, isolate Maria's actor, confirm each link against its source transition rows, and decide which links are automatic versus fresh Quick/Strong presses. Keep buffs, grabs and evasions out of that attack graph. Raw addresses are session observations and must be resolved again at launch.
 
 ## Voice substitution
 

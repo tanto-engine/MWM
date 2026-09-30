@@ -439,9 +439,10 @@ def main():
                             record['dispatch_reason'] = (record['valid_fields'] >> 8) & 255
                             record['substitution_intended'] = bool(record['valid_fields'] & (1 << 16))
                             record['final_exact_match'] = bool(record['valid_fields'] & (1 << 17))
+                            record['native_cast_pulse'] = bool(record['valid_fields'] & (1 << 19))
                             if record['substitution_intended']:
                                 record['action_name'] = ' / '.join(move['name'] for move in boss['imports'] if move['key']==record['forwarded_key']) or None
-                            if record['final_exact_match'] and record['valid_fields'] & (1 << 18):
+                            if (record['final_exact_match'] or record['native_cast_pulse']) and record['valid_fields'] & (1 << 18):
                                 record['decision_qpc'] = int(record['context'], 0)
                                 record['context'] = '0x0'
                                 record['decision_to_dispatch_ms'] = (record['qpc']-record['decision_qpc'])*1000/frequency

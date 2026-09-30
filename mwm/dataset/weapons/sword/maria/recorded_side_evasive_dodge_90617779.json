@@ -4,7 +4,7 @@
   "name": "Side Evasive Dodge",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "movement",
   "review_status": "candidate",
   "priority": null,
   "description": "Side Evasive Dodge",

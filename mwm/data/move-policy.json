@@ -19,7 +19,7 @@
       "ki_pulse": {
         "percent": 40,
         "fill_frames": 30,
-        "hold_frames": 36
+        "hold_frames": 120
       }
     },
     "jin_hayabusa.action_0c71": {

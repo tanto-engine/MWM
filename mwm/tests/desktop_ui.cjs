@@ -178,7 +178,17 @@ app.whenReady().then(async () => {
       await tab('overview');
       document.querySelector('#trial').click();await ready();
       assert(document.querySelector('#enable').disabled,'Enable bypasses unsaved draft');
-      for(const name of ['low','mid','high']){await stance(name);assert(document.querySelector('[data-assignment="hold:'+name+'"]')?.closest('.skill-row'),'Hold Triangle is not directly selectable in '+name+' stance');}
+      for(const name of ['low','mid','high']){
+        await stance(name);
+        assert(document.querySelector('[data-assignment="hold:'+name+'"]')?.closest('.skill-row'),'Hold Triangle is not directly selectable in '+name+' stance');
+        for(const source of ['guard_strong','quick_followup',name==='high'?'high_heavy_followup':'strong_followup']){
+          const menu=document.querySelector('[data-assignment$=":'+source+'"]');
+          assert(menu,'Built-in '+source+' is missing in '+name);
+          assert([...menu.options].some(x=>x.value==='okatsu.charged_rush'),'Skill missing from '+source);
+          assert(![...menu.options].some(x=>x.value==='toyotomi_hideyori.action_0d30'),'String exposed as '+source+' skill');
+        }
+        assert(![...document.querySelector('[data-assignment="frost:'+name+'"]').options].some(x=>x.value==='toyotomi_hideyori.action_0d30'),'Frost exposes a press-through string');
+      }
       await stance('low');
       assert(![...document.querySelectorAll('main option')].some(x=>/\\b(?:0x)?[0-9A-F]{4}\\b/.test(x.textContent)),'Overview exposes source hex IDs');
       const lowHold=document.querySelector('[data-assignment="hold:low"]');
@@ -418,21 +428,21 @@ app.whenReady().then(async () => {
       assert(document.querySelector('[data-assignment="native:low:tiger_sprint"]')?.value==='okatsu.charged_rush','Editing Mid erased the shared route from Low');
       await stance('high');
       assert(document.querySelector('[data-assignment="native:high:tiger_sprint"]')?.value==='okatsu.charged_rush','Editing Mid erased the shared route from High');
-      assert(!document.querySelector('[data-assignment="followup:high:after_strong"]'),'Occupied High strong follow-up was offered');
+      assert(document.querySelector('[data-assignment="empty:high:strong_followup"]'),'High Strong finisher is missing');
       await stance('mid');
-      assert(!document.querySelector('[data-assignment="followup:mid:after_quick"]'),'Occupied Mid quick finisher was offered');
+      assert(document.querySelector('[data-assignment="empty:mid:quick_followup"]'),'Mid Quick finisher is missing');
       await stance('low');
-      change(document.querySelector('[data-assignment="followup:low:after_strong"]'),'okatsu.charged_rush');await ready();
-      assert(document.querySelector('[data-assignment="followup:low:after_strong"]')?.value==='okatsu.charged_rush','After Strong route did not appear in Low');
+      change(document.querySelector('[data-assignment="empty:low:strong_followup"]'),'okatsu.charged_rush');await ready();
+      assert(document.querySelector('[data-assignment="native:low:strong_followup"]')?.value==='okatsu.charged_rush','After Strong route did not appear in Low');
       document.querySelector('#baseline').click();await ready();await stance('mid');
       change(document.querySelector('[data-assignment="native:mid:heavy_attack"]'),'');await ready();
       change(document.querySelector('[data-assignment="hold:mid"]'),'oda_nobunaga.action_0c6e');await ready();
-      const midFollowup=document.querySelector('[data-assignment="followup:mid:after_strong"]');
-      assert(midFollowup && !midFollowup.disabled && midFollowup.closest('.skill-row').querySelector('.control-note').hidden,'Mid original Strong was blocked by its separate Hold Strong move');
+      const midFollowup=document.querySelector('[data-assignment="empty:mid:strong_followup"]');
+      assert(midFollowup && !midFollowup.disabled,'Mid Strong was blocked by its separate Hold Strong move');
       change(midFollowup,'okatsu.charged_rush');await ready();
       document.querySelector('#apply').click();await ready();
       const midSaved=(await window.mwm.request('snapshot')).preset;
-      assert(midSaved.stance_holds.mid==='oda_nobunaga.action_0c6e' && midSaved.skill_bindings.some(row=>row.stance==='mid' && row.input?.gesture==='after_strong'),'Mid Hold Strong and After Strong did not save together');
+      assert(midSaved.stance_holds.mid==='oda_nobunaga.action_0c6e' && midSaved.skill_bindings.some(row=>row.stance==='mid' && row.source==='strong_followup' && !row.input),'Mid Hold Strong and After Strong did not save together');
       await tab('collection');
       const research=[...document.querySelectorAll('.library-tabs button')].find(button=>button.textContent.includes('Unreviewed actions'));
       const unreviewed=(await window.mwm.request('collection')).unreviewed;

@@ -171,6 +171,7 @@ static void reset() {
     // Populate the researched native offsets and reset the callback control fields.
     // Prior failures must not leak consumed gestures or borrowed slots into later checks.
     own_dispatch = {}; own_trace = {}; dispatch=&own_dispatch; trace=&own_trace;
+    cast_pulse_input={};original_lookup=nullptr;
     player.fill(0); owner.fill(0); source.fill(0); source_owner.fill(0);
     motion.fill(0); timing.fill(0); source_motion.fill(0); source_timing.fill(0);
     bank.fill(0); player_bank.fill(0); neutral.fill(0); desired.fill(0); payload.fill(0);
@@ -211,6 +212,7 @@ static void reset() {
     pulse_descriptor.fill(0); pulse_pointers.fill(0);
     memcpy(dodge_row.data(),native_dodge_row,0x30);
     pulse_pointers[48]=address(dodge_row.data());
+    fixture_shortcut_exits(pulse_pointers.data());
     for (unsigned i=0;i!=3;++i) {
         memcpy(pulse_rows[i].data(),boss_pulse_templates[i],0x30);
         pulse_pointers[21+i]=address(pulse_rows[i].data());
@@ -287,11 +289,14 @@ static void handgun_visibility_cases() {
     ++checks;
 }
 
+#include "cast_pulse_cases.h"
+
 int main() {
     // Exercise frame scheduling, lifecycle suspension, windup and voice adaptation.
     // Drive real wrappers using owned memory and configurable native callback outcomes.
     // Gameplay acceptance still requires live evidence beyond these deterministic invariants.
     LARGE_INTEGER f; QueryPerformanceFrequency(&f); frequency=f.QuadPart;
+    cast_pulse_cases();
     handgun_visibility_cases();
     reset(); boss_frost_variants[1]=1; // Mid Frost shares ordinary C64 with a High custom input.
     put(player.data(),0x470,uint32_t(0)); publish(); tick();
@@ -305,7 +310,7 @@ int main() {
     assert((trace->records[0].valid_fields>>8 & 255)==IneligibleRequest); ++checks;
     assert(trace->records[0].context==0 && !(trace->records[0].valid_fields & (1u<<18))); ++checks;
     tick(); assert(frame_calls==1 && action_calls==2 && boss_active && dispatch->control.dispatch_count==1);
-    assert(boss_private_actions[0].transition_count==32);
+    assert(boss_private_actions[0].transition_count==36);
     for (unsigned i=0;i!=3;++i) {
         auto expected=pulse_rows[i]; put(expected.data(),0x20,int16_t(54));
         assert(!memcmp(boss_private_actions[0].transition_bodies[28+i],expected.data(),0x30));

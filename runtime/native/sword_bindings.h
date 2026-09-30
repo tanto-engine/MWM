@@ -64,8 +64,14 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
         || !grapple_field(descriptor,0,key) || !grapple_field(descriptor,0x40,uint8_t(1))
         || !copy_field(descriptor+0x20,payload)) return -1;
     const unsigned mask=1u<<(2-stance);
+    uint8_t guard[0x30];const unsigned family=sword_attack_family(boss_session.player);
+    if (family && selected_sword_row(key,guard) && guard[0x0B]==5 && guard[0x0C]==0
+        && guard[0x0D]==(family==1) && guard[0x0E]==1)
+        for (const auto& binding : boss_skill_bindings)
+            if (binding.kind==(family==1 ? 7u : 4u) && (binding.stances&mask)
+                && native_binding_context(command)) return int(binding.variant-1);
     for (const auto& binding : boss_skill_bindings) {
-        if (!binding.kind || binding.kind==3 || binding.kind==4 || !(binding.stances&mask)) continue;
+        if (!binding.kind || binding.kind==3 || binding.kind==4 || binding.kind==7 || !(binding.stances&mask)) continue;
         if (binding.kind==5) {
             // Match the selected stance's ordinary Square opener, not running or dodge Square.
             // Each graph borrows the corresponding William heavy exit template.
@@ -91,7 +97,8 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
                 && tiger_sprint_entry(key,descriptor,payload))) continue;
         } else {
             uint8_t row[0x30];
-            if (!selected_sword_row(key,row) || row[0x0B]!=5 || row[0x0C]!=0 || row[0x0D]!=0 || row[0x0E]!=1) continue;
+            if (!selected_sword_row(key,row) || row[0x0B]!=5 || row[0x0C]!=0
+                || row[0x0D]!=(binding.kind==6) || row[0x0E]!=1) continue;
         }
         if (native_binding_context(command)) return int(binding.variant-1);
     }

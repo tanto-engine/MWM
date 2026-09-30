@@ -44,34 +44,33 @@ SPEED_MOVES = frozenset(move['id'] for move in _ordinary['moves'] + [m for sourc
     if move['flags'] not in (0x8078000000, 0x8038000000))
 CUSTOM_BINDING_LIMIT = 24
 PRESET_FIELDS = frozenset('schema_version name weapon tap_move hold_move modifier_mask trigger_mask hold_seconds low_heavy stance_holds okatsu_grapple mid_light_ender string_enabled skill_bindings frost_moon chord_stance move_settings'.split())
-SOURCE_LABELS = dict(tiger_sprint='Tiger Sprint',dodge_attack='Dodge attack',heavy_attack='Heavy attack',
-    guard_light='Guard + light attack',light_attack='Quick attack',high_heavy_followup='High-heavy follow-up')
 MOVE_HELP = json.loads((DATA/'move-help.json').read_text(encoding='utf8'))
+SOURCE_LABELS = {source: row['label'] for source, row in MOVE_HELP['sources'].items()}
+MOVE_NAMES = {move['id']: move['name'] for move in json.loads((DATA/'moves.json').read_text(encoding='utf8'))['moves']}
+STRING_MOVES = frozenset(identifier for identifier,row in MOVE_HELP['moves'].items() if row['category']=='string')
+FROST_MOVES = CHORD_MOVES - STRING_MOVES
 
 
 def move_label(identifier):
     # Name validation conflicts using the same catalogue labels shown in the move menu.
-    # Look up labels only when needed so ordinary validation does not reread the catalogue.
+    # Use cached catalogue names and authored phase labels without rereading data on each validation.
     # Unknown file values retain their identifier instead of being mistaken for a supported move.
-    from catalogue import load_catalogue, iter_moves
-    return next((move['name'] for move in iter_moves(load_catalogue()) if move['id']==identifier),str(identifier))
+    return MOVE_NAMES.get(identifier,MOVE_HELP['moves'].get(identifier,{}).get('label',identifier)) if isinstance(identifier,str) else str(identifier)
 
 
 def move_capabilities():
     # Tell the trainer which reviewed moves can actually be configured.
     # Join readable catalogue names to implemented imports and their supported binding/speed roles.
     # A raw recording or catalogue entry alone never becomes a playable menu choice.
-    from catalogue import load_catalogue, iter_moves
-    names = {move['id']: move['name'] for move in iter_moves(load_catalogue())}
     ids = dict.fromkeys(move['id'] for move in _ordinary['moves'] + [m for source in SOURCE_MANIFESTS for m in source['moves']])
-    return dict(moves=[dict(id=identifier, name=names[identifier], **MOVE_HELP['moves'][identifier], chord=identifier in CHORD_MOVES,
+    return dict(moves=[dict(id=identifier, name=move_label(identifier), **MOVE_HELP['moves'][identifier], chord=identifier in CHORD_MOVES,
         string_hold=identifier==STRING_ENTRY,
         graph=identifier in HELD_MOVES, held=identifier in HELD_INPUT_MOVES, heavy_string=identifier in HEAVY_STRINGS,
         native=identifier in CHORD_MOVES or identifier=='jin_hayabusa.action_0c6f',
-        speed=identifier in SPEED_MOVES) for identifier in ids],
-        native_sources=[dict(id=source, label=SOURCE_LABELS[source], **MOVE_HELP['sources'][source],
-                             stances=['high'] if source=='high_heavy_followup' else ['low','mid','high','any'])
-                        for source in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup')],
+        speed=identifier in SPEED_MOVES, string=identifier in STRING_MOVES and identifier in CHORD_MOVES,
+        skill=identifier not in STRING_MOVES and identifier in CHORD_MOVES,
+        frost=identifier in FROST_MOVES) for identifier in ids],
+        native_sources=[dict(id=source, **row) for source,row in MOVE_HELP['sources'].items()],
         speed=dict(min=.25,max=2.0), stances=['low','mid','high'],chord_stances=['low','mid','high','any'],
         native_binding_limit=BINDING_LIMIT, custom_binding_limit=CUSTOM_BINDING_LIMIT,
         custom_sequence=dict(modifiers=['L1 / LB','Circle / B','Triangle / Y','L2 / LT','Square / X'],
@@ -203,8 +202,8 @@ def validate_preset(value):
     frost=result['frost_moon']
     if not isinstance(frost,dict) or set(frost)!=set(holds):
         raise ValueError('Frost Moon requires low, mid and high entries')
-    if any(identifier is not None and (not isinstance(identifier,str) or identifier not in CHORD_MOVES) for identifier in frost.values()):
-        stance,move=next((stance,move) for stance,move in frost.items() if move is not None and (not isinstance(move,str) or move not in CHORD_MOVES))
+    if any(identifier is not None and (not isinstance(identifier,str) or identifier not in FROST_MOVES) for identifier in frost.values()):
+        stance,move=next((stance,move) for stance,move in frost.items() if move is not None and (not isinstance(move,str) or move not in FROST_MOVES))
         raise ValueError(f'{move_label(move)} cannot be assigned to {stance.title()} Frost Moon. Choose a move from the Frost Moon menu.')
     seen_frost={}
     for stance,move in frost.items():
@@ -222,6 +221,7 @@ def validate_preset(value):
         move=next(result[field] for field in ('tap_move','hold_move') if result[field] in HELD_MOVES)
         raise ValueError(f'Choose Low, Mid or High for the custom chord: {move_label(move)} needs one stance for its move sequence. Any stance is not supported for this move.')
     occupied={}
+    attack_owners={result['low_heavy']:2} if result['low_heavy'] else {}
     routes=[]
     attack_routes=[]
     for gesture,field in (('tap','tap_move'),('hold','hold_move')):
@@ -232,7 +232,7 @@ def validate_preset(value):
         if not isinstance(binding,dict) or set(binding) not in ({'source','stance','move'}, {'source','stance','move','input'}):
             raise ValueError('Skill binding requires source, stance and move')
         source,stance,move=(binding[field] for field in ('source','stance','move'))
-        if source not in (*NATIVE_SKILLS,'guard_light','light_attack','high_heavy_followup') or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
+        if source not in SOURCE_LABELS or stance not in (*holds,'any') or move not in (*HELD_MOVES,*MOVE_VARIANTS,'jin_hayabusa.action_0c6f'):
             label=SOURCE_LABELS.get(source,source) if isinstance(source,str) else str(source)
             raise ValueError(f'Unsupported skill binding: {label} ({stance}) → {move_label(move)}. Choose a source, stance and move from the supported menus.')
         custom=binding.get('input')
@@ -276,16 +276,26 @@ def validate_preset(value):
             raise ValueError(f'{move_label(move)} requires Low Dodge attack and the {move_label("jin_hayabusa.action_0c6e")} Low Triangle / Y string. Enable that string and choose Low Dodge attack, or choose another move.')
         if move in HELD_MOVES and stance=='any':
             raise ValueError(f'{SOURCE_LABELS[source]}: {move_label(move)} needs one stance for its move sequence. Choose Low, Mid or High instead of Any.')
-        if custom is None and source=='high_heavy_followup' and stance!='high':
-            raise ValueError(f'High-heavy follow-up for {move_label(move)} requires High stance because it follows the High heavy attack. Choose High or another source.')
+        if custom is None and stance not in MOVE_HELP['sources'][source]['stances']:
+            choices=', '.join(scope.title() for scope in MOVE_HELP['sources'][source]['stances'] if scope!='any')
+            raise ValueError(f'{SOURCE_LABELS[source]}: {move_label(move)} requires {choices} stance. Choose one from its menu.')
+        if custom is None and source in ('guard_strong','strong_followup','quick_followup') and move in STRING_MOVES:
+            raise ValueError(f'{SOURCE_LABELS[source]} requires a single skill; put strings on Quick or Strong attack.')
         if custom is None:
+            if source in ('light_attack','heavy_attack') and move in STRING_MOVES:
+                family=1 if source=='light_attack' else 2
+                if attack_owners.setdefault(move,family)!=family:
+                    raise ValueError(f'{move_label(move)} cannot share Quick and Strong continuation buttons. Choose one attack family or a different move for the other input.')
             scopes=list(holds) if stance=='any' else [stance]
             for scope in scopes:
-                if (source,scope) in occupied:
-                    raise ValueError(f'{scope.title()} {SOURCE_LABELS[source]} selects both {move_label(occupied[source,scope])} and {move_label(move)}. Only one override can own this input; remove one row or change its source or stance.')
-                occupied[source,scope]=move
+                identity=(MOVE_HELP['sources'][source]['kind'],source if source in NATIVE_SKILLS else '',scope)
+                if identity in occupied:
+                    raise ValueError(f'{scope.title()} {SOURCE_LABELS[source]} selects both {move_label(occupied[identity])} and {move_label(move)}. Only one override can own this input; remove one row or change its source or stance.')
+                occupied[identity]=move
         if move in HELD_MOVES or move in frost.values(): entries.append((stance,move,f'{stance.title()} {"custom input" if custom else SOURCE_LABELS[source]}'))
     for gesture,stance in attack_routes:
+        if (4 if gesture=='after_strong' else 7,'',stance) in occupied:
+            raise ValueError(f'{stance.title()} attack follow-up already selects a native override; remove its custom duplicate.')
         source='heavy_attack' if gesture=='after_strong' else 'light_attack'
         replaced=any('input' not in binding and binding['source']==source and binding['stance'] in (stance,'any')
                      for binding in bindings)

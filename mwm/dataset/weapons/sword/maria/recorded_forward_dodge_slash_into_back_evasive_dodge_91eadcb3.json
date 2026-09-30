@@ -4,7 +4,7 @@
   "name": "Forward Dodge Slash Into Back Evasive Dodge",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "unclassified",
   "review_status": "candidate",
   "priority": null,
   "description": "Forward Dodge Slash Into Back Evasive Dodge",

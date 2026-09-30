@@ -10,9 +10,9 @@ enum DispatchReason : uint32_t {
     BankMismatch, CurrentNotAllowed, DesiredInvalid, DesiredMissing,
     DesiredMismatch, Accepted, Contention, InvalidTime, InvalidConfig,
     BossSourceMismatch, BossBindingMismatch, BossFollowupExit, BossPreviewActive,
-    BossGuardSuppressed, ContextSuspended, ContextChanged, NativeHeavyTap
+    BossGuardSuppressed, ContextSuspended, ContextChanged, NativeHeavyTap, NativeCastPulse
 };
-enum { TRACE_SUBSTITUTED = 1u << 16, TRACE_FINAL_MATCH = 1u << 17 };
+enum { TRACE_SUBSTITUTED = 1u << 16, TRACE_FINAL_MATCH = 1u << 17, TRACE_CAST_PULSE = 1u << 19 };
 enum PlayerContext : uint32_t {
     ContextPlayer = 1, ContextBanks = 2, ContextOriginalSlots = 4,
     ContextAdvancing = 8, ContextImportedAction = 16, ContextNeutralAction = 32

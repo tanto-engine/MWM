@@ -25,7 +25,7 @@ from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, BINDING_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
-from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS
+from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS, MOVE_HELP, STRING_MOVES
 from game_controller import game_binding, controller_selection
 from runtime_session import SEQUENCE_BUTTONS
 
@@ -309,7 +309,7 @@ def compiled_skill_bindings(configuration, imports):
             key,motion,rows,flags=NATIVE_SKILLS.get(source,(0,0,0,0))
             if source=='heavy_attack':
                 key=STANCE_OPENERS[scope]; motion,rows,_=PLAYER_TEMPLATES[key]
-            result.append(dict(kind={'guard_light':2,'high_heavy_followup':4,'light_attack':5}.get(source,1),
+            result.append(dict(kind=MOVE_HELP['sources'][source]['kind'],
                 stances=7 if scope=='any' else 1<<list(STANCE_OPENERS).index(scope),
                 variant=slots[move],key=key,motion=motion,transition_count=rows,flags=flags))
     for stance,move in configuration['stance_holds'].items():
@@ -346,6 +346,10 @@ def compiled_move_settings(configuration, imports, policy=None):
             {**{chain[0]:chain for chain in manifest['candidates'].values()},**manifest['hold_chains']}.items()}
     present={move['id'] for move in imports}
     inherited={child:root for root,chain in chains.items() if root in present for child in chain}
+    families={binding['move']:1 if binding['source']=='light_attack' else 2
+              for binding in configuration['skill_bindings'] if 'input' not in binding
+              and binding['source'] in ('light_attack','heavy_attack') and binding['move'] in STRING_MOVES}
+    if configuration['low_heavy']: families[configuration['low_heavy']]=2
     result=[]
     for move in imports:
         identifier=move['id']; root=inherited.get(identifier,identifier)
@@ -353,7 +357,10 @@ def compiled_move_settings(configuration, imports, policy=None):
         speed=settings.get(identifier,settings.get(root,{})).get('speed',1)
         pulse=policy['moves'].get(identifier,policy['moves'].get(root,{})).get('ki_pulse',KI_PULSE)
         if move['flags'] in (0x8078000000,PLAYER_PAIRED_FLAGS): speed,pulse=1,KI_PULSE
-        result.append(dict(speed=speed,**pulse))
+        setting=dict(speed=speed,**pulse)
+        if root in families and move['flags'] not in (0x8078000000,PLAYER_PAIRED_FLAGS):
+            setting['input_family']=families[root]
+        result.append(setting)
     return result
 
 

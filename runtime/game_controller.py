@@ -90,10 +90,10 @@ def game_binding(calibration, binding):
     stance=binding.get('moveset',{}).get('chord_stance','any')
     stances=7 if stance=='any' else 1<<('low','mid','high').index(stance)
     compiled['chord_policy']=((compiled['modifier_mask']|compiled['trigger_mask'])<<16)|(stances<<32) if enabled else 0
+    routes=[dict(modifier_mask=compiled['modifier_mask'],trigger_mask=compiled['trigger_mask'],
+                 gesture=gesture,stance=stance,variant=variant)
+            for gesture,variant in zip(('tap','hold'),binding.get('variants',[0,1])) if variant is not None]
     if binding.get('routes'):
-        routes=[dict(modifier_mask=compiled['modifier_mask'],trigger_mask=compiled['trigger_mask'],
-                     gesture=gesture,stance=stance,variant=variant)
-                for gesture,variant in zip(('tap','hold'),binding['variants']) if variant is not None]
         for route in binding['routes']:
             route=dict(route,modifier_mask=game_button_mask(device,route['modifier_mask'],mapping),
                        trigger_mask=game_button_mask(device,route['trigger_mask'],mapping))
@@ -112,6 +112,14 @@ def game_binding(calibration, binding):
                 raise ValueError('Custom inputs require two distinct L1 / LB, Circle / B, Triangle / Y, L2 / LT or Square / X buttons')
             routes.append(route)
         compiled['routes']=routes
+    for native in binding.get('moveset',{}).get('skill_bindings',[]):
+        if 'input' in native: continue
+        from engine_config import MOVE_HELP
+        source=MOVE_HELP['sources'][native['source']]
+        if any(route['gesture'] in ('tap','hold','sequence')
+               and {route['modifier_mask'],route['trigger_mask']}==set(source.get('buttons',[]))
+               and (native['stance']=='any' or route['stance']=='any' or native['stance']==route['stance']) for route in routes):
+            raise ValueError(f'{native["stance"].title()} {source["label"]} overlaps a custom controller input. Clear that custom chord or choose another stance.')
     return dict(calibration, device=GAME_DEVICE, lb_mask=lb), compiled
 
 

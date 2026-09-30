@@ -91,6 +91,7 @@ int main() {
     std::array<uint64_t, 49> pulse_pointers{};
     std::array<uint8_t,0x30> dodge_row{}; memcpy(dodge_row.data(),native_dodge_row,0x30);
     pulse_pointers[48]=reinterpret_cast<uint64_t>(dodge_row.data());
+    fixture_shortcut_exits(pulse_pointers.data());
     for (unsigned i = 0; i != 3; ++i) {
         memcpy(pulse_rows[i].data(), boss_pulse_templates[i], 0x30);
         pulse_pointers[21+i] = reinterpret_cast<uint64_t>(pulse_rows[i].data());
@@ -121,17 +122,18 @@ int main() {
     assert(memcmp(regular.payload, expected_regular.data(), 0xB0) == 0);
     for (unsigned i = 0; i < 0xD0; ++i)
         if ((i < 0x20 || i >= 0x28) && (i < 0x78 || i >= 0x84)) assert(regular.descriptor[i] == descriptor[i]);
-    assert(regular.transition_count == 32);
+    assert(regular.transition_count == 36);
     uint64_t private_table = 0; uint16_t private_start = 99, private_count = 0;
     assert(copy_field(boss_private_descriptor_address() + 0x78, private_table));
     assert(copy_field(boss_private_descriptor_address() + 0x80, private_start) && private_start == 0);
-    assert(copy_field(boss_private_descriptor_address() + 0x82, private_count) && private_count == 32);
+    assert(copy_field(boss_private_descriptor_address() + 0x82, private_count) && private_count == 36);
     assert(private_table == reinterpret_cast<uint64_t>(regular.transition_pointers));
-    for (unsigned i = 0; i != 32; ++i) {
+    for (unsigned i = 0; i != 36; ++i) {
         assert(regular.transition_pointers[i] == reinterpret_cast<uint64_t>(regular.transition_bodies[i]));
         if (i < 28) assert(memcmp(regular.transition_bodies[i], source_rows[i].data(), 0x30) == 0);
         else {
-            auto expected = i==31 ? dodge_row : pulse_rows[i-28]; put(expected.data(), 0x20, int16_t(54));
+            auto expected = i>=32 ? native_shortcut_rows[i-32] : i==31 ? dodge_row : pulse_rows[i-28];
+            put(expected.data(), 0x20, int16_t(54));
             assert(memcmp(regular.transition_bodies[i], expected.data(), 0x30) == 0);
         }
     }
@@ -193,12 +195,13 @@ int main() {
     put(expected_charged.data(), 0x38, int16_t(78)); put(expected_charged.data(), 0x3A, int16_t(25));
     put(expected_charged.data(), 0x3C, int16_t(24));
     assert(memcmp(charged.payload, expected_charged.data(), 0xB0) == 0);
-    assert(charged.transition_count == 26);
-    for (unsigned i = 0; i != 26; ++i) {
+    assert(charged.transition_count == 30);
+    for (unsigned i = 0; i != 30; ++i) {
         assert(charged.transition_pointers[i] == reinterpret_cast<uint64_t>(charged.transition_bodies[i]));
         if (i < 22) assert(memcmp(charged.transition_bodies[i], source_rows[i].data(), 0x30) == 0);
         else {
-            auto expected = i==25 ? dodge_row : pulse_rows[i-22]; put(expected.data(), 0x20, int16_t(78));
+            auto expected = i>=26 ? native_shortcut_rows[i-26] : i==25 ? dodge_row : pulse_rows[i-22];
+            put(expected.data(), 0x20, int16_t(78));
             assert(memcmp(charged.transition_bodies[i], expected.data(), 0x30) == 0);
         }
     }

@@ -146,6 +146,50 @@ class AttackFollowupCases(unittest.TestCase):
             [dict(id='oda_nobunaga.action_0c6e'), dict(id='okatsu.leaping_slash')]))
         self.assertEqual(binding['routes'][-1]['gesture'], 'after_strong')
 
+    def test_native_followups_cover_every_stance_and_reject_strings(self):
+        for source in ('guard_strong', 'strong_followup', 'quick_followup'):
+            for stance in ('low', 'mid', 'high'):
+                value = copy.deepcopy(DEFAULT_PRESET)
+                value['skill_bindings'] = [dict(source=source, stance=stance, move='okatsu.charged_rush')]
+                self.assertEqual(validate_preset(value), value)
+                value['skill_bindings'][0]['move'] = 'toyotomi_hideyori.action_0d30'
+                with self.subTest(source=source, stance=stance), self.assertRaisesRegex(ValueError, 'single skill'):
+                    validate_preset(value)
+
+    def test_legacy_alias_and_custom_followup_cannot_share_native_route(self):
+        value = copy.deepcopy(DEFAULT_PRESET)
+        value['skill_bindings'] = [dict(source='strong_followup', stance='high', move='okatsu.charged_rush'),
+            dict(source='high_heavy_followup', stance='high', move='okatsu.leaping_slash')]
+        with self.assertRaisesRegex(ValueError, 'Only one override'):
+            validate_preset(value)
+        value['skill_bindings'][0]['stance'] = 'low'
+        value['skill_bindings'][1] = dict(source='tiger_sprint', stance='low', move='okatsu.leaping_slash',
+            input=dict(modifier_mask=0x100, trigger_mask=0x4000, gesture='after_strong'))
+        value['low_heavy'] = None
+        with self.assertRaisesRegex(ValueError, 'already selects'):
+            validate_preset(value)
+
+    def test_custom_chord_cannot_silently_preempt_new_native_skill(self):
+        value = copy.deepcopy(DEFAULT_PRESET)
+        value.update(tap_move='okatsu.charged_rush', hold_move=None,
+            modifier_mask=0x100, trigger_mask=0x8000, chord_stance='low')
+        calibration = dict(device=GAME_DEVICE, lb_mask=0x100)
+        for source in ('guard_strong', 'quick_followup'):
+            value['skill_bindings'] = [dict(source=source, stance='low', move='okatsu.leaping_slash')]
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'overlaps a custom'):
+                game_binding(calibration, binding_for_preset(calibration, value))
+            value['chord_stance'] = 'high'
+            game_binding(calibration, binding_for_preset(calibration, value))
+            value['chord_stance'] = 'low'
+
+    def test_one_graph_cannot_borrow_both_attack_continuation_families(self):
+        value = copy.deepcopy(DEFAULT_PRESET); value['low_heavy'] = None
+        move = 'jin_hayabusa.action_0c6e'
+        value['skill_bindings'] = [dict(source=source, stance='low', move=move)
+                                   for source in ('light_attack', 'heavy_attack')]
+        with self.assertRaisesRegex(ValueError, 'Quick and Strong'):
+            validate_preset(value)
+
 
 if __name__ == '__main__':
     unittest.main()

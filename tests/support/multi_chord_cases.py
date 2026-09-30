@@ -56,9 +56,10 @@ class MultiChordCases(unittest.TestCase):
 
     def test_shared_graph_and_duplicate_frost_still_rejected(self):
         value=copy.deepcopy(DEFAULT_PRESET)
-        value['frost_moon']['mid']='jin_hayabusa.action_0bc0'
+        value['frost_moon']['low']=None
+        value['frost_moon']['mid']='jin_hayabusa.action_0c71'
         value['skill_bindings'].append(dict(source='tiger_sprint',stance='high',
-            move='jin_hayabusa.action_0bc0',input=dict(modifier_mask=16,trigger_mask=8,gesture='tap')))
+            move='jin_hayabusa.action_0c71',input=dict(modifier_mask=16,trigger_mask=8,gesture='tap')))
         with self.assertRaisesRegex(ValueError,'same stance across bindings'):
             validate_preset(value)
         value=copy.deepcopy(DEFAULT_PRESET)

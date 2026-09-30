@@ -23,7 +23,8 @@ static void restore_launch_weights(uint64_t actor, bool force, bool all=false) {
             || (VirtualQuery(reinterpret_cast<void*>(entry.actor),&region,sizeof(region)) && region.State!=MEM_COMMIT);
         bool release=retired;
         float effective=0;
-        if (!retired && readable && copy_field(owner+0x250,collision) && (!collision || copy_field(collision+0xB0,effective))
+        if (!retired && readable && same_field(owner,0x250,uint64_t(0))) release=true;
+        else if (!retired && readable && copy_field(owner+0x250,collision) && collision && copy_field(collision+0xB0,effective)
             && copy_field(entry.actor+0x58,current) && copy_field(entry.actor+0x7BC,value)) {
             release=value!=entry.applied || force || current!=entry.descriptor || collision!=entry.collision;
             if (release && value==entry.applied && native_set_weight)

@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import sys
 import tempfile
-from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock
 
@@ -20,16 +19,6 @@ from gestures import ControllerGesture
 
 
 class PresetTests(unittest.TestCase):
-    def test_cancel_save_does_not_apply_pending_edits(self):
-        # Cancel the trainer's Save dialog while the form contains unsaved changes.
-        # Compare configuration and application calls with the state before the dialog.
-        # Cancellation must not apply the pending moveset merely because Save was opened.
-        app=SimpleNamespace(root=None,apply=Mock(return_value=True))
-        with tempfile.TemporaryDirectory() as td, patch.object(trainer,'RUNTIME',Path(td)), \
-             patch('tkinter.filedialog.asksaveasfilename',return_value=''):
-            trainer.Trainer.save(app)
-        app.apply.assert_not_called()
-
     def test_public_preset_excludes_engine_physics(self):
         # Public bindings and timing controls must not carry enemy-physics policy.
         # Reject new private fields and discard historical tuning during explicit migration.
@@ -173,7 +162,7 @@ class RuntimeRegistryTests(unittest.TestCase):
         # Invoke the trainer's disable worker through its command-line path.
         # An automated stop request must not create a window or initialize interactive UI state.
         with tempfile.TemporaryDirectory() as td, patch.object(trainer, 'RUNTIME', Path(td)), \
-             patch.object(trainer, 'active_runtime', return_value=None), patch.object(trainer, 'Trainer') as ui:
+             patch.object(trainer, 'active_runtime', return_value=None), patch.object(trainer.subprocess, 'run') as ui:
             self.assertEqual(trainer.main(['--disable']), 0)
             ui.assert_not_called()
             self.assertTrue((Path(td)/'stop.flag').exists())
@@ -199,62 +188,16 @@ class RuntimeRegistryTests(unittest.TestCase):
             self.assertEqual((local/'native/build/nioh_skill_runtime.dll').read_bytes(), b'fixture runtime')
             self.assertEqual(launch.call_args.args[0], code/'supervisor.py')
 
-    def test_open_trainer_adopts_other_runtime_before_applying_pending_edit(self):
-        # Adopt another active runtime before applying a pending trainer edit.
-        # Present an already-running external runtime while the open trainer has a pending edit.
-        # The trainer must adopt current ownership before deciding whether the edit can be applied.
-        calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
-        binding = config.binding_for_preset(calibration, config.DEFAULT_PRESET)
-        desired = dict(config.DEFAULT_PRESET, name='Pending user edit', hold_seconds=.35)
+    def test_desktop_rejects_pending_edit_when_runtime_owner_changes(self):
+        import web_worker as worker
         with tempfile.TemporaryDirectory() as td:
             local, other = Path(td)/'local', Path(td)/'other'
             local.mkdir(); other.mkdir()
-            for folder in (local, other):
-                (folder/'controller-calibration.json').write_text(json.dumps(calibration))
-                (folder/'controller-binding.json').write_text(json.dumps(config.DEFAULT_PRESET))
-            catalogue = Path(td)/'moves.xlsx'
-            registration = {'runtime_path': str(other), 'catalogue_path': str(catalogue),
-                            'publisher_pid': 42, 'publisher_start_filetime': 'birth'}
-            messages = []
-            app = SimpleNamespace(adopt_running=True, runtime_registration=None, catalogue_path=catalogue,
-                calibration=calibration, binding=binding, preset=dict(config.DEFAULT_PRESET),
-                cancel_capture=Mock(), button_selectors=[], slot_choice=SimpleNamespace(get=lambda: (
-                    # Supply the trainer fixture's automatic controller-selection label.
-                    # Match the UI accessor interface without creating another control widget.
-                    # The case exercises Save cancellation, not discovery of real connected controllers.
-                    'Auto'
-                )),
-                refresh_table=lambda: (
-                    # Skip visual table refresh in the handle-free trainer fixture.
-                    # Return without constructing any widget or touching display state.
-                    # Runtime adoption ordering can then be checked independently of rendering.
-                    None
-                ), notice=SimpleNamespace(set=messages.append),
-                form=lambda: (
-                    # Return the fixture's desired configuration to the trainer callback.
-                    # Preserve the exact object selected by the scenario.
-                    # Pending edits must be evaluated against the newly adopted runtime owner.
-                    desired
-                ), load_fields=lambda value: (
-                    # Skip writing adopted binding values into absent form widgets.
-                    # Accept the selected configuration while leaving the fixture's form intact.
-                    # Pending-edit persistence can then be checked without constructing a GUI.
-                    None
-                ), error=lambda error: (
-                    # Turn trainer apply errors into immediate test failures.
-                    # Pass the reported error text to unittest's failure path.
-                    # A reported configuration error must not look like successful runtime adoption.
-                    self.fail(str(error))
-                ))
-            app.set_runtime = trainer.Trainer.set_runtime.__get__(app)
-            app.adopt_active_runtime = trainer.Trainer.adopt_active_runtime.__get__(app)
-            with patch.object(trainer, 'RUNTIME', local), patch.dict(os.environ), \
-                 patch.object(trainer, 'active_runtime', return_value=registration), \
-                 patch.object(trainer, 'load_catalogue', return_value={'moves': []}), \
-                 patch('controller_reader.WinMMBackend'), patch('controller_reader.ControllerReader'):
-                self.assertTrue(trainer.Trainer.apply(app))
-                self.assertEqual(trainer.RUNTIME, other)
-                self.assertEqual(app.runtime_registration, registration)
-            saved = json.loads((other/'controller-binding.json').read_text())
-            self.assertEqual(saved, desired)
-            self.assertEqual(json.loads((local/'controller-binding.json').read_text()), config.DEFAULT_PRESET)
+            calibration = json.loads((MOD_ROOT/'data/controller-calibration.json').read_text())
+            params = dict(runtime=str(local), calibration=calibration, preset=config.DEFAULT_PRESET)
+            registration = dict(runtime_path=str(other))
+            with patch.object(trainer, 'RUNTIME', local), patch.object(worker, 'active_runtime', return_value=registration):
+                with self.assertRaisesRegex(ValueError, 'Active Engine changed'):
+                    worker.Desktop().dispatch('apply', params)
+            self.assertFalse((other/'controller-binding.json').exists())
+            self.assertFalse((local/'controller-binding.json').exists())

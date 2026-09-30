@@ -4,7 +4,7 @@
   "name": "Triple Blade Beam Slash",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "unclassified",
   "review_status": "candidate",
   "priority": null,
   "description": "Triple Blade Beam Slash",
