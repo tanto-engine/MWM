@@ -1,5 +1,11 @@
 #pragma once
 
+static bool read_player_pulse(float (&pulse)[4]) {
+    uint64_t vitals=0;
+    return copy_field(boss_session.player_owner+0x240,vitals)
+        && copy_bytes(vitals+0x8C,pulse,sizeof(pulse));
+}
+
 struct FrostMoonInput {
     int64_t opened, sampled, closes;
     uint64_t descriptor;
@@ -30,10 +36,10 @@ static void latch_native_frost() {
     // Observe Ki availability before native action selection consumes the pulse.
     // Reuse the current frame's device/lifecycle observation without generating input edges.
     // This closes the same-frame RB race without an additional hook or direct Ki write.
-    uint64_t vitals=0,current=0;uint32_t stance=0;float pulse[4]{};GameInput sample{};
+    uint64_t current=0;uint32_t stance=0;float pulse[4]{};GameInput sample{};
     if (!frost_input.sampled || !trace || !dispatch || !dispatch->control.enabled || !boss_player_valid()
         || !read_game_input(trace->header,sample) || !copy_field(boss_session.player+0x470,stance) || stance>2
-        || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
+        || !read_player_pulse(pulse)
         || !copy_field(boss_session.player+0x58,current)) return;
     LARGE_INTEGER now;QueryPerformanceCounter(&now);
     frost_window(frost_input,now.QuadPart,2-stance,current,
@@ -112,10 +118,10 @@ static DispatchReason choose_frost_moon(DispatchCommand& command) {
     // Native conditionD5 calls7AFDF0 on owner+240+40: positive duration and remaining fill/hold.
     // Observe those four floats without writing Ki or changing native stance inputs.
     // Dispatch only a configured skill after its double tap and fresh player/resource checks.
-    GameInput sample{}; unsigned slot=0; uint32_t stance=0; uint64_t vitals=0,current=0; float pulse[4]{};
+    GameInput sample{}; unsigned slot=0; uint32_t stance=0; uint64_t current=0; float pulse[4]{};
     if (!trace || !read_game_input(trace->header,sample)) { frost_input={}; return IneligibleRequest; }
     if (!selected_game_controller(sample,slot) || !copy_field(boss_session.player+0x470,stance) || stance>2
-        || !copy_field(boss_session.player_owner+0x240,vitals) || !copy_bytes(vitals+0x8C,pulse,sizeof(pulse))
+        || !read_player_pulse(pulse)
         || !copy_field(boss_session.player+0x58,current)) { frost_input={}; return IneligibleRequest; }
     const unsigned mapped=2-stance; // Native high0/mid1/low2 -> preset low0/mid1/high2.
     const bool available=pulse[0]+pulse[2]>0 && (pulse[1]>0 || pulse[3]>0);

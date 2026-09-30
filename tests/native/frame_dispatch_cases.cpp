@@ -171,6 +171,7 @@ static void reset() {
     // Populate the researched native offsets and reset the callback control fields.
     // Prior failures must not leak consumed gestures or borrowed slots into later checks.
     own_dispatch = {}; own_trace = {}; dispatch=&own_dispatch; trace=&own_trace;
+    cast_pulse_input={};original_lookup=nullptr;
     player.fill(0); owner.fill(0); source.fill(0); source_owner.fill(0);
     motion.fill(0); timing.fill(0); source_motion.fill(0); source_timing.fill(0);
     bank.fill(0); player_bank.fill(0); neutral.fill(0); desired.fill(0); payload.fill(0);
@@ -288,11 +289,14 @@ static void handgun_visibility_cases() {
     ++checks;
 }
 
+#include "cast_pulse_cases.h"
+
 int main() {
     // Exercise frame scheduling, lifecycle suspension, windup and voice adaptation.
     // Drive real wrappers using owned memory and configurable native callback outcomes.
     // Gameplay acceptance still requires live evidence beyond these deterministic invariants.
     LARGE_INTEGER f; QueryPerformanceFrequency(&f); frequency=f.QuadPart;
+    cast_pulse_cases();
     handgun_visibility_cases();
     reset(); boss_frost_variants[1]=1; // Mid Frost shares ordinary C64 with a High custom input.
     put(player.data(),0x470,uint32_t(0)); publish(); tick();

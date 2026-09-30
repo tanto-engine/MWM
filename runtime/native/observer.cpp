@@ -45,10 +45,11 @@ template<class T> static bool copy_field(uint64_t address, T& value) {
 #include "controller_input.h"
 #include "replacement_support.h"
 #include "frost_moon.h"
+#include "cast_pulse.h"
 #include "launcher_weight.h"
 #endif
 
-enum class ActionRequest { Native, Gesture, Chain, Heavy, Frost, Followup };
+enum class ActionRequest { Native, Gesture, Chain, Heavy, Frost, Followup, CastPulse };
 static bool observed_action_impl(void* actor, uint32_t key, void* context, ActionRequest request=ActionRequest::Native) {
     // Run the shared action hook with scoped gesture, chain and research policies.
     // Preserve native arguments and errors except for a fully validated imported substitution.
@@ -76,18 +77,19 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && reinterpret_cast<uint64_t>(actor)==boss_session.player)
         latch_native_frost();
     if (record_this && request==ActionRequest::Frost) reason=choose_frost_moon(command);
+    else if (record_this && request==ActionRequest::CastPulse) reason=choose_cast_pulse(command);
     else if (record_this && request==ActionRequest::Followup) reason=choose_attack_followup(command);
     else if (record_this && request==ActionRequest::Heavy) reason=choose_heavy(command);
     else if (record_this && request==ActionRequest::Chain) reason = choose_chain(actor, command);
     else
 #endif
     if (record_this) reason = choose_dispatch(actor, key, context, command, frame_mode);
-    if (reason == Accepted || reason == NativeHeavyTap) forwarded_key = command.desired_key;
+    if (reason == Accepted || reason == NativeHeavyTap || reason == NativeCastPulse) forwarded_key = command.desired_key;
 #else
     (void)frame_mode;
 #endif
 #ifdef RESEARCH_REPEAT
-    if (frame_mode && reason != Accepted && reason != NativeHeavyTap) { SetLastError(incoming_error); return false; }
+    if (frame_mode && reason != Accepted && reason != NativeHeavyTap && reason != NativeCastPulse) { SetLastError(incoming_error); return false; }
     uint64_t current = 0;
     const bool suppress_guard = !frame_mode && !context && reinterpret_cast<uint64_t>(actor)==boss_session.player
         && (custom_chord_blocks(key) || ((key == 24 || key == 25)
@@ -111,13 +113,13 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
 #ifdef RESEARCH_REPEAT
     if (!suppress_guard)
 #endif
-    if (!boss_prepare_call(actor, key, reason, command, forwarded_key, forwarded_context, private_banks)) {
+    if (reason != NativeCastPulse && !boss_prepare_call(actor, key, reason, command, forwarded_key, forwarded_context, private_banks)) {
         SetLastError(incoming_error);
         return false;
     }
 #ifdef RESEARCH_REPEAT
     // A failed frame preflight never turns into an unsolicited key-0 setter.
-    if (frame_mode && reason != Accepted && reason != NativeHeavyTap) { SetLastError(incoming_error); return false; }
+    if (frame_mode && reason != Accepted && reason != NativeHeavyTap && reason != NativeCastPulse) { SetLastError(incoming_error); return false; }
     if (request==ActionRequest::Frost && reason==Accepted) boss_frost_playback=true;
 #endif
 #endif
@@ -163,6 +165,10 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && copy_field(record.payload + 0x20, record.motion_key)
         && copy_field(record.payload + 0x34, record.timing_key)) record.valid_fields |= 16;
 #ifdef RESEARCH_DISPATCH
+    if (reason == NativeCastPulse && result && record.after_key>=0xD5F && record.after_key<=0xD62) {
+        record.valid_fields |= TRACE_CAST_PULSE;
+        InterlockedIncrement64(&dispatch->control.dispatch_count);
+    }
     if (reason == Accepted && (record.valid_fields & 20) == 20
         && record.after == command.expected_descriptor && record.after_key == command.desired_key
         && record.payload == command.expected_payload && record.motion_key == command.expected_motion)
@@ -243,6 +249,7 @@ static float observed_frame(void* actor, float delta) {
     restore_launch_weights(reinterpret_cast<uint64_t>(actor),restore_weights,player_frame);
     if (trace && reinterpret_cast<uint64_t>(actor) == boss_session.player)
         observe_game_input(trace->header);
+    if (player_frame) latch_cast_pulse_window();
     SetLastError(incoming_error);
     float result = original_frame(actor, delta);
     const float native_delta = result;
@@ -282,6 +289,11 @@ static float observed_frame(void* actor, float delta) {
         }
     }
     if (player_frame) {
+        if (!ready) cast_pulse_input={};
+        else {
+            SetLastError(native_error);
+            observed_action_impl(actor,0,nullptr,ActionRequest::CastPulse);
+        }
         if (!ready) attack_followup_input={};
         else {
             SetLastError(native_error);
@@ -317,6 +329,7 @@ static void observed_voice(void* state, void* timing_record, void* event, int32_
     // Other actors, combat effects, owner routing and native LastError remain untouched.
     const DWORD incoming_error = GetLastError();
     BossCallScope scope;
+    observe_cast_pulse_cue(state,timing_record,event);
     const bool suppress = boss_suppress_voice(state, timing_record, event);
     if (suppress && dispatch)
         InterlockedIncrement(reinterpret_cast<volatile LONG*>(&dispatch->control.reserved1));
