@@ -372,6 +372,37 @@ static void native_heavy_string_cases() {
     assert(sword_string_successor(boss_imports[4])==0);
 }
 
+static void jin_string_input_cases() {
+    static uint8_t rows[3][75][0x30];static uint64_t pointers[3][75];
+    for (unsigned family : {1u,2u}) {
+        replacement_reset();
+        for (unsigned phase=0;phase<3;++phase) {
+            const unsigned slot=phase+2;
+            boss_move_settings[slot]={1,40,25,24,uint16_t(family)};
+            auto& adapter=boss_adapters[slot];adapter=boss_adapters[2];adapter.kind=phase ? 4 : 2;
+            adapter.player_descriptor=address(heavy_descriptors[0].data());adapter.player_key=0xCF5;
+            adapter.player_motion=4300;adapter.transition_count=46;adapter.recovery_frame=38;
+            for (unsigned i=0;i<boss_imports[slot].transition_count;++i) {
+                memset(rows[phase][i],0xff,0x30);pointers[phase][i]=address(rows[phase][i]);
+            }
+            put(jin_descriptors[phase].data(),0x78,address(pointers[phase]));
+        }
+        for (unsigned phase=0;phase<3;++phase) {
+            uint8_t copied[64][0x30]{};uint16_t count=0;unsigned continuations=0;
+            assert(boss_copy_player_transitions(phase+2,jin_descriptors[phase].data(),copied,count));
+            for (unsigned i=0;i<count;++i) {
+                int16_t target=0;memcpy(&target,copied[i]+0x14,2);
+                if (target==int16_t(0xC6F+phase)) {
+                    ++continuations;assert(copied[i][0x0B]==(family==1 ? 0 : 1));
+                    assert(copied[i][0x0C]==1);
+                }
+            }
+            assert(phase==2 ? continuations==0 : continuations>0);
+        }
+    }
+    for (unsigned slot=2;slot<5;++slot) boss_move_settings[slot]={};
+}
+
 static void low_quick_string_cases() {
     // Enter Hideyori from native Low Square, then let each authored Square row
     // request its next phase while the same source bank remains borrowed.
@@ -1246,7 +1277,7 @@ int main() {
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     recorded_pulse_cost_cases();
     native_heavy_string_cases();
-    low_quick_string_cases();
+    jin_string_input_cases();low_quick_string_cases();
     mid_hideyori_string_cases();
     chord_reservation_cases();
     sequence_reservation_cases();

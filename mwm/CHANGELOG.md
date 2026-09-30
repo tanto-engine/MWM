@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.3.0-alpha.17
+
+- Use the compiled Quick/Strong input family for Jin string continuations. A Jin string assigned to Quick now continues on Square instead of silently requiring Triangle; Strong retains Triangle.
+- Includes the alpha.16 UI consolidation, native finishers, hold/teardown fixes, candidate classifications and import/damage documentation below.
+- Native owned-memory regression checks both button families across all three Jin phases, including the final stop. Live acceptance remains deferred.
+
 ## 0.3.0-alpha.16
 
 - Remove the duplicate Tkinter editor; retain controller remapping, saved movesets, lifecycle commands and the legacy launcher alias through Electron.

@@ -298,7 +298,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         || !copy_field(payload+0x24,recovery) || recovery != adapter.recovery_frame) return false;
     uint64_t pointers[64]{}, after[64]{};
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return false;
-    bool quick_string=false;
+    bool quick_string=boss_settings(slot).input_family==1;
     if (boss_imports[slot].flags==0x184C0000 && boss_imports[slot].key>=0xD30 && boss_imports[slot].key<=0xD33)
         for (const auto& binding : boss_skill_bindings) if (binding.kind==5 && binding.variant
             && binding.variant<=boss_import_count && boss_imports[binding.variant-1].key==0xD30
