@@ -25,7 +25,7 @@ from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
 from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, BINDING_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
-from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS, MOVE_HELP
+from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS, MOVE_HELP, STRING_MOVES
 from game_controller import game_binding, controller_selection
 from runtime_session import SEQUENCE_BUTTONS
 
@@ -348,7 +348,7 @@ def compiled_move_settings(configuration, imports, policy=None):
     inherited={child:root for root,chain in chains.items() if root in present for child in chain}
     families={binding['move']:1 if binding['source']=='light_attack' else 2
               for binding in configuration['skill_bindings'] if 'input' not in binding
-              and binding['source'] in ('light_attack','heavy_attack')}
+              and binding['source'] in ('light_attack','heavy_attack') and binding['move'] in STRING_MOVES}
     if configuration['low_heavy']: families[configuration['low_heavy']]=2
     result=[]
     for move in imports:

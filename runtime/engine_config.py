@@ -282,7 +282,7 @@ def validate_preset(value):
         if custom is None and source in ('guard_strong','strong_followup','quick_followup') and move in STRING_MOVES:
             raise ValueError(f'{SOURCE_LABELS[source]} requires a single skill; put strings on Quick or Strong attack.')
         if custom is None:
-            if source in ('light_attack','heavy_attack'):
+            if source in ('light_attack','heavy_attack') and move in STRING_MOVES:
                 family=1 if source=='light_attack' else 2
                 if attack_owners.setdefault(move,family)!=family:
                     raise ValueError(f'{move_label(move)} cannot share Quick and Strong continuation buttons. Choose one attack family or a different move for the other input.')
