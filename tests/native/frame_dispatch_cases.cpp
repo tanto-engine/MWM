@@ -211,6 +211,7 @@ static void reset() {
     pulse_descriptor.fill(0); pulse_pointers.fill(0);
     memcpy(dodge_row.data(),native_dodge_row,0x30);
     pulse_pointers[48]=address(dodge_row.data());
+    fixture_shortcut_exits(pulse_pointers.data());
     for (unsigned i=0;i!=3;++i) {
         memcpy(pulse_rows[i].data(),boss_pulse_templates[i],0x30);
         pulse_pointers[21+i]=address(pulse_rows[i].data());
@@ -305,7 +306,7 @@ int main() {
     assert((trace->records[0].valid_fields>>8 & 255)==IneligibleRequest); ++checks;
     assert(trace->records[0].context==0 && !(trace->records[0].valid_fields & (1u<<18))); ++checks;
     tick(); assert(frame_calls==1 && action_calls==2 && boss_active && dispatch->control.dispatch_count==1);
-    assert(boss_private_actions[0].transition_count==32);
+    assert(boss_private_actions[0].transition_count==36);
     for (unsigned i=0;i!=3;++i) {
         auto expected=pulse_rows[i]; put(expected.data(),0x20,int16_t(54));
         assert(!memcmp(boss_private_actions[0].transition_bodies[28+i],expected.data(),0x30));

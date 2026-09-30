@@ -3,7 +3,7 @@ import { createControllerDiagram } from './controller_diagram';
 // Stable move IDs travel over IPC while readable names remain presentation data.
 export {};
 type Stance = 'low' | 'mid' | 'high';
-type MoveRole = 'chord' | 'string_hold' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed';
+type MoveRole = 'chord' | 'string_hold' | 'graph' | 'held' | 'heavy_string' | 'native' | 'speed' | 'string' | 'skill' | 'frost';
 type Move = { id: string; name: string; input?: string; description?: string } & Record<MoveRole, boolean>;
 type Calibration = { device: Record<string, unknown>; controller_slot?: number | null; [key: string]: unknown };
 type ButtonKey = 'modifier_mask' | 'trigger_mask';
@@ -22,12 +22,12 @@ type Snapshot = {
   runtime: string; preset: Preset; calibration: Calibration; buttons: Record<string, number>; nioh_exe: string;
   running: boolean; status: string; detail: string;
   binding_groups: { id: string; label: string }[]; load_warning?: string;
-  capabilities: { moves: Move[]; native_sources: { id: string; label: string; description?: string; stances?: string[] }[]; chord_stances?: (Stance | 'any')[];
+  capabilities: { moves: Move[]; native_sources: { id: string; label: string; input?: string; description?: string; stances?: string[]; role?: MoveRole }[]; chord_stances?: (Stance | 'any')[];
     stances: Stance[]; native_binding_limit?: number; custom_binding_limit?: number; custom_sequence?: { modifiers: string[]; buttons: string[]; window_seconds: number };
     attack_followup?: { gestures: string[]; window_seconds: number };
     speed: { min: number; max: number } };
 };
-type ResearchMove = { id: string; name: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
+type ResearchMove = { id: string; name: string; kind: string; weapon_id: string; boss_id: string; review_status: string; mapping_status?: string;
   priority: string | null; review_notes?: string[]; steps: { source: { action_id: string; motion_id: number } }[];
   evidence: { annotation_text: string }[] };
 type Collection = { manifest: { weapons: Record<string, { name: string }>; bosses: Record<string, { name: string }> };
@@ -341,24 +341,21 @@ function input(value: string | number, update: (value: string) => void, type = '
   return control;
 }
 
-function moveOptions(role: MoveRole, empty = 'Native'): [string, string][] {
+function moveOptions(role: MoveRole, empty = 'Native', current: string | null = null): [string, string][] {
   // Filter the imported capability rows by their implemented runtime role.
   // Research-only catalogue records never appear in these controls.
   // The Engine repeats this check when validating a submitted preset.
   const choices: [string, string][] = [['', empty]];
   for (const move of state.capabilities.moves) if (move[role] || role === 'string_hold' && move.chord) choices.push([move.id, move.name]);
+  const saved = state.capabilities.moves.find(move => move.id === current);
+  if (saved && !choices.some(([id]) => id === current)) choices.push([saved.id, saved.name + ' · saved assignment']);
   return choices;
 }
 
 function playable(id: string | null) { return state.capabilities.moves.find(move => move.id === id); }
-const sourceInputs: Record<string, string> = {
-  light_attack: 'Quick attack · Square / X', heavy_attack: 'Strong attack · Triangle / Y',
-  dodge_attack: 'Dodge → attack', guard_light: 'Hold Guard + Quick attack',
-  high_heavy_followup: 'High Strong attack → Hold Guard + Quick attack',
-  tiger_sprint: 'Equipped Tiger Sprint → sheathe / Iai preparation'
-};
 function sourceInput(source: string) {
-  return sourceInputs[source] || state.capabilities.native_sources.find(item => item.id === source)?.label || source;
+  const row = state.capabilities.native_sources.find(item => item.id === source);
+  return row?.input || row?.label || source;
 }
 function buttonName(mask: number) {
   return Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
@@ -454,7 +451,7 @@ function renderOverview() {
     const row = element('div', undefined, 'skill-row'); row.dataset.routeKey = key;
     const chip = element('div', undefined, 'skill-input');
     chip.append(element('strong', label), element('small', inputText));
-    const choice = select(moveOptions(role, empty), current, value => {
+    const choice = select(moveOptions(role, empty, current), current, value => {
       set(value);
       const [body, tip] = moveHelp(value, `Input: ${inputText}`);
       annotate(row, `${activeStance.toUpperCase()} · ${label}`, body, tip);
@@ -468,17 +465,15 @@ function renderOverview() {
     return row;
   };
 
-  let refreshFollowups = () => {};
   if (activeStance === 'low') addRow('Strong string', 'Triangle / Y · Low', preset.low_heavy, 'heavy_string', 'low-heavy', value => {
-    preset.low_heavy = value || null; changed(); refreshFollowups();
+    preset.low_heavy = value || null; changed();
   });
-  const order = ['guard_light', 'heavy_attack', 'light_attack', 'dodge_attack', 'high_heavy_followup', 'tiger_sprint'];
-  const labels: Record<string, string> = { guard_light: 'Guard + Quick', heavy_attack: 'Strong attack', light_attack: 'Quick attack',
-    dodge_attack: 'Dodge attack', high_heavy_followup: 'High strong follow-up', tiger_sprint: 'Tiger Sprint' };
-  for (const source of [...state.capabilities.native_sources].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))) {
+  for (const source of state.capabilities.native_sources) {
     if (source.stances && !source.stances.includes(activeStance)) continue;
+    const legacy = preset.skill_bindings.some(row => !row.input && row.source === 'high_heavy_followup');
+    if (source.id === 'high_heavy_followup' && !legacy || source.id === 'strong_followup' && activeStance === 'high' && legacy) continue;
     const binding = preset.skill_bindings.find(row => !row.input && row.source === source.id && (row.stance === activeStance || row.stance === 'any'));
-    addRow(labels[source.id] || source.label, sourceInput(source.id) + (binding?.stance === 'any' ? ' · shared across stances' : ''), binding?.move || null, 'native',
+    addRow(source.label, sourceInput(source.id) + (binding?.stance === 'any' ? ' · shared across stances' : ''), binding?.move || null, source.role || 'native',
       binding ? `native:${binding.stance}:${source.id}` : `empty:${activeStance}:${source.id}`, value => {
         if (binding) {
           if (binding.stance === 'any') void action(async () => {
@@ -492,18 +487,18 @@ function renderOverview() {
             state.preset = (await window.mwm.request<Preview>('preview', { ...params(), preset: candidate })).preset;
             changed(); logEdit(`${source.label}: ${activeStance} split from shared route`); render();
           });
-          else if (value) { binding.move = value; changed(); refreshFollowups(); }
+          else if (value) { binding.move = value; changed(); }
           else { preset.skill_bindings.splice(preset.skill_bindings.indexOf(binding), 1); changed(); render(); }
         } else if (value) void action(async () => {
           state.preset = await window.mwm.request<Preset>('add_override', { ...params(), source: source.id, stance: activeStance, move: value });
-          changed(); logEdit(`${activeStance.toUpperCase()} ${labels[source.id] || source.label} assigned`); render();
+          changed(); logEdit(`${activeStance.toUpperCase()} ${source.label} assigned`); render();
         });
       });
   }
   addRow('Hold Strong', 'Hold Triangle / Y', preset.stance_holds[activeStance], 'held', `hold:${activeStance}`, value => {
-    preset.stance_holds[activeStance] = value || null; changed(); refreshFollowups();
+    preset.stance_holds[activeStance] = value || null; changed();
   });
-  addRow('Stance switch', 'Ki Pulse · R1 / RB + stance twice', preset.frost_moon[activeStance], 'chord', `frost:${activeStance}`, value => {
+  addRow('Stance switch', 'Ki Pulse · R1 / RB + stance twice', preset.frost_moon[activeStance], 'frost', `frost:${activeStance}`, value => {
     preset.frost_moon[activeStance] = value || null; changed();
   }, 'Disabled');
   if (activeStance === 'mid') {
@@ -515,43 +510,7 @@ function renderOverview() {
     rows.append(finisher);
   }
 
-  const followupRows: { row: HTMLElement; binding: Binding | undefined; gesture: string; note: HTMLElement }[] = [];
-  const blockedFollowup = (gesture: string) => {
-    const source = gesture === 'after_strong' ? 'heavy_attack' : 'light_attack';
-    return preset.skill_bindings.some(row => !row.input && row.source === source && (row.stance === activeStance || row.stance === 'any'))
-      || gesture === 'after_strong' && activeStance === 'low' && Boolean(preset.low_heavy);
-  };
-  for (const [gesture, stanceSet, label, inputText, trigger] of [
-    ['after_strong', 'low mid', 'After Strong', 'Triangle / Y → L1 / LB + Square / X', 'Square / X'],
-    ['after_quick', 'low high', 'After Quick', 'Square / X → L1 / LB + Triangle / Y', 'Triangle / Y']
-  ] as const) {
-    if (!stanceSet.split(' ').includes(activeStance) || !state.capabilities.attack_followup?.gestures.includes(gesture)) continue;
-    const binding = preset.skill_bindings.find(row => row.input?.gesture === gesture && row.stance === activeStance);
-    const row = addRow(label, inputText, binding?.move || null, 'chord', `followup:${activeStance}:${gesture}`, value => {
-      if (binding) {
-        if (value) { binding.move = value; changed(); }
-        else { preset.skill_bindings.splice(preset.skill_bindings.indexOf(binding), 1); changed(); render(); }
-      } else if (value) void action(async () => {
-        const candidate = structuredClone(state.preset);
-        candidate.skill_bindings.push({ source: 'tiger_sprint', stance: activeStance, move: value,
-          input: { modifier_mask: state.buttons['L1 / LB'], trigger_mask: state.buttons[trigger], gesture } });
-        state.preset = (await window.mwm.request<Preview>('preview', { ...params(), preset: candidate })).preset;
-        changed(); render();
-      });
-    });
-    const note = element('small', `Available when this stance keeps its original ${gesture === 'after_strong' ? 'Strong' : 'Quick'} attack. Remove that replacement first.`, 'control-note');
-    row.append(note); followupRows.push({ row, binding, gesture, note });
-  }
-  refreshFollowups = () => {
-    for (const { row, binding, gesture, note } of followupRows) {
-      const blocked = blockedFollowup(gesture);
-      row.querySelector('select')!.disabled = blocked && !binding;
-      note.hidden = !blocked;
-    }
-  };
-  refreshFollowups();
-
-  const customRows = preset.skill_bindings.filter(binding => binding.input && !binding.input.gesture.startsWith('after_') && (binding.stance === activeStance || binding.stance === 'any'));
+  const customRows = preset.skill_bindings.filter(binding => binding.input && (binding.stance === activeStance || binding.stance === 'any'));
   if (customRows.length) rows.append(element('h3', 'Custom inputs', 'skill-subtitle'));
   for (const binding of customRows) {
     const key = `custom:${preset.skill_bindings.indexOf(binding)}`;
@@ -747,7 +706,7 @@ function renderNative() {
       element('span', binding.stance.toUpperCase(), 'stance-tag'));
     row.append(head);
     if (!binding.input) {
-      const sources: [string, string][] = state.capabilities.native_sources.map(source => [source.id, source.label]);
+      const sources: [string, string][] = state.capabilities.native_sources.filter(source => source.id !== 'high_heavy_followup' || binding.source === source.id).map(source => [source.id, source.label]);
       field('Source', select(sources, binding.source, value => {
         binding.source = value;
         const stances = state.capabilities.native_sources.find(source => source.id === value)?.stances;
@@ -768,12 +727,12 @@ function renderNative() {
     if (!followup) field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller input']], binding.input ? 'custom' : 'original', value => {
       if (value === 'custom' && !binding.input) binding.input = suggestedInput(binding.stance);
       if (value === 'original') delete binding.input;
-      const choices = moveOptions(binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : 'native').slice(1);
+      const choices = moveOptions(binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : state.capabilities.native_sources.find(source => source.id === binding.source)?.role || 'native').slice(1);
       if (!choices.some(([id]) => id === binding.move)) binding.move = choices[0][0];
       void action(async () => { await cancelCapture(); render(); });
     }), row);
-    const role = binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : 'native';
-    const replacement = select(moveOptions(role).slice(1), binding.move, value => {
+    const role = binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : state.capabilities.native_sources.find(source => source.id === binding.source)?.role || 'native';
+    const replacement = select(moveOptions(role, 'Native', binding.move).slice(1), binding.move, value => {
       // Expose only actions reviewed for native-source replacement.
       // This stores an ID, never a raw game address.
       // Apply still checks source-specific restrictions.
@@ -830,7 +789,7 @@ function renderFrost() {
   // This separates configurable move selection from adaptation internals.
   const grid = section('Stance-switch moves', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice.');
   for (const stance of state.capabilities.stances) {
-    const move = select(moveOptions('chord', 'Disabled'), state.preset.frost_moon[stance], value => {
+    const move = select(moveOptions('frost', 'Disabled'), state.preset.frost_moon[stance], value => {
     // Change this destination stance's reviewed move.
     // Clearing disables its replacement without changing other routes.
     // Actual route acceptance remains a separate gameplay check.
@@ -1214,14 +1173,14 @@ function renderCollection() {
   }
   recordedPane.append(routes, element('h3', 'Source recordings', 'section-title'));
   const missing = collection.intake.sessions.filter(session => session.status !== 'curated_candidate').length;
-  recordedPane.append(element('p', `${collection.moves.length} candidate strings · ${collection.intake.sessions.length} source sessions · ${missing} incomplete sessions. Names follow the source notes; action matching still needs review.`, 'hint'));
+  recordedPane.append(element('p', `${collection.moves.length} candidate moves · ${collection.intake.sessions.length} source sessions · ${missing} incomplete sessions. Names and categories follow the source notes; action matching still needs review.`, 'hint'));
   const recordedCards: { node: HTMLElement; text: string }[] = [];
   for (const move of collection.moves) {
     const card = element('details', undefined, 'research-move');
     const weapon = collection.manifest.weapons[move.weapon_id].name, boss = collection.manifest.bosses[move.boss_id].name;
     const title = `${weapon} / ${boss} · ${move.name}`;
     card.append(element('summary', title));
-    card.append(element('p', `${move.mapping_status === 'partial' ? 'Partial mapping' : 'Candidate mapping'} · Priority: ${move.priority || 'unset'}`, 'hint'));
+    card.append(element('p', `${move.kind.replaceAll('_', ' ')} candidate · ${move.mapping_status === 'partial' ? 'Partial mapping' : 'Candidate mapping'} · Priority: ${move.priority || 'unset'}`, 'hint'));
     for (const evidence of move.evidence) card.append(element('p', evidence.annotation_text, 'recorded-note'));
     card.append(element('p', move.steps.map(step => `${step.source.action_id} (${step.source.motion_id})`).join(' → '), 'source-ids'));
     for (const note of move.review_notes || []) card.append(element('p', note, 'hint'));

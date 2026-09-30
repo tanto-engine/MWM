@@ -253,6 +253,26 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
         || !copy_bytes(boss_session.player_pulse_descriptor, player_check, sizeof(player))
         || memcmp(player, player_check, sizeof(player))) return false;
     total = uint16_t(source_count + 4);
+    // Retain William's recovery-gated shortcut exits so a long Pulse window can include a cast.
+    // These select native item actions; they never grant an early cast or synthesize its effect.
+    uint8_t shortcuts[4][0x30]{};unsigned found=0;
+    constexpr uint8_t selectors[]={0x1F,0x1F,0x23,0x20}, states[]={5,7,4,4};
+    for (unsigned i=0;i<count;++i) {
+        uint64_t pointer=0;uint8_t body[0x30],check[0x30];
+        if (!copy_field(table+(uint64_t(start)+i)*8,pointer) || !pointer
+            || !copy_bytes(pointer,body,sizeof(body))) continue;
+        int16_t target=0;memcpy(&target,body+0x14,2);
+        if (body[0]!=0x5D || body[1] || target<0xD1B || target>0xD1E) continue;
+        const unsigned index=unsigned(target-0xD1B);
+        if (body[0x0B]!=selectors[index] || body[0x0C]!=states[index]
+            || body[0x0D]!=0xff || body[0x0E]!=0xff) continue;
+        if (!copy_bytes(pointer,check,sizeof(check)) || memcmp(body,check,sizeof(body))) return false;
+        memcpy(shortcuts[index],body,sizeof(body));found|=1u<<index;
+    }
+    if (found==15) for (auto& body : shortcuts) {
+        memcpy(body+0x20,&recovery_start,2);
+        memcpy(bodies[total++],body,sizeof(body));
+    }
     return true;
 }
 

@@ -10,14 +10,15 @@ struct ReplacementCall { void* actor; DispatchCommand* command; DispatchReason* 
 static thread_local ReplacementCall replacement_call{};
 // Retain a pending tap/hold decision only for its originating descriptor, controller and player-context epoch.
 struct PendingHeavy {
-    int64_t started;
+    int64_t started, press;
     uint64_t origin;
     uint32_t origin_key, epoch;
-    unsigned tap, controller, hold, native_key;
+    unsigned tap, controller, hold, native_key, family, tap_key;
     bool active, spent;
 };
 static PendingHeavy pending_heavy{};
 static WORD configured_chord_buttons();
+static unsigned sword_attack_family(uint64_t player, bool recovered=true);
 
 static bool heavy_button(unsigned& controller, bool& down, bool& interrupted) {
     // Read Triangle from the player frame's timestamped controller snapshot.
@@ -141,7 +142,8 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
         || !held_binding_context(command,pending_heavy.hold,pending_heavy.native_key)
         || command.reserved[2]!=pending_heavy.epoch
         || !copy_field(command.player+0x58,current) || !copy_field(current,key)
-        || ((current!=pending_heavy.origin || key!=pending_heavy.origin_key) && !repeat_current_allowed(current,key))) {
+        || ((current!=pending_heavy.origin || key!=pending_heavy.origin_key) && !repeat_current_allowed(current,key)
+            && (!pending_heavy.family || sword_attack_family(command.player,false)!=pending_heavy.family))) {
         pending_heavy.active=false; pending_heavy.spent=true;
         return ContextChanged;
     }
@@ -153,7 +155,7 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
     const unsigned slot=held ? pending_heavy.hold : pending_heavy.tap;
     pending_heavy.active=false; pending_heavy.spent=down;
     if (slot==UINT32_MAX) {
-        command.desired_key=pending_heavy.native_key;
+        command.desired_key=pending_heavy.tap_key;
         return NativeHeavyTap; // Replay the exact native heavy or grapple selection.
     }
     const auto& move=boss_imports[slot];
@@ -164,47 +166,61 @@ static DispatchReason choose_heavy(DispatchCommand& command) {
     return reason;
 }
 
-struct HighFollowupInput {
+struct AttackFollowupInput {
     int64_t sampled;
     unsigned slot, epoch, spent_counter;
     WORD buttons;
     bool spent;
 };
-static HighFollowupInput high_followup_input{};
+static AttackFollowupInput attack_followup_input{};
 
-static bool high_heavy_recovery(uint64_t player) {
-    // Permit the follow-up only while a native High heavy has reached its own recovery frame.
-    // A dodge, damage state, completed idle or stance change closes the opportunity immediately.
-    // Match the player family and motion as well as its action number before reading the window.
+static unsigned sword_attack_family(uint64_t player, bool recovered) {
+    // Identify every native sword stage or an explicitly compiled imported string.
+    // Skills, dodges and paired actions do not become quick/strong attacks by sharing a numeric key.
+    // A follow-up starts only after this phase's own recovery boundary.
     uint64_t current=0,payload=0,flags=0;uint32_t key=0,stance=0;
     int32_t motion=-1;int16_t recovery=-1;float frame=0;
-    return copy_field(player+0x470,stance) && stance==0 && copy_field(player+0x58,current)
-        && copy_field(current,key) && key>=0xCB7 && key<=0xCB9 && copy_field(current+0x20,payload)
-        && copy_field(payload+0x18,flags) && flags==0x8000000594C0000ULL
-        && copy_field(payload+0x20,motion) && motion==3300+int32_t(key-0xCB7)*10
-        && copy_field(payload+0x24,recovery) && recovery>0 && copy_field(player+0x28,frame)
-        && frame>=float(recovery);
+    if (!copy_field(player+0x470,stance) || stance>2 || !copy_field(player+0x58,current)
+        || !copy_field(current,key) || !copy_field(current+0x20,payload)
+        || (recovered && (!copy_field(payload+0x24,recovery) || recovery<=0
+            || !copy_field(player+0x28,frame) || !(frame>=float(recovery))))) return 0;
+    if (boss_active && boss_active_slot<boss_import_count
+        && current==boss_private_descriptor_address(boss_active_slot))
+        return boss_settings(boss_active_slot).input_family;
+    if (!same_field(player,0x68,uint32_t(0)) || !copy_field(payload+0x18,flags)
+        || flags!=0x8000000594C0000ULL || !copy_field(payload+0x20,motion)) return 0;
+    constexpr uint32_t keys[3][2]={{0xCB3,0xCB7},{0xC76,0xC7A},{0xCF0,0xCF5}};
+    constexpr int32_t motions[3][2]={{3100,3300},{2100,2300},{4100,4300}};
+    for (unsigned family=0;family<2;++family) {
+        const auto start=keys[stance][family];
+        if (key>=start && key<start+((stance==2 && !family) ? 5u : 3u)
+            && motion==motions[stance][family]+int32_t(key-start)*10) return family+1;
+    }
+    return 0;
 }
 
-static DispatchReason choose_high_followup(DispatchCommand& command) {
-    // Accept one fresh Square press with LB held during the native High-heavy recovery window.
+static DispatchReason choose_attack_followup(DispatchCommand& command) {
+    // Accept one fresh opposite attack with Guard during quick/strong recovery in each stance.
     // Controller/epoch discontinuities require a new input edge; stick movement has no bearing on this gate.
     // Reuse normal source validation and the action setter instead of skipping into an animation.
-    unsigned variant=0;
-    for (const auto& binding : boss_skill_bindings) if (binding.kind==4) variant=binding.variant;
-    if (!variant || !trace || !native_binding_context(command)) {high_followup_input={};return IneligibleRequest;}
+    if (!trace || !native_binding_context(command)) {attack_followup_input={};return IneligibleRequest;}
     GameInput sample{};unsigned slot=0;
-    if (!read_game_input(trace->header,sample) || !selected_game_controller(sample,slot)) {high_followup_input={};return IneligibleRequest;}
-    auto& state=high_followup_input;const WORD buttons=sample.buttons[slot];
+    if (!read_game_input(trace->header,sample) || !selected_game_controller(sample,slot)) {attack_followup_input={};return IneligibleRequest;}
+    auto& state=attack_followup_input;const WORD buttons=sample.buttons[slot];
     if (sample.qpc==state.sampled) return IneligibleRequest;
     const bool reset=!state.sampled || state.slot!=slot || state.epoch!=command.reserved[2]
         || sample.qpc<state.sampled || sample.qpc-state.sampled>=dispatch->control.qpc_frequency/10;
     const WORD pressed=buttons&~state.buttons;
     if (reset) state={};
     state.sampled=sample.qpc;state.slot=slot;state.epoch=unsigned(command.reserved[2]);state.buttons=buttons;
-    uint32_t counter=0;
-    if (reset || !(pressed&XINPUT_GAMEPAD_X) || !(buttons&XINPUT_GAMEPAD_LEFT_SHOULDER)
-        || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER) || !high_heavy_recovery(boss_session.player)
+    uint32_t counter=0,stance=0;const unsigned family=sword_attack_family(boss_session.player);
+    const WORD trigger=family==1 ? XINPUT_GAMEPAD_Y : XINPUT_GAMEPAD_X;
+    unsigned variant=0;
+    if (family && copy_field(boss_session.player+0x470,stance))
+        for (const auto& binding : boss_skill_bindings)
+            if (binding.kind==(family==1 ? 7u : 4u) && (binding.stances&(1u<<(2-stance)))) variant=binding.variant;
+    if (reset || !variant || !(pressed&trigger) || !(buttons&XINPUT_GAMEPAD_LEFT_SHOULDER)
+        || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER)
         || !copy_field(boss_session.player+0xDC,counter) || (state.spent && state.spent_counter==counter)) return IneligibleRequest;
     state.spent=true;state.spent_counter=counter;
     const unsigned index=variant-1;const auto& move=boss_imports[index];
@@ -349,7 +365,7 @@ static uint64_t replace_native_grapple(void* context, uint64_t descriptor) {
     return 0;
 }
 
-static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigned hold, const DispatchCommand& command) {
+static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigned hold, const DispatchCommand& command, uint32_t hold_key=0) {
     // Preserve the native-selected tap while deciding the physical Triangle hold.
     // An empty redirect rejects commitment without resetting the current movement clock.
     // Repeated lookups share the original press and never restart its deadline.
@@ -357,8 +373,10 @@ static uint64_t defer_heavy(uint64_t player, uint32_t key, unsigned tap, unsigne
     uint64_t current=0; uint32_t current_key=0;
     if (!heavy_button(controller,down,interrupted) || !down || interrupted || !triangle_input.pressed
         || !copy_field(player+0x58,current) || !copy_field(current,current_key)) return 0;
+    if (!pending_heavy.active && triangle_input.pressed>pending_heavy.press) pending_heavy.spent=false;
     if (!pending_heavy.active && !pending_heavy.spent)
-        pending_heavy={triangle_input.pressed,current,current_key,uint32_t(command.reserved[2]),tap,controller,hold,key,true,false};
+        pending_heavy={triangle_input.pressed,triangle_input.pressed,current,current_key,uint32_t(command.reserved[2]),
+                       tap,controller,hold,hold_key ? hold_key : key,sword_attack_family(player,false),key,true,false};
     static const int32_t payload[0xB0/4]={0,0,0,0,0,0,0,0,-1};
     static const struct { uint8_t prefix[0x20]; const void* payload; uint8_t tail[0xA8]; }
         deferred={{},payload,{}};
@@ -413,6 +431,16 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
     }
     if (*bank_index==0) {
         DispatchCommand command{};
+        uint32_t stance=0;uint8_t row[0x30];
+        if (sword_attack_family(player,false) && copy_field(player+0x470,stance) && stance<=2
+            && selected_sword_row(key,row) && row[0x0B]==1 && row[0x0C]==1 && row[0x0D]==0xff) {
+            constexpr uint32_t openers[]={0xCB7,0xC7A,0xCF5};
+            const unsigned hold=stance_hold(openers[stance]);
+            if (key!=openers[stance] && hold<boss_import_count && held_binding_context(command,hold,openers[stance]))
+                if (const auto deferred=defer_heavy(player,key,UINT32_MAX,hold,command,openers[stance])) {
+                    SetLastError(native_error);return deferred;
+                }
+        }
         const int guard_slot=native_bound_slot(key,descriptor,command);
         if (guard_slot>=0) {
             // Defer before importing the tap so a same-stance Triangle hold can select its own destination.
@@ -503,7 +531,7 @@ static bool replacements_configured() {
     // Native skill/chord bindings need lookup even when their destination uses baseline resources.
     // Baseline Okatsu sessions keep their established three-hook path.
     if (boss_native_bindings || boss_native_grapple) return true;
-    for (const auto& binding : boss_skill_bindings) if (binding.kind==1 || binding.kind==2 || binding.kind==3 || binding.kind==5) return true;
+    for (const auto& binding : boss_skill_bindings) if (binding.kind) return true;
     for (unsigned i=0; i<boss_import_count; ++i) if (boss_adapters[i].kind==1 || boss_adapters[i].kind==2) return true;
     return false;
 }

@@ -4,7 +4,7 @@
   "name": "Maria Teleport Slash",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "skill",
   "review_status": "candidate",
   "priority": null,
   "description": "Maria Teleport Slash",

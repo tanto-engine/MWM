@@ -1,5 +1,5 @@
 # Open MWM's Electron interface, or explicitly request its Enable/Disable lifecycle command.
-# LegacyUI preserves the old trainer for comparison; each launcher mode is mutually exclusive.
+# LegacyUI remains a compatibility alias for the maintained Electron editor.
 # This development launcher does not compile an EXE or bypass Build.ps1 release controls.
 param(
     [string]$PythonRuntime = $env:NIOH_PYTHON,
@@ -16,9 +16,6 @@ if ($Enable -or $Disable) {
     $mode = if ($Enable) { '--enable' } else { '--disable' }
     & $PythonRuntime -B $scriptPath $mode
     if ($LASTEXITCODE -ne 0) { throw "Runtime control failed: $LASTEXITCODE" }
-} elseif ($LegacyUI) {
-    if (-not $PythonRuntime) { $PythonRuntime = 'python.exe' }
-    Start-Process -FilePath $PythonRuntime -ArgumentList @('-B', ('"' + $scriptPath + '"'), '--legacy-ui') -WindowStyle Hidden
 } else {
     # Compile local UI sources before launch so authored changes cannot leave stale JavaScript visible.
     # npm ci is an explicit development prerequisite; this path never invokes electron-builder or makes an EXE.

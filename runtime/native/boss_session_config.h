@@ -68,9 +68,9 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
     for (unsigned index=0;index<BOSS_BINDING_LIMIT;++index) {
         const auto& binding=config.skill_bindings[index];const SkillBinding empty{};
         if (!binding.kind) { if (memcmp(&binding,&empty,sizeof(empty))) return false; continue; }
-        if (binding.kind>5 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
-        if ((binding.kind==4 && binding.stances!=4)
-            || (binding.kind==5 && binding.stances!=1 && binding.stances!=2 && binding.stances!=4 && binding.stances!=7)) return false;
+        if (binding.kind>7 || !binding.stances || binding.stances>7 || !binding.variant || binding.variant>config.import_count) return false;
+        if ((binding.kind==4 || binding.kind==5 || binding.kind==7)
+            && binding.stances!=1 && binding.stances!=2 && binding.stances!=4 && binding.stances!=7) return false;
         const auto& adapter=config.adapters[binding.variant-1];
         for (unsigned stance=0;stance<3;++stance)
             if (config.frost_variants[stance]==binding.variant && binding.stances!=(1u<<stance) && adapter.kind) return false;
@@ -120,9 +120,9 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         const auto& settings=config.move_settings[i];
         if (memcmp(&settings,&no_settings,sizeof(settings))) {
             if (!(settings.speed>=.25f && settings.speed<=2) || settings.pulse_percent>100
-                || !settings.pulse_fill || settings.pulse_fill>120 || settings.pulse_hold>120 || settings.reserved) return false;
+                || !settings.pulse_fill || settings.pulse_fill>120 || settings.pulse_hold>120 || settings.input_family>2) return false;
             if ((move.flags==0x8078000000ULL || move.flags==0x8038000000ULL)
-                && (settings.speed!=1 || settings.pulse_percent!=40 || settings.pulse_fill!=25 || settings.pulse_hold!=24)) return false;
+                && (settings.speed!=1 || settings.pulse_percent!=40 || settings.pulse_fill!=25 || settings.pulse_hold!=24 || settings.input_family)) return false;
         }
         const uint64_t pointers[] = {move.descriptor, move.payload, move.clip, move.timing_record};
         for (uint64_t pointer : pointers)

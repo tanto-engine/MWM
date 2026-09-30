@@ -76,7 +76,7 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && reinterpret_cast<uint64_t>(actor)==boss_session.player)
         latch_native_frost();
     if (record_this && request==ActionRequest::Frost) reason=choose_frost_moon(command);
-    else if (record_this && request==ActionRequest::Followup) reason=choose_high_followup(command);
+    else if (record_this && request==ActionRequest::Followup) reason=choose_attack_followup(command);
     else if (record_this && request==ActionRequest::Heavy) reason=choose_heavy(command);
     else if (record_this && request==ActionRequest::Chain) reason = choose_chain(actor, command);
     else
@@ -282,7 +282,7 @@ static float observed_frame(void* actor, float delta) {
         }
     }
     if (player_frame) {
-        if (!ready) high_followup_input={};
+        if (!ready) attack_followup_input={};
         else {
             SetLastError(native_error);
             observed_action_impl(actor,0,nullptr,ActionRequest::Followup);

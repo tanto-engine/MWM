@@ -62,15 +62,16 @@ static void guard_binding_cases() {
     // Reject ordinary/running/dodge Square, Triangle, stale rows, disabled contexts and nonplayer banks.
     static std::array<uint8_t,0xD0> guard{};
     constexpr uint32_t stances[]={2,1,0};
+    for (unsigned kind : {2u,6u})
     for (unsigned stance=0;stance<3;++stance) for (uint32_t loadout : {0xFA2u,0xCF8u})
     for (unsigned failure=0;failure<17;++failure) {
         uint32_t key=loadout;
         sword_reset(0);boss_native_bindings=0;
-        boss_skill_bindings[0]={2,1u<<stance,loadout==0xFA2 ? 1u : 2u,0,0,0,0};
+        boss_skill_bindings[0]={kind,1u<<stance,loadout==0xFA2 ? 1u : 2u,0,0,0,0};
         guard.fill(0);put(light.data(),0,key);put(guard.data(),0x78,address(light_pointers.data()));
         put(guard.data(),0x80,uint16_t(3));put(guard.data(),0x82,uint16_t(40));
         auto& row=light_rows[6];row.fill(0xff);row[0x0A]=key==0xFA2 ? 0 : 2;
-        row[0x0B]=5;row[0x0C]=0;row[0x0D]=0;row[0x0E]=1;
+        row[0x0B]=5;row[0x0C]=0;row[0x0D]=kind==6;row[0x0E]=1;
         put(row.data(),0x14,int16_t(key));put(row.data(),0x2C,int32_t(0x3580));
         put(player.data(),0x58,address(guard.data()));put(player.data(),0x90,address(row.data()));
         put(player.data(),0x470,stances[stance]);
@@ -78,7 +79,7 @@ static void guard_binding_cases() {
         if (failure==3 || failure==4) {row[0x0B]=0;row[0x0C]=1;row[0x0D]=0xff;row[0x0E]=0xff;}
         if (failure==4) {key=0xCD5;put(light.data(),0,key);put(row.data(),0x14,int16_t(key));}
         if (failure==5) {row[0x0B]=2;row[0x0C]=1;row[0x0D]=0xff;row[0x0E]=0xff;}
-        if (failure==6) row[0x0D]=1;
+        if (failure==6) row[0x0D]^=1;
         if (failure==7) {light_rows[0]=row;put(player.data(),0x90,address(light_rows[0].data()));}
         if (failure==8) boss_skill_bindings[0]={};
         if (failure==9) sword_bank=1;
@@ -95,6 +96,38 @@ static void guard_binding_cases() {
             assert(observed_lookup(player.data()+0x70,key,&bank)==address(light.data()) && bank==1);
         } else assert(native_bound_slot(key,address(light.data()),request)==(failure && failure!=15 ? -1 : int(boss_skill_bindings[0].variant-1)));
     }
+}
+
+static void contextual_finisher_cases() {
+    constexpr uint32_t keys[3][2]={{0xCB3,0xCB7},{0xC76,0xC7A},{0xCF0,0xCF5}};
+    constexpr int32_t motions[3][2]={{3100,3300},{2100,2300},{4100,4300}};
+    for (unsigned stance=0;stance<3;++stance) for (unsigned family=0;family<2;++family)
+    for (unsigned stage=0;stage<(stance==2 && family==0 ? 5u : 3u);++stage) {
+        sword_reset(0);
+        put(player.data(),0x470,stance);put(player.data(),0x58,address(light.data()));
+        put(light.data(),0,keys[stance][family]+stage);put(light_payload.data(),0x20,motions[stance][family]+int32_t(stage)*10);
+        put(light_payload.data(),0x24,int16_t(10));put(player.data(),0x28,float(10));
+        assert(sword_attack_family(address(player.data()))==family+1);
+        auto& row=light_rows[6];row.fill(0xff);row[0x0A]=0;row[0x0B]=5;row[0x0C]=0;row[0x0D]=family==0;row[0x0E]=1;
+        put(row.data(),0x14,int16_t(0xD3A));put(player.data(),0x90,address(row.data()));
+        boss_skill_bindings[0]={family==0 ? 6u : 2u,1u<<(2-stance),1,0,0,0,0};
+        boss_skill_bindings[1]={family==0 ? 7u : 4u,1u<<(2-stance),2,0,0,0,0};
+        DispatchCommand selected{};
+        assert(native_bound_slot(0xD3A,address(living.data()),selected)==1);
+        put(player.data(),0x28,float(9));
+        assert(!sword_attack_family(address(player.data())));
+        assert(native_bound_slot(0xD3A,address(living.data()),selected)==0);
+        put(player.data(),0x28,float(10));put(player.data(),0x68,uint32_t(1));
+        assert(!sword_attack_family(address(player.data())));
+    }
+    sword_reset(0);runtime_session_configured=true;boss_move_settings[0]={1,40,30,24,1};
+    boss_active=1;boss_active_slot=0;put(player.data(),0x58,boss_private_descriptor_address(0));
+    put(boss_private_actions[0].descriptor,0x20,boss_private_payload_address(0));
+    put(boss_private_actions[0].payload,0x24,int16_t(20));put(player.data(),0x28,float(20));
+    assert(sword_attack_family(address(player.data()))==1);
+    boss_move_settings[0].input_family=2;assert(sword_attack_family(address(player.data()))==2);
+    boss_move_settings[0].input_family=0;assert(!sword_attack_family(address(player.data())));
+    runtime_session_configured=false;boss_active=0;
 }
 
 static void quick_binding_cases() {
@@ -164,6 +197,7 @@ int main() {
     // These checks establish descriptor behavior; actual combat playback still needs the player.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     guard_binding_cases();
+    contextual_finisher_cases();
     quick_binding_cases();
     tiger_entry_cases();
     for (unsigned stance=0;stance<3;++stance) {
@@ -257,11 +291,11 @@ int main() {
     sword_reset(0);put(player.data(),0x470,uint32_t(0));put(player.data(),0x58,address(light.data()));
     put(light.data(),0,uint32_t(0xCB7));put(light_payload.data(),0x20,int32_t(3300));
     put(light_payload.data(),0x24,int16_t(58));put(player.data(),0x28,float(57));
-    assert(!high_heavy_recovery(address(player.data())));
-    put(player.data(),0x28,float(58));assert(high_heavy_recovery(address(player.data())));
-    put(player.data(),0x470,uint32_t(1));assert(!high_heavy_recovery(address(player.data())));
-    put(player.data(),0x470,uint32_t(0));put(light.data(),0,uint32_t(0xBB8));assert(!high_heavy_recovery(address(player.data())));
-    put(light.data(),0,uint32_t(0xCB7));put(light_payload.data(),0x20,int32_t(5011));assert(!high_heavy_recovery(address(player.data())));
+    assert(!sword_attack_family(address(player.data())));
+    put(player.data(),0x28,float(58));assert((sword_attack_family(address(player.data()))==2));
+    put(player.data(),0x470,uint32_t(1));assert(!(sword_attack_family(address(player.data()))==2));
+    put(player.data(),0x470,uint32_t(0));put(light.data(),0,uint32_t(0xBB8));assert(!(sword_attack_family(address(player.data()))==2));
+    put(light.data(),0,uint32_t(0xCB7));put(light_payload.data(),0x20,int32_t(5011));assert(!(sword_attack_family(address(player.data()))==2));
     MoveImport trial{};MoveAdapter adapter{};adapter.kind=2;
     trial.key=0xD30;trial.motion=2000;trial.flags=0x184C0000;trial.transition_count=46;trial.recovery_frame=45;
     assert(recorded_grounded(trial,adapter) && sword_string_successor(trial)==0xD31);

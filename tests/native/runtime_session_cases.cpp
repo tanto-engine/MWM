@@ -64,7 +64,7 @@ int main() {
         if (field==3) changed.move_settings[0].pulse_percent=101;
         if (field==4) changed.move_settings[0].pulse_fill=0;
         if (field==5) changed.move_settings[0].pulse_hold=121;
-        if (field==6) changed.move_settings[0].reserved=1;
+        if (field==6) changed.move_settings[0].input_family=3;
         if (field==7) changed.move_settings[6]=changed.move_settings[0]; // Paired attacker keeps native timing.
         if (field==8) changed.controller_selection=5;
         assert(!runtime_imports_valid(changed));
@@ -113,7 +113,7 @@ int main() {
     assert(!runtime_imports_valid(invalid_alias));
     invalid_alias=aerial;invalid_alias.adapters[19]=aerial.adapters[7];
     assert(!runtime_imports_valid(invalid_alias));
-    static_assert(RUNTIME_SESSION_VERSION==13 && sizeof(RuntimeSessionConfig)==12552
+    static_assert(RUNTIME_SESSION_VERSION==14 && sizeof(RuntimeSessionConfig)==12552
         && offsetof(RuntimeSessionConfig,imports)==328 && offsetof(RuntimeSessionConfig,adapters)==6472
         && offsetof(RuntimeSessionConfig,skill_bindings)==10568
         && offsetof(RuntimeSessionConfig,chord_reservations)==12416);

@@ -18,7 +18,7 @@ MOVE_SETTINGS = struct.Struct('<f4H')
 CHORD_RESERVATION_LIMIT = 32
 SEQUENCE_BUTTONS = (0x100,0x400,0x2000,0x4000,0x8000)
 SESSION_CONFIG = struct.Struct('<4I12Q26Q2I' + '5QIi hHhHHH 9I' * IMPORT_LIMIT + '6QIiHhI' * IMPORT_LIMIT + '4IiIQ'*BINDING_LIMIT + 'IffI'*2 + '4f' + 'f4H'*IMPORT_LIMIT + '2I' + 'HBB'*CHORD_RESERVATION_LIMIT + '2I')
-MAGIC, VERSION = 0x3153454e, 13
+MAGIC, VERSION = 0x3153454e, 14
 assert MOVE_IMPORT.size == 96 and MOVE_ADAPTER.size == 64 and SESSION_CONFIG.size == 12552
 
 
@@ -138,7 +138,7 @@ def encode_session(config, pid, creation_filetime):
     for binding in bindings:
         fields=[binding[field] for field in ('kind','stances','variant','key','motion','transition_count','flags')]
         kind,stances,variant,key,motion,rows,flags=fields
-        if any(type(value) is not int for value in fields) or kind not in (1,2,3,4,5) or not 0<stances<8 or not 0<variant<=len(moves):
+        if any(type(value) is not int for value in fields) or kind not in range(1,8) or not 0<stances<8 or not 0<variant<=len(moves):
             raise ValueError('Invalid compiled skill binding')
         adapter=adapters[variant-1]
         if adapter is None and moves[variant-1]['flags']!=0x184C0000:
@@ -148,7 +148,7 @@ def encode_session(config, pid, creation_filetime):
         signatures=(*NATIVE_SKILLS.values(),*((key,*PLAYER_TEMPLATES[key][:2],0x8000000594C0000) for key in STANCE_OPENERS.values()))
         if kind==1 and (key,motion,rows,flags) not in signatures or kind>=2 and any((key,motion,rows,flags)):
             raise ValueError('Unverified native skill signature')
-        if kind==4 and stances!=4 or kind==5 and stances not in (1,2,4,7):
+        if kind in (4,5,7) and stances not in (1,2,4,7):
             raise ValueError('Trial native source differs from its reviewed stance')
         if kind==1 and key in STANCE_OPENERS.values() and stances!=1<<list(STANCE_OPENERS.values()).index(key):
             raise ValueError('Native heavy source differs from its stance')
@@ -187,7 +187,7 @@ def encode_session(config, pid, creation_filetime):
         raise ValueError('Every import requires move settings')
     encoded_settings=[]
     for move,setting in zip(moves,settings):
-        if not isinstance(setting,dict) or set(setting)!={'speed',*KI_PULSE}:
+        if not isinstance(setting,dict) or set(setting) not in ({'speed',*KI_PULSE},{'speed',*KI_PULSE,'input_family'}):
             raise ValueError('Invalid compiled move settings')
         rate,percent,fill,hold=(setting[field] for field in ('speed','percent','fill_frames','hold_frames'))
         if (type(rate) not in (int,float) or not .25<=rate<=2
@@ -196,7 +196,9 @@ def encode_session(config, pid, creation_filetime):
             raise ValueError('Invalid move speed or Ki Pulse policy')
         if move['flags'] in (0x8078000000,PLAYER_PAIRED_FLAGS) and setting!=dict(speed=1,**KI_PULSE):
             raise ValueError('Paired actions retain native timing and Pulse policy')
-        encoded_settings.extend((rate,percent,fill,hold,0))
+        family=setting.get('input_family',0)
+        if type(family) is not int or not 0<=family<=2: raise ValueError('Invalid sword attack family')
+        encoded_settings.extend((rate,percent,fill,hold,family))
     encoded_settings.extend([0]*((IMPORT_LIMIT-len(moves))*5))
     selection=config.get('controller_selection',0)
     if type(selection) is not int or not 0<=selection<=4:

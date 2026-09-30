@@ -1,5 +1,17 @@
 # Release notes
 
+## 0.3.0-alpha.16
+
+- Remove the duplicate Tkinter editor; retain controller remapping, saved movesets, lifecycle commands and the legacy launcher alias through Electron.
+- Use shared input metadata for native sword dropdowns. Add Guard + Strong and Quick/Strong finishers in all three stances; preserve saved assignments and give internal phases readable names.
+- Tag imported string phases by their assigned attack input. Reject conflicting custom/native chords and keep press-through strings out of Frost and the new skill slots.
+- Preserve buffered holds across native string stages and retain the actual selected tap/ender on release.
+- Drop owned weight overrides when a collider has disappeared, avoiding a native setter into torn-down collision state. The tournament crash still needs live reproduction.
+- Retain verified native shortcut exits during imported attack recovery and extend the downward-slash Pulse hold window. Effect-safe cast cancellation remains unverified.
+- Correct Maria candidate categories without enabling imports. Document damage-calibration boundaries and the Nioh 1-specific import architecture.
+
+Live sword/controller acceptance is deferred. Offline and packaged UI results are recorded by the build receipt; they do not certify hitboxes, teleport behavior, cast effects or encounter transitions.
+
 ## 0.3.0-alpha.15
 
 - The Moves tab now creates two-button tap or hold custom inputs directly; a three-button follow-up is optional. Per-route inputs accept any distinct pair among the five reviewed controller buttons. The desktop roundtrip saves both patterns.

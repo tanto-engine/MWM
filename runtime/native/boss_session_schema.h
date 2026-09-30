@@ -81,7 +81,7 @@ static constexpr uint16_t SEQUENCE_BUTTONS[5]={0x100,0x400,0x2000,0x4000,0x8000}
 // Thresholds choose a launch policy by resistance; weight_scale and vertical_impulse affect separate native fields.
 struct LaunchProfile { uint32_t resistance_below; float weight_scale, vertical_impulse; uint32_t reserved; };
 // Playback speed is a multiplier; pulse_percent controls recoverable Ki and fill/hold use native frame units.
-struct MoveSettings { float speed; uint16_t pulse_percent, pulse_fill, pulse_hold, reserved; };
+struct MoveSettings { float speed; uint16_t pulse_percent, pulse_fill, pulse_hold, input_family; };
 static_assert(sizeof(MoveSettings)==12,"Move settings ABI size");
 
 // This fixed Windows x64 layout is copied from the launcher, not read as a C++ object from another process.
@@ -108,4 +108,4 @@ static_assert(sizeof(RuntimeSessionConfig) == 12552 && offsetof(RuntimeSessionCo
               && offsetof(RuntimeSessionConfig, chord_reservations) == 12416,
               "Runtime configuration ABI size");
 static constexpr uint32_t RUNTIME_SESSION_MAGIC = 0x3153454e; // NES1
-static constexpr uint32_t RUNTIME_SESSION_VERSION = 13;
+static constexpr uint32_t RUNTIME_SESSION_VERSION = 14;

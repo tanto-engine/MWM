@@ -630,7 +630,7 @@ int main() {
     }
     for (unsigned slot=2;slot<7;++slot) {
         const auto& clone=boss_private_actions[slot];
-        assert(clone.ready && clone.transition_count==boss_imports[slot].transition_count+(slot<5 ? 4 : 0));
+        assert(clone.ready && clone.transition_count==boss_imports[slot].transition_count+(slot<5 ? 8 : 0));
         for (unsigned row=0;row<boss_imports[slot].transition_count;++row) {
             auto expected=chain_rows[slot][row]; bool unconditional=true;
             for (unsigned c=0;c<10;++c) if (expected[c]!=0xff) unconditional=false;
@@ -642,7 +642,8 @@ int main() {
         }
         for (unsigned row=boss_imports[slot].transition_count+1;row<clone.transition_count;++row) {
             std::array<uint8_t,0x30> expected{};
-            memcpy(expected.data(),boss_pulse_templates[row-boss_imports[slot].transition_count-1],0x30);
+            const unsigned added=row-boss_imports[slot].transition_count-1;
+            memcpy(expected.data(),added<3 ? boss_pulse_templates[added] : native_shortcut_rows[added-3].data(),0x30);
             put(expected.data(),0x20,boss_move_timing(slot).recovery);
             assert(!memcmp(expected.data(),clone.transition_bodies[row],0x30)); ++checks;
         }

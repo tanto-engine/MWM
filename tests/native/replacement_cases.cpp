@@ -167,9 +167,9 @@ static void weight_cases() {
         if (ending==3) put(victim_owner,0x250,address(changed_collision));
         if (ending==4) put(victim_owner,0x250,uint64_t(0));
         restore_launch_weights(address(victim),ending==5);
-        assert(!launch_weight_count && weight_calls==calls+(ending==1 || ending==2 ? 0 : 1));
+        assert(!launch_weight_count && weight_calls==calls+(ending==1 || ending==2 || ending==4 ? 0 : 1));
         float actual=0;assert(copy_field(address(victim)+0x7BC,actual));
-        assert(actual==(ending==1 ? 50.0f : ending==2 ? 75.0f : -1.0f));
+        assert(actual==(ending==1 || ending==4 ? 50.0f : ending==2 ? 75.0f : -1.0f));
     }
     // Native sword rows and curated imports can add one small boost to an already airborne victim.
     // Compare the new native result with the source row, so repeated finishing cannot accumulate.
@@ -638,6 +638,22 @@ static void held_slot_cases() {
         assert(stance_hold(key)==boss_import_count);
     }
     boss_hold_stances=7;
+}
+
+static void buffered_hold_cases() {
+    hold_reset(2,false);
+    static uint8_t first[0xD0]{},second[0xD0]{},payload[0xB0]{},next_payload[0xB0]{};
+    put(first,0,uint32_t(0xCF0));first[0x40]=1;put(first,0x20,address(payload));
+    put(payload,0x18,uint64_t(0x8000000594C0000ULL));put(payload,0x20,int32_t(4100));
+    put(payload,0x24,int16_t(38));memcpy(second,first,sizeof(first));memcpy(next_payload,payload,sizeof(payload));
+    put(second,0,uint32_t(0xCF1));put(second,0x20,address(next_payload));put(next_payload,0x20,int32_t(4110));
+    put(player.data(),0x58,address(first));put(player.data(),0x28,float(40));
+    publish_player_context(.25f);publish();
+    assert(defer_heavy(address(player.data()),0xCF5,UINT32_MAX,5,command) && pending_heavy.active);
+    pending_heavy.started-=frequency;
+    put(player.data(),0x58,address(second));publish_player_context(.25f);publish();
+    assert(choose_heavy(command)==Accepted && command.reserved[1]==5);
+    put(player.data(),0x58,address(neutral.data()));pending_heavy={};
 }
 
 static void airborne_cases() {
@@ -1234,7 +1250,7 @@ int main() {
     mid_hideyori_string_cases();
     chord_reservation_cases();
     sequence_reservation_cases();
-    held_slot_cases();
+    held_slot_cases(); buffered_hold_cases();
     weapon_policy_cases();
     airborne_cases();
     for (unsigned family=0;family<3;++family) mid_string_cases(family);

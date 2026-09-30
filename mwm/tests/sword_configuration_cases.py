@@ -221,7 +221,9 @@ class SwordConfigurationTests(unittest.TestCase):
         self.assertEqual(len(jin), 15)  # Three heavy, five quick, four Swallow, three downward-slash phases.
         for index, move in enumerate(fixture.config['imports']):
             if move in jin:
-                self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,11640+index*MOVE_SETTINGS.size), (1.,40,30,36,0))
+                setting = fixture.config['move_settings'][index]
+                self.assertEqual(MOVE_SETTINGS.unpack_from(encoded,11640+index*MOVE_SETTINGS.size),
+                    (1.,40,30,setting['hold_frames'],setting.get('input_family',0)))
 
     def test_research_dataset_rejects_misclassification_truncated_ids_and_reversed_strings(self):
         # The fresh collection uses stable weapon/boss paths instead of the legacy runtime catalogue.
@@ -246,4 +248,23 @@ class SwordConfigurationTests(unittest.TestCase):
                     else: record['steps'].reverse()
                     file.write_text(json.dumps(record), encoding='utf8')
                     with self.assertRaises(ValueError): module.load_dataset(copy)
+
+    def test_maria_buff_can_be_utility_without_becoming_playable(self):
+        import importlib.util
+        dataset = ROOT/'dataset'
+        spec = importlib.util.spec_from_file_location('maria_roles', dataset/'validate.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        source = dataset/'weapons/sword/maria/recorded_maria_sword_buff_063f4d96.json'
+        record = json.loads(source.read_text(encoding='utf8')); record['kind'] = 'utility'
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            (folder/'dataset.json').write_bytes((dataset/'dataset.json').read_bytes())
+            target = folder/source.relative_to(dataset); target.parent.mkdir(parents=True)
+            target.write_text(json.dumps(record), encoding='utf8')
+            result = module.load_dataset(folder)[record['id']]
+            self.assertEqual((result['kind'], result['review_status'], result['mapping_status']),
+                             ('utility', 'candidate', 'unmapped'))
+            record['kind'] = 'unknown_category'; target.write_text(json.dumps(record), encoding='utf8')
+            with self.assertRaises(ValueError): module.load_dataset(folder)
+        self.assertFalse(any(move['id'].startswith('maria.') for move in config.move_capabilities()['moves']))
 

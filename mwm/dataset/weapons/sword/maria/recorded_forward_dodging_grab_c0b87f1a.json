@@ -4,7 +4,7 @@
   "name": "Forward Dodging Grab",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "grapple",
   "review_status": "candidate",
   "priority": null,
   "description": "Forward Dodging Grab",

@@ -17,7 +17,7 @@ def require(condition, message):
 
 def load_dataset(root):
     # Load one record per weapon/boss/move path and index stable IDs for direct lookup.
-    # Ordered steps define a string; their names remain hypotheses until reviewed.
+    # Ordered steps describe phases; neither their count nor a note proves the player's button sequence.
     # This loader never modifies the separate legacy runtime catalogue or enables gameplay.
     root = Path(root)
     manifest = json.loads((root / 'dataset.json').read_text(encoding='utf8'))
@@ -33,7 +33,8 @@ def load_dataset(root):
         require(weapon in manifest['weapons'] and boss in manifest['bosses'], f'{identifier}: unknown weapon/boss')
         require(boss != 'edward_kelley', f'{identifier}: excluded boss')
         require(move['weapon_id'] == weapon and move['boss_id'] == boss, f'{identifier}: folder classification mismatch')
-        require(move['kind'] == 'move_string' and bool(move['name'].strip()), f'{identifier}: unnamed move string')
+        require(move['kind'] in ('move_string','skill','movement','utility','grapple','unclassified')
+                and bool(move['name'].strip()), f'{identifier}: invalid or unnamed move category')
         require(move['review_status'] in ('candidate', 'reviewed', 'rejected'), f'{identifier}: invalid review status')
         require(move['priority'] in (None, 'low', 'mid', 'high'), f'{identifier}: invalid priority')
         mapping = move.get('mapping_status', 'candidate')

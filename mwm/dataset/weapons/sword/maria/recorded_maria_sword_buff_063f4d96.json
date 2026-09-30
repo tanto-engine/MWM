@@ -4,7 +4,7 @@
   "name": "Maria Sword Buff",
   "weapon_id": "sword",
   "boss_id": "maria",
-  "kind": "move_string",
+  "kind": "utility",
   "review_status": "candidate",
   "priority": null,
   "description": "Maria Sword Buff",

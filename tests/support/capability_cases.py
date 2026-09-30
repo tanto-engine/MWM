@@ -50,6 +50,10 @@ class CapabilityTests(unittest.TestCase):
                     binding=config.binding_for_preset(dict(device={},lb_mask=1),preset,fixture.config['imports'])
                     self.assertEqual(binding['variants'],[slot,None])
                     preset['tap_move']=None;preset['frost_moon'][stance]=move
+                    if move not in config.FROST_MOVES:
+                        with self.assertRaisesRegex(ValueError,'Frost Moon'):
+                            self.fixture(preset)
+                        continue
                     fixture,_=self.fixture(preset)
                     self.assertGreater(fixture.config['frost_variants'][('low','mid','high').index(stance)],0)
 
@@ -185,7 +189,7 @@ class CapabilityTests(unittest.TestCase):
         with patch('catalogue.load_catalogue',return_value=catalogue):
             self.assertEqual(config.move_capabilities(),before)
         self.assertEqual({source['id'] for source in before['native_sources']},
-            {'tiger_sprint','dodge_attack','heavy_attack','guard_light','light_attack','high_heavy_followup'})
+            {'tiger_sprint','dodge_attack','heavy_attack','guard_light','light_attack','high_heavy_followup','guard_strong','strong_followup','quick_followup'})
         for source,move in (('captured_native_skill','okatsu.charged_rush'),('tiger_sprint','unreviewed.captured_action')):
             preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance='mid',move=move)]
             with self.assertRaisesRegex(ValueError,'Unsupported skill binding'):
@@ -202,20 +206,20 @@ class CapabilityTests(unittest.TestCase):
         cases.append((preset,('Low Frost Moon','Mid Frost Moon','different move','clear Low')))
         preset=empty_preset();preset['stance_holds']['low']=launcher
         preset['skill_bindings']=[dict(source='heavy_attack',stance='high',move=launcher)]
-        cases.append((preset,('Low hold Triangle / Y','High Heavy attack','same stance','clear Low')))
+        cases.append((preset,('Low hold Triangle / Y','High Strong attack','same stance','clear Low')))
         preset=empty_preset();preset['skill_bindings']=[dict(source='tiger_sprint',stance='any',move=sanada)]
         cases.append((preset,('Tiger Sprint',config.move_label(sanada),'Choose Low, Mid or High','instead of Any')))
         preset=empty_preset();preset.update(tap_move=sanada,chord_stance='any')
         cases.append((preset,('custom chord',config.move_label(sanada),'Choose Low, Mid or High','not supported')))
         preset=empty_preset();preset['skill_bindings']=[dict(source='heavy_attack',stance='any',move='okatsu.charged_rush'),
             dict(source='heavy_attack',stance='high',move='okatsu.leaping_slash')]
-        cases.append((preset,('High Heavy attack','Only one override','remove one row')))
+        cases.append((preset,('High Strong attack','Only one override','remove one row')))
         for source,stance,required in (('high_heavy_followup','low','High stance'),):
             preset=empty_preset();preset['skill_bindings']=[dict(source=source,stance=stance,move=sanada)]
             cases.append((preset,(config.SOURCE_LABELS[source],config.move_label(sanada),required,'Choose')))
         preset=empty_preset();preset['low_heavy']='jin_hayabusa.action_0c6e'
         preset['skill_bindings']=[dict(source='heavy_attack',stance='mid',move=preset['low_heavy'])]
-        cases.append((preset,('Low Triangle / Y string','Mid Heavy attack','cannot share','Disable')))
+        cases.append((preset,('Low Triangle / Y string','Mid Strong attack','cannot share','Disable')))
         preset=empty_preset();preset['skill_bindings']=[dict(source='dodge_attack',stance='mid',move='jin_hayabusa.action_0c6f')]
         cases.append((preset,('Low Dodge attack','Low Triangle / Y string','Enable that string')))
         for preset,parts in cases:

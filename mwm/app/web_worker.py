@@ -430,11 +430,11 @@ class Desktop:
         for source in self.capabilities['native_sources']:
             if params.get('source') and source['id'] != params['source']: continue
             for stance in self.capabilities['stances']:
-                if params.get('stance') and stance != params['stance']: continue
+                if stance not in source['stances'] or params.get('stance') and stance != params['stance']: continue
                 if any('input' not in row and row['source'] == source['id'] and row['stance'] in (stance, 'any') for row in preset['skill_bindings']):
                     continue
                 for move in self.capabilities['moves']:
-                    if not move['native'] or params.get('move') and move['id'] != params['move']:
+                    if not move[source['role']] or params.get('move') and move['id'] != params['move']:
                         continue
                     candidate = deepcopy(preset)
                     candidate['skill_bindings'].append(dict(source=source['id'], stance=stance, move=move['id']))
