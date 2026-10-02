@@ -45,31 +45,22 @@ static uintptr_t original_tables[4];
 static bool hooked;
 
 template<class T> T game_function(uintptr_t rva) {
-    // Resolve a researched native entrypoint relative to the validated game image.
-    // Convert its fixed RVA to the specific calling signature at the call site.
-    // Module relocation changes addresses without changing the evidence-backed function identity.
+    // RVAs and call signatures belong to the executable fingerprint checked at Start.
     return reinterpret_cast<T>(base + rva);
 }
 
 static void* allocate_data(void* allocator, size_t size) {
-    // Allocate decoded motion storage from the native data allocator.
-    // Use its allocation virtual slot with the matching native resource category.
-    // File-object pools and clip-data ownership use different allocators and cannot be mixed.
+    // Motion data and file objects use different allocators; never mix their frees.
     uint64_t category[2] = {0x2d, 0};
     return reinterpret_cast<void* (*)(void*, size_t, void*)>(
         (*reinterpret_cast<uintptr_t**>(allocator))[5])(allocator, size, category);
 }
 static void free_data(void* allocator, void* pointer) {
-    // Return decoded storage through the allocator that originally owned it.
-    // Call the matching free virtual slot only for a non-null allocation.
-    // Partial decode failures require symmetric cleanup without touching missing blocks.
     if (pointer) reinterpret_cast<void (*)(void*, void*)>(
         (*reinterpret_cast<uintptr_t**>(allocator))[11])(allocator, pointer);
 }
 static void* create_motion_clip(const uint8_t* bytes, uint32_t size, void* allocator) {
-    // Construct one clip through the game's native stream and clip factories.
-    // Initialize a temporary stream, decode its bounded bytes and destroy the stream wrapper.
-    // The native clip owns its decoded storage after the borrowed input span is released.
+    // Destroy the borrowed stream; the returned clip owns its decoded storage.
     uintptr_t stream[4]{};
     game_function<void* (*)(void*)>(0x3845F0)(stream);
     game_function<bool (*)(void*, const void*, uint64_t, uint64_t)>(0x384650)(stream, bytes, 0, size);
@@ -80,9 +71,7 @@ static void* create_motion_clip(const uint8_t* bytes, uint32_t size, void* alloc
 }
 
 static DWORD decode_motion_resource(void* object, bool selected_motion) {
-    // Build native motion or camera resource fields from a validated package.
-    // Allocate lookup storage, decode clips and clean every completed allocation on failure.
-    // The stock decoder assumes success and can crash on allocator exhaustion.
+    // The stock bulk decoder dereferences failed allocations. Publish only a complete owned decode.
     auto words = reinterpret_cast<uintptr_t*>(object);
     auto bytes = reinterpret_cast<const uint8_t*>(words[0x428 / 8]);
     const size_t size = words[0x440 / 8];
@@ -119,9 +108,7 @@ static DWORD decode_motion_resource(void* object, bool selected_motion) {
 }
 
 template<class T> static bool read_field(uintptr_t address, T& value) {
-    // Inspect a loader-side field without dereferencing an untrusted actor pointer.
-    // Require a full-width read from the current process into owned storage.
-    // Player discovery must tolerate objects disappearing between native frames.
+    // Actor discovery can race destruction; a partial read is not evidence of identity.
     SIZE_T copied = 0;
     return ReadProcessMemory(GetCurrentProcess(), reinterpret_cast<void*>(address), &value, sizeof(value), &copied)
         && copied == sizeof(value);
@@ -156,11 +143,10 @@ static bool locate_player(void* actor) {
 }
 
 static void resource_decoded(void* object) {
-    // Finalize only resources allocated and tracked by this loader.
-    // Verify file size, decode motion packages and publish completion with atomic flags.
-    // Borrowers must not receive a package before native I/O and decoding have completed.
+    // Completion bits publish decoded objects, never merely submitted I/O.
     for (unsigned i = 0; i != 4; ++i) if (state->objects[i] == reinterpret_cast<uintptr_t>(object)) {
         if (*reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(object) + 0x440) != request.sizes[i]) {
+            *reinterpret_cast<uintptr_t*>(object) = original_tables[i];
             InterlockedExchange(&state->error, ERROR_BAD_LENGTH);
             InterlockedExchange(&state->phase, 4);
             return;
@@ -183,14 +169,12 @@ static void resource_decoded(void* object) {
 }
 
 static void track_completion(unsigned i, void* object) {
-    // Install a per-object completion callback while preserving its concrete vtable.
-    // Copy RTTI and all observed virtual slots into module-lifetime storage.
-    // Other resource objects and native type identity must remain unaffected.
+    // Retain this private vtable with the DLL: I/O may finish after the frame hook detaches.
     state->objects[i] = reinterpret_cast<uintptr_t>(object);
     auto table = *reinterpret_cast<uintptr_t**>(object);
     original_tables[i] = reinterpret_cast<uintptr_t>(table);
     memcpy(tables[i], table - 1, sizeof(tables[i]));
-    // Preserve RTTI and every virtual slot of this concrete file resource.
+    // Slot -1 is RTTI; slot 3 is the completion callback.
     tables[i][4] = reinterpret_cast<uintptr_t>(&resource_decoded);
     *reinterpret_cast<uintptr_t**>(object) = tables[i] + 1;
 }

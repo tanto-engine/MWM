@@ -15,7 +15,10 @@ SOURCES = {
     'oda_nobunaga': (103, 3996, [0xC6E, 0xC6F]),
     'tachibana_muneshige': (107, 4005, [0xD8D]),
     'sanada_yukimura': (134, 4038, [0xC6A]),
+    'maria': (124, 4286, [0xC80, 0xC81, 0xC82, 0xC83, 0xC84, 0xC85, 0xC86, 0xC89, 0xC8A]),
 }
+MARIA_CHAINS = {0xC80: [0xC80, 0xC81, 0xC82], 0xC83: [0xC83, 0xC84],
+                0xC85: [0xC85, 0xC86], 0xC89: [0xC89], 0xC8A: [0xC8A, 0xC81, 0xC82]}
 
 
 def asset(folder, archive, index):
@@ -77,20 +80,25 @@ def write(path, value):
     # Publish deterministic JSON definitions for normal source review.
     # Generated files contain identifiers/hashes rather than extracted game resources.
     # The original recordings and installed archives are never modified.
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False)+'\n', encoding='utf8')
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True)+'\n', encoding='utf8', newline='\n')
 
 
-def compile_sources(folder):
+def compile_sources(folder, boss_id=None):
     # Match recorded action bytes, resolve companion resources and author the requested trials.
     # Keep original source recovery and event signatures separate from runtime adaptation.
     # Every generated definition remains explicitly unverified in gameplay.
     catalogue = json.loads((ROOT/'data/moves.json').read_text(encoding='utf8'))
     for boss, (action_index, timing_index, keys) in SOURCES.items():
+        if boss_id is not None and boss != boss_id: continue
+        chains = MARIA_CHAINS if boss == 'maria' else {keys[0]: keys}
         observed = observations(boss)
         actions, action_asset = asset(folder, 'archive_00.lnk', action_index)
         timing, timing_asset = asset(folder, 'archive_01.lnk', timing_index)
         motion, motion_asset = asset(folder, 'archive_01.lnk', timing_index+1)
-        _, camera_asset = asset(folder, 'archive_01.lnk', timing_index+2)
+        camera, camera_asset = asset(folder, 'archive_01.lnk', 4289 if boss == 'maria' else timing_index+2)
+        if camera[:8] != b'G2A_PACK': raise ValueError(f'{boss}: camera is not a motion package')
+        if boss == 'maria' and set(records(camera)) != {1101}:
+            raise ValueError('Maria camera must match her recorded paired-grab motion')
         timing_map, motion_map = records(timing), records(motion)
         profile = dict(schema_version=1, resource_profile_id=f'{boss}.resources.v1', boss_id=boss,
                        build_sha256=catalogue['supported_build_sha256'], status='archive_matched_gameplay_trial',
@@ -119,7 +127,7 @@ def compile_sources(folder):
             move = dict(id=identifier,key=key,motion=motion_key,flags=struct.unpack_from('<Q',body,24)[0],
                         ki_cost=struct.unpack_from('<h',body,22)[0],recovery_frame=struct.unpack_from('<h',body,36)[0],
                         transition_count=row['transition_slice']['count'],next=None,next_start=0,next_end=0,voices=voices,
-                        source_payload_prefix=prefix.hex(),adapter_kind=2 if key==keys[0] else 4,
+                        source_payload_prefix=prefix.hex(),adapter_kind=2 if key in chains else 4,
                         replacement=dict(player_key=0xCF5,player_motion=4300,transition_count=46,recovery_frame=38))
             imports.append(move)
             profile['moves'][f'{key:X}'] = dict(motion_key=motion_key,timing_key=motion_key,motion_index=mi,motion_record_offset=mo,
@@ -134,7 +142,9 @@ def compile_sources(folder):
         if not any(item['id']==boss for item in catalogue['bosses']): catalogue['bosses'].append(dict(id=boss,name=boss.replace('_',' ').title()))
         write(ROOT/'data/resources'/f'{boss}.json', profile)
         write(ROOT/'data/imports'/f'{boss}.json',dict(schema_version=1,boss_id=boss,resource_profile_id=profile['resource_profile_id'],
-              trial=True,string_entry=None,candidates={},hold_chains={imports[0]['id']:[m['id'] for m in imports]},moves=imports))
+              trial=True,string_entry=None,candidates={},
+              hold_chains={f'{boss}.action_{root:04x}':[f'{boss}.action_{key:04x}' for key in chain]
+                           for root,chain in chains.items()},moves=imports))
         print(boss, 'matched', len(imports), 'actions; voices', [len(m['voices']) for m in imports])
     for move in catalogue['moves']:
         if move['implementation'].get('engine_profile')=='recorded_grounded_trial': move.setdefault('default_binding',None)
@@ -144,4 +154,6 @@ def compile_sources(folder):
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('archive',type=Path)
-    compile_sources(parser.parse_args().archive)
+    parser.add_argument('--boss', choices=SOURCES)
+    args = parser.parse_args()
+    compile_sources(args.archive, args.boss)

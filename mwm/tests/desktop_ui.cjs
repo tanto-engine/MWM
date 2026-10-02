@@ -11,6 +11,8 @@ const folder = process.argv[2], python = process.argv[3];
 app.setPath('userData', path.join(folder, 'electron-state'));
 const pending = new Map(); let sequence = 0, capture = 0, oldCapture, lateRouteCapture, delayPreview = false, cancelGroup = false;
 let delaySnapshot = false, waitSnapshot, snapshotStarted, releaseSnapshot;
+let scriptedCapture;
+let delayController=false, controllerStarted, waitController, releaseController;
 const methods = [];
 let phase = 'startup';
 let simulatedRunning = false, failExport = false, failController = false, savedGroup;
@@ -20,7 +22,7 @@ process.on('uncaughtException', error => {
   // A test failure must never open Electron's blocking error dialog.
   // Preserve the actual exception beside the temporary screenshots.
   // Stop only this fixture's worker and window process.
-  fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({error:String(error)}));
+  fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({error:error.message || String(error)}));
   worker.kill();app.exit(1);
 });
 let errors = ''; worker.stderr.on('data', value => { errors += value; });
@@ -54,7 +56,20 @@ async function request(_event, method, params={}) {
     return true;
   }
   if (method==='test_runtime_running') { simulatedRunning=params; return true; }
+  if (method==='test_preset_hotkey') {
+    const snapshot=await call('snapshot');
+    snapshot.preset.name='Controller-cycled moveset';
+    const library=await call('preset_save',snapshot);
+    const result=await call('preset_switch',{runtime:snapshot.runtime,id:library.presets.at(-1).id});
+    uiWindow.webContents.send('mwm:preset-cycle',{result});
+    return result.snapshot.preset.name;
+  }
   if (method==='test_fail_controller') { failController=true; return true; }
+  if (method==='test_capture_result') { scriptedCapture=params; return true; }
+  if (method==='test_haptic_count') return methods.filter(value=>value==='haptic').length;
+  if (method==='test_delay_controller') { delayController=true; waitController=new Promise(resolve=>{controllerStarted=resolve;}); return true; }
+  if (method==='test_wait_controller') return waitController;
+  if (method==='test_release_controller') { releaseController(); return true; }
   if (method==='test_delay_snapshot') { delaySnapshot=true; waitSnapshot=new Promise(resolve=>{snapshotStarted=resolve;}); return true; }
   if (method==='test_wait_snapshot') return waitSnapshot;
   if (method==='test_release_snapshot') { releaseSnapshot(); return true; }
@@ -72,6 +87,10 @@ async function request(_event, method, params={}) {
     return result;
   }
   if (method==='controller' && failController) { failController=false; throw new Error('Fixture: controller unavailable'); }
+  if (method==='controller' && delayController) {
+    delayController=false; const result=await call(method,params);
+    await new Promise(resolve=>{releaseController=resolve; controllerStarted();}); return result;
+  }
   if (method==='test_delay_preview') { delayPreview=true; return true; }
   if (method==='test_cancel_group') { cancelGroup=true; return true; }
   if (method==='test_release_route_capture') { lateRouteCapture({mask:0x40000000,label:'stale route press'}); return true; }
@@ -81,6 +100,8 @@ async function request(_event, method, params={}) {
   }
   if (method==='collection') return JSON.parse(fs.readFileSync(path.join(root,'desktop-dist/collection.json'),'utf8'));
   if (method==='capture_cancel') return true;
+  if (method==='capture_start' && scriptedCapture) return {status:'Waiting'};
+  if (method==='capture_poll' && scriptedCapture) { const result=scriptedCapture; scriptedCapture=null; return result; }
   if (method==='capture_start') { capture++; if (capture===2 && oldCapture) setTimeout(()=>oldCapture({mask:1,label:'stale Square'}),25); return {status:'Waiting'}; }
   if (method==='capture_poll') return capture===1 ? new Promise(resolve=>{oldCapture=resolve;}) : capture===3 || capture===4
     ? {mask:capture===3 ? 0x2000 : 0x8000,label:capture===3 ? 'Circle / B' : 'Triangle / Y',calibration:{schema:1,device:{backend:'xinput',slot:1},lb_mask:0x100,lt:{axis:'lt',neutral:0,full:255},controller_slot:1}}
@@ -134,7 +155,20 @@ app.whenReady().then(async () => {
       assert(document.querySelector('[data-assignment="empty:low:tiger_sprint"]') && document.querySelector('#apply').disabled,'Discard did not restore the saved input');
       await tab('guide');
       assert(document.querySelectorAll('.guide-step').length===4,'Visible guide lacks the four-step workflow');
+      assert(document.querySelector('main').textContent.includes('Maria sword bindings') && document.querySelector('main').textContent.includes('Onmyo and shuriken Ki Pulse'),'Guide is missing the shipped gameplay inputs');
       await wait(350);await window.mwm.request('test_screenshot','guide');
+      const beforeMaria=(await window.mwm.request('snapshot')).preset;
+      document.querySelector('#maria').click();await ready();await tab('overview');
+      for(const [mode,source,move] of [['low','light_attack','maria.action_0c85'],['mid','light_attack','maria.action_0c80'],['mid','guard_strong','maria.action_0c89'],['high','heavy_attack','maria.action_0c83']]) {
+        await stance(mode);
+        assert(document.querySelector('[data-assignment="native:'+mode+':'+source+'"]')?.value===move,'Maria preset is missing '+mode+' '+source);
+      }
+      await tab('presets');
+      document.querySelector('[data-preset-template="maria_dash"]').click();await ready();await tab('overview');await stance('mid');
+      assert(document.querySelector('[data-assignment="native:mid:light_attack"]')?.value==='maria.action_0c8a','Maria dodge preset did not load from Presets');
+      assert(JSON.stringify((await window.mwm.request('snapshot')).preset)===JSON.stringify(beforeMaria),'Loading a built-in preset unexpectedly saved the draft');
+      await window.mwm.request('test_screenshot','maria');
+      document.querySelector('#reload').click();await ready();await stance('low');
       assert(document.querySelector('#disable').hidden && !document.querySelector('#enable').hidden,'Disabled runtime shows both actions');
       assert(document.querySelector('#apply').disabled,'Saved moveset still offers redundant save');
       await tab('controls');
@@ -153,6 +187,17 @@ app.whenReady().then(async () => {
       assert(!document.querySelector('#disable').hidden,'Old status poll overwrote newer runtime state');
       await window.mwm.request('test_runtime_running',false);
       document.querySelector('#reload').click();await ready();
+      await window.mwm.request('test_delay_snapshot');await window.mwm.request('test_wait_snapshot');
+      const cycledName=await window.mwm.request('test_preset_hotkey');await wait(250);await ready();
+      assert(document.querySelector('#profile-name').textContent===cycledName,'Controller hotkey did not adopt the active preset');
+      await window.mwm.request('test_release_snapshot');await wait(250);
+      assert(document.querySelector('#profile-name').textContent===cycledName,'Old status poll overwrote a controller preset switch');
+      await tab('frost');
+      document.querySelector('#frost-low .browse-move').click();
+      const frostChoices=[...document.querySelectorAll('.picker-choice')].map(button=>button.querySelector('strong').textContent);
+      const unsupported=(await window.mwm.request('snapshot')).capabilities.moves.filter(move=>move.chord && !move.frost);
+      assert(unsupported.every(move=>!frostChoices.includes(move.name)),'Frost picker offers unsupported chord moves that clear the assignment');
+      document.querySelector('#picker-close').click();await tab('overview');
       // An independent tool can save while this window is open; use only fixture settings.
       // Clean views should follow that saved model, while real draft edits and focus survive polling.
       // Both saves execute production Python Apply rather than replacing renderer state directly.
@@ -350,15 +395,27 @@ app.whenReady().then(async () => {
       document.querySelector('#apply').click();await ready();
       document.querySelector('#reload').click();await ready();
       assert(label('Modifier').querySelector('select').value==='256','Controller remap did not persist');
+      document.querySelector('#haptic-toggle').click();
       label('Modifier').querySelector('button').click();
       for(let i=0;i<100 && label('Modifier').querySelector('select').value!=='8192';i++)await wait(30);
       await ready();
       assert(label('Modifier').querySelector('select').value==='8192','Physical capture did not set the pressed button');
       assert(document.querySelector('#capture-status').hidden,'Capture status remained visible after binding');
       assert(label('Controller mapping').querySelector('select').value==='2','Physical capture did not select its XInput slot');
+      assert(await window.mwm.request('test_haptic_count')===1,'Successful binding did not emit its opted-in feedback');
+      document.querySelector('#haptic-toggle').click();
       document.querySelector('#apply').click();await ready();
       const captured=await window.mwm.request('snapshot');
       assert(captured.preset.modifier_mask===0x2000 && captured.calibration.controller_slot===1,'Physical capture did not persist controller and button together');
+      await window.mwm.request('test_capture_result',{mask:0x8000,label:'Triangle / Y',calibration:{...captured.calibration,device:{backend:'xinput',slot:2},controller_slot:2}});
+      await window.mwm.request('test_delay_controller');label('Modifier').querySelector('button').click();
+      await window.mwm.request('test_wait_controller');
+      change(label('Moveset name').querySelector('input'),'Edited while capturing');await ready();
+      await window.mwm.request('test_release_controller');
+      for(let i=0;i<100 && !document.querySelector('#capture-status').hidden;i++)await wait(30);
+      await ready();
+      assert(label('Moveset name').querySelector('input').value==='Edited while capturing','A delayed capture remap overwrote a newer draft edit');
+      document.querySelector('#reload').click();await ready();
       await tab('speed');
       assert(speed('jin_hayabusa.action_0c6f').value==='100','Apply/reload lost tuning');
       await tab('frost');
@@ -379,6 +436,12 @@ app.whenReady().then(async () => {
       document.querySelector('#apply').click();await ready();
       const savedCustom=(await window.mwm.request('snapshot')).preset.skill_bindings.at(-1);
       assert(savedCustom.input.trigger_mask===32768 && savedCustom.input.modifier_mask===256 && savedCustom.input.gesture==='hold','Captured custom chord did not persist');
+      await window.mwm.request('test_capture_result',{mask:0x40000000,label:'unsupported button',calibration:{...captured.calibration,device:{backend:'xinput',slot:2},controller_slot:2}});
+      routeField('Trigger').querySelector('button').click();
+      for(let i=0;i<100 && !document.querySelector('#notice').textContent.includes('unavailable');i++)await wait(30);
+      await ready();await tab('controls');
+      assert(label('Game controller slot').querySelector('select').value==='1' && document.querySelector('#apply').disabled,'Rejected capture changed the controller mapping of a clean draft');
+      await tab('native');
       routeField('Trigger').querySelector('button').click();await wait(80);
       assert(document.querySelector('#capture-status')?.textContent.includes('Route') && document.querySelector('#capture-status')?.textContent.includes('Waiting'),'Route capture did not identify its active row');
       [...[...document.querySelectorAll('.binding')].at(-1).querySelectorAll(':scope > button')].find(x=>x.textContent==='Remove').click();await ready();
@@ -444,6 +507,13 @@ app.whenReady().then(async () => {
       const midSaved=(await window.mwm.request('snapshot')).preset;
       assert(midSaved.stance_holds.mid==='oda_nobunaga.action_0c6e' && midSaved.skill_bindings.some(row=>row.stance==='mid' && row.source==='strong_followup' && !row.input),'Mid Hold Strong and After Strong did not save together');
       await tab('collection');
+      const librarySearch=document.querySelector('[aria-label="Search move library"]');
+      change(librarySearch,'maria.action_0c80');
+      assert([...document.querySelectorAll('.library-list:not([hidden]) .library-move')].some(card=>!card.hidden && card.textContent.includes('Maria')),'Playable library cannot find a stable move ID');
+      [...document.querySelectorAll('.library-tabs button')].find(button=>button.textContent.includes('Recorded candidates')).click();
+      change(librarySearch,'0x00000C80');
+      assert([...document.querySelectorAll('.research-move')].some(card=>!card.hidden && card.textContent.includes('Maria')),'Recorded library cannot find the action ID shown on its card');
+      change(librarySearch,'');
       const research=[...document.querySelectorAll('.library-tabs button')].find(button=>button.textContent.includes('Unreviewed actions'));
       const unreviewed=(await window.mwm.request('collection')).unreviewed;
       assert(unreviewed.signatures.length>0 && research?.textContent.includes(String(unreviewed.distinct_signatures)),'Unreviewed recording index is missing from Move library');
@@ -503,8 +573,8 @@ app.whenReady().then(async () => {
     // Process exit closes the pipe after Chromium stops issuing status reads.
     app.exit(0);
   } catch(error) {
-    fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({error:String(error),worker:errors}));
+    fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({error:error.message || String(error),worker:errors}));
     worker.kill();app.exit(1);
   }
 });
-setTimeout(()=>{fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({timeout:true,phase,lastMethods:methods.slice(-20),worker:errors}));worker.kill();app.exit(2);},80000).unref();
+setTimeout(()=>{fs.writeFileSync(path.join(folder,'ui-result.json'),JSON.stringify({timeout:true,phase,lastMethods:methods.slice(-20),worker:errors}));worker.kill();app.exit(2);},120000).unref();

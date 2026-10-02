@@ -209,7 +209,7 @@ static void weight_cases() {
         assert(weight_action(victim,0x96,&expected));finish_launch_weight(victim,hit,true);
         const float wanted=boosts ? (weight_native_impulse+2>20 ? 20 : weight_native_impulse+2) : weight_native_impulse;
         float actual=0;assert(copy_field(address(component)+0x5C,actual) && actual==wanted);
-        finish_launch_weight(victim,hit,true);assert(grapple_field(address(component),0x5C,wanted));
+        finish_launch_weight(victim,hit,true);assert(same_field(address(component),0x5C,wanted));
         assert(!launch_weight_count && weight_calls==calls);boss_adapters[5].kind=kind;
     }
     boss_active=active;boss_air_juggle_boost=2;put(player.data(),0x58,player_current);put(player.data(),0x68,player_bank);
@@ -367,7 +367,7 @@ static void native_heavy_string_cases() {
         assert(boss_native_successor(phase+1,boss_imports[phase+2].key)==int(phase+2));
         assert(observed_action(player.data(),0xCF5+phase,nullptr));
         assert(boss_active && boss_active_slot==phase+2);
-        assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(phase+2)));
+        assert(same_field(boss_session.player,0x58,boss_private_descriptor_address(phase+2)));
     }
     assert(sword_string_successor(boss_imports[4])==0);
 }
@@ -457,7 +457,7 @@ static void low_quick_string_cases() {
         assert(squares==2);
         assert(observed_action(player.data(),uint32_t(next),nullptr));
         assert(boss_active && boss_active_slot==slot+1 &&
-            grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot+1)));
+            same_field(boss_session.player,0x58,boss_private_descriptor_address(slot+1)));
         bindings(true);
     }
     assert(sword_string_successor(boss_imports[8])==0);
@@ -769,7 +769,7 @@ static void airborne_cases() {
     assert(boss_native_successor(18,0xC72)==-1 && boss_native_successor(10,0xC72)==11);
     assert(boss_private_actions[18].transition_bodies[1][0x0A]==0xff);
     assert(boss_private_actions[10].transition_bodies[1][0x0A]!=0xff);
-    assert(grapple_field(address(boss_private_actions[18].transition_bodies[0]),0x14,int16_t(0x11)));
+    assert(same_field(address(boss_private_actions[18].transition_bodies[0]),0x14,int16_t(0x11)));
     // Commit the actual guard lookup and all three native phases with owned retained resources.
     // Selector-only tests cannot catch a source-validation or resource-borrowing failure here.
     // Ordinary completion must restore the four player slots after the imported landing.
@@ -800,7 +800,7 @@ static void airborne_cases() {
     for (unsigned slot : {15u,16u}) {
         SetLastError(FRAME_ERROR);
         assert(observed_action(player.data(),boss_imports[slot].key,nullptr));
-        assert(boss_active_slot==slot && grapple_field(boss_session.player,0x58,boss_private_descriptor_address(slot)));
+        assert(boss_active_slot==slot && same_field(boss_session.player,0x58,boss_private_descriptor_address(slot)));
     }
     put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());assert(!boss_active);bindings(false);
     // Dispatch each real C79 graph through held Triangle, chord intent and native heavy selection.
@@ -864,12 +864,12 @@ static void airborne_cases() {
         if (!boss_active || boss_active_slot!=target || dispatch->control.dispatch_count!=1)
             std::fprintf(stderr,"C79 target%u stance%u route%u active%ld slot%u count%lld reason%ld\n",target,stance,route,boss_active,boss_active_slot,dispatch->control.dispatch_count,dispatch->control.last_reason);
         assert(boss_active && boss_active_slot==target && dispatch->control.dispatch_count==1);
-        assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(target)));
+        assert(same_field(boss_session.player,0x58,boss_private_descriptor_address(target)));
         assert(boss_native_successor(target,0xC7A)==(target==5 ? 6 : -1));
         if (target==5) for (unsigned next : {6u,7u,8u,9u}) {
             SetLastError(FRAME_ERROR);
             assert(observed_action(player.data(),boss_imports[next].key,nullptr) && boss_active_slot==next);
-            assert(grapple_field(boss_session.player,0x58,boss_private_descriptor_address(next)));
+            assert(same_field(boss_session.player,0x58,boss_private_descriptor_address(next)));
         }
         command.armed=0;put(player.data(),0x58,address(neutral.data()));boss_finish_call(player.data());
         assert(!boss_active);bindings(false);
@@ -892,8 +892,8 @@ static void weapon_policy_cases() {
     }
     put(jin_bank.data(),0x80,address(pointers));put(jin_bank.data(),0x88,uint16_t(58));
     const auto before=jin_payloads[0];assert(boss_prepare_private_action(2));
-    assert(grapple_field(boss_private_payload_address(2),0x40,int16_t(-1)));
-    assert(grapple_field(boss_private_payload_address(2),0x46,int16_t(-1)) && before==jin_payloads[0]);
+    assert(same_field(boss_private_payload_address(2),0x40,int16_t(-1)));
+    assert(same_field(boss_private_payload_address(2),0x46,int16_t(-1)) && before==jin_payloads[0]);
     boss_private_actions[2]={};effects[0][0x18]=0;assert(!boss_prepare_private_action(2));effects[0][0x18]=0xff;
 }
 
@@ -928,10 +928,10 @@ static void mid_string_cases(unsigned family) {
         const unsigned slot=5+phase;assert(boss_prepare_private_action(slot));
         const auto& clone=boss_private_actions[slot];
         for (unsigned r : {7u,8u}) {
-            assert(grapple_field(address(clone.transition_bodies[r]),0x14,int16_t(phase+1<count ? keys[family][phase+1] : -1)));
+            assert(same_field(address(clone.transition_bodies[r]),0x14,int16_t(phase+1<count ? keys[family][phase+1] : -1)));
             assert(clone.transition_bodies[r][0x0B]==1 && clone.transition_bodies[r][0x0C]==1);
         }
-        assert(grapple_field(address(player_rows[0][7].data()),0x14,int16_t(0xC7B)));
+        assert(same_field(address(player_rows[0][7].data()),0x14,int16_t(0xC7B)));
         if (phase+1<count) assert(boss_native_successor(slot,keys[family][phase+1])==int(slot+1));
         else assert(sword_string_successor(boss_imports[slot])==0);
         assert(clone.payload[0x0B]==4);
@@ -1068,11 +1068,11 @@ static void slam_cases() {
     for (unsigned phase=0;phase<3;++phase) assert(!memcmp(boss_private_actions[phase+5].transition_bodies[0],rows[phase][0],0x30));
     for (unsigned offset : {0x24u,0x26u,0x38u}) {int16_t recovery=0;assert(copy_field(boss_private_payload_address(7)+offset,recovery) && recovery==29);}
     int16_t cost=0;assert(copy_field(boss_private_payload_address(7)+0x16,cost) && cost==20);
-    assert(boss_private_actions[7].payload[0x33]==40 && grapple_field(boss_private_descriptor_address(7),0x48,address(&combat_pointer)));
+    assert(boss_private_actions[7].payload[0x33]==40 && same_field(boss_private_descriptor_address(7),0x48,address(&combat_pointer)));
     unsigned pulses=0;
     for (unsigned row=0;row<boss_private_actions[7].transition_count;++row)
-        if (grapple_field(address(boss_private_actions[7].transition_bodies[row]),0x14,int16_t(0xD5F))) {
-            assert(grapple_field(address(boss_private_actions[7].transition_bodies[row]),0x20,int16_t(29)));++pulses;
+        if (same_field(address(boss_private_actions[7].transition_bodies[row]),0x14,int16_t(0xD5F))) {
+            assert(same_field(address(boss_private_actions[7].transition_bodies[row]),0x20,int16_t(29)));++pulses;
         }
     assert(pulses);
     for (unsigned slot=5;slot<8;++slot) assert(boss_move_timing(slot).startup_speed==1);
@@ -1088,7 +1088,7 @@ static void slam_cases() {
         put(motion.data(),0x58,boss_imports[slot].clip);
         for (float frame : {0.0f,ends[phase]-2,ends[phase]}) {
             put(player.data(),0x28,frame);put(player.data(),0x6A8,1.0f);put(player.data(),0x24,1.0f);
-            assert(boss_advance_clock(player.data(),1)==1 && grapple_field(address(player.data()),0x28,frame));
+            assert(boss_advance_clock(player.data(),1)==1 && same_field(address(player.data()),0x28,frame));
         }
         if (phase<2) {SetLastError(FRAME_ERROR);assert(observed_action(player.data(),keys[phase+1],nullptr));}
     }
@@ -1270,11 +1270,14 @@ static void recorded_pulse_cost_cases() {
     }
 }
 
+#include "maria_cases.h"
+
 int main() {
     // Stress native input priority, resource isolation and recovery under rejected commits.
     // Run the three moves through ordinary setter calls with no armed controller gesture.
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
+    maria_transition_cases();
     recorded_pulse_cost_cases();
     native_heavy_string_cases();
     jin_string_input_cases();low_quick_string_cases();

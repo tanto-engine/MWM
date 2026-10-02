@@ -8,7 +8,7 @@ The **How to use** tab walks through the four-step edit, route, controller, and 
 
 ## Start playing
 
-Download **MWM.exe** from [Releases](https://github.com/neuriv/tanto-engine/releases). The EXE contains its own interface, Engine worker and move definitions; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
+Download **MWM.exe** from [Latest release](https://github.com/neuriv/tanto-engine/releases/latest). The EXE contains its own interface, Engine worker and move definitions; no Python, Node or extra asset downloads are needed. Nioh itself must be installed.
 
 Open Nioh, enter a mission with a single katana, then open MWM. New installs start with **Sword Rebuild 1**; existing saved settings stay intact. Choose your assignments and **Save changes**, then **Enable mod**. Disable the mod before saving edits; invalid drafts stay in the editor and never change the running moveset. Use **Disable mod** to return to normal gameplay; closing the editor leaves an enabled mod running. After an Engine update, restart Nioh before enabling the new EXE. Stop retains native code until the game exits; mixing builds is blocked.
 
@@ -29,11 +29,31 @@ bloodborne gun shot uses tap-and-release; holding is unassigned by default. A ne
 
 ## Change your bindings
 
-**Sword** shows one stance branch at a time. Select a named input to read its trigger and current move, then choose a reviewed replacement. The detailed list view is available below. **Input routes** contains every original and custom route. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or original inputs. For example, use Low held Triangle for the launcher and High held Triangle for Izuna. The drop still needs native enemy contact.
+**Moves** shows Low, Mid and High tabs with each native input and its replacement. Use the route controls for custom tap, hold or follow-up chords. Strings belong on Quick/Strong attacks; skills belong on skill inputs. Select **Launcher only** or **Launcher + Izuna Drop** on supported held, custom or original inputs. The drop still needs native enemy contact.
 
-**Input routes** lists overrides for reviewed sword moves. Each row can use its **Original Nioh input** or a **Custom controller chord** with its own Modifier, Trigger and tap/hold choice. A custom route leaves its named source assignment unchanged, while the configured button pair takes priority over a Nioh action on those same buttons. Per-route chords support L1/LB + Circle/B, Triangle/Y, L2/LT or Square/X; up to 24 custom rows are available separately from 32 native slots. **Controller** retains the original global custom chord and its shared hold threshold. Press to bind on either page, release the controls, then press one button on the connected pad. The recorded button and detected mapping remain pending until Save. R1/RB stays reserved for Ki Pulse and Frost Moon. Imported graphs need an explicit stance, and launcher-only and full Izuna must use different stances. Invalid combinations open a popup naming the conflicting move, controls and stances, with a correction.
+Custom routes accept two distinct buttons from L1/LB, Circle/B, Triangle/Y, L2/LT and Square/X, with an optional third-button follow-up. Up to 24 custom rows coexist with 32 native binding slots. **Controller** retains the broader global chord and its shared hold threshold; R1/RB remains reserved for Pulse and Frost Moon. Press to bind, release the controls, then press the intended button. Mapping changes stay in the draft until Save. Imported graphs require an explicit stance, and conflicting routes are rejected with a correction.
 
-**Tuning** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests its native speed. The right-hand guide explains hovered or focused controls. Soft editor sounds can be muted there; short XInput binding haptics are optional and off by default. **More** provides Frost Moon destinations, the original moveset, and moveset import/export. Binding groups let you reuse one part without replacing the rest. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
+**Speed** controls bounded playback rates. Clearing a phase restores inheritance; entering `1` requests native speed. **Presets** saves complete movesets and reusable binding groups. **Move library** searches move names, descriptions and IDs; Browse respects the destination's supported choices. **How to use** explains controls and cast cancellation. The side guide follows hovered or focused controls; sounds can be muted and binding haptics are optional. **More** includes Frost Moon and the sword baseline. Ki Pulse authoring, physics and Frost timing remain developer-controlled.
+
+## Maria presets and cast cancellation
+
+Load **Maria sword** or **Maria dodge string** in the editor, then review and save the draft.
+
+![Maria sword preset in the editor](docs/maria-ui.png)
+
+| Input | Maria sword |
+| --- | --- |
+| Mid Quick / Square / X | Quick string, three phases |
+| High Strong / Triangle / Y | Horizontal string, two phases |
+| Low Quick / Square / X | Aerial kicks, two phases |
+| Mid Guard + Strong | Forward slash |
+| High Strong → Guard + Quick | Jin downward slash, retained for cast testing |
+
+The dodge preset swaps Mid Quick for the dodge-slash string. Continue pressing the assigned attack to advance and restart a completed string; stopping input retains normal recovery. A phase may contain several hits. Seven recorded Maria candidates remain unsupported, including grabs, evasions, buff, teleport and beam attacks.
+
+For Onmyo or shuriken cancellation, start a sword attack with a remaining Ki Pulse window, use the shortcut, then tap **R1/RB after the effect releases**. The engine requests a native Pulse and lets the effect persist. Cast families use their native release events and share the preceding attack's Pulse window. Casting from idle does not manufacture one.
+
+The user confirmed Guardian Spirit Talisman and shuriken cancellation and the initial Maria animations. Later High continuation and string-restart fixes pass the native offline matrix but await a fresh gameplay check; other Onmyo items and damage/contact coverage remain unverified.
 
 ## Controllers
 
@@ -71,4 +91,4 @@ Match descriptions against the final few relevant executions before Stop, lookin
 
 MWM lives in this repository's `mwm/` folder. Keep Recorder beside the repository for integration tests. After `npm ci` in `mwm/`, `Trainer.ps1` builds current native libraries and opens the source UI. The repository root's `Test-Offline.ps1` runs both maintained suites, including product UI and binding checks.
 
-Close the source editor before building. `Build.ps1` requires clean commits, a pinned Engine, a new version and release notes. It packages and checks an isolated EXE, then records hashes and an immutable version tag. Packaged checks exercise startup, actual UI rebinding, saved settings, XInput translation and bundled assets with game access blocked. [CODE_GUIDE.md](CODE_GUIDE.md) gives module details and future work.
+Close the source editor before building. `Build.ps1` requires clean source, a new version and release notes. It packages and checks an isolated EXE, then records hashes and an immutable version tag. Packaged checks exercise startup, Maria presets, actual UI rebinding, saved settings, controller translation and bundled assets with game access blocked. [The architecture diagrams](../README.md#architecture) and [code guide](../CODE_GUIDE.md) explain the module boundaries.

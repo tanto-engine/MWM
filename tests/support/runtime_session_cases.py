@@ -88,6 +88,28 @@ class RuntimeSessionTests(unittest.TestCase):
                 encode_session(dict(self.config,chord_reservations=[dict(buttons=buttons,stances=1,mode=mode)]),
                                self.pid,self.born)
 
+    def test_plain_chord_reservations_retain_global_buttons_without_widening_sequences(self):
+        from prepare_session import compiled_chord_reservations
+        from game_controller import GAME_DEVICE
+        from engine_config import DEFAULT_PRESET
+        calibration = dict(device=GAME_DEVICE, lb_mask=0x100)
+        preset = dict(DEFAULT_PRESET, tap_move='okatsu.charged_rush', hold_move=None,
+                      modifier_mask=0x100, skill_bindings=[])
+        for trigger in (0x800, 0x1000, 1):  # R2, Cross and D-pad up were offered by the global chord editor.
+            with self.subTest(trigger=trigger):
+                preset['trigger_mask'] = trigger
+                reservations = compiled_chord_reservations(preset, calibration, self.config['imports'])
+                self.assertEqual(reservations, [dict(buttons=0x100|trigger, stances=1, mode=0)])
+                encoded = encode_session(dict(self.config, chord_reservations=reservations), self.pid, self.born)
+                self.assertEqual(encoded[12416:12420], (0x100|trigger).to_bytes(2,'little')+bytes((1,0)))
+                with self.assertRaisesRegex(ValueError, 'chord reservation'):
+                    encode_session(dict(self.config, chord_reservations=[dict(reservations[0], mode=4)]), self.pid, self.born)
+        preset['trigger_mask'] = 0x200
+        with self.assertRaisesRegex(ValueError, 'R1 / RB is reserved'):
+            compiled_chord_reservations(preset, calibration, self.config['imports'])
+        with self.assertRaisesRegex(ValueError, 'chord reservation'):
+            encode_session(dict(self.config, chord_reservations=[dict(buttons=0x300, stances=1, mode=0)]), self.pid, self.born)
+
     def test_full_import_capacity_and_overflow(self):
         # The former 32-phase cap rejected otherwise valid authored movesets.
         # Encode every available slot, then reject an additional phase before packing.

@@ -96,6 +96,23 @@ class BindingGroupTests(unittest.TestCase):
                              game_button_mask(target_calibration['device'], result[field]))
         self.assertEqual(result['frost_moon'], target['frost_moon'])
 
+    def test_imported_chord_does_not_remap_existing_custom_routes(self):
+        xinput = worker.Desktop.xinput_calibration(0)
+        for source_calibration, target_calibration in ((self.calibration, xinput), (xinput, self.calibration)):
+            with self.subTest(source=source_calibration['device']['backend']):
+                source = worker.trainer.remap_preset(self.preset, self.calibration, source_calibration)
+                target = dict(self.preset, tap_move=None, hold_move=None, low_heavy=None,
+                    stance_holds=dict(low=None,mid=None,high=None), frost_moon=dict(low=None,mid=None,high=None),
+                    skill_bindings=[dict(source='tiger_sprint',stance='mid',move='okatsu.leaping_slash',
+                        input=dict(modifier_mask=16, trigger_mask=1, gesture='tap'))])
+                target = worker.trainer.remap_preset(target, self.calibration, target_calibration)
+                before = deepcopy(target)
+                result = groups.import_group(groups.export_group(source, source_calibration, 'chord'),
+                    target, target_calibration, 'chord')
+                self.assertEqual(result['skill_bindings'], before['skill_bindings'])
+                self.assertEqual(target, before)
+                worker.Desktop().preview(dict(preset=result, calibration=target_calibration))
+
     def test_group_cannot_smuggle_unrelated_settings_or_mutate_on_conflict(self):
         # A group file is an exact field contract, not a general preset patch.
         # Cross-group requirements are validated after copying, so rejection cannot change the draft.

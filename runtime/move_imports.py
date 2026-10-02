@@ -118,7 +118,7 @@ def check_import_topology(moves, string_variant):
             current = moves[current]['next_variant']
 
 
-def read_import_manifest(path, catalogue_path=None):
+def read_import_manifest(path, catalogue_path=None, *, catalogue=None):
     # Resolve named configured successors into runtime table indices.
     # Validate the manifest's source profile and preserve baseline slots zero/one.
     # Adding supported ordinary actions stays configuration work.
@@ -165,7 +165,9 @@ def read_import_manifest(path, catalogue_path=None):
                     or move['adapter_kind'] in (2, 4) and adapter['player_key'] not in STANCE_OPENERS.values()
                     or any(type(value) is not int for value in values)):
                 raise ValueError('Unverified player replacement signature')
-    catalogue = load_catalogue(catalogue_path) if catalogue_path is not None else load_catalogue()
+    # A compilation batch shares one validated catalogue; source manifests remain fresh.
+    if catalogue is None:
+        catalogue = load_catalogue(catalogue_path) if catalogue_path is not None else load_catalogue()
     names = {move['id']: move['name'] for move in iter_moves(catalogue)}
     for move in moves:
         move['name'] = names[move['id']]

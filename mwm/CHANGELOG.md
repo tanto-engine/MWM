@@ -1,5 +1,18 @@
 # Release notes
 
+## 0.3.0
+
+- Fix cast cancellation's 32-bit action-ID comparison. Onmyo and shurikens share an effect-release gate and the preceding sword Pulse window; native Pulse handles recovery without direct Ki or item writes.
+- Add Maria quick, horizontal, kick and dodge-slash strings plus forward slash, with two editable presets. Correct the camera asset, supply High-stance continuation rows, and let fresh attack presses restart completed strings. Exclude automatic boss restart branches and unrelated action-ID collisions.
+- Expose Maria presets and cast guidance in the GUI. Fix action-ID search, invalid Frost selections, stale preset/capture responses, rejected controller-capture mutations, and optional binding feedback.
+- Preserve stance assignments regardless of JSON key order, limit binding-group remaps to the imported group, and avoid false preset cycling after pauses. Keep global chord inputs compatible with the native reservation protocol.
+- Support all 64 compiled import slots. Validate native field widths, vocal categories and finite animation clocks; reject missing requested clips and restore resource callbacks on failure.
+- Keep failed cleanup visible, find archives beside the verified running game, identify failed resource components, and clean incomplete portable EXE extraction.
+- Reuse one validated catalogue per import batch. Ten Maria previews improved from 1385ms to 440ms in the measured source run, with fresh data still loaded for every preview.
+- Consolidate repeated code, replace redundant comments with ownership and timing contracts, and add architecture diagrams and broader native, protocol, controller and Electron regressions.
+
+The user verified Guardian Spirit Talisman and shuriken cancellation and the initial Maria moves. The later High-stance continuation and string restart fixes pass offline regressions but await a fresh gameplay check. Other Onmyo items, damage/contact coverage and another-PC acceptance remain unverified. The release receipt records the final automated results and exact artifact hashes.
+
 ## 0.3.0-alpha.18
 
 - Add a native Pulse request for the recorded Guardian Spirit Talisman cast: retain the sword's actual Pulse deadline and wait until its timing stream passes the final non-sound event.

@@ -8,17 +8,25 @@
   "review_status": "candidate",
   "priority": null,
   "description": "Forward Dodge Slash Into Back Evasive Dodge",
-  "mapping_status": "unmapped",
-  "steps": [],
+  "mapping_status": "partial",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Recorded phase; one fresh attack press per phase in the player string.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C89",
+        "motion_id": 1030,
+        "timing_id": 1030
+      }
+    }
+  ],
   "observed_links": [],
   "capture_context": {
-    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "actor_identity": "Same actor and owner across the selected sequence; Maria action-bank fingerprint matches the complete payloads in archive_00 entry 124.",
     "weapon_classification": "User-described sword destination; equipped weapon unverified."
   },
   "blocked_reasons": [
-    "actor_and_phase_mapping_unreviewed",
-    "william_adapter_unverified",
-    "motion_timing_resources_unverified",
     "gameplay_unverified"
   ],
   "evidence": [
@@ -35,8 +43,20 @@
       "annotation_end_seconds": 79.359,
       "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
       "identity_line": 2,
-      "steps": [],
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 710,
+          "metadata_line": 71,
+          "first_observed_seconds": 76.671,
+          "counter": 118
+        }
+      ],
       "native_links": []
     }
+  ],
+  "review_notes": [
+    "Selected action, motion, payload and native transition rows agree with the installed Maria asset bank. Hit counts in the note do not equal input counts. Player continuation is one fresh attack press per selected phase.",
+    "Only the forward-slash C89 phase is adapted. The following evasive dodge remains excluded from the playable skill."
   ]
 }

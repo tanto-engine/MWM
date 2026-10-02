@@ -18,6 +18,7 @@ from resource_assets import read_asset
 
 from project_paths import DATA
 STATE = struct.Struct('<IIiiQ32s4QII2Q4Q')
+RESOURCE_KINDS = ('actions', 'timing', 'motion', 'camera')  # Native completion-mask bit order.
 loader.K.OpenFileMappingW.argtypes = [W.DWORD, W.BOOL, W.LPCWSTR]
 loader.K.OpenFileMappingW.restype = W.HANDLE
 
@@ -46,7 +47,7 @@ def resource_identity(profile, motion_keys=()):
     # Hash stable source identities and content fingerprints while excluding editorial notes.
     # Different bosses or revised assets must never share mutable module-local resource state.
     assets = [{key: profile['assets'][kind][key] for key in ('archive', 'entry_id', 'source_name', 'size', 'sha256')}
-              for kind in ('actions', 'timing', 'motion', 'camera')]
+              for kind in RESOURCE_KINDS]
     identity = [profile['resource_profile_id'], profile['build_sha256'], assets, list(motion_keys),
                 sorted(profile.get('object_keys', []))]
     return hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).digest()
@@ -59,9 +60,10 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
     profile = json.loads(profile_path.read_text())
     if profile['build_sha256'] != game.identity['build_sha256']:
         raise ValueError('Resource profile targets a different game build')
-    assets = [profile['assets'][kind] for kind in ('actions', 'timing', 'motion', 'camera')]
+    assets = [profile['assets'][kind] for kind in RESOURCE_KINDS]
+    archive = Path(game.main['path']).parent / 'archive'
     for asset in assets:
-        read_asset(loader.NIOH.parent / 'archive', asset)
+        read_asset(archive, asset)
     pid = game.identity['pid']
     birth = int(game.identity['creation_filetime'])
     motion_keys=sorted(set(motion_keys))
@@ -122,13 +124,14 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                     raise ValueError('Resource owner identity mismatch')
                 if not game.alive():
                     raise ResourceLoadError('Nioh exited during move-resource loading. Activation stopped; reopen Nioh and explicitly enable the mod again.')
+                pending = ', '.join(kind for index, kind in enumerate(RESOURCE_KINDS) if not completed & (1 << index))
                 if not detached and phase >= 2 and (player or error):
                     detach_resources(handle, args, module)
                     detached = True
                 if phase >= 3 and (player or error):
                     if error or phase != 3 or completed != 15:
-                        detail=f'clip index {error&0x1fffffff}' if error&0x20000000 else f'error {error}'
-                        raise ResourceLoadError(f"{profile['boss_id']}: native resource decode failed ({detail}, completed={completed}, motions={motion_keys})")
+                        detail = f'error {error}' + (f', clip index {error&0x1fffffff}' if error&0x20000000 else '')
+                        raise ResourceLoadError(f"{profile['boss_id']}: native resource decode failed ({detail}; incomplete: {pending or 'none'}; completed_mask={completed:#x}; motions={motion_keys})")
                     # E84E60 reads asset+0x160: native decoding must finish before the action can
                     # instantiate its model or projectile. The frame hook is already detached.
                     pending_objects = [str(key) for key, address in zip(object_keys, object_assets)
@@ -137,7 +140,6 @@ def load_resources(game, profile_path=DATA/'resources/okatsu.json', motion_keys=
                         return actions, timing, motion, camera, player, owner
                 if time.monotonic() >= deadline:
                     if phase == 2:
-                        pending = ', '.join(kind for index, kind in enumerate(('actions', 'timing', 'motion', 'camera')) if not completed & (1 << index))
                         raise ResourceLoadError(f"{profile['boss_id'].replace('_', ' ').title()}: archive loading stalled; waiting for {pending}. Activation stopped; restart Nioh before retrying.")
                     if phase == 3 and player:
                         raise ResourceLoadError(f"{profile['boss_id']}: waiting for object assets {', '.join(pending_objects)}. Activation stopped.")

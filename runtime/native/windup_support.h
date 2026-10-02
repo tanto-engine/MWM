@@ -110,7 +110,7 @@ static float boss_advance_clock(void* actor, float native_delta) {
     float frame = 0, speed = 0, delta = 0;
     if (!copy_field(player + 0x28, frame) || !copy_field(player + 0x6A8, speed)
         || !copy_field(player + 0x24, delta)
-        || !(frame >= 0.0f && speed > 0.0f && speed <= 8.0f
+        || !(std::isfinite(frame) && frame >= 0.0f && speed > 0.0f && speed <= 8.0f
              && delta > 0.0f && delta <= 4.0f && delta == native_delta)) return native_delta;
     const float tracking_end=move.key==0xC79 ? 26 : move.key==0xC83 ? 29 : move.key==0xC74 ? 20 : 1000;
     if (group<3 && boss_tracking_rates[group]>0 && frame<tracking_end) {

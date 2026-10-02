@@ -44,6 +44,31 @@ static void cast_cue(unsigned index) {
 }
 static void cast_pulse_cases() {
     DispatchCommand probe{};
+    cast_setup();put(cast_pose.data(),4,uint32_t(0x155)); // Live descriptor metadata follows its DWORD key.
+    cast_cue(22);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    assert(choose_cast_pulse(probe)==NativeCastPulse);++checks;
+    cast_setup();original_lookup=nullptr;lookup_target=reinterpret_cast<void*>(&cast_lookup);
+    cast_cue(14);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    assert(choose_cast_pulse(probe)==NativeCastPulse);++checks;
+    for (int motion : {110,111,104}) {
+        cast_setup();put(neutral.data(),0,uint32_t(motion==104 ? 0x4D0 : 0x263));
+        put(neutral_payload.data(),0x20,int32_t(motion));
+        put(neutral_payload.data(),0x18,uint64_t(motion==104 ? 0x2184C0000ULL : 0x2181C0000ULL));
+        cast_cue(14);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+        assert(choose_cast_pulse(probe)==NativeCastPulse);++checks;
+    }
+    cast_setup();
+    constexpr uint32_t throw_events[][3]={{6,10,2},{7,0,1},{10,40,0},{16,10,0},{16,10,4},
+        {25,0,0},{28,10,1},{54,10,3},{64,10,4},{68,10,5},{120,41,0}};
+    put(voice_record.data(),4,uint32_t(std::size(throw_events)));
+    memcpy(voice_record.data()+0x24,throw_events,sizeof(throw_events));
+    cast_cue(0);assert(!cast_pulse_input.ready);
+    cast_cue(3);assert(cast_pulse_input.ready);++checks;
+    cast_setup();
+    constexpr uint32_t instant_events[][3]={{0,40,0},{1,10,0},{160,41,0}};
+    put(voice_record.data(),4,uint32_t(std::size(instant_events)));
+    memcpy(voice_record.data()+0x24,instant_events,sizeof(instant_events));
+    cast_cue(1);assert(cast_pulse_input.ready);++checks;
     cast_setup();alignas(8) std::array<uint8_t,0xA0> vitals{};
     put(owner.data(),0x240,address(vitals.data()));
     state(0xCB7,3300,0);put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
@@ -80,10 +105,11 @@ static void cast_pulse_cases() {
 
     cast_setup();cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     assert(choose_cast_pulse(probe)==IneligibleRequest); // R1 buffered; effect rows still pending.
-    cast_cue(14);assert(!cast_pulse_input.ready); // Sound98 precedes the final non-sound row132.
-    cast_cue(22);assert(cast_pulse_input.ready); // Sound136 witnesses completion of those rows.
+    cast_cue(12);assert(!cast_pulse_input.ready); // Sound86 precedes release91.
+    cast_cue(14);assert(cast_pulse_input.ready); // Sound98 follows release; cleanup132 need not finish.
     cast_sample(0);assert(choose_cast_pulse(probe)==NativeCastPulse && probe.desired_key==0xD5F);
-    cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==IneligibleRequest);++checks;
+    assert(cast_pulse_input.edge && cast_pulse_input.closes); // Selection alone does not consume a refused Pulse.
+    ++checks;
 
     cast_setup();cast_cue(22);cast_pulse_input.closes=1;cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     assert(choose_cast_pulse(probe)==IneligibleRequest);++checks;
@@ -112,6 +138,13 @@ static void cast_pulse_cases() {
     assert(choose_cast_pulse(probe)==IneligibleRequest && !cast_pulse_input.closes);++checks;
     cast_setup();cast_cue(22);put(neutral_payload.data(),0x20,int32_t(112));cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     assert(choose_cast_pulse(probe)==IneligibleRequest);++checks;
+    cast_setup();cast_cue(14);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    original_action=[](void*,uint32_t,void*) {return false;};
+    assert(!observed_action_impl(player.data(),0,nullptr,ActionRequest::CastPulse));
+    assert(cast_pulse_input.edge && cast_pulse_input.closes);
+    original_action=cast_action;cast_sample(0);
+    assert(observed_action_impl(player.data(),0,nullptr,ActionRequest::CastPulse));
+    assert(!cast_pulse_input.edge && !cast_pulse_input.closes);++checks;
 
     cast_setup();cast_cue(22);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     const auto payload_before=neutral_payload;

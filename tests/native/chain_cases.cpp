@@ -611,7 +611,7 @@ int main() {
     for (unsigned slot=0;slot<2;++slot) {
         const int16_t earliest=slot==0 ? 54 : 78;
         for (unsigned offset : {0x24u,0x26u,0x38u})
-            assert(grapple_field(boss_private_payload_address(slot),offset,earliest));
+            assert(same_field(boss_private_payload_address(slot),offset,earliest));
     }
     for (unsigned slot=0;slot<5;++slot) for (uint8_t direction : {0x1f,0x21,0x22,0xff}) {
         int16_t selected=-1;

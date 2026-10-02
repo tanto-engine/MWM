@@ -26,6 +26,18 @@ try {
   fs.writeFileSync(path.join(source, 'MWMWorker.exe'), 'worker fixture');
   fs.writeFileSync(path.join(source, '_internal', 'python.dll'), 'library fixture');
   const first = retainWorker(source, state, '0.3.0-alpha.2');
+  const copy = fs.cpSync;
+  try {
+    fs.cpSync = (_source, stage) => {
+      fs.writeFileSync(path.join(stage, 'partial-worker'), 'incomplete');
+      throw new Error('Simulated disk full');
+    };
+    assert.throws(() => retainWorker(source, state, '0.3.0-alpha.3'), /Simulated disk full/);
+  } finally { fs.cpSync = copy; }
+  assert.deepEqual(fs.readdirSync(path.join(state, 'workers')), ['0.3.0-alpha.2'], 'Failed extraction left partial workers behind');
+  fs.writeFileSync(path.join(source, 'MWMWorker.exe'), 'next worker');
+  const next = retainWorker(source, state, '0.3.0-alpha.3');
+  assert.equal(fs.readFileSync(next, 'utf8'), 'next worker');
   // Delete only this owned fixture's simulated extraction; no user runtime is involved.
   // Reopening must reuse a complete cached worker without its original source files.
   // The version key keeps an already-running supervisor's files unchanged.
@@ -33,5 +45,5 @@ try {
   assert.equal(retainWorker(source, state, '0.3.0-alpha.2'), first);
   assert.equal(fs.readFileSync(first, 'utf8'), 'worker fixture');
   assert.equal(fs.readFileSync(path.join(path.dirname(first), '_internal', 'python.dll'), 'utf8'), 'library fixture');
-  assert.deepEqual(fs.readdirSync(path.join(state, 'workers')), ['0.3.0-alpha.2']);
+  assert.deepEqual(fs.readdirSync(path.join(state, 'workers')), ['0.3.0-alpha.2', '0.3.0-alpha.3']);
 } finally { fs.rmSync(folder, {recursive:true, force:true}); }

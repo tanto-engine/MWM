@@ -256,14 +256,6 @@ struct ReplacementScope {
     }
 };
 
-template<class T> static bool grapple_field(uint64_t base, unsigned offset, T expected) {
-    // Compare one native field at its recorded integer width.
-    // Byte selectors and signed action words must not include neighboring payload bytes.
-    // Pair ownership still uses complete pointer-width comparisons.
-    T value{};
-    return copy_field(base+offset,value) && value==expected;
-}
-
 static int grapple_resource_index(uint64_t table, int32_t key) {
     // Read the native key/index table in bounded chunks before a paired handoff.
     // Require one matching entry and unchanged table ownership across the scan.
@@ -279,7 +271,7 @@ static int grapple_resource_index(uint64_t table, int32_t key) {
             index=chunk[row][1];
         }
     }
-    return grapple_field(table,8,count) && grapple_field(table,16,pairs) ? index : -1;
+    return same_field(table,8,count) && same_field(table,16,pairs) ? index : -1;
 }
 
 static bool grapple_victim_resources(uint64_t owner) {
@@ -289,7 +281,7 @@ static bool grapple_victim_resources(uint64_t owner) {
     uint64_t motion=0,timing=0,bank=0,wrapper=0,clips=0,table=0,clip=0,data=0;
     const auto module=reinterpret_cast<uint64_t>(GetModuleHandleW(nullptr));
     if (!copy_field(owner+0x38,motion) || !copy_field(owner+0x68,timing)
-        || !copy_field(motion+0x18,bank) || !grapple_field(bank,0,module+0x13C8FA0)
+        || !copy_field(motion+0x18,bank) || !same_field(bank,0,module+0x13C8FA0)
         || !copy_field(bank+0x468,clips) || !copy_field(bank+0x480,table)) return false;
     const int motion_index=grapple_resource_index(table,35030);
     uint8_t clip_header[0x40];
@@ -305,8 +297,8 @@ static bool grapple_victim_resources(uint64_t owner) {
         || !copy_field(data+relative+8,event_offset) || event_offset<16 || event_offset>0x100000) return false;
     uint8_t events[512*12];
     return copy_bytes(data+relative+event_offset,events,event_count*12)
-        && grapple_field(owner,0x38,motion) && grapple_field(owner,0x68,timing)
-        && grapple_field(motion,0x18,bank) && grapple_field(timing,0x20,wrapper);
+        && same_field(owner,0x38,motion) && same_field(owner,0x68,timing)
+        && same_field(motion,0x18,bank) && same_field(timing,0x20,wrapper);
 }
 
 static uint64_t replace_native_grapple(void* context, uint64_t descriptor) {
@@ -320,30 +312,30 @@ static uint64_t replace_native_grapple(void* context, uint64_t descriptor) {
     uint32_t index=0; const uint64_t entry=original_lookup(context,0xD4A,&index);
     uint64_t payload=0,table=0,row=0,chosen=0,flags=0,partner=0,component=0,victim=0,mode=0,previous_partner=0;
     uint16_t start=0,count=0;
-    if (index!=0 || !entry || !grapple_field(player,0x58,entry) || !grapple_field(entry,0,uint32_t(0xD4A))
-        || !copy_field(entry+0x20,payload) || !grapple_field(payload,0x20,int32_t(5050))
-        || !grapple_field(payload,0x18,uint64_t(0x194C0000))
+    if (index!=0 || !entry || !same_field(player,0x58,entry) || !same_field(entry,0,uint32_t(0xD4A))
+        || !copy_field(entry+0x20,payload) || !same_field(payload,0x20,int32_t(5050))
+        || !same_field(payload,0x18,uint64_t(0x194C0000))
         || !copy_field(entry+0x78,table) || !copy_field(entry+0x80,start)
         || !copy_field(entry+0x82,count) || count!=37
         || !copy_field(table+(uint64_t(start)+8)*8,row) || !copy_field(player+0x90,chosen) || chosen!=row
-        || !grapple_field(row,0,uint16_t(22)) || !grapple_field(row,0x0B,uint8_t(0xff))
-        || !grapple_field(row,0x14,int16_t(0x301))) return 0;
-    if (!copy_field(descriptor+0x20,payload) || !grapple_field(descriptor,0,uint32_t(0x301))
-        || !grapple_field(payload,0x20,int32_t(5051)) || !grapple_field(payload,0x18,uint64_t(0x80780C0000ULL))
+        || !same_field(row,0,uint16_t(22)) || !same_field(row,0x0B,uint8_t(0xff))
+        || !same_field(row,0x14,int16_t(0x301))) return 0;
+    if (!copy_field(descriptor+0x20,payload) || !same_field(descriptor,0,uint32_t(0x301))
+        || !same_field(payload,0x20,int32_t(5051)) || !same_field(payload,0x18,uint64_t(0x80780C0000ULL))
         || !copy_field(player+0x40,flags) || !(flags&(1ULL<<22))
         || !copy_field(player+0x5B0,partner) || partner==boss_session.player_owner) return 0;
-    if (!copy_field(partner+0xE90,mode) || !grapple_field(mode,0x0C,uint32_t(0))
+    if (!copy_field(partner+0xE90,mode) || !same_field(mode,0x0C,uint32_t(0))
         || !copy_field(partner+0x230,component) || !copy_field(component+8,victim) || victim==player
-        || !grapple_field(victim,0,boss_session.vtable) || !grapple_field(victim,0x50,partner)
+        || !same_field(victim,0,boss_session.vtable) || !same_field(victim,0x50,partner)
         || !copy_field(victim+0x5B0,previous_partner)
         || (previous_partner && previous_partner!=boss_session.player_owner)) return 0;
     // Native7104DD establishes victim+5B0 and its pending flags after this lookup.
     // Requiring that future state here would silently reject a valid first grapple.
     const uint64_t victim_descriptor=original_lookup(reinterpret_cast<void*>(victim+0x70),0x362,&index);
-    if (index!=2 || !victim_descriptor || !grapple_field(victim_descriptor,0,uint32_t(0x362))
-        || !grapple_field(victim_descriptor,0x40,uint8_t(1)) || !copy_field(victim_descriptor+0x20,payload)
-        || !grapple_field(payload,0x0C,int16_t(0x362)) || !grapple_field(payload,0x18,uint64_t(0x8038000000ULL))
-        || !grapple_field(payload,0x20,int32_t(35030)) || !grapple_field(payload,0x34,int32_t(-1))
+    if (index!=2 || !victim_descriptor || !same_field(victim_descriptor,0,uint32_t(0x362))
+        || !same_field(victim_descriptor,0x40,uint8_t(1)) || !copy_field(victim_descriptor+0x20,payload)
+        || !same_field(payload,0x0C,int16_t(0x362)) || !same_field(payload,0x18,uint64_t(0x8038000000ULL))
+        || !same_field(payload,0x20,int32_t(35030)) || !same_field(payload,0x34,int32_t(-1))
         || !grapple_victim_resources(partner) || !boss_camera_available()) return 0;
     DispatchCommand command{}; LARGE_INTEGER now; QueryPerformanceCounter(&now);
     const int64_t frequency=dispatch->control.qpc_frequency;
@@ -466,9 +458,9 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
         const unsigned ordinary_hold=stance_hold(key);
         if (ordinary_hold<boss_import_count && !boss_adapters[ordinary_hold].kind) {
             uint64_t payload=0;const int32_t motion=key==0xCF5 ? 4300 : key==0xC7A ? 2300 : 3300;
-            if (grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
-                && copy_field(descriptor+0x20,payload) && grapple_field(payload,0x20,motion)
-                && grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
+            if (same_field(descriptor,0,key) && same_field(descriptor,0x40,uint8_t(1))
+                && copy_field(descriptor+0x20,payload) && same_field(payload,0x20,motion)
+                && same_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
                 && held_binding_context(command,ordinary_hold,key)) {
                 if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,ordinary_hold,command)) {
                     SetLastError(native_error);return deferred;
@@ -489,9 +481,9 @@ static uint64_t observed_lookup(void* context, uint32_t key, uint32_t* bank_inde
     // entry before contact; a tap keeps its target checks and paired ownership.
     if (key==0xD4A && *bank_index==0 && boss_hold_variant && (boss_hold_stances&1)) {
         uint64_t payload=0; const unsigned hold=stance_hold(0xCF5); DispatchCommand command{};
-        if (hold<boss_import_count && grapple_field(descriptor,0,key) && grapple_field(descriptor,0x40,uint8_t(1))
-            && grapple_field(descriptor,0x82,uint16_t(37)) && copy_field(descriptor+0x20,payload)
-            && grapple_field(payload,0x18,uint64_t(0x194C0000)) && grapple_field(payload,0x20,int32_t(5050))
+        if (hold<boss_import_count && same_field(descriptor,0,key) && same_field(descriptor,0x40,uint8_t(1))
+            && same_field(descriptor,0x82,uint16_t(37)) && copy_field(descriptor+0x20,payload)
+            && same_field(payload,0x18,uint64_t(0x194C0000)) && same_field(payload,0x20,int32_t(5050))
             && held_binding_context(command,hold,key)) {
             if (const uint64_t deferred=defer_heavy(player,key,UINT32_MAX,hold,command)) {
                 SetLastError(native_error); return deferred;

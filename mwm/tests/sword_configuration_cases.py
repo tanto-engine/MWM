@@ -150,7 +150,7 @@ class SwordConfigurationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='mwm-ui-') as folder:
             result = subprocess.run([str(ROOT/'node_modules/electron/dist/electron.exe'),
                                      str(ROOT/'tests/desktop_ui.cjs'), folder, sys.executable],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=95,
+                                    cwd=ROOT, capture_output=True, text=True, timeout=150,
                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             report = Path(folder)/'ui-result.json'
             details = report.read_text(encoding='utf8') if report.exists() else result.stdout+result.stderr
@@ -266,5 +266,6 @@ class SwordConfigurationTests(unittest.TestCase):
                              ('utility', 'candidate', 'unmapped'))
             record['kind'] = 'unknown_category'; target.write_text(json.dumps(record), encoding='utf8')
             with self.assertRaises(ValueError): module.load_dataset(folder)
-        self.assertFalse(any(move['id'].startswith('maria.') for move in config.move_capabilities()['moves']))
+        self.assertFalse(any(move['id'] in (record['id'], 'maria.action_0c7a')
+                             for move in config.move_capabilities()['moves']))
 

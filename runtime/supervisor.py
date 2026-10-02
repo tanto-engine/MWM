@@ -16,18 +16,14 @@ CODE = Path(os.environ.get('TANTO_RUNTIME_CODE', Path(__file__).resolve().parent
 
 
 def sleep_until(seconds, stop):
-    # Wait between attachment attempts while honoring a stop request.
-    # Use short sleeps against a monotonic deadline and the stop file.
-    # The supervisor remains responsive while gameplay is unavailable.
+    # Stop interrupts retry backoff without waiting for its full duration.
     end = time.monotonic() + seconds
     while time.monotonic() < end and not stop.exists():
         time.sleep(min(.2, max(0, end-time.monotonic())))
 
 
 def session_binary(snapshot, session, tag):
-    # Keep a stable module filename for each configuration generation.
-    # Reuse identical bytes and reject a tag collision with another build.
-    # Already-loaded native modules must never be overwritten.
+    # Retained modules may still be loaded: a tag can only reuse identical bytes.
     if len(tag) != 16 or any(c not in '0123456789abcdef' for c in tag):
         raise ValueError('Invalid runtime configuration tag')
     destination = session / ('boss_repeat_' + tag + '.dll')
@@ -40,17 +36,14 @@ def session_binary(snapshot, session, tag):
 
 
 def supervise(args):
-    # Keep the selected moves active through valid gameplay generations.
-    # Prepare fresh resources, run one worker and wait for native cleanup.
-    # Retries resume automatically without compiling for the current mission.
+    # Reacquire a player only after the preceding worker establishes safe cleanup.
     stop = HERE / 'stop.flag'
     session = HERE / 'sessions' / (time.strftime('%Y%m%d-%H%M%S-') + str(os.getpid()))
     session.mkdir(parents=True, exist_ok=True)
     attempt = 0
     last_message = None
     def status(state, **extra):
-        # Publish the current supervisor state and failure context.
-        # Publish transitions; process identity, not the file timestamp, establishes liveness.
+        # Publish transitions; process identity establishes liveness, not mtime.
         nonlocal last_message
         value = dict(state=state, **extra)
         if value == last_message:
@@ -116,7 +109,8 @@ def supervise(args):
                 raise
         result = read_json(trace/'status.json', {})
         no_mutation = result.get('start_attempted') is False or (result.get('start_report') or {}).get('mutation_started') is False
-        if not result.get('stop_completed') and not no_mutation:
+        # Export success cannot override observed failure to restore the player.
+        if result.get('post_stop_slots_restored') is False or not result.get('stop_completed') and not no_mutation:
             status('cleanup_needs_attention', trace=str(trace), errors=result.get('errors', []))
             return 1
         if stop.exists():
@@ -131,9 +125,7 @@ def supervise(args):
 
 
 def main(argv=None):
-    # Own the singleton and registry around the supervisor lifecycle.
-    # Parse source options, acquire the lock and clean registration on exit.
-    # A second launch reuses the running supervisor instead of competing.
+    # Keep the singleton held through native cleanup and registry removal.
     parser = argparse.ArgumentParser(description='Keep configured moves active across Nioh sessions.')
     parser.add_argument('--dll', type=Path, help='Prebuilt runtime DLL')
     args = parser.parse_args(argv)

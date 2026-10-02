@@ -83,6 +83,9 @@ const pageHelp: Record<string, [string, string, string]> = {
   collection: ['Move library', 'Playable moves can be assigned in Sword or Input routes. Recorded candidates remain research until adapted and reviewed.', 'A video or action ID alone does not establish that William can play a move.'],
   guide: ['Help', 'Choose moves, save the draft, then enable the mod.', 'Disable the mod before saving further changes.']
 };
+const builtInPresets: Record<string, string> = {
+  baseline: 'Sword baseline', starter: 'Rebuild subset', trial: 'Sword Rebuild 1', maria: 'Maria sword', maria_dash: 'Maria dodge string'
+};
 const fieldHelp: Record<string, [string, string]> = {
   'Moveset name': ['Names this saved configuration in the editor.', 'It does not change the game weapon.'],
   'Custom input stance': ['Limits the two-button input to a stance. Graph moves need Low, Mid or High.', 'Any works only for single moves.'],
@@ -137,7 +140,9 @@ const actionHelp: Record<string, [string, string]> = {
   apply: ['Validates and saves your pending moveset.', 'Disable the mod before saving.'],
   trial: ['Loads Sword Rebuild 1 into a draft.', 'Review it, then save to use it.'],
   starter: ['Loads a smaller Rebuild subset into a draft.', 'Review it, then save to use it.'],
-  baseline: ['Loads Nioh’s original moveset into a draft.', 'Save to make this your active setup.'],
+  maria: ['Loads Maria’s quick, horizontal slash, aerial kick and forward dodge slash bindings.', 'Review the inputs, then save to use them.'],
+  maria_dash: ['Loads Maria’s dodge slash string in place of her Mid quick string.', 'The two strings share continuation phases; choose one per moveset.'],
+  baseline: ['Loads the baseline sword configuration into a draft.', 'Save to make this your active setup.'],
   load: ['Imports a moveset file into your draft.', 'Saving is a separate step.'],
   save: ['Exports the current moveset to a file.', 'Exporting does not enable the mod.'],
   reload: ['Discards local edits and reloads the saved moveset.', 'Changes from another editor appear after reloading.']
@@ -169,22 +174,16 @@ function chime(kind: 'bound' | 'saved') {
 }
 soundToggle.onchange = () => { localStorage.setItem('mwm.sound', soundToggle.checked ? 'on' : 'off'); prepareAudio(); };
 hapticToggle.onchange = () => { localStorage.setItem('mwm.haptic', hapticToggle.checked ? 'on' : 'off'); };
-document.addEventListener('mwm:bound', event => {
+window.addEventListener('mwm:bound', event => {
   chime('bound');
   if (hapticToggle.checked) void window.mwm.request('haptic', { slot: (event as CustomEvent<{ slot: number | null }>).detail.slot }).catch(() => {});
 });
 
 function errorText(error: unknown): string {
-  // Read worker failures without exposing Electron's transport implementation.
-  // Browser-local exceptions keep their useful message.
-  // Names and paths remain plain text even when supplied by a failed import.
   return error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error).replace(/^Error: /, '');
 }
 
 function explainError(error: unknown) {
-  // Keep rejected drafts editable behind an accessible explanation.
-  // Operation and IO failures remain distinct from incompatible bindings.
-  // Dismissing the native dialog restores focus, including when using Escape.
   const incompatible = Boolean(error && typeof error === 'object' && 'kind' in error && error.kind === 'validation');
   document.querySelector('#error-title')!.textContent = incompatible ? 'Incompatible bind' : 'Could not complete action';
   document.querySelector('#error-reason')!.textContent = (incompatible ? 'This bind is incompatible because: ' : '') + errorText(error);
@@ -193,9 +192,7 @@ function explainError(error: unknown) {
 }
 
 function refreshActions() {
-  // Allow saving valid drafts only while gameplay is stopped.
-  // Export does not change the running configuration and remains available.
-  // Status polling updates controls without revalidating or showing another popup.
+  // Export may run during gameplay; saving graph changes must wait until the mod stops.
   const label = document.querySelector<HTMLElement>('#validation')!, valid = label.dataset.state === 'valid';
   for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = !valid || (button.id === 'apply' ? !dirty || state.running : button.id === 'enable' && dirty);
   document.querySelector<HTMLButtonElement>('#apply')!.title = state.running ? 'Disable the mod before saving changes.' : '';
@@ -204,9 +201,6 @@ function refreshActions() {
 }
 
 function message(text: string, error = false) {
-  // Show one current operation result without hiding it behind modal dialogs.
-  // textContent prevents descriptions or Engine errors from becoming executable markup.
-  // Error color adds emphasis while the full text remains available to assistive technology.
   clearTimeout(noticeTimer);
   if (text && !error) noticeTimer = setTimeout(() => { notice.textContent = ''; }, 5000);
   notice.textContent = text; notice.classList.toggle('error', error);
@@ -220,23 +214,14 @@ function logEdit(text: string) {
 }
 
 function changed() {
-  // Mark local edits pending without writing settings on each keystroke.
-  // Apply validates the combined form, including conflicts across different tabs.
-  // Reload remains available to discard edits and reread the Engine's actual state.
   dirty = true;
   ++editGeneration;
   message('');
   schedulePreview();
 }
 
-function refreshTuning() {
-  speedRefresh?.();
-}
-
 function schedulePreview() {
-  // Validate the whole draft after a short typing pause, without persisting it.
-  // Ignore responses from older drafts so a delayed success cannot enable an invalid Apply.
-  // Compilation checks graph capacity and inherited settings as well as field bounds.
+  // Only the latest draft may unlock Save; discard delayed previews from older edits.
   const generation = ++draftGeneration;
   clearTimeout(draftTimer);
   const label = document.querySelector<HTMLElement>('#validation')!;
@@ -246,9 +231,7 @@ function schedulePreview() {
   for (const button of document.querySelectorAll<HTMLButtonElement>('#apply, #save, #enable, [data-binding-export]')) button.disabled = true;
   document.querySelector('#profile-name')!.textContent = state.preset.name + (dirty ? ' · unsaved' : '');
   draftTimer = setTimeout(async () => {
-    // Capture browser-invalid number fields before blank/NaN values reach JSON serialization.
-    // Worker compilation remains authoritative for cross-field and import-graph restrictions.
-    // Errors stay separate from messages about binding, loading and saving.
+    // Reject browser-invalid numbers before JSON can turn NaN into null.
     try {
       const invalid = content.querySelector<HTMLInputElement>('input:invalid');
       if (invalid) throw { kind: 'validation', message: `${invalid.closest('label')?.querySelector('span')?.textContent || 'Value'}: ${invalid.validationMessage}` };
@@ -263,21 +246,17 @@ function schedulePreview() {
       if (routeDiagnostic?.isConnected) { routeDiagnostic.textContent = errorText(error); routeDiagnostic.classList.add('error'); }
       if (editGeneration > explainedEdit && !state.preset.skill_bindings.some(binding => !binding.stance)) { explainedEdit = editGeneration; explainError(error); }
     }
-    refreshTuning();
+    speedRefresh?.();
   }, 180);
 }
 
 function params(value = state) {
-  // Include the runtime identity shown when the form was loaded.
-  // The worker rejects writes if another Engine became active meanwhile.
-  // No game pointer or arbitrary file path is included in this form payload.
+  // The loaded runtime identity lets the worker reject writes after another Engine takes ownership.
   return { runtime: value.runtime, preset: value.preset, calibration: value.calibration, nioh_exe: value.nioh_exe };
 }
 
 async function action(operation: () => Promise<void>) {
-  // Serialize user mutations so two operations cannot replace each other's pending form.
-  // Disable the form during a request and surface worker validation errors in place.
-  // Re-enable controls even if a dialog is cancelled or the worker fails.
+  // Serialize mutations; overlapping requests must not replace each other's draft.
   if (busy || !state) return;
   ++actionGeneration; busy = true; document.body.inert = true;
   try { await operation(); } catch (error) {
@@ -291,9 +270,7 @@ async function action(operation: () => Promise<void>) {
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] {
-  // Build interface nodes without interpolating catalog strings into HTML.
-  // Names remain ordinary text even when future imported labels contain punctuation.
-  // The helper centralizes only repeated DOM creation, leaving behavior at each call site.
+  // Catalogue strings remain text, including imported move names and errors.
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
   if (className) node.className = className;
@@ -301,9 +278,6 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, c
 }
 
 function field(label: string, input: HTMLElement, parent: HTMLElement) {
-  // Pair each input with a real label for keyboard and screen-reader navigation.
-  // Shared CSS keeps spacing consistent across selects, numbers and binding rows.
-  // Layout never infers a gameplay role from a label's spelling.
   const wrapper = element('label', undefined, 'field');
   wrapper.append(element('span', label), input); parent.append(wrapper);
   const help = fieldHelp[label] || ['Choose the reviewed action for this input.', 'The change remains in your draft until saved.'];
@@ -312,39 +286,26 @@ function field(label: string, input: HTMLElement, parent: HTMLElement) {
 }
 
 function select(options: [string, string][], value: string | null, update: (value: string) => void, markChanged = true) {
-  // Render only caller-supplied reviewed options using stable IDs as values.
-  // A blank value means Native/Disabled according to the owning control.
-  // Changing the selection modifies the pending form only.
   const control = element('select');
   for (const [id, label] of options) control.add(new Option(label, id));
   control.value = value || '';
   control.onchange = () => {
-    // Read the option value rather than trying to reverse-map its visible name.
-    // The owner stores the appropriate nullable ID, stance or controller choice.
-    // All tab edits share one explicit Apply boundary.
     update(control.value); if (markChanged) changed();
   };
   return control;
 }
 
 function input(value: string | number, update: (value: string) => void, type = 'text') {
-  // Keep incomplete numeric text editable until the user applies the form.
-  // Browser bounds guide input; Engine validation enforces the actual rules.
-  // No keystroke writes directly to the runtime's files.
+  // Keep numeric text editable; preview validates browser bounds and Engine restrictions.
   const control = element('input'); control.type = type; control.value = String(value);
   control.oninput = () => {
-    // Pass the current string to the field-specific conversion.
-    // Invalid numbers remain pending and are rejected before persistence.
-    // Updating the form does not start Engine.
     update(control.value); changed();
   };
   return control;
 }
 
 function moveOptions(role: MoveRole, empty = 'Native', current: string | null = null): [string, string][] {
-  // Filter the imported capability rows by their implemented runtime role.
-  // Research-only catalogue records never appear in these controls.
-  // The Engine repeats this check when validating a submitted preset.
+  // Only implemented capability roles are bindable; source recordings alone are not.
   const choices: [string, string][] = [['', empty]];
   for (const move of state.capabilities.moves) if (move[role] || role === 'string_hold' && move.chord) choices.push([move.id, move.name]);
   const saved = state.capabilities.moves.find(move => move.id === current);
@@ -360,11 +321,11 @@ function sourceInput(source: string) {
 function buttonName(mask: number) {
   return Object.entries(state.buttons).find(([, value]) => value === mask)?.[0] || 'Unmapped button';
 }
-function routeMaskAllowed(binding: Binding, key: RouteButtonKey, mask: number) {
+function routeMaskAllowed(binding: Binding, key: RouteButtonKey, mask: number, buttons = state.buttons) {
   const custom = !binding.input?.gesture.startsWith('after_') ? state.capabilities.custom_sequence : null;
   const names = custom ? key === 'modifier_mask' ? custom.modifiers : custom.buttons
     : key === 'modifier_mask' ? ['L1 / LB'] : routeTriggers;
-  return names.some(name => state.buttons[name] === mask);
+  return names.some(name => buttons[name] === mask);
 }
 function routeInput(binding: Binding) {
   const input = binding.input;
@@ -380,21 +341,20 @@ function moveHelp(id: string | null, context: string): [string, string] {
     `${move.input ? `Expected input: ${move.input}. ` : ''}The replacement is pending until saved.`]
     : [context, 'Original keeps Nioh’s game-selected action.'];
 }
-function openMovePicker(role: MoveRole, target: HTMLSelectElement, title: string, returnFocus?: () => HTMLElement | null, choose?: (id: string) => void) {
+function openMovePicker(target: HTMLSelectElement, title: string) {
   document.querySelector('#picker-title')!.textContent = title;
   pickerSearch.value = ''; pickerResults.replaceChildren();
-  const choices = moveOptions(role, 'Original').filter(([id]) => id || [...target.options].some(option => option.value === ''));
   const rows: { node: HTMLElement; search: string }[] = [];
-  for (const [id, label] of choices) {
+  // The picker must offer exactly the owning control's valid choices, including saved assignments.
+  for (const { value: id, text: label } of target.options) {
     const move = playable(id), button = element('button', undefined, 'picker-choice'); button.type = 'button';
     button.append(element('strong', label));
     if (move) button.append(element('span', move.input || 'Input follows the selected route', 'picker-input'),
       element('small', move.description || 'Reviewed action; additional source notes are available in Move library.'));
-    else button.append(element('small', 'Keep Nioh’s original action on this input.'));
+    else button.append(element('small', 'Keep this input without a replacement.'));
     button.onclick = () => {
       picker.close();
-      if (choose) { choose(id); return; }
-      target.value = id; target.dispatchEvent(new Event('change', { bubbles: true })); (returnFocus?.() || target).focus();
+      target.value = id; target.dispatchEvent(new Event('change', { bubbles: true })); target.focus();
     };
     if (target.value === id) button.classList.add('current');
     pickerResults.append(button);
@@ -407,17 +367,14 @@ function openMovePicker(role: MoveRole, target: HTMLSelectElement, title: string
   picker.showModal(); pickerSearch.focus();
 }
 document.querySelector<HTMLButtonElement>('#picker-close')!.onclick = () => picker.close();
-function browseMove(wrapper: HTMLElement, control: HTMLSelectElement, role: MoveRole, title: string) {
+function browseMove(wrapper: HTMLElement, control: HTMLSelectElement, title: string) {
   const button = element('button', 'Browse', 'browse-move'); button.type = 'button';
   button.setAttribute('aria-label', `Browse reviewed moves for ${title}`);
-  button.onclick = () => openMovePicker(role, control, title);
+  button.onclick = () => openMovePicker(control, title);
   wrapper.append(button);
 }
 
 function section(title: string, hint: string) {
-  // Give each tab a clear purpose and a short explanation of its limits.
-  // Keep the actual controls in a shared responsive grid below the introduction.
-  // Returning that grid avoids multiple competing spacing conventions.
   content.append(element('h2', title, 'section-title'), element('p', hint, 'hint'));
   const grid = element('div', undefined, 'fields'); content.append(grid); return grid;
 }
@@ -468,9 +425,9 @@ function renderOverview() {
   if (activeStance === 'low') addRow('Strong string', 'Triangle / Y · Low', preset.low_heavy, 'heavy_string', 'low-heavy', value => {
     preset.low_heavy = value || null; changed();
   });
+  const legacy = preset.skill_bindings.some(row => !row.input && row.source === 'high_heavy_followup');
   for (const source of state.capabilities.native_sources) {
     if (source.stances && !source.stances.includes(activeStance)) continue;
-    const legacy = preset.skill_bindings.some(row => !row.input && row.source === 'high_heavy_followup');
     if (source.id === 'high_heavy_followup' && !legacy || source.id === 'strong_followup' && activeStance === 'high' && legacy) continue;
     const binding = preset.skill_bindings.find(row => !row.input && row.source === source.id && (row.stance === activeStance || row.stance === 'any'));
     addRow(source.label, sourceInput(source.id) + (binding?.stance === 'any' ? ' · shared across stances' : ''), binding?.move || null, source.role || 'native',
@@ -563,7 +520,7 @@ function renderOverview() {
   for (const [key, label] of [['tap_move', 'Tap'], ['hold_move', 'Hold']] as const) {
     const row = element('label', undefined, 'skill-shared-row');
     row.append(element('span', `${globalInput} · ${label}`));
-    const choice = select(moveOptions(key === 'hold_move' ? 'string_hold' : 'chord', 'Disabled'), preset[key], value => { preset[key] = value || null; changed(); });
+    const choice = select(moveOptions(key === 'hold_move' ? 'string_hold' : 'chord', 'Disabled'), preset[key], value => { preset[key] = value || null; });
     choice.dataset.assignment = key === 'tap_move' ? 'chord:tap' : 'chord:hold'; row.append(choice); sharedRows.append(row);
   }
   const editShared = element('button', 'Change shared buttons →', 'inline-button'); editShared.onclick = () => navigate('controls');
@@ -579,82 +536,52 @@ function renderOverview() {
 
 
 function renderMoves() {
-  // Present the existing sword preset's custom chord and native hold choices.
-  // Each move menu uses its own capability flag rather than a universal catalogue list.
-  // Weapon selection stays sword-only until Engine implements reviewed weapon routing.
   const p = state.preset, grid = section('Global custom chord', 'Hold Modifier, then press Trigger. Choose separate moves for a tap and a hold. Input routes can use additional chords.');
   field('Moveset name', input(p.name, value => {
-    // Preserve a readable profile name apart from its stable move IDs.
-    // Engine enforces its length and nonempty value during Apply.
-    // Renaming a preset does not change weapon support.
     p.name = value;
   }), grid);
   field('Custom input stance', select((state.capabilities.chord_stances || state.capabilities.stances).map(stance => {
-    // Each stance maps directly to the Engine's canonical value.
-    // No priority label from a recording enters this selector.
-    // Titles remain cosmetic.
     return [stance, stance === 'any' ? 'ANY · single moves only' : stance.toUpperCase()];
   }), p.chord_stance, value => {
-    // Save the concrete stance required by the custom chord.
-    // Engine rejects unsupported cross-stance combinations.
-    // This edits only the draft.
     p.chord_stance = value as Stance | 'any';
   }), grid);
   renderChordButtons(grid);
   for (const [key, label] of [['tap_move', 'Tap / release'], ['hold_move', 'Hold']] as const) {
     const role = key === 'hold_move' ? 'string_hold' : 'chord';
     const move = select(moveOptions(role, 'Disabled'), p[key], value => {
-      // Store the chosen reviewed action by its stable identity.
-      // Clearing the option disables this half of the chord.
-      // Tap and hold remain independently configurable.
       p[key] = value || null;
     });
     const route = field(label, move, grid);
     const updateHelp = () => { const [body, tip] = moveHelp(move.value, `${label} of the Modifier + Trigger chord`); annotate(route, label, body, tip); };
     updateHelp(); move.addEventListener('change', () => { updateHelp(); explainTarget(move); });
-    browseMove(route, move, role, label);
+    browseMove(route, move, label);
   }
   const threshold = input(state.preset.hold_seconds, value => {
-    // Express hold duration in seconds for the existing chord interpreter.
-    // Engine enforces the reviewed 0.08–2 second range.
-    // This is separate from developer-owned animation phase timing.
     state.preset.hold_seconds = Number(value);
   }, 'number'); threshold.min = '.08'; threshold.max = '2'; threshold.step = 'any'; field('Hold threshold · seconds', threshold, grid);
 
 }
 
 function renderOverrides() {
-  // Group stance replacements separately from the custom button chord.
-  // Every control edits the same pending preset; nothing is applied on selection.
-  // Native overrides below provide explicit source and stance routing.
   const p = state.preset, grid = section('Special sword routes', 'These switches affect specific native combo windows or imported strings. They do not replace every press of a base button.');
   const heavy = select(moveOptions('heavy_string'), p.low_heavy, value => {
-    // Select a reviewed heavy-string graph rather than an arbitrary animation.
-    // Native clears only this particular replacement.
-    // Continuation and recovery still belong to Engine.
     p.low_heavy = value || null;
   });
   const heavyField = field('Low heavy string', heavy, grid);
   heavyField.id = 'special-low-heavy';
-  browseMove(heavyField, heavy, 'heavy_string', 'Low heavy string');
+  browseMove(heavyField, heavy, 'Low heavy string');
   for (const stance of state.capabilities.stances) {
     const held = select(moveOptions('graph'), p.stance_holds[stance], value => {
-      // Bind a reviewed graph to this stance's held-heavy slot.
-      // Shared source actions retain their Engine-authored graph transitions.
-      // A blank value restores the native held-heavy behavior.
       p.stance_holds[stance] = value || null;
     });
     const heldField = field(stance.toUpperCase() + ' · hold Triangle / Y', held, grid);
     heldField.id = `special-held-${stance}`;
     annotate(heldField, `${stance.toUpperCase()} held strong`, `Hold Triangle / Y in ${stance} stance to start the selected reviewed sequence.`, 'The Izuna Drop continuation requires a successful launcher and contact.');
-    browseMove(heldField, held, 'graph', `${stance} held strong`);
+    browseMove(heldField, held, `${stance} held strong`);
   }
   for (const [key, label] of [['okatsu_grapple', 'Okatsu grapple'], ['mid_light_ender', 'Mid quick-attack finisher'], ['string_enabled', 'Include Okatsu kicking string']] as const) {
     const check = element('input'); check.type = 'checkbox'; check.checked = p[key];
     check.onchange = () => {
-      // Toggle one established sword adaptation without exposing its internal timing.
-      // Engine validates this together with all related binding choices.
-      // The running moveset does not change until Apply.
       p[key] = check.checked; changed();
     };
     const control = field(label, check, grid); control.classList.add('toggle');
@@ -719,9 +646,6 @@ function renderNative() {
     const stanceChoices: [string, string][] = allowed.map(stance => [stance, stance.toUpperCase()]);
     if (!binding.stance) stanceChoices.unshift(['', 'Choose stance…']);
     field('Stance', select(stanceChoices, binding.stance, value => {
-      // Any is valid only where the selected action permits it.
-      // Graphs requiring a concrete stance are rejected by Engine.
-      // No automatic conflict resolution silently removes another row.
       binding.stance = value; updateSlots();
     }), row);
     if (!followup) field('Activation', select([['original', 'Original Nioh input'], ['custom', 'Custom controller input']], binding.input ? 'custom' : 'original', value => {
@@ -733,15 +657,12 @@ function renderNative() {
     }), row);
     const role = binding.input?.gesture === 'hold' ? 'string_hold' : binding.input ? 'chord' : state.capabilities.native_sources.find(source => source.id === binding.source)?.role || 'native';
     const replacement = select(moveOptions(role, 'Native', binding.move).slice(1), binding.move, value => {
-      // Expose only actions reviewed for native-source replacement.
-      // This stores an ID, never a raw game address.
-      // Apply still checks source-specific restrictions.
       binding.move = value;
     });
     const replacementField = field('Move', replacement, row);
     const updateHelp = () => { const [body, tip] = moveHelp(replacement.value, `Input: ${routeInput(binding)}`); annotate(replacementField, 'Move', body, tip); };
     updateHelp(); replacement.addEventListener('change', () => { updateHelp(); explainTarget(replacement); });
-    browseMove(replacementField, replacement, role, `route ${index + 1}`);
+    browseMove(replacementField, replacement, `route ${index + 1}`);
     if (binding.input) {
       const sequence = binding.input.gesture === 'sequence';
       if (followup) row.append(element('p', `${routeInput(binding)} within ${state.capabilities.attack_followup?.window_seconds || .6}s of the original attack’s recovery.`, 'control-note'));
@@ -784,22 +705,16 @@ function renderNative() {
 }
 
 function renderFrost() {
-  // Let users choose only the destination action for each Frost Moon route.
-  // Activation windows, startup speed, Ki Pulse and physics remain Engine-owned.
-  // This separates configurable move selection from adaptation internals.
   const grid = section('Stance-switch moves', 'During a Ki Pulse window, hold R1 / RB and tap the destination stance button twice.');
   for (const stance of state.capabilities.stances) {
     const move = select(moveOptions('frost', 'Disabled'), state.preset.frost_moon[stance], value => {
-    // Change this destination stance's reviewed move.
-    // Clearing disables its replacement without changing other routes.
-    // Actual route acceptance remains a separate gameplay check.
-    state.preset.frost_moon[stance] = value || null;
+      state.preset.frost_moon[stance] = value || null;
     });
     const route = field(stance.toUpperCase(), move, grid);
     route.id = `frost-${stance}`;
     const updateHelp = () => { const [body, tip] = moveHelp(move.value, `During a Ki Pulse window, hold R1 / RB and tap ${stance} stance twice`); annotate(route, `${stance.toUpperCase()} Frost Moon`, body, tip); };
     updateHelp(); move.addEventListener('change', () => { updateHelp(); explainTarget(move); });
-    browseMove(route, move, 'chord', `${stance} Frost Moon`);
+    browseMove(route, move, `${stance} Frost Moon`);
   }
 }
 
@@ -811,7 +726,7 @@ function renderSpeed() {
   const editor = element('section', undefined, 'speed-editor');
   workspace.append(moveList, editor); content.append(workspace);
   const show = element('input'); show.type = 'checkbox'; show.checked = showUnused;
-  show.onchange = () => { showUnused = show.checked; refreshTuning(); };
+  show.onchange = () => { showUnused = show.checked; speedRefresh?.(); };
   field('Show unused moves', show, content).classList.add('toggle');
   const buttons = new Map<string, HTMLButtonElement>();
   let percent: HTMLInputElement, slider: HTMLInputElement, effective: HTMLElement, mode: HTMLElement;
@@ -873,12 +788,21 @@ function renderSpeed() {
   };
   if (!buttons.has(speedSelection)) speedSelection = buttons.keys().next().value || '';
   if (speedSelection) selectMove(speedSelection);
-  refreshTuning();
+  speedRefresh();
 }
 
 function renderPresets() {
   content.append(element('h2', 'Preset manager', 'section-title'),
     element('p', 'Save a setup to the library, then activate it here or cycle during gameplay. The editor keeps unsaved changes until you choose to replace them.', 'hint'));
+  const templates = element('details', undefined, 'guide-glossary');
+  templates.append(element('summary', 'Built-in movesets · load a draft'));
+  const choices = element('div', undefined, 'preset-actions');
+  for (const [id, label] of Object.entries(builtInPresets)) {
+    const button = element('button', label); button.dataset.presetTemplate = id;
+    button.onclick = () => void action(() => perform(id)); choices.append(button);
+  }
+  templates.append(element('p', 'Loading replaces the editor draft. Save changes to use it, or save a named copy in the library.'), choices);
+  content.append(templates);
   if (!presetLibrary) { content.append(element('p', 'Reading saved presets…', 'hint')); void refreshPresetLibrary(); return; }
   const library = presetLibrary;
   if (!library.presets.some(item => item.id === presetSelection)) presetSelection = library.selected_id || library.presets[0]?.id || '';
@@ -948,6 +872,7 @@ async function refreshPresetLibrary() {
 }
 
 function adoptPresetSwitch(result: { presets: PresetLibrary; snapshot: Snapshot }) {
+  ++actionGeneration; // A controller hotkey can finish while an older status poll is still in flight.
   ++presetLibraryRevision; presetLibrary = result.presets; presetSelection = result.presets.selected_id || presetSelection;
   if (!dirty) state = result.snapshot;
   if (!dirty || tab === 'presets') render();
@@ -961,27 +886,33 @@ async function switchPreset(method: 'preset_switch' | 'preset_cycle', params: un
 }
 
 async function pollCapture() {
-  // Poll input only while the player has explicitly armed press-to-bind.
-  // Wait for each reply before scheduling another request to prevent queue growth.
-  // A captured mask updates the pending field and then closes the listener.
+  // Keep one capture poll in flight; generation changes invalidate cancelled listeners.
   if (!capture) return;
   const generation = captureGeneration, target = capture;
   try {
     const result = await window.mwm.request<{ mask?: number; label?: string; status?: string; calibration?: Calibration }>('capture_poll');
     if (!capture || generation !== captureGeneration) return;
     if (result.mask !== undefined) {
+      const index = target.kind === 'route' ? state.preset.skill_bindings.indexOf(target.binding) : -1;
+      if (target.kind === 'route' && index < 0) { await cancelCapture(); return; }
+      let mapped: Pick<Snapshot, 'calibration' | 'preset' | 'buttons'> | undefined;
       if (result.calibration && JSON.stringify(result.calibration) !== JSON.stringify(state.calibration)) {
-        const index = target.kind === 'route' ? state.preset.skill_bindings.indexOf(target.binding) : -1;
-        if (target.kind === 'route' && index < 0) { await cancelCapture(); return; }
-        const mapped = await window.mwm.request<Pick<Snapshot, 'calibration' | 'preset' | 'buttons'>>('controller',
+        const preset = state.preset, revision = editGeneration;
+        mapped = await window.mwm.request('controller',
           { ...params(), choice: 'detected', detected_calibration: result.calibration });
         if (!capture || generation !== captureGeneration) return;
+        if (preset !== state.preset || revision !== editGeneration) {
+          await cancelCapture(); render(); message('Draft changed while detecting the controller. Record the button again.'); return;
+        }
+      }
+      // Reject unsupported buttons before adopting any remapped controller or draft fields.
+      if (target.kind === 'route' && !routeMaskAllowed(target.binding, target.key, result.mask, mapped?.buttons)) {
+        await cancelCapture(); render(); message('This button is unavailable for the selected input pattern.', true); return;
+      }
+      if (mapped) {
         Object.assign(state, mapped);
         if (target.kind === 'route') target.binding = state.preset.skill_bindings[index];
         controllerChoice = state.calibration.device.backend === 'xinput' ? String(Number(state.calibration.device.slot) + 1) : 'ds4';
-      }
-      if (target.kind === 'route' && !routeMaskAllowed(target.binding, target.key, result.mask)) {
-        await cancelCapture(); render(); message('This button is unavailable for the selected input pattern.', true); return;
       }
       if (target.kind === 'global') state.preset[target.key] = result.mask;
       else if (state.preset.skill_bindings.includes(target.binding) && target.binding.input) target.binding.input[target.key] = result.mask;
@@ -1000,9 +931,7 @@ async function pollCapture() {
 }
 
 async function cancelCapture() {
-  // End an armed binding before switching tabs or controller mappings.
-  // A late polling reply observes the cleared target and cannot overwrite the new form.
-  // The worker closes the temporary OS controller listener.
+  // Invalidate in-flight replies before closing the worker's temporary input listener.
   ++captureGeneration; capture = null; clearTimeout(timer); await window.mwm.request('capture_cancel');
 }
 
@@ -1047,17 +976,12 @@ function buttonPicker(parent: HTMLElement, label: string, mask: number, update: 
 }
 
 function renderChordButtons(grid: HTMLElement) {
-  // Keep the chord's actual buttons beside its tap/hold actions.
-  // Binding captures target one pending field and never change runtime input directly.
-  // Controller-specific labels come from the same calibration used by validation.
   for (const [key, label] of [['modifier_mask', 'Modifier'], ['trigger_mask', 'Trigger']] as const) {
     buttonPicker(grid, label, state.preset[key], value => { state.preset[key] = value; }, { kind: 'global', key });
   }
   const swap = element('button', 'Swap buttons');
   swap.onclick = () => {
-    // Exchange both halves of the chord as one draft change, avoiding an intermediate duplicate.
-    // Cancel binding capture so a delayed physical press cannot overwrite the swap.
-    // Move choices, hold duration and all Frost destinations remain unchanged.
+    // Cancel capture before swapping so a late input cannot undo half of the swap.
     void action(async () => {
       await cancelCapture();
       [state.preset.modifier_mask, state.preset.trigger_mask] = [state.preset.trigger_mask, state.preset.modifier_mask];
@@ -1066,10 +990,6 @@ function renderChordButtons(grid: HTMLElement) {
   };
   swap.className = 'swap-buttons'; grid.append(swap);
   captureStatus(grid, true);
-}
-
-function renderControllerMap() {
-  content.append(createControllerDiagram(state.calibration.device.backend === 'xinput' ? 'xbox' : 'playstation'));
 }
 
 function renderGuide() {
@@ -1088,6 +1008,13 @@ function renderGuide() {
     button.onclick = () => navigate(destination); card.append(button); steps.append(card);
   }
   content.append(steps);
+  for (const [title, body] of [
+    ['Maria sword bindings', 'Load Maria sword from More or Presets. Low Quick uses the aerial kick string; Mid Quick uses the quick string; High Strong uses the horizontal slash string; Mid Guard + Strong uses the forward dodge slash. Press again for each phase and keep tapping as the final phase ends to restart. Maria dodge string replaces only the Mid Quick string.'],
+    ['Onmyo and shuriken Ki Pulse', 'After a sword attack, cast Onmyo or throw a shuriken, then press R1 / RB during the remaining Ki Pulse window. Release Guard and attack buttons first. The same release timing applies to both: the spell effect or projectile is preserved before recovery is cancelled with a full Ki Pulse. A cast alone does not create a new Ki Pulse window.']
+  ]) {
+    const feature = element('details', undefined, 'guide-glossary'); feature.open = true;
+    feature.append(element('summary', title), element('p', body)); content.append(feature);
+  }
   const glossary = element('details', undefined, 'guide-glossary');
   glossary.append(element('summary', 'What counts as a playable move?'));
   glossary.append(element('p', 'The move picker contains reviewed moves the Engine can route to William. Move library separately lists named recording candidates and unreviewed action signatures; neither becomes playable without William adaptation.'),
@@ -1096,37 +1023,22 @@ function renderGuide() {
 }
 
 function renderControls() {
-  // Present calibrated button meanings and supported OS controller backends.
-  // Remapping goes through Engine so changing hardware preserves logical button choices.
-  // Physical controller acceptance is not inferred from successfully editing this form.
+  // Engine translates logical buttons when controller hardware changes.
   const grid = section('Controller mapping', 'Choose the controller Nioh uses. The diagram below shows its default buttons; custom inputs can be recorded while the game is open or closed.');
   const devices = select([['saved', 'Saved mapping'], ['ds4', 'DS4 mapping'], ['1', 'XInput controller 1'], ['2', 'XInput controller 2'], ['3', 'XInput controller 3'], ['4', 'XInput controller 4']], controllerChoice, value => {
-    // Cancel the previous controller listener before translating button masks.
-    // Failed remapping preserves the current pending preset.
-    // Successful selection remains unsaved until Apply.
+    // Adopt calibration, buttons and preset together only after translation succeeds.
     void action(async () => {
-      // Ask Engine to preserve logical button meaning across mappings.
-      // Replace calibration, buttons and preset as one UI state update.
-      // No file writes occur in this translation request.
       await cancelCapture(); Object.assign(state, await window.mwm.request('controller', { ...params(), choice: value })); controllerChoice = value; changed(); render();
     }).finally(() => { devices.value = controllerChoice; });
   }, false);
   field('Controller mapping', devices, grid);
   field('Game controller slot', select([['', 'Auto (one controller)'], ['0', '1'], ['1', '2'], ['2', '3'], ['3', '4']], state.calibration.controller_slot == null ? '' : String(state.calibration.controller_slot), value => {
-    // Keep the game's controller slot distinct from raw OS controller identity.
-    // Automatic selection requires one valid controller at runtime.
-    // Changing this cancels a listener created under the previous selection.
+    // The game slot is distinct from the raw OS controller identity.
     state.calibration.controller_slot = value === '' ? null : Number(value); void action(cancelCapture);
   }), grid);
   const game = element('details', undefined, 'game-path'); game.append(element('summary', 'Game launch · optional'));
   const path = element('button', state.nioh_exe || 'Choose nioh.exe (optional)'); path.onclick = () => {
-    // Delegate executable selection to a native dialog in the main process.
-    // Choosing a path changes the next explicit Enable request only.
-    // Cancelling preserves the previously selected path.
     void action(async () => {
-      // Receive only the file chosen by the user.
-      // Store it as a pending launch preference rather than launching it now.
-      // No renderer-supplied path is trusted by the native dialog channel.
       const value = await window.mwm.request<string | null>('game_path'); if (value) { state.nioh_exe = value; changed(); render(); }
     });
   }; field('Game executable', path, game); return game;
@@ -1154,7 +1066,7 @@ function renderCollection() {
     annotate(card, move.name, move.description || 'Reviewed playable move.', move.input ? `Expected input: ${move.input}` : 'Input depends on the route you assign.');
     const kinds = [move.chord && 'Custom chord', move.held && 'Held strong', move.native && 'Input route', move.heavy_string && 'Heavy string'].filter(Boolean);
     card.append(element('small', kinds.join(' · ') || 'Tuning only', 'move-kinds'));
-    playablePane.append(card); playableCards.push({ node: card, text: `${move.name} ${move.input || ''} ${move.description || ''}`.toLowerCase() });
+    playablePane.append(card); playableCards.push({ node: card, text: `${move.id} ${move.name} ${move.input || ''} ${move.description || ''}`.toLowerCase() });
   }
   recordedPane.append(element('h3', 'Sword Rebuild routes', 'section-title'));
   recordedPane.append(element('p', 'The curated subset contains Jin moves; Sword Rebuild 1 adds Oda, Tachibana, Hideyori, and a gun shot. Route status below shows what is adapted.', 'hint'));
@@ -1184,7 +1096,7 @@ function renderCollection() {
     for (const evidence of move.evidence) card.append(element('p', evidence.annotation_text, 'recorded-note'));
     card.append(element('p', move.steps.map(step => `${step.source.action_id} (${step.source.motion_id})`).join(' → '), 'source-ids'));
     for (const note of move.review_notes || []) card.append(element('p', note, 'hint'));
-    recordedCards.push({ node: card, text: [title, ...move.evidence.map(evidence => evidence.annotation_text)].join(' ').toLowerCase() });
+    recordedCards.push({ node: card, text: [move.id, title, ...move.steps.map(step => `${step.source.action_id} ${step.source.motion_id}`), ...move.evidence.map(evidence => evidence.annotation_text)].join(' ').toLowerCase() });
     recordedPane.append(card);
   }
   unreviewedPane.append(element('p', 'These action signatures came from 55 sword recording sessions. The logs do not identify the actor reliably or prove William can play them. Search the evidence below; they cannot be assigned yet.', 'hint'));
@@ -1223,9 +1135,7 @@ function renderCollection() {
 }
 
 function renderBindingModules() {
-  // Reuse one binding group across movesets without overwriting name, speed or unrelated routes.
-  // File dialogs stay in the main process; the worker validates and remaps the merged draft.
-  // Selecting a group is a UI preference and must not mark the moveset dirty.
+  // A group owns only its binding fields; selecting a group is not a draft edit.
   const panel = element('details', undefined, 'binding-modules');
   panel.append(element('summary', 'Reuse a binding group'));
   const controls = element('div', undefined, 'module-controls');
@@ -1238,9 +1148,7 @@ function renderBindingModules() {
     const button = element('button', label);
     if (operation === 'binding_export') button.dataset.bindingExport = '';
     button.onclick = () => {
-      // A cancelled dialog leaves the draft intact; a loaded group replaces only its owned fields.
-      // Failed cross-group compatibility checks preserve every original draft value.
-      // Group loading never applies settings or enables the mod.
+      // Cancelled or rejected imports leave the entire draft intact.
       void action(async () => {
         await cancelCapture();
         const result = await window.mwm.request<Preset | boolean | null>(operation, { ...params(), group: bindingGroup });
@@ -1256,16 +1164,14 @@ function renderBindingModules() {
 }
 
 function render() {
-  // Rebuild only the selected tab from the pending model.
-  // Ordinary input edits stay in place; tab changes and structural edits request a rebuild.
-  // All text supplied by data remains escaped by DOM construction.
+  // Rebuild on structural changes only; ordinary input edits keep their DOM and focus.
   speedRefresh = null; content.replaceChildren(); content.setAttribute('aria-busy', 'false');
   explain(...pageHelp[tab]);
   for (const button of document.querySelectorAll<HTMLButtonElement>('nav button')) button.classList.toggle('selected', button.dataset.tab === tab);
   if (tab === 'overview') renderOverview();
   else if (tab === 'presets') renderPresets();
   else if (tab === 'collection') renderCollection();
-  else if (tab === 'controls') { const game = renderControls(); renderControllerMap(); content.append(game); renderMoves(); renderBindingModules(); }
+  else if (tab === 'controls') { const game = renderControls(); content.append(createControllerDiagram(state.calibration.device.backend === 'xinput' ? 'xbox' : 'playstation'), game); renderMoves(); renderBindingModules(); }
   else if (tab === 'native') { renderNative(); renderOverrides(); renderBindingModules(); }
   else if (tab === 'frost') { renderFrost(); renderBindingModules(); }
   else if (tab === 'speed') renderSpeed();
@@ -1274,9 +1180,7 @@ function render() {
 }
 
 async function reload() {
-  // Read a fresh snapshot only when explicitly loading or discarding pending edits.
-  // Keep periodic runtime status reads separate so they never overwrite form choices.
-  // Display actual process-backed Engine status alongside the loaded configuration.
+  // Explicit reload may discard edits; periodic status reads must preserve them.
   await cancelCapture(); state = await window.mwm.request<Snapshot>('snapshot'); controllerChoice = 'saved'; dirty = Boolean(state.load_warning); render();
   showRuntime(state);
   message(state.load_warning || '', Boolean(state.load_warning));
@@ -1284,14 +1188,12 @@ async function reload() {
 }
 
 async function perform(name: string) {
-  // Route footer/lifecycle actions through the same pending form and worker validation.
-  // Import, Baseline and Export do not implicitly enable or apply a moveset.
-  // No UI path bypasses Engine's preset validator.
-  await cancelCapture();
+  // Loading and exporting operate on the draft; only Apply persists active settings.
   if (name === 'reload') { await reload(); return; }
-  if (name === 'baseline' || name === 'starter' || name === 'trial' || name === 'load') {
+  await cancelCapture();
+  if (name in builtInPresets || name === 'load') {
     const preset = await window.mwm.request<Preset | null>(name === 'load' ? 'import' : name, params());
-    if (preset) { state.preset = preset; dirty = true; render(); message(name === 'trial' ? 'Sword Rebuild 1 loaded into draft.' : name === 'starter' ? 'Subset loaded into draft.' : 'Moveset loaded into draft.'); } return;
+    if (preset) { state.preset = preset; dirty = true; render(); message(`${builtInPresets[name] || 'Moveset'} loaded into draft.`); } return;
   }
   if (name === 'save') { if (await window.mwm.request('export', params())) message('Moveset exported. Runtime settings were not changed.'); return; }
   if (name === 'apply') { state = await window.mwm.request<Snapshot>('apply', params()); dirty = false; render(); showRuntime(state); message(''); chime('saved'); void refreshPresetLibrary(); return; }
@@ -1300,9 +1202,6 @@ async function perform(name: string) {
 }
 
 function navigate(name: string, focus?: string) {
-  // Navigation retains the pending model while cancelling any physical binding listener.
-  // Closing More keeps its secondary commands out of the workspace.
-  // A page change never saves or starts gameplay.
   void action(async () => {
     await cancelCapture(); tab = name; document.querySelector<HTMLDetailsElement>('#tools')!.open = false; render(); content.scrollTop = 0;
   }).then(() => {
@@ -1313,17 +1212,12 @@ function navigate(name: string, focus?: string) {
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('nav [data-tab]')) button.onclick = () => navigate(button.dataset.tab!);
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-action]')) button.onclick = () => {
-  // Keep all explicit mutations on the serialized worker path.
-  // The only primary button saves; file and lifecycle operations stay distinct.
-  // Closing the menu also prevents it covering the result of an action.
   document.querySelector<HTMLDetailsElement>('#tools')!.open = false;
   void action(() => perform(button.dataset.action!));
 };
 
 function showRuntime(snapshot: Snapshot) {
-  // Runtime facts come from a fresh worker snapshot, independently of the draft.
-  // Show only the lifecycle action relevant to the reported process state.
-  // Preserve terminal failure details after Engine exits instead of claiming readiness.
+  // Runtime status is independent of the draft, including failures retained after Engine exits.
   state.running = snapshot.running; state.status = snapshot.status; state.detail = snapshot.detail;
   const runtime = document.querySelector<HTMLElement>('.runtime')!;
   runtime.dataset.running = String(snapshot.running);
@@ -1339,9 +1233,8 @@ function showRuntime(snapshot: Snapshot) {
 }
 
 async function pollStatus() {
-  // Adopt external saved changes only while the editor is still clean and idle.
-  // Recheck after awaiting the worker so an in-flight read cannot overwrite a new draft.
-  // Unchanged snapshots update runtime status without rebuilding controls or moving focus.
+  // Adopt external saves only while clean and idle, rechecking after the asynchronous read.
+  // Unchanged snapshots keep controls and focus intact.
   if (state && !busy && !capture) {
     const generation = actionGeneration;
     try {
@@ -1360,9 +1253,6 @@ async function pollStatus() {
 }
 
 async function start() {
-  // Load configuration before enabling any app commands.
-  // Startup failure stays visible instead of presenting an empty ready form.
-  // Status polling is read-only and does not attach to Nioh.
   document.body.inert = true;
   try {
     collection = await window.mwm.request<Collection>('collection'); await reload();

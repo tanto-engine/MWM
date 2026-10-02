@@ -87,6 +87,13 @@ int main(int argc, char** argv) {
     assert(calls==1 && output[selected_index+1]);
     const uint32_t missing_key=0x7ffffffe;calls=0;
     assert(!decode_motion_clips(pack.data(),pack.size(),nullptr,make_clip,output.data()+1,count,failed,&missing_key,1) && calls==0);
+    auto empty=pack;
+    put(empty,package_u32(pack.data(),32)+selected_index*4,0);
+    put(empty,package_u32(pack.data(),36)+selected_index*4,0);
+    assert(motion_package_bounds(empty.data(),empty.size())); // Sparse packages are valid, required holes are not.
+    std::fill(output.begin(),output.end(),0);calls=0;
+    assert(!decode_motion_clips(empty.data(),empty.size(),nullptr,make_clip,output.data()+1,count,failed,&selected_key,1));
+    assert(calls==0 && failed==selected_index && !output[selected_index+1]);
     // Reject malformed data before *any* native decoder call.
     const auto reject=[&](const std::vector<uint8_t>& bad, size_t size) {
         // Check malformed package rejection before the clip factory is invoked.
@@ -123,6 +130,7 @@ class ResourceCrashTests(unittest.TestCase):
             (build / 'nioh_resources.dll').write_bytes(b'owned test DLL; never loaded')
             object_ready = True
             game = SimpleNamespace(identity=dict(pid=123, creation_filetime='456', build_sha256='build'),
+                                   main=dict(path=r'D:\Games\Nioh\nioh.exe'),
                                    alive=lambda: True, bytes=lambda address, count: bytes([object_ready]))
             assets = {kind: dict(archive='archive_00.lnk', entry_id=index, source_name='/'+kind,
                                 size=100+index, sha256=str(index)*64)

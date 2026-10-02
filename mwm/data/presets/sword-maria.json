@@ -1,0 +1,53 @@
+{
+  "schema_version": 8,
+  "name": "Maria sword - gameplay trial",
+  "weapon": "sword",
+  "tap_move": null,
+  "hold_move": null,
+  "modifier_mask": 16,
+  "trigger_mask": 4,
+  "hold_seconds": 0.25,
+  "low_heavy": null,
+  "stance_holds": {
+    "low": null,
+    "mid": null,
+    "high": null
+  },
+  "okatsu_grapple": false,
+  "mid_light_ender": false,
+  "string_enabled": false,
+  "skill_bindings": [
+    {
+      "source": "light_attack",
+      "stance": "mid",
+      "move": "maria.action_0c80"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "high",
+      "move": "maria.action_0c83"
+    },
+    {
+      "source": "light_attack",
+      "stance": "low",
+      "move": "maria.action_0c85"
+    },
+    {
+      "source": "guard_strong",
+      "stance": "mid",
+      "move": "maria.action_0c89"
+    },
+    {
+      "source": "strong_followup",
+      "stance": "high",
+      "move": "jin_hayabusa.action_0c75"
+    }
+  ],
+  "frost_moon": {
+    "low": null,
+    "mid": null,
+    "high": null
+  },
+  "chord_stance": "low",
+  "move_settings": {}
+}

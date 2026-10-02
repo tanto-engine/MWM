@@ -4,6 +4,7 @@
 import contextlib
 import copy
 import io
+import itertools
 import json
 from pathlib import Path
 import re
@@ -216,7 +217,8 @@ class PreparationTests(unittest.TestCase):
         import load_resources as resources
         profile_path=MOD_ROOT/'data/resources/okatsu.json'
         profile=json.loads(profile_path.read_text()); identity=resources.resource_identity(profile,[])
-        game=SimpleNamespace(identity=dict(pid=1234,creation_filetime='11',build_sha256=profile['build_sha256']),alive=Mock(return_value=False))
+        game=SimpleNamespace(identity=dict(pid=1234,creation_filetime='11',build_sha256=profile['build_sha256']),
+            main=dict(path=r'D:\Games\Nioh\nioh.exe'), alive=Mock(return_value=False))
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder); (root/'native/build').mkdir(parents=True)
             (root/'native/build/nioh_resources.dll').write_bytes(b'fixture-dll')
@@ -244,6 +246,52 @@ class PreparationTests(unittest.TestCase):
             binary = Path(folder) / 'snapshot.dll'; binary.write_bytes(b'completed build')
             with patch.dict(prepare.os.environ, {'NIOH_RUNTIME_BUILD_DLL': str(binary)}):
                 self.assertEqual(prepare.native_code_hash(), prepare.hashlib.sha256(b'completed build').hexdigest())
+
+    def test_decode_failure_identifies_incomplete_resources_from_mask(self):
+        from types import SimpleNamespace
+        import load_resources as resources
+        profile_path = MOD_ROOT/'data/resources/okatsu.json'
+        profile = json.loads(profile_path.read_text())
+        motions = [1220, 1230]
+        identity = resources.resource_identity(profile, motions)
+        game = SimpleNamespace(identity=dict(pid=1234, creation_filetime='11',
+            build_sha256=profile['build_sha256']), main=dict(path=r'D:\Games\Nioh\nioh.exe'), alive=lambda: True)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root/'native/build').mkdir(parents=True)
+            (root/'native/build/nioh_resources.dll').write_bytes(b'fixture; never loaded')
+            with patch.dict(resources.os.environ, {'NIOH_RUNTIME_HOME':folder, 'TANTO_RUNTIME_CODE':folder}), \
+                 patch.object(resources, 'read_asset'), patch.object(resources.loader.K, 'OpenProcess', return_value=123), \
+                 patch.object(resources.loader.K, 'CloseHandle'), patch.object(resources.loader, 'validate_target'), \
+                 patch.object(resources.loader, 'module_at_path', return_value={'base':1}), \
+                 patch.object(resources.loader, 'remote_export', return_value=1), \
+                 patch.object(resources.loader, 'call_export', return_value=0), \
+                 patch.object(resources, 'detach_resources') as detach, patch.object(resources.mmap, 'mmap') as mapped:
+                for completed, missing in ((7,'camera'), (11,'motion'), (13,'timing'),
+                                           (14,'actions'), (1,'timing, motion, camera')):
+                    with self.subTest(completed_mask=completed):
+                        mapped.return_value.__enter__.return_value = resources.STATE.pack(
+                            0x3152504e, 5, 4, 13, 11, identity, *([0]*4), completed, 0, 1, 0, *([0]*4))
+                        with self.assertRaises(resources.ResourceLoadError) as caught:
+                            resources.load_resources(game, profile_path, motions)
+                        self.assertIn('incomplete: '+missing+';', str(caught.exception))
+                        self.assertIn(f'completed_mask={completed:#x}', str(caught.exception))
+                        self.assertIn('error 13', str(caught.exception))
+                        self.assertIn('motions=[1220, 1230]', str(caught.exception))
+                        detach.assert_called_once()
+                        detach.reset_mock()
+
+    def test_archive_validation_uses_the_discovered_game_installation(self):
+        from types import SimpleNamespace
+        import load_resources as resources
+        profile_path = MOD_ROOT/'data/resources/okatsu.json'
+        profile = json.loads(profile_path.read_text())
+        executable = Path(r'D:\Other Steam library\Nioh\nioh.exe')
+        game = SimpleNamespace(identity=dict(build_sha256=profile['build_sha256']), main=dict(path=str(executable)))
+        with patch.object(resources, 'read_asset', side_effect=ValueError('stop before native loading')) as read:
+            with self.assertRaisesRegex(ValueError, 'stop before native loading'):
+                resources.load_resources(game, profile_path)
+        read.assert_called_once_with(executable.parent/'archive', profile['assets']['actions'])
 
 
 
@@ -380,3 +428,51 @@ class PreparationTests(unittest.TestCase):
                         self.assertEqual(fields['player_camera_slot'],camera+8)
                         self.assertEqual(fields['camera_original'],0)
                         self.assertEqual(fields['source_camera_bank'],BOSS['source_camera_bank'])
+
+    def test_stance_configuration_order_does_not_change_native_bindings(self):
+        from runtime_session import encode_session, SESSION_CONFIG
+        configuration = dict(prepare.read_json(MOD_ROOT/'data/presets/sword-original.json'),
+            tap_move=None, hold_move=None, low_heavy=None, skill_bindings=[],
+            okatsu_grapple=False, mid_light_ender=False)
+        holds = dict(low=None, mid=None, high='okatsu.leaping_slash')
+        frost = dict(low='okatsu.charged_rush', mid=None, high=None)
+        first = dict(resolution=PROFILE['source']['action_resolution'], motion=1220,
+            **{kind+'_resource':{key:value for key,value in PROFILE['source']['resources'][kind]['banks'][0].items() if key!='slot'}
+               for kind in ('motion', 'timing')})
+        handles = tuple(BOSS[key] for key in ('source_action_resource', 'source_timing_resource',
+            'source_motion_bank', 'source_camera_bank', 'player', 'player_owner'))
+        game = ImportMemory()
+        game.identity = PROFILE['session']
+        camera = BOSS['player_camera_slot']-8
+        for address, value in ((BOSS['source_action_resource']+0x468,game.bank),
+                (BOSS['source_timing_resource']+0x468,0x710000),
+                (BOSS['source_camera_bank'],int(game.identity['module_base'],0)+0x13C8FA0),
+                (BOSS['player_owner']+0x48,camera), (camera+8,BOSS['camera_original'])):
+            game.put(address, struct.pack('<Q',value))
+        game.put(camera+0x20, struct.pack('<i',0))
+        resource_info = (copy.deepcopy(PROFILE['player']['resources']),
+            [BOSS['originals'][0],0,0,0,BOSS['originals'][1]],
+            [BOSS['originals'][2],0,0,BOSS['originals'][3]])
+        read = prepare.read_json
+        calibration = read(MOD_ROOT/'data/controller-calibration.json')
+        def settings(path, default=None):
+            if path == prepare.CURRENT_CONFIG: return configuration
+            if path.name == 'controller-calibration.json': return calibration
+            return read(path, default)
+        with patch.object(prepare, 'read_json', side_effect=settings), \
+             patch.object(prepare, 'load_resources', return_value=handles), \
+             patch.object(prepare, 'inspect_candidate', return_value=copy.deepcopy(PROFILE['player'])), \
+             patch.object(prepare, 'resolve_imports', return_value=([first,PROFILE['charged_candidate']],BOSS['imports'][:2])), \
+             patch.object(prepare, 'inspect_motion', return_value={'presence':'present','clip':'0x56000000'}), \
+             patch.object(prepare, 'resources', return_value=resource_info):
+            for order in itertools.permutations(holds):
+                with self.subTest(order=order):
+                    configuration.update(stance_holds={key:holds[key] for key in order},
+                                         frost_moon={key:frost[key] for key in reversed(order)})
+                    profile = prepare.fresh_profile(game)
+                    self.assertEqual(profile['hold_stances'], 4)
+                    self.assertEqual(profile['frost_variants'], [1,0,0])
+                    fields, originals = prepare.boss_fields(profile)
+                    session = dict(fields, originals=originals, session=game.identity, config_tag='123456789abcdef0')
+                    packed = SESSION_CONFIG.unpack(encode_session(session, game.identity['pid'], int(game.identity['creation_filetime'])))
+                    self.assertEqual(packed[10:14], (4,1,0,0))

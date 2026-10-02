@@ -166,7 +166,7 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && copy_field(record.payload + 0x34, record.timing_key)) record.valid_fields |= 16;
 #ifdef RESEARCH_DISPATCH
 #ifdef RESEARCH_REPEAT
-    if (request==ActionRequest::Native && result && record.actor==boss_session.player
+    if ((request==ActionRequest::Native || reason==NativeCastPulse) && result && record.actor==boss_session.player
         && (record.valid_fields&4) && record.after_key>=0xD5F && record.after_key<=0xD78)
         cast_pulse_input.closes=cast_pulse_input.edge=0;
 #endif
@@ -512,7 +512,7 @@ static DWORD start_observer() {
     if (!voice_prologue_matches(voice_target)) return 5;
     if (!resolve_weight_setter(reinterpret_cast<uint64_t>(main))
         || !resolve_tracking_helpers(reinterpret_cast<uint64_t>(main))) return 5;
-    if (replacements_configured()) {
+    {
         lookup_target = reinterpret_cast<char*>(main) + 0x73fa40;
         const uint8_t prefix[] = {0x48,0x89,0x5c,0x24,0x08,0x48,0x89,0x74,0x24,0x10,0x57,0x48,0x83,0xec,0x20};
         uint8_t bytes[sizeof(prefix)];

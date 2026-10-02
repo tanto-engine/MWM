@@ -1,5 +1,6 @@
 #pragma once
 #include "trace_protocol.h"
+#include "boss_session_schema.h"
 
 enum { DISPATCH_MAGIC = 0x3144494e, DISPATCH_VERSION = 1 };
 // These numeric rejection/acceptance codes are consumed by external trace readers; ordering is part of the ABI.
@@ -85,7 +86,7 @@ static inline DispatchReason command_status(const DispatchCommand& c, int64_t no
     // A reconnect or delayed publisher must not replay an old input into valid gameplay.
     if (c.armed != 1) return NotArmed;
     if (c.generation != generation) return WrongGeneration;
-    if (!valid_chord_policy(c.reserved[0]) || c.reserved[1] >= 32 || c.reserved[2] > UINT16_MAX) return InvalidConfig;
+    if (!valid_chord_policy(c.reserved[0]) || c.reserved[1] >= BOSS_IMPORT_LIMIT || c.reserved[2] > UINT16_MAX) return InvalidConfig;
     if (c.held != 1 && !(c.reserved[0]&1)) return Released;
     if (!c.chord_sequence || c.chord_sequence > INT64_MAX) return InvalidConfig;
     if (c.chord_sequence <= consumed) return SequenceConsumed;

@@ -122,6 +122,13 @@ class Recovery(unittest.TestCase):
         code, attempts, status = self.exercise(None)
         self.assertEqual((code, attempts, status['state']), (1, 1, 'cleanup_needs_attention'))
 
+    def test_successful_stop_with_borrowed_slots_never_retries(self):
+        code, attempts, status = self.exercise(dict(start_attempted=True, start_completed=True,
+            stop_completed=True, post_stop_slots_restored=False,
+            errors=['Stop returned success but borrowed resource slots remain']))
+        self.assertEqual((code, attempts, status['state']), (1, 1, 'cleanup_needs_attention'))
+        self.assertEqual(status['errors'], ['Stop returned success but borrowed resource slots remain'])
+
     def test_retired_game_process_allows_reacquisition(self):
         # Reacquire only after the previous game process is positively retired.
         # Report that the prior game process has retired.

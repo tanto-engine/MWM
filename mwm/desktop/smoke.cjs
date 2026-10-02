@@ -15,7 +15,14 @@ async function runSmoke(window, call, report) {
     const collection=await window.mwm.request('collection');
     if (!collection.moves.length) throw new Error('Packaged move collection missing');
     if (!collection.unreviewed || collection.unreviewed.signatures.length !== collection.unreviewed.distinct_signatures) throw new Error('Packaged recording index missing');
-    return {datasetMoves:collection.moves.length,unreviewedActions:collection.unreviewed.distinct_signatures};
+    const snapshot=await window.mwm.request('snapshot');
+    for (const [method,root] of [['maria','maria.action_0c80'],['maria_dash','maria.action_0c8a']]) {
+      const preset=await window.mwm.request(method,snapshot);
+      const preview=await window.mwm.request('preview',{...snapshot,preset});
+      if (!preset.skill_bindings.some(row=>row.stance==='mid' && row.source==='light_attack' && row.move===root)
+          || !preview.moves[root]) throw new Error('Packaged Maria preset is unavailable: '+method);
+    }
+    return {datasetMoves:collection.moves.length,unreviewedActions:collection.unreviewed.distinct_signatures,mariaPresets:2};
   })()`);
   // Capture the actual first-open app before test edits; the release keeps this image with its receipt.
   await window.webContents.executeJavaScript('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');

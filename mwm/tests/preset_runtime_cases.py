@@ -286,6 +286,46 @@ class PresetRuntimeTests(unittest.TestCase):
                     clock['t']=t;results.append(desktop.preset_hotkey_poll())
                 self.assertEqual(results,[False]*7)
 
+    def test_hotkey_resume_does_not_count_a_press_held_while_suspended(self):
+        from controller_reader import ControllerReader
+        device = self.calibration['device']
+        sample = dict(t=0., buttons=0, running=True)
+        class Backend:
+            name = 'winmm'
+            absent_codes = {1167}
+            def slots(self): return [device['slot']]
+            def describe(self, slot): return {key:value for key,value in device.items() if key not in ('backend','slot')}
+            def read(self, slot): return 0, dict(buttons=sample['buttons'], axes={}, pov=65535)
+        def make_reader():
+            return ControllerReader(backends=[Backend()], clock=lambda:sample['t'])
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            worker.atomic_json(runtime/'controller-calibration.json', self.calibration)
+            with patch.object(worker.Desktop, 'location', return_value=runtime), \
+                 patch.object(worker, 'process_matches', side_effect=lambda _:sample['running']), \
+                 patch.object(worker, 'ControllerReader', side_effect=make_reader), \
+                 patch.object(worker.time, 'perf_counter', side_effect=lambda:sample['t']):
+                for stopped in (False, True):
+                    with self.subTest(engine_stopped=stopped):
+                        sample.update(t=0., buttons=0, running=True)
+                        desktop = worker.Desktop()
+                        worker.atomic_json(runtime/'play-status.json', dict(state='enabled'))
+                        self.assertFalse(desktop.preset_hotkey_poll())
+                        worker.atomic_json(runtime/'play-status.json', dict(state='gameplay_suspended'))
+                        sample.update(t=1., buttons=worker.HOTKEY_MASK, running=not stopped)
+                        self.assertFalse(desktop.preset_hotkey_poll())
+                        worker.atomic_json(runtime/'play-status.json', dict(state='enabled'))
+                        sample['running'] = True
+                        for t, buttons in ((1.1,worker.HOTKEY_MASK), (1.15,0),
+                                           (1.2,worker.HOTKEY_MASK), (1.31,worker.HOTKEY_MASK)):
+                            sample.update(t=t, buttons=buttons)
+                            self.assertFalse(desktop.preset_hotkey_poll())
+                        for t, buttons in ((1.35,0), (1.4,worker.HOTKEY_MASK)):
+                            sample.update(t=t, buttons=buttons)
+                            self.assertFalse(desktop.preset_hotkey_poll())
+                        sample['t'] = 1.51
+                        self.assertTrue(desktop.preset_hotkey_poll())
+
 
 if __name__ == '__main__':
     unittest.main()

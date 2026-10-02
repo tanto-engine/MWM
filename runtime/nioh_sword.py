@@ -16,11 +16,16 @@ RECORDED_GROUNDED = (
     (0xD32,2020,0x184C0000,46,35),(0xD33,2030,0x184C0000,42,-1),
     (0xC6E,1010,0x19400000,10,-1),(0xC6F,1011,0x19400000,6,-1),
     (0xD8D,5011,0x594C0000,27,120),(0xC6A,1130,0x40019480000,9,-1),
+    (0xC80,1000,0x184C0000,31,36),(0xC81,1001,0x184C0000,23,36),
+    (0xC82,1002,0x184C0000,13,36),(0xC83,1010,0x184C0000,15,36),
+    (0xC84,1011,0x184C0000,13,36),(0xC85,1020,0x184C0000,17,52),
+    (0xC86,1021,0x184C0000,15,52),(0xC89,1030,0x184C0000,17,70),
+    (0xC8A,1030,0x184C0000,17,70),
 )
 
 
 def is_recorded_grounded(move):
-    # Reuse William's input/recovery adapter only for the eight researched trial phases.
+    # Reuse William's input/recovery adapter only for researched trial phases.
     # Exact motion, family, row count and recovery distinguish reused boss action numbers.
     # Native preparation additionally checks the complete archived payload prefix.
     return move.get('adapter_kind') in (2,4) and tuple(move.get(k) for k in

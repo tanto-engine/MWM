@@ -123,6 +123,13 @@ int main() {
     assert(runtime_imports_valid(chords));
     chords.chord_reservations[1].mode=0;
     assert(runtime_imports_valid(chords));
+    for (uint16_t buttons : {uint16_t(0x0900),uint16_t(0x1100),uint16_t(0x0101)}) {
+        auto global=chords;global.chord_reservations[0].buttons=buttons; // L1 with R2, Cross or D-pad Up.
+        assert(runtime_imports_valid(global));
+        global.chord_reservations[0].mode=10;assert(!runtime_imports_valid(global));
+    }
+    auto pulse_chord=chords;pulse_chord.chord_reservations[0].buttons=0x0300;
+    assert(!runtime_imports_valid(pulse_chord)); // R1 remains reserved for native Pulse/stance input.
     auto bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8000;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[0].buttons=0x8300;assert(!runtime_imports_valid(bad_chord));
     bad_chord=chords;bad_chord.chord_reservations[0].stances=8;assert(!runtime_imports_valid(bad_chord));

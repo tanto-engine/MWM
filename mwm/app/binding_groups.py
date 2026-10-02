@@ -12,25 +12,18 @@ GROUPS = {
 
 
 def describe_groups():
-    # Give the editor one authoritative list of reusable groups.
-    # Labels describe player controls; IDs identify the portable file contract.
-    # File operations never accept renderer-supplied field lists.
     return [dict(id=key, label=value[0]) for key, value in GROUPS.items()]
 
 
 def group_fields(group):
-    # Restrict an operation to a known group before reading or writing a file.
-    # Each group owns disjoint preset fields, preventing hidden changes to other bindings.
-    # Speed, profile name and controller selection are deliberately outside these groups.
+    # Fields are product-owned; a file cannot widen its selected group's scope.
     if not isinstance(group, str) or group not in GROUPS:
         raise ValueError('Choose a supported binding group')
     return GROUPS[group][1]
 
 
 def export_group(preset, calibration, group):
-    # Copy only this group's settings from a validated draft.
-    # Chord files include their source controller map so button meaning survives remapping.
-    # Independent dictionaries prevent later edits from changing the exported document.
+    # Raw button masks must travel with their source controller map.
     fields = group_fields(group)
     preset = validate_preset(preset)
     value = dict(schema_version=1, kind='mwm_binding_group', weapon='sword', group=group,
@@ -41,9 +34,7 @@ def export_group(preset, calibration, group):
 
 
 def import_group(document, preset, calibration, group):
-    # Replace exactly one group in a copy, retaining all unrelated pending choices.
-    # Reject mismatched files and unexpected fields rather than silently widening their scope.
-    # Validate the merged result; cross-group prerequisites remain Engine's authority.
+    # Merge into a copy: a rejected cross-group conflict leaves the draft intact.
     fields = group_fields(group)
     keys = {'schema_version', 'kind', 'weapon', 'group', 'bindings'}
     allowed = [keys | {'controller'}] if group == 'chord' else [keys, keys | {'controller'}] if group == 'skills' else [keys]
@@ -60,7 +51,7 @@ def import_group(document, preset, calibration, group):
         if (not isinstance(controller, dict) or not isinstance(controller.get('device'), dict)
                 or 'backend' not in controller['device'] or set(controller) - {'device', 'button_map'}):
             raise ValueError('Chord file requires its source controller mapping')
-        return remap_preset(result, controller, calibration, top_level=group == 'chord')
+        return remap_preset(result, controller, calibration, top_level=group == 'chord', custom_inputs=group == 'skills')
     if group == 'skills' and any('input' in row for row in result['skill_bindings']):
         raise ValueError('Custom input group requires its source controller mapping')
     return validate_preset(result)

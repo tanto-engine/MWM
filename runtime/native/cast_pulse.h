@@ -1,6 +1,6 @@
 #pragma once
 
-// Keep a sword's actual Pulse deadline across the native Onmyo cast. No Ki,
+// Keep a sword's actual Pulse deadline across native magic and throwing casts. No Ki,
 // item count, effect or cast-speed fields are written by this adapter.
 struct CastPulseInput {
     int64_t closes, sampled, edge;
@@ -13,11 +13,12 @@ struct CastPulseInput {
 static CastPulseInput cast_pulse_input{};
 
 static bool pulse_cast_descriptor(uint64_t descriptor) {
-    uint64_t payload=0,flags=0;uint32_t key=0;int32_t motion=0;uint8_t enabled=0;
-    return copy_field(descriptor,key) && key==0x262
-        && copy_field(descriptor+0x40,enabled) && enabled==1
-        && copy_field(descriptor+0x20,payload) && copy_field(payload+0x20,motion) && motion==111
-        && copy_field(payload+0x18,flags) && flags==0x2181C0000ULL;
+    uint64_t payload=0,flags=0;int32_t motion=0;uint8_t enabled=0;
+    return copy_field(descriptor+0x40,enabled) && enabled==1
+        && copy_field(descriptor+0x20,payload) && copy_field(payload+0x20,motion)
+        && copy_field(payload+0x18,flags)
+        && (((motion==110 || motion==111) && (flags&~0x400000ULL)==0x2181C0000ULL)
+            || (motion==104 && flags==0x2184C0000ULL));
 }
 
 static void latch_cast_pulse_window() {
@@ -33,8 +34,8 @@ static void latch_cast_pulse_window() {
 }
 
 static void observe_cast_pulse_cue(void* state, void* timing_record, void* event) {
-    // A late sound callback witnesses completion of all earlier non-sound rows.
-    // This uses the loaded cast's event stream instead of guessing its effect frame.
+    // Native type40 releases the item effect; type41 is later cleanup.
+    // The next sound callback witnesses release on the same player-owned timeline.
     auto& input=cast_pulse_input;uint64_t current=0;uint32_t counter=0;
     const uint64_t record=reinterpret_cast<uint64_t>(timing_record),address=reinterpret_cast<uint64_t>(event);
     if (!dispatch || !dispatch->control.enabled || !input.descriptor || input.ready || !boss_player_valid()
@@ -47,13 +48,13 @@ static void observe_cast_pulse_cue(void* state, void* timing_record, void* event
         || offset<0x24 || offset>0x10000 || address<record+offset
         || address-record-offset>=uint64_t(count)*12 || (address-record-offset)%12
         || !copy_bytes(address,fields,sizeof(fields)) || fields[1]!=10) return;
-    uint32_t rows[512][3]{},last_effect=0;
+    uint32_t rows[512][3]{},last_effect=0;bool release_found=false;
     if (!copy_bytes(record+offset,rows,count*12)) return;
     for (unsigned i=0;i<count;++i) {
         if (i && rows[i][0]<rows[i-1][0]) return;
-        if (rows[i][1]!=10 && rows[i][0]>last_effect) last_effect=rows[i][0];
+        if (rows[i][1]==40) {last_effect=rows[i][0];release_found=true;}
     }
-    if (last_effect && fields[0]>last_effect) input.ready=true;
+    if (release_found && fields[0]>last_effect) input.ready=true;
 }
 
 static DispatchReason choose_cast_pulse(DispatchCommand& command) {
@@ -85,10 +86,10 @@ static DispatchReason choose_cast_pulse(DispatchCommand& command) {
         input.edge=0;return IneligibleRequest;
     }
     if ((pressed&XINPUT_GAMEPAD_RIGHT_SHOULDER) && sample.qpc<input.closes) input.edge=sample.qpc;
-    if (!input.edge || !input.ready || sample.qpc>=input.closes || !original_lookup) return IneligibleRequest;
-    uint32_t bank=0;const uint64_t descriptor=original_lookup(reinterpret_cast<void*>(boss_session.player+0x70),0xD5F,&bank);
+    const auto lookup=original_lookup ? original_lookup : reinterpret_cast<LookupFn>(lookup_target);
+    if (!input.edge || !input.ready || sample.qpc>=input.closes || !lookup) return IneligibleRequest;
+    uint32_t bank=0;const uint64_t descriptor=lookup(reinterpret_cast<void*>(boss_session.player+0x70),0xD5F,&bank);
     if (!descriptor || bank>2 || !same_field(descriptor,0,uint32_t(0xD5F))) return DesiredMissing;
     command.desired_key=0xD5F;command.edge_qpc=input.edge;
-    input.edge=0;input.closes=0;
     return NativeCastPulse;
 }

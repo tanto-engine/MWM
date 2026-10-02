@@ -8,17 +8,64 @@
   "review_status": "candidate",
   "priority": null,
   "description": "4 Hit Vertical/Horizontal Quick Attack Combo",
-  "mapping_status": "unmapped",
-  "steps": [],
-  "observed_links": [],
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "Recorded phase; one fresh attack press per phase in the player string.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C80",
+        "motion_id": 1000,
+        "timing_id": 1000
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "Recorded phase; one fresh attack press per phase in the player string.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C81",
+        "motion_id": 1001,
+        "timing_id": 1001
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "Recorded phase; one fresh attack press per phase in the player string.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C82",
+        "motion_id": 1002,
+        "timing_id": 1002
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
   "capture_context": {
-    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "actor_identity": "Same actor and owner across the selected sequence; Maria action-bank fingerprint matches the complete payloads in archive_00 entry 124.",
     "weapon_classification": "User-described sword destination; equipped weapon unverified."
   },
   "blocked_reasons": [
-    "actor_and_phase_mapping_unreviewed",
-    "william_adapter_unverified",
-    "motion_timing_resources_unverified",
     "gameplay_unverified"
   ],
   "evidence": [
@@ -35,8 +82,44 @@
       "annotation_end_seconds": 37.547,
       "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
       "identity_line": 2,
-      "steps": [],
-      "native_links": []
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 345,
+          "metadata_line": 156,
+          "first_observed_seconds": 34.047,
+          "counter": 157
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 351,
+          "metadata_line": 83,
+          "first_observed_seconds": 34.891,
+          "counter": 158
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 356,
+          "metadata_line": 90,
+          "first_observed_seconds": 35.281,
+          "counter": 159
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 4
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 2
+        }
+      ]
     }
+  ],
+  "review_notes": [
+    "Selected action, motion, payload and native transition rows agree with the installed Maria asset bank. Hit counts in the note do not equal input counts. Player continuation is one fresh attack press per selected phase."
   ]
 }

@@ -20,13 +20,8 @@ READ_ONLY = ('nioh_memory','boss_probe')
 
 
 def source_state(project):
-    # Identify the exact saved source behind an EXE, like a build's fingerprint.
-    # Git HEAD names the commit; porcelain status also detects staged and untracked changes.
-    # Ignored compiler outputs are not source changes and do not make the checkout dirty.
+    # Ignored compiler outputs do not dirty the source receipt; untracked source does.
     def git(*args):
-        # Run a read-only Git query inside the requested repository.
-        # Argument lists preserve spaces in Windows paths without invoking another shell.
-        # A failed query raises instead of inventing a clean revision for the release receipt.
         return subprocess.check_output(['git','-C',str(project),*args],text=True).strip()
     return dict(commit=git('rev-parse','HEAD'),dirty=bool(git('status','--porcelain')))
 
@@ -91,19 +86,13 @@ def stage_product(project, destination):
     runtime=destination/'runtime';runtime.mkdir()
     modules=READ_ONLY if spec['kind']=='recorder' else tuple(p.stem for p in (ROOT/'runtime').glob('*.py'))
     for name in modules: shutil.copyfile(ROOT/'runtime'/f'{name}.py',runtime/f'{name}.py')
-    if spec['kind']=='recorder':
-        # The new worker needs only discovery/metadata; remove the legacy recorder/controller CLI.
-        # Its window, ZIP streaming, hotkey and audio now belong to Electron.
-        # Stage only the live action worker, excluding offline intake and duplicated artwork.
-        probe=runtime/'boss_probe.py';source=probe.read_text(encoding='utf8')
-        probe.write_text(source[:source.index('def record(')],encoding='utf8')
+    # Consumer workers need discovery primitives, not recording/report or catalogue-editing CLIs.
+    boundaries={'boss_probe':'def record('}
     if spec['kind']=='sword':
-        # Omit recorder/report CLI and catalogue editing from the consumer runtime.
-        # Keep the validated read/discovery primitives used by live preparation.
-        # Cut at explicit module boundaries so build tests can check the exported surface.
-        for name,boundary in [('boss_probe','def record('),('catalogue','def save_catalogue('),('action_banks','def inspect_pair(')]:
-            path=runtime/f'{name}.py';source=path.read_text(encoding='utf8')
-            path.write_text(source[:source.index(boundary)],encoding='utf8')
+        boundaries.update(catalogue='def save_catalogue(',action_banks='def inspect_pair(')
+    for name,boundary in boundaries.items():
+        path=runtime/f'{name}.py';source=path.read_text(encoding='utf8')
+        path.write_text(source[:source.index(boundary)],encoding='utf8')
     if spec['kind']=='recorder':
         (destination/'src').mkdir()
         shutil.copyfile(project/'src/action_capture.py',destination/'src/action_capture.py')

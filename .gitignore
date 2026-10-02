@@ -26,3 +26,4 @@ runtime/trainer-settings.json
 runtime/recordings/
 local-artifacts/
 .build/
+work/

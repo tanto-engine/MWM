@@ -69324,6 +69324,276 @@
         }
       ],
       "default_binding": null
+    },
+    {
+      "id": "maria.action_0c80",
+      "name": "Maria - Four-hit quick string",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "quick",
+      "source": {
+        "action_id": 3200,
+        "action_hex": "0C80",
+        "motion_id": 1000,
+        "timing_id": 1000,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 36
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c81",
+      "name": "Maria - Quick string, second phase",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "normal",
+      "source": {
+        "action_id": 3201,
+        "action_hex": "0C81",
+        "motion_id": 1001,
+        "timing_id": 1001,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 36
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c82",
+      "name": "Maria - Quick string, final phase",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "normal",
+      "source": {
+        "action_id": 3202,
+        "action_hex": "0C82",
+        "motion_id": 1002,
+        "timing_id": 1002,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 36
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c83",
+      "name": "Maria - Horizontal slash string",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "heavy",
+      "source": {
+        "action_id": 3203,
+        "action_hex": "0C83",
+        "motion_id": 1010,
+        "timing_id": 1010,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 36
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c84",
+      "name": "Maria - Jumping slash ender",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "normal",
+      "source": {
+        "action_id": 3204,
+        "action_hex": "0C84",
+        "motion_id": 1011,
+        "timing_id": 1011,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 36
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c85",
+      "name": "Maria - Aerial kick string",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "normal",
+      "source": {
+        "action_id": 3205,
+        "action_hex": "0C85",
+        "motion_id": 1020,
+        "timing_id": 1020,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 52
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c86",
+      "name": "Maria - Aerial kick string, final phase",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "normal",
+      "source": {
+        "action_id": 3206,
+        "action_hex": "0C86",
+        "motion_id": 1021,
+        "timing_id": 1021,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 52
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c89",
+      "name": "Maria - Forward dodge slash",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "skill",
+      "source": {
+        "action_id": 3209,
+        "action_hex": "0C89",
+        "motion_id": 1030,
+        "timing_id": 1030,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 70
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "isolated_skill",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "maria.action_0c8a",
+      "name": "Maria - Dodge slash string",
+      "boss_id": "maria",
+      "weapon": "sword",
+      "designation": "quick",
+      "source": {
+        "action_id": 3210,
+        "action_hex": "0C8A",
+        "motion_id": 1030,
+        "timing_id": 1030,
+        "flags": 407633920,
+        "ki_cost": 10,
+        "recovery_frame": 70
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental",
+        "continuation": "fresh_attack_press",
+        "notes": "Native William transitions and Ki cost; original Maria action, animation, timing and contact data. Gameplay pending."
+      },
+      "verification": {
+        "gameplay": "pending"
+      },
+      "resource_profile_id": "maria.resources.v1"
     }
   ],
   "observations": [],

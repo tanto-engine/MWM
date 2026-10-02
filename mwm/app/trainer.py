@@ -13,19 +13,15 @@ RUNTIME = Path(os.environ.get('NIOH_RUNTIME_HOME', ROOT/'runtime'))
 CODE = Path(os.environ.get('TANTO_ENGINE_ROOT', ROOT.parent))/'runtime' if not (ROOT/'runtime/engine_config.py').is_file() else ROOT/'runtime'
 os.environ['TANTO_MOD_ROOT'] = str(ROOT)
 os.environ['NIOH_RUNTIME_HOME'] = str(RUNTIME)
-for folder in (CODE,):
-    sys.path.insert(0, str(folder))
+sys.path.insert(0, str(CODE))
 
 from engine_config import read_json, validate_preset
 from game_controller import binding_buttons, game_button_mask
 from process_support import active_runtime, process_matches, worker_command
 
 
-def remap_preset(preset, source, target, top_level=True):
-    # Keep a player's chosen physical buttons when switching controller mappings.
-    # Translate saved bits through logical game buttons, then back into the destination mapping.
-    # Reject missing equivalents and validate the translated preset before it can replace saved settings.
-    """Preserve physical button meaning when the saved mask namespace changes."""
+def remap_preset(preset, source, target, top_level=True, custom_inputs=True):
+    """Preserve logical buttons; group imports remap only their own mask namespace."""
     buttons=binding_buttons(target['device'],target.get('button_map'))
     masks={game_button_mask(target['device'],mask,target.get('button_map')):mask for mask in buttons.values()}
     result=deepcopy(preset)
@@ -35,7 +31,7 @@ def remap_preset(preset, source, target, top_level=True):
         return masks[logical]
     if top_level:
         for key in ('modifier_mask','trigger_mask'): result[key]=remap(result[key])
-    for row in result['skill_bindings']:
+    for row in result['skill_bindings'] if custom_inputs else ():
         if 'input' in row:
             for key in ('modifier_mask','trigger_mask','followup_mask'):
                 if key in row['input']: row['input'][key]=remap(row['input'][key])
@@ -43,9 +39,7 @@ def remap_preset(preset, source, target, top_level=True):
 
 
 def saved_moveset(value, calibration):
-    # Load either a controller-aware moveset file or an older bare preset.
-    # New bundles validate their shape and translate logical controls into the current calibration.
-    # Old presets retain the current saved-mask namespace and still pass normal preset validation.
+    # Bundles carry their mask namespace; legacy bare presets use the current map.
     if isinstance(value,dict) and value.get('kind')=='sword_moveset':
         if value.get('schema_version')!=1 or set(value)!={'schema_version','kind','preset','controller'}:
             raise ValueError('Unsupported saved moveset bundle')
@@ -54,9 +48,7 @@ def saved_moveset(value, calibration):
 
 
 def launch(script, arguments, folder):
-    # Start a hidden worker with stdout and stderr saved in its session folder.
-    # Keep executable and script arguments separate, including paths with spaces.
-    # Return the process handle so the UI can report worker exit.
+    # Frozen children need their own extraction lifetime when the UI exits first.
     folder.mkdir(parents=True, exist_ok=True)
     with (folder/'stdout.txt').open('w') as out, (folder/'stderr.txt').open('w') as err:
         return subprocess.Popen(worker_command(script, *arguments), stdout=out, stderr=err,
@@ -65,9 +57,7 @@ def launch(script, arguments, folder):
 
 
 def launch_engine():
-    # Reuse an existing registered engine instead of launching another publisher.
-    # Clear the stop signal only when starting a new session.
-    # Keep UI reopening independent from gameplay attachment.
+    # Reopening the editor must not clear an existing supervisor's Stop request.
     if active_runtime() is not None:
         return None
     if process_matches(read_json(RUNTIME/'play-process.json')):
@@ -84,9 +74,7 @@ def launch_engine():
 
 
 def disable_engine():
-    # Signal the registered runtime through its stop file.
-    # Resolve the active runtime directory before writing the request.
-    # Native recovery remains responsible for safe detachment.
+    # Target the registered owner; its native recovery performs detachment.
     registration = active_runtime()
     runtime = Path(registration['runtime_path']) if registration else RUNTIME
     runtime.mkdir(parents=True, exist_ok=True)
@@ -94,9 +82,7 @@ def disable_engine():
 
 
 def main(argv=None):
-    # Route source UI and headless lifecycle controls through the same functions.
-    # Parse only maintained controls before constructing any widgets.
-    # Disable remains cooperative and can run without opening the trainer.
+    # Headless Disable must not construct UI or stage a new runtime.
     parser = argparse.ArgumentParser(description='Control the Nioh sword runtime')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--enable', action='store_true', help='Enable without opening the UI')

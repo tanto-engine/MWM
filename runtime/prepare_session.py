@@ -23,6 +23,7 @@ from profile_resources import StableReads, inspect_candidate, resources, inspect
 from load_resources import load_resources, ResourceLoadError
 from trace_reader import Trace
 from action_banks import inspect_bank, inspect_banks, resolve
+from catalogue import load_catalogue
 from move_imports import read_import_manifest, check_import_topology, GRAB_ATTEMPT_FLAGS, PLAYER_PAIRED_FLAGS, STANCE_OPENERS, PLAYER_TEMPLATES, IMPORT_LIMIT, BINDING_LIMIT, is_izuna_bridge
 from engine_policy import LAUNCH_PROFILES, TRACKING_RATES, AIR_JUGGLE_BOOST, FROST_MILLISECONDS, FROST_STARTUP_SPEED, KI_PULSE, validate_move_policy
 from engine_config import validate_preset, binding_for_preset, read_json, atomic_json, move_label, HEAVY_STRINGS, NATIVE_SKILLS, HELD_MOVES, SPEED_MOVES, SOURCE_MANIFESTS, MOVE_HELP, STRING_MOVES
@@ -217,7 +218,9 @@ def configured_replacements(configuration=None, baseline=None):
         *configuration['frost_moon'].values(), *(binding['move'] for binding in configuration['skill_bindings']))
     if candidate is None and not hold and not jump:
         return None
-    sources = [read_import_manifest(IMPORT_MANIFEST.with_name(source['boss_id']+'.json')) for source in SOURCE_MANIFESTS]
+    catalogue = load_catalogue()
+    sources = [read_import_manifest(IMPORT_MANIFEST.with_name(source['boss_id']+'.json'), catalogue=catalogue)
+               for source in SOURCE_MANIFESTS]
     manifest = dict(sources[0], moves=[], hold_chains={})
     for source in sources:
         offset = len(manifest['moves'])
@@ -414,7 +417,7 @@ def fresh_profile(game):
     moves, imports = resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest)
     adapters = [None] * len(imports)
     hold_variant = hold_milliseconds = hold_camera_bank = 0
-    hold_stances=0; frost_variants=[0,0,0]; frost_milliseconds=FROST_MILLISECONDS
+    frost_milliseconds=FROST_MILLISECONDS
     base = int(game.identity['module_base'], 0)
     if U64(stable.pin(camera_bank, 8), 0) != base + 0x13C8FA0:
         raise ValueError('Owned camera resource has an unexpected type')
@@ -466,8 +469,6 @@ def fresh_profile(game):
         if replacement_manifest['hold_variant']:
             hold_variant = replacement_offset + replacement_manifest['hold_variant']
             hold_milliseconds = replacement_manifest['hold_milliseconds']
-            hold_stances=replacement_manifest['hold_stances']
-            frost_variants=[slot+replacement_offset if slot else 0 for slot in replacement_manifest['frost_variants']]
             frost_milliseconds=replacement_manifest['frost_milliseconds']
             if any(move['adapter_kind']==3 for move in additional):
                 if U64(stable.pin(hold_camera,8),0)!=base+0x13C8FA0 or inspect_motion(game,stable,hold_camera,5020)['presence']!='present':
@@ -476,10 +477,12 @@ def fresh_profile(game):
         imports.extend(additional)
     native_grapple = configuration['okatsu_grapple']
     slots={move['id']:index+1 for index,move in enumerate(imports)}
-    frost_variants=[slots.get(move,0) for move in configuration['frost_moon'].values()]
-    hold_stances=sum(1<<i for i,move in enumerate(configuration['stance_holds'].values()) if move)
+    # ABI slots and mask bits use low/mid/high, independent of JSON key order.
+    frost_variants=[slots.get(configuration['frost_moon'][stance],0) for stance in STANCE_OPENERS]
+    holds=[configuration['stance_holds'][stance] for stance in STANCE_OPENERS]
+    hold_stances=sum(1<<i for i,move in enumerate(holds) if move)
     if not hold_variant and hold_stances:
-        hold_variant=next(slots[move] for move in configuration['stance_holds'].values() if move)
+        hold_variant=next(slots[move] for move in holds if move)
         hold_milliseconds=round(configuration['hold_seconds']*1000)
     calibration=read_json(HERE/'controller-calibration.json',{})
     selection=controller_selection(calibration)

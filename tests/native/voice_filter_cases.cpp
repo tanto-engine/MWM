@@ -78,6 +78,7 @@ int main() {
         put(record.data(), 0x2c, uint32_t(slot ? 16 : 11));
         const size_t sound = 0x100 + (slot ? 16 : 11) * 0x4c + 0x1c;
         put(record.data(), sound, slot ? 0xF519B456u : 0x0E077D36u);
+        put(record.data(), sound+0x24, uint32_t(12));
         put(actor.data(), 0x58, boss_private_descriptor_address(slot)); put(state.data(), 0x20, ptr(record.data()));
         const auto before_record = record;
         const auto before_actor = actor;
@@ -88,6 +89,8 @@ int main() {
             return boss_suppress_voice(state.data(), record.data(), record.data()+0x24);
         };
         check(filtered()); check(record == before_record && actor == before_actor);
+        put(record.data(), sound+0x24, uint32_t(11)); check(!filtered());
+        put(record.data(), sound+0x24, uint32_t(12));
         put(record.data(), sound, uint32_t(0xA14FFCB9)); check(!filtered()); // SE_OKATSU_RUSH preserved.
         put(record.data(), sound, slot ? 0xF519B456u : 0x0E077D36u);
         put(record.data(), 0x28, uint32_t(0)); check(!filtered()); put(record.data(), 0x28, uint32_t(10));

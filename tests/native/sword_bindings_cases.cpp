@@ -108,6 +108,8 @@ static void contextual_finisher_cases() {
         put(light.data(),0,keys[stance][family]+stage);put(light_payload.data(),0x20,motions[stance][family]+int32_t(stage)*10);
         put(light_payload.data(),0x24,int16_t(10));put(player.data(),0x28,float(10));
         assert(sword_attack_family(address(player.data()))==family+1);
+        put(player.data(),0x6C,uint32_t(2)); // Previous cast bank is independent of current sword bank0.
+        assert(sword_attack_family(address(player.data()))==family+1);
         auto& row=light_rows[6];row.fill(0xff);row[0x0A]=0;row[0x0B]=5;row[0x0C]=0;row[0x0D]=family==0;row[0x0E]=1;
         put(row.data(),0x14,int16_t(0xD3A));put(player.data(),0x90,address(row.data()));
         boss_skill_bindings[0]={family==0 ? 6u : 2u,1u<<(2-stance),1,0,0,0,0};
@@ -223,9 +225,9 @@ int main() {
         const auto& clone=mid_light_actions[index];
         for (unsigned row=0;row<46u;++row) assert(!memcmp(clone.rows[row+2],rows[row].data(),0x30));
         for (unsigned row=0;row<2;++row) {
-            assert(grapple_field(address(clone.rows[row]),0x14,int16_t(0xD3A)));
+            assert(same_field(address(clone.rows[row]),0x14,int16_t(0xD3A)));
             assert(clone.rows[row][0x0B]==1 && clone.rows[row][0x0C]==1 && clone.rows[row][0x0D]==5 && clone.rows[row][0x0E]==0);
-            assert(grapple_field(address(clone.rows[row]),0x2C,int32_t(-1)));
+            assert(same_field(address(clone.rows[row]),0x2C,int32_t(-1)));
         }
         assert(observed_lookup(player.data()+0x70,0xC76+index,&bank)==adapted);
         put(player.data(),0x58,adapted); dispatch->control.enabled=0;

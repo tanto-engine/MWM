@@ -30,9 +30,9 @@ static bool selected_sword_row(uint32_t key, uint8_t* row) {
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return false;
     for (unsigned index=0;index<count;++index) owned=owned || pointers[index]==selected;
     if (!owned || !copy_bytes(selected,check,sizeof(check)) || memcmp(row,check,sizeof(check))
-        || !grapple_field(player,0x58,current) || !grapple_field(player,0x90,selected)
-        || !grapple_field(current,0x78,table) || !grapple_field(current,0x80,start)
-        || !grapple_field(current,0x82,count)) return false;
+        || !same_field(player,0x58,current) || !same_field(player,0x90,selected)
+        || !same_field(current,0x78,table) || !same_field(current,0x80,start)
+        || !same_field(current,0x82,count)) return false;
     return true;
 }
 
@@ -42,9 +42,9 @@ static bool tiger_sprint_entry(uint32_t key, uint64_t descriptor, uint64_t paylo
     // The existing player lookup substitutes before either preparation owns an animation.
     const bool sheath=key==0xBBA;
     uint8_t row[0x30];uint64_t gate=0;int32_t skill=0;
-    if ((!sheath && key!=0xD46) || !grapple_field(payload,0x20,int32_t(sheath ? -1 : 5000))
-        || !grapple_field(payload,0x18,uint64_t(sheath ? 0 : 0x194C0000))
-        || !grapple_field(descriptor,0x82,uint16_t(sheath ? 13 : 49))
+    if ((!sheath && key!=0xD46) || !same_field(payload,0x20,int32_t(sheath ? -1 : 5000))
+        || !same_field(payload,0x18,uint64_t(sheath ? 0 : 0x194C0000))
+        || !same_field(descriptor,0x82,uint16_t(sheath ? 13 : 49))
         || !selected_sword_row(key,row) || row[0x0B]!=0x14 || row[0x0C]>1
         || row[0x0D]!=0xff || row[0x0E]!=0xff) return false;
     memcpy(&skill,row+0x2C,4);
@@ -61,7 +61,7 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
     uint32_t stance=0;uint64_t payload=0;
     if ((boss_active && boss_paired(boss_imports[boss_active_slot].flags))
         || !copy_field(boss_session.player+0x470,stance) || stance>2
-        || !grapple_field(descriptor,0,key) || !grapple_field(descriptor,0x40,uint8_t(1))
+        || !same_field(descriptor,0,key) || !same_field(descriptor,0x40,uint8_t(1))
         || !copy_field(descriptor+0x20,payload)) return -1;
     const unsigned mask=1u<<(2-stance);
     uint8_t guard[0x30];const unsigned family=sword_attack_family(boss_session.player);
@@ -79,16 +79,16 @@ static int native_bound_slot(uint32_t key, uint64_t descriptor, DispatchCommand&
             constexpr uint32_t quick_keys[]={0xCF0,0xC76,0xCB3};
             constexpr int32_t quick_motions[]={4100,2100,3100};
             const unsigned selected=2-stance;
-            if (key!=quick_keys[selected] || !grapple_field(payload,0x20,quick_motions[selected])
-                || !grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))) continue;
+            if (key!=quick_keys[selected] || !same_field(payload,0x20,quick_motions[selected])
+                || !same_field(payload,0x18,uint64_t(0x8000000594C0000ULL))) continue;
             if (native_binding_context(command)) return int(binding.variant-1);
             continue;
         }
         if (binding.kind==1) {
             const bool dodge=binding.key==0xBC8 && (key==0xBC8 || key==0xBC9);
-            const bool exact=(key==binding.key || dodge) && grapple_field(payload,0x20,binding.motion)
-                && grapple_field(payload,0x18,binding.flags)
-                && grapple_field(descriptor,0x82,uint16_t(binding.transition_count+(dodge && key==0xBC9)));
+            const bool exact=(key==binding.key || dodge) && same_field(payload,0x20,binding.motion)
+                && same_field(payload,0x18,binding.flags)
+                && same_field(descriptor,0x82,uint16_t(binding.transition_count+(dodge && key==0xBC9)));
             if (dodge) {
                 uint8_t row[0x30];
                 if (!selected_sword_row(key,row) || row[0x0B]!=1 || row[0x0C]!=1 || row[0x0D]!=0xff) continue;
@@ -139,13 +139,13 @@ static uint64_t mid_light_ender(void* context, uint32_t key, uint64_t descriptor
     if (!copy_bytes(descriptor,source,sizeof(source))) return 0;
     memcpy(&payload,source+0x20,8); memcpy(&table,source+0x78,8);
     memcpy(&start,source+0x80,2); memcpy(&count,source+0x82,2);
-    if (!grapple_field(descriptor,0,key) || !source[0x40] || count!=46
-        || !grapple_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
-        || !grapple_field(payload,0x20,int32_t(2100+index*10))) return 0;
+    if (!same_field(descriptor,0,key) || !source[0x40] || count!=46
+        || !same_field(payload,0x18,uint64_t(0x8000000594C0000ULL))
+        || !same_field(payload,0x20,int32_t(2100+index*10))) return 0;
     uint32_t bank=0; const uint64_t ender=original_lookup(context,0xD3A,&bank); uint64_t ender_payload=0;
-    if (bank!=0 || !grapple_field(ender,0,uint32_t(0xD3A)) || !grapple_field(ender,0x40,uint8_t(1))
-        || !copy_field(ender+0x20,ender_payload) || !grapple_field(ender_payload,0x20,int32_t(9210))
-        || !grapple_field(ender_payload,0x18,uint64_t(0x194C0000))) return 0;
+    if (bank!=0 || !same_field(ender,0,uint32_t(0xD3A)) || !same_field(ender,0x40,uint8_t(1))
+        || !copy_field(ender+0x20,ender_payload) || !same_field(ender_payload,0x20,int32_t(9210))
+        || !same_field(ender_payload,0x18,uint64_t(0x194C0000))) return 0;
     if (target.ready) return !memcmp(source,target.original,sizeof(source)) ? reinterpret_cast<uint64_t>(target.descriptor) : 0;
     uint64_t pointers[46]{},check[46]{};
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return 0;
@@ -155,15 +155,15 @@ static uint64_t mid_light_ender(void* context, uint32_t key, uint64_t descriptor
         const int16_t low=int16_t(row ? (index==0 ? 24 : index==1 ? 26 : 31) : index==0 ? 5 : 10);
         const int16_t high=int16_t((index==0 ? 24 : index==1 ? 26 : 31)+(row ? 30 : -1));
         if (original[0x0A]!=(row ? 0 : 2) || original[0x0B]!=1 || original[0x0C]!=1
-            || !grapple_field(pointers[7+row],0x14,int16_t(0xFA5))
-            || !grapple_field(pointers[7+row],0x20,low) || !grapple_field(pointers[7+row],0x22,high)) return 0;
+            || !same_field(pointers[7+row],0x14,int16_t(0xFA5))
+            || !same_field(pointers[7+row],0x20,low) || !same_field(pointers[7+row],0x22,high)) return 0;
         memcpy(target.rows[row],original,0x30);
         target.rows[row][0x0D]=5; target.rows[row][0x0E]=0; // Native selector5/state0: guard held.
         const int16_t destination=0xD3A; const int32_t skill=-1;
         memcpy(target.rows[row]+0x14,&destination,2); memcpy(target.rows[row]+0x2C,&skill,4);
     }
     if (!copy_bytes(table+uint64_t(start)*8,check,count*8) || memcmp(check,pointers,count*8)
-        || !grapple_field(descriptor,0x20,payload)) return 0;
+        || !same_field(descriptor,0x20,payload)) return 0;
     memcpy(target.original,source,sizeof(source)); memcpy(target.descriptor,source,sizeof(source));
     for (unsigned row=0;row<count+2u;++row) target.pointers[row]=reinterpret_cast<uint64_t>(target.rows[row]);
     table=reinterpret_cast<uint64_t>(target.pointers); start=0; count+=2;

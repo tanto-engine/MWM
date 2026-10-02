@@ -88,6 +88,15 @@ int main(int argc,char**) {
     FlushInstructionCache(GetCurrentProcess(),image+0xFA7080,sizeof(allocator_stub));
     base=reinterpret_cast<uintptr_t>(image);
     ResourceState owned_state{};
+    if (argc==1) {
+        uintptr_t original_table[5]{}, object[0x490/8]{};
+        object[0]=reinterpret_cast<uintptr_t>(original_table+1);
+        object[0x440/8]=1;request.sizes[0]=2;state=&owned_state;
+        track_completion(0,object);resource_decoded(object);
+        assert(state->phase==4 && state->error==ERROR_BAD_LENGTH && !state->completed);
+        assert(object[0]==reinterpret_cast<uintptr_t>(original_table+1));
+        owned_state={};request={};
+    }
     if (argc>1) {
         state=&owned_state;state->phase=1;submitting=1;
         submit_resources();

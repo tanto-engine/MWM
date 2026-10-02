@@ -23,6 +23,22 @@ def empty_preset():
 
 
 class CapabilityTests(unittest.TestCase):
+    def test_manifest_batch_reads_one_fresh_catalogue(self):
+        import move_imports
+        catalogue = move_imports.load_catalogue()
+        preset = empty_preset()
+        preset['low_heavy'] = 'jin_hayabusa.action_0c6e'
+        baseline = prepare.configured_imports(preset)
+        with patch.object(move_imports, 'load_catalogue', side_effect=lambda: copy.deepcopy(catalogue)) as read, \
+             patch.object(prepare, 'load_catalogue', side_effect=read, create=True):
+            prepare.configured_replacements(preset, baseline)
+            self.assertEqual(read.call_count, 1)
+            entry = next(move for move in move_imports.iter_moves(catalogue) if move['id']==preset['low_heavy'])
+            entry['name'] = 'Updated catalogue label'
+            compiled = prepare.configured_replacements(preset, baseline)
+            self.assertEqual(read.call_count, 2)
+            self.assertEqual(compiled['moves'][0]['name'], entry['name'])
+
     def test_hideyori_string_uses_one_continuation_input(self):
         preset=empty_preset()
         preset['stance_holds']['low']='toyotomi_hideyori.action_0d30'
@@ -253,11 +269,11 @@ class CapabilityTests(unittest.TestCase):
         preset['hold_move']=None;self.fixture(preset)
         preset=empty_preset();preset['tap_move']='jin_hayabusa.action_0c71'
         read=prepare.read_import_manifest
-        def incomplete(path):
+        def incomplete(path, **kwargs):
             # Remove one required phase after reading an otherwise valid source definition.
             # This models an incomplete selection rather than corrupting the recorded source bytes.
             # Preview must catch the missing dash dependency before native loading begins.
-            manifest=read(path)
+            manifest=read(path, **kwargs)
             if manifest['boss_id']=='jin_hayabusa':manifest['hold_chains'][preset['tap_move']].pop()
             return manifest
         with patch.object(prepare,'read_import_manifest',side_effect=incomplete),self.assertRaisesRegex(ValueError,'missing from the selected move sequence'):

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "boss_id": "maria",
+  "resource_profile_id": "maria.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "maria.action_0c80": [
+      "maria.action_0c80",
+      "maria.action_0c81",
+      "maria.action_0c82"
+    ],
+    "maria.action_0c83": [
+      "maria.action_0c83",
+      "maria.action_0c84"
+    ],
+    "maria.action_0c85": [
+      "maria.action_0c85",
+      "maria.action_0c86"
+    ],
+    "maria.action_0c89": [
+      "maria.action_0c89"
+    ],
+    "maria.action_0c8a": [
+      "maria.action_0c8a",
+      "maria.action_0c81",
+      "maria.action_0c82"
+    ]
+  },
+  "moves": [
+    {
+      "id": "maria.action_0c80",
+      "key": 3200,
+      "motion": 1000,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 36,
+      "transition_count": 31,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 18,
+          "index": 10,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00800cffff0109010004000a0000004c1800000000e80300002400ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c81",
+      "key": 3201,
+      "motion": 1001,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 36,
+      "transition_count": 23,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 8,
+          "index": 10,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00810cffff0109010004000a0000004c1800000000e90300002400ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c82",
+      "key": 3202,
+      "motion": 1002,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 36,
+      "transition_count": 13,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 10,
+          "index": 12,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00820cffff0109010004000a0000004c1800000000ea0300002400ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c83",
+      "key": 3203,
+      "motion": 1010,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 36,
+      "transition_count": 15,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 20,
+          "index": 9,
+          "hash": 2543008070
+        },
+        {
+          "frame": 48,
+          "index": 9,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00830cffff0109010004000a0000004c1800000000f20300002400ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c84",
+      "key": 3204,
+      "motion": 1011,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 36,
+      "transition_count": 13,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 12,
+          "index": 12,
+          "hash": 465981000
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00840cffff0109010004000a0000004c1800000000f30300002400ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c85",
+      "key": 3205,
+      "motion": 1020,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 52,
+      "transition_count": 17,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 18,
+          "index": 11,
+          "hash": 1943050345
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00850cffff0109010004000a0000004c1800000000fc0300003400ffffffff090001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c86",
+      "key": 3206,
+      "motion": 1021,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 52,
+      "transition_count": 15,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 8,
+          "index": 9,
+          "hash": 1943050345
+        },
+        {
+          "frame": 58,
+          "index": 10,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00860cffff0109010004000a0000004c1800000000fd0300003400ffffffff090001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c89",
+      "key": 3209,
+      "motion": 1030,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 70,
+      "transition_count": 17,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 44,
+          "index": 12,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff00890cffff0109010004000a0000004c1800000000060400004600ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "maria.action_0c8a",
+      "key": 3210,
+      "motion": 1030,
+      "flags": 407633920,
+      "ki_cost": 10,
+      "recovery_frame": 70,
+      "transition_count": 17,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 44,
+          "index": 12,
+          "hash": 2543008070
+        }
+      ],
+      "source_payload_prefix": "02000000000100000000ff008a0cffff0109010004000a0000004c1800000000060400004600ffffffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}

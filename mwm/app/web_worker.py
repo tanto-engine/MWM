@@ -2,6 +2,7 @@
 from copy import deepcopy
 import ctypes as C
 import json
+import math
 import os
 from pathlib import Path
 import sys
@@ -25,6 +26,8 @@ class BindingError(ValueError):
 
 HOTKEY_MASK = 0x2000  # Direct WinMM DS4 button 14 (touchpad click); XInput has no touchpad bit.
 HOTKEY_MIRROR_DELAY = .1  # Leave two 50-ms UI polls for a delayed XInput mirror.
+SHIPPED_PRESETS = {'baseline':'sword-original', 'starter':'sword-rebuild-1-supported',
+                   'trial':'sword-rebuild-1', 'maria':'sword-maria', 'maria_dash':'sword-maria-dash'}
 
 
 class TouchpadDoubleTap:
@@ -303,16 +306,16 @@ class Desktop:
 
     def preset_hotkey_poll(self):
         runtime = self.location()
-        if not process_matches(read_json(runtime/'play-process.json')):
-            self.hotkey_gesture = TouchpadDoubleTap()
-            self.hotkey_pending = None
-            return False
-        if read_json(runtime/'play-status.json', {}).get('state') != 'enabled':
+        if (not process_matches(read_json(runtime/'play-process.json'))
+                or read_json(runtime/'play-status.json', {}).get('state') != 'enabled'):
+            # Resume from a fresh observation; a press held during suspension is no edge.
+            self.hotkey_reader = self.hotkey_device = None
             self.hotkey_gesture = TouchpadDoubleTap()
             self.hotkey_pending = None
             return False
         calibration = read_json(runtime/'controller-calibration.json', read_json(trainer.ROOT/'data/controller-calibration.json'))
         if not self.hotkey_capability(calibration)['supported']:
+            self.hotkey_reader = self.hotkey_device = None
             self.hotkey_gesture = TouchpadDoubleTap()
             self.hotkey_pending = None
             return False
@@ -517,38 +520,13 @@ class Desktop:
         # TODO(pack-registry): replace sword-only capability discovery after Engine exposes reviewed weapon manifests.
         if os.environ.get('MWM_UI_SMOKE') == '1' and method in ('enable', 'disable', 'capture_start', 'capture_poll', 'preset_switch', 'preset_cycle', 'preset_hotkey_poll'):
             raise ValueError('Game and controller operations are disabled during the packaged UI check')
-        if method == 'snapshot':
-            return self.snapshot()
-        if method == 'preset_list':
-            return self.preset_list()
-        if method == 'preset_save':
-            return self.preset_save(params)
-        if method == 'preset_load':
-            return self.preset_load(params)
-        if method == 'preset_delete':
-            return self.preset_delete(params)
-        if method == 'preset_cycle':
-            return self.preset_cycle(params)
-        if method == 'preset_switch':
-            return self.preset_switch(params)
-        if method == 'preset_hotkey_poll':
-            return self.preset_hotkey_poll()
-        if method == 'validate':
-            return self.validate(params)
-        if method == 'preview':
-            return self.preview(params)
-        if method == 'add_override':
-            return self.add_override(params)
-        if method == 'apply':
-            return self.apply(params)
-        if method == 'baseline':
-            return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets/sword-original.json')),
-                                       read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
-        if method == 'starter':
-            return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets/sword-rebuild-1-supported.json')),
-                                       read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
-        if method == 'trial':
-            return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets/sword-rebuild-1.json')),
+        if method in ('snapshot', 'preset_list', 'preset_hotkey_poll'):
+            return getattr(self, method)()
+        if method in ('preset_save', 'preset_load', 'preset_delete', 'preset_cycle', 'preset_switch',
+                      'validate', 'preview', 'add_override', 'apply'):
+            return getattr(self, method)(params)
+        if method in SHIPPED_PRESETS:
+            return trainer.remap_preset(validate_preset(read_json(trainer.ROOT/'data/presets'/(SHIPPED_PRESETS[method]+'.json'))),
                                        read_json(trainer.ROOT/'data/controller-calibration.json'), params['calibration'])
         if method == 'controller':
             choice = params['choice']
@@ -600,12 +578,16 @@ class Desktop:
         raise ValueError('Unsupported desktop operation')
 
 
+def finite_number(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError('Desktop requests require finite JSON numbers')
+    return number
+
+
 def main():
-    # Keep stdin/stdout as one-request/one-reply JSON lines for Electron's private pipe.
-    # Recoverable request failures report an error without killing the next configuration operation.
-    # Closing the UI closes only this worker, preserving Engine's established explicit Disable lifecycle.
-    # Electron writes UTF-8 bytes even when Windows' local code page is different.
-    # Keep names and exported notes unchanged on both sides of the private pipe.
+    # Each UTF-8 request receives one reply. A malformed request must neither
+    # perform an operation nor kill the pipe needed by subsequent requests.
     sys.stdin.reconfigure(encoding='utf-8')
     sys.stdout.reconfigure(encoding='utf-8')
     desktop = Desktop()
@@ -613,7 +595,13 @@ def main():
         for line in sys.stdin:
             request = {}
             try:
-                request = json.loads(line)
+                request = json.loads(line, parse_float=finite_number, parse_constant=finite_number)
+                if not isinstance(request, dict):
+                    request = {}
+                    raise ValueError('Desktop request must be an object')
+                if ('id' not in request or not isinstance(request.get('method'), str)
+                        or not isinstance(request.get('params', {}), dict)):
+                    raise ValueError('Desktop request requires id, method and object params')
                 result = desktop.dispatch(request['method'], request.get('params', {}))
                 reply = dict(id=request['id'], result=result)
                 encoded = json.dumps(reply, allow_nan=False)

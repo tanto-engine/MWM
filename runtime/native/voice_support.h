@@ -30,7 +30,7 @@ static bool boss_suppress_voice(void* state, void* timing_record, void* event) {
     if (!copy_field(boss_session.player + 0x58, current)) return false;
     unsigned slot = boss_import_count;
     for (unsigned i = 0; i != boss_import_count; ++i)
-        if (boss_private_actions[i].ready && current == boss_private_descriptor_address(i)) slot = i;
+        if (boss_private_actions[i].ready && current == boss_private_descriptor_address(i)) {slot=i;break;}
     if (slot == boss_import_count) return false;
     const uint64_t record = reinterpret_cast<uint64_t>(timing_record);
     const uint64_t expected_record = boss_imports[slot].timing_record;
@@ -51,8 +51,8 @@ static bool boss_suppress_voice(void* state, void* timing_record, void* event) {
     for (unsigned i = 0; i != boss_imports[slot].voice_count; ++i) {
         const auto& voice = boss_imports[slot].voices[i];
         if (fields[0] != voice.frame || fields[2] != voice.index) continue;
-        uint32_t hash = 0;
-        return copy_field(record+sound_offset+uint64_t(fields[2])*0x4c+0x1c,hash) && hash == voice.hash;
+        const uint64_t sound=record+sound_offset+uint64_t(fields[2])*0x4c;
+        return same_field(sound,0x40,uint32_t(12)) && same_field(sound,0x1c,voice.hash);
     }
     return false;
 }

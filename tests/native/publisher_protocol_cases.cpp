@@ -16,6 +16,12 @@ int main(int argc, char** argv) {
     assert(command.banks[2] == 0x600000 && command.expected_descriptor == 0x700000);
     assert(command.desired_key == 0xCF0 && command.expected_motion == 4100);
     assert(command_status(command, 1050, 1000, 7, 0, false) == Accepted);
+    const uint64_t variants[]={31,32,63,64,UINT64_MAX};
+    for (uint64_t variant : variants) {
+        command.reserved[1]=variant;
+        assert(command_status(command,1050,1000,7,0,false)==(variant<64 ? Accepted : InvalidConfig));
+    }
+    command.reserved[1]=0;
     assert(command_status(command, 1150, 1000, 7, 0, false) == StaleHeartbeat);
     assert(command_status(command, 2100, 1000, 7, 0, false) == Expired);
     assert(command_status(command, 1050, 1000, 8, 0, false) == WrongGeneration);

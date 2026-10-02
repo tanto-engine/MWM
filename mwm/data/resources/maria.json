@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "maria.resources.v1",
+  "boss_id": "maria",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 124,
+      "source_name": "/9D1589D705E1504860D488A3A76203F3477D333A40F62B34F924813A9D6281D4",
+      "size": 167420,
+      "sha256": "dd2af4fb381f9d0108fbaf9be529ad4ff00cc162d0e210c291d4dde7feb6a553"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4286,
+      "source_name": "/E509032D19CDEBE26F1F58AABE242D8E0AD1140C5878BB9F8288589DD2BEDDE8",
+      "size": 71936,
+      "sha256": "496fc0b2b3abbfbcfddbb9456f6aae39e1578d8b254bfb592a969d10f72a9b2a"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4287,
+      "source_name": "/3F5D5313482B7F4E7AC0C58632AF9ABB125079F5CA1623760FB86FA298424E6E",
+      "size": 1195328,
+      "sha256": "976836b4b7c3c2b2a9ce799b130e32d40ebd3b1231b7b26b0ebb9b4e486af093"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 4289,
+      "source_name": "/1411CAAF105A2CCEA57A95CC0899873D2B0BF04D629A1E68B7654939EF6D18C0",
+      "size": 608,
+      "sha256": "bfbd8d6298e4908dd43a5334cf7afabd04b0d4a89dfe00c78e293d19f7f2a910"
+    }
+  },
+  "moves": {
+    "C80": {
+      "motion_key": 1000,
+      "timing_key": 1000,
+      "motion_index": 28,
+      "motion_record_offset": 519168,
+      "timing_index": 29,
+      "timing_record_offset": 35168,
+      "timing_event_count": 31,
+      "source_payload_offset": 25212
+    },
+    "C81": {
+      "motion_key": 1001,
+      "timing_key": 1001,
+      "motion_index": 29,
+      "motion_record_offset": 553536,
+      "timing_index": 30,
+      "timing_record_offset": 37440,
+      "timing_event_count": 22,
+      "source_payload_offset": 25388
+    },
+    "C82": {
+      "motion_key": 1002,
+      "timing_key": 1002,
+      "motion_index": 30,
+      "motion_record_offset": 576032,
+      "timing_index": 31,
+      "timing_record_offset": 39232,
+      "timing_event_count": 26,
+      "source_payload_offset": 25564
+    },
+    "C83": {
+      "motion_key": 1010,
+      "timing_key": 1010,
+      "motion_index": 31,
+      "motion_record_offset": 604992,
+      "timing_index": 32,
+      "timing_record_offset": 41344,
+      "timing_event_count": 31,
+      "source_payload_offset": 25740
+    },
+    "C84": {
+      "motion_key": 1011,
+      "timing_key": 1011,
+      "motion_index": 32,
+      "motion_record_offset": 657152,
+      "timing_index": 33,
+      "timing_record_offset": 43424,
+      "timing_event_count": 27,
+      "source_payload_offset": 25916
+    },
+    "C85": {
+      "motion_key": 1020,
+      "timing_key": 1020,
+      "motion_index": 33,
+      "motion_record_offset": 707616,
+      "timing_index": 34,
+      "timing_record_offset": 45632,
+      "timing_event_count": 23,
+      "source_payload_offset": 26092
+    },
+    "C86": {
+      "motion_key": 1021,
+      "timing_key": 1021,
+      "motion_index": 34,
+      "motion_record_offset": 746272,
+      "timing_index": 35,
+      "timing_record_offset": 47520,
+      "timing_event_count": 38,
+      "source_payload_offset": 26268
+    },
+    "C89": {
+      "motion_key": 1030,
+      "timing_key": 1030,
+      "motion_index": 37,
+      "motion_record_offset": 906112,
+      "timing_index": 38,
+      "timing_record_offset": 54144,
+      "timing_event_count": 38,
+      "source_payload_offset": 26796
+    },
+    "C8A": {
+      "motion_key": 1030,
+      "timing_key": 1030,
+      "motion_index": 37,
+      "motion_record_offset": 906112,
+      "timing_index": 38,
+      "timing_record_offset": 54144,
+      "timing_event_count": 38,
+      "source_payload_offset": 26972
+    }
+  }
+}

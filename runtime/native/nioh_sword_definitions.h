@@ -28,7 +28,12 @@ static bool recorded_grounded(const MoveImport& move, const MoveAdapter& adapter
         {0xD30,2000,0x184C0000,2,46,45},{0xD31,2010,0x184C0000,4,46,30},
         {0xD32,2020,0x184C0000,4,46,35},{0xD33,2030,0x184C0000,4,42,-1},
         {0xC6E,1010,0x19400000,2,10,-1},{0xC6F,1011,0x19400000,4,6,-1},
-        {0xD8D,5011,0x594C0000,2,27,120},{0xC6A,1130,0x40019480000ULL,2,9,-1}
+        {0xD8D,5011,0x594C0000,2,27,120},{0xC6A,1130,0x40019480000ULL,2,9,-1},
+        {0xC80,1000,0x184C0000,2,31,36},{0xC81,1001,0x184C0000,4,23,36},
+        {0xC82,1002,0x184C0000,4,13,36},{0xC83,1010,0x184C0000,2,15,36},
+        {0xC84,1011,0x184C0000,4,13,36},{0xC85,1020,0x184C0000,2,17,52},
+        {0xC86,1021,0x184C0000,4,15,52},{0xC89,1030,0x184C0000,2,17,70},
+        {0xC8A,1030,0x184C0000,2,17,70}
     };
     for (const auto& source : sources) if (sword_move_matches(source,move,adapter)) return true;
     return false;
@@ -99,6 +104,16 @@ static inline int sword_string_successor(const MoveImport& move) {
     if (move.flags==0x184C0000 && move.key>=0xD30 && move.key<=0xD33
         && move.motion==2000+int32_t(move.key-0xD30)*10 && move.transition_count==(move.key==0xD33 ? 42 : 46))
         return move.key==0xD33 ? 0 : int(move.key+1);
+    struct MariaString { uint32_t key; int32_t motion; uint16_t count; int16_t recovery; int next; };
+    constexpr MariaString maria[]={
+        {0xC80,1000,31,36,0xC81},{0xC81,1001,23,36,0xC82},{0xC82,1002,13,36,0},
+        {0xC83,1010,15,36,0xC84},{0xC84,1011,13,36,0},
+        {0xC85,1020,17,52,0xC86},{0xC86,1021,15,52,0},
+        {0xC89,1030,17,70,0},{0xC8A,1030,17,70,0xC81}
+    };
+    if (move.flags==0x184C0000) for (const auto& phase : maria)
+        if (move.key==phase.key && move.motion==phase.motion && move.transition_count==phase.count
+            && move.recovery_frame==phase.recovery) return phase.next;
     if (move.flags!=0x194C0000ULL) return -1;
     for (const auto& string : strings) for (unsigned i=0;i<string.count;++i)
         if (move.key==string.keys[i] && move.motion==string.motion+int32_t(i)*10
@@ -127,7 +142,15 @@ static constexpr SwordTimingDefinition sword_timing_definitions[]={
     // D8D leaves after about 108 frames in repeated recordings; its source Pulse onset at 120 is unreachable.
     // Open William's recovery after the strike at 72 so the 30-frame fill can complete before exit.
     {{0xD8D,5011,0x594C0000,2,27,120},{72,0,1}},
-    {{0xC6A,1130,0x40019480000ULL,2,9,-1},{128,0,1}}
+    {{0xC6A,1130,0x40019480000ULL,2,9,-1},{128,0,1}},
+    // Maria's next-press gates follow her recorded direct-input rows. The C84
+    // landing strike releases contact at40; C86's second kick precedes its88 branch.
+    {{0xC80,1000,0x184C0000,2,31,36},{50,0,1}},
+    {{0xC81,1001,0x184C0000,4,23,36},{23,0,1}},
+    {{0xC83,1010,0x184C0000,2,15,36},{66,0,1}},
+    {{0xC84,1011,0x184C0000,4,13,36},{40,0,1}},
+    {{0xC85,1020,0x184C0000,2,17,52},{43,0,1}},
+    {{0xC86,1021,0x184C0000,4,15,52},{88,0,1}}
 };
 static_assert([]() constexpr {
     // Check every constant timing row, including rows gated by Frost bindings or successor availability.

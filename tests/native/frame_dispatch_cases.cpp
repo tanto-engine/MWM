@@ -494,6 +494,7 @@ int main() {
     put(voice_record.data(),0x10,uint32_t(0x80)); put(voice_record.data(),0x24,uint32_t(30));
     put(voice_record.data(),0x28,uint32_t(10)); put(voice_record.data(),0x2c,uint32_t(11));
     put(voice_record.data(),0x80+11*0x4c+0x1c,uint32_t(0x0E077D36));
+    put(voice_record.data(),0x80+11*0x4c+0x40,uint32_t(12));
     SetLastError(INCOMING); observed_voice(voice_state.data(),voice_record.data(),voice_record.data()+0x24,-1234);
     assert(voice_calls==1 && william_calls==1 && GetLastError()==ACTION_ERROR
         && dispatch->control.reserved1==1 && boss_inflight==0); ++checks;
@@ -506,6 +507,7 @@ int main() {
     put(player.data(),0x58,boss_private_descriptor_address(1));
     put(voice_record.data(),0x24,uint32_t(46)); put(voice_record.data(),0x2c,uint32_t(16));
     put(voice_record.data(),0x80+16*0x4c+0x1c,uint32_t(0xF519B456));
+    put(voice_record.data(),0x80+16*0x4c+0x40,uint32_t(12));
     const auto imported_voice=voice_record;
     const auto player_voice_state=voice_state;
     SetLastError(INCOMING); observed_voice(voice_state.data(),voice_record.data(),voice_record.data()+0x24,-1234);
@@ -528,7 +530,9 @@ int main() {
         // Run the real frame wrapper and compare both native clock fields.
         // Faster startup must preserve shared timing rather than seek past events.
         put(player.data(),0x28,frame); SetLastError(INCOMING);
-        assert(observed_frame(player.data(),1.0f)==expected);
+        const float actual=observed_frame(player.data(),1.0f);
+        if (actual!=expected) std::fprintf(stderr,"clock frame%g delta%g expected%g\n",frame,actual,expected);
+        assert(actual==expected);
         float speed=0,delta=0;
         assert(copy_field(address(player.data())+0x6a8,speed) && copy_field(address(player.data())+0x24,delta));
         assert(speed==expected && delta==expected && GetLastError()==FRAME_ERROR && !boss_inflight); ++checks;
@@ -546,6 +550,14 @@ int main() {
     assert(observed_frame(player.data(),0.0f)==0.0f && GetLastError()==FRAME_ERROR); ++checks;
     put(player.data(),0x28,5.0f); SetLastError(INCOMING);
     assert(observed_frame(player.data(),8.0f)==8.0f && GetLastError()==FRAME_ERROR); ++checks;
+    reset();tick();original_frame=native_clock_frame;
+    boss_session.source_clip=0x23450000;boss_imports[0].clip=boss_session.source_clip;
+    put(motion.data(),0x58,boss_session.source_clip);boss_move_settings[0].speed=2;
+    rush_tick(31.0f,2.0f);
+    rush_tick(std::numeric_limits<float>::infinity(),1.0f);
+    rush_tick(std::numeric_limits<float>::quiet_NaN(),1.0f);
+    rush_tick(-1.0f,1.0f);
+    boss_move_settings[0]={};
     std::printf("frame dispatcher offline checks passed: %u\n",checks);
     return 0;
 }

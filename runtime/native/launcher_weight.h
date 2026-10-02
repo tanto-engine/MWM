@@ -44,7 +44,7 @@ static bool sword_combat_row(uint64_t row) {
     const unsigned slot=boss_active_slot;
     bool sword=boss_active && slot<boss_import_count && boss_private_actions[slot].ready
         && current==boss_private_descriptor_address(slot);
-    if (!sword && grapple_field(boss_session.player,0x68,uint32_t(0)) && copy_field(current,key)
+    if (!sword && same_field(boss_session.player,0x68,uint32_t(0)) && copy_field(current,key)
         && copy_field(payload+0x20,motion)) {
         constexpr uint32_t keys[]={0xC76,0xC7A,0xCB3,0xCB7,0xCF0,0xCF5};
         constexpr int32_t motions[]={2100,2300,3100,3300,4100,4300};
@@ -52,7 +52,7 @@ static bool sword_combat_row(uint64_t row) {
             if (key>=keys[group] && key<keys[group]+(group==4 ? 5u : 3u)
                 && motion==motions[group]+int32_t(key-keys[group])*10) sword=true;
     }
-    if (!sword || !grapple_field(current,0x40,uint8_t(1)) || !copy_field(current+0x48,table)
+    if (!sword || !same_field(current,0x40,uint8_t(1)) || !copy_field(current+0x48,table)
         || !copy_field(current+0x50,start) || !copy_field(current+0x52,count) || !count || count>64) return false;
     uint64_t pointers[64]{};
     if (!copy_bytes(table+uint64_t(start)*8,pointers,count*8)) return false;
@@ -94,7 +94,7 @@ static LaunchHit launcher_hit(void* actor) {
     if (!native_set_weight || !copy_field(victim+0x7BC,original) || !std::isfinite(original)) return {};
     float scale=.5f;hit.vertical_impulse=16;
     uint64_t profile=0,stats=0,alternate=0;uint32_t resistance=0;
-    if (copy_field(hit.owner+0xE90,profile) && grapple_field(profile,0x0C,uint32_t(0))
+    if (copy_field(hit.owner+0xE90,profile) && same_field(profile,0x0C,uint32_t(0))
         && copy_field(hit.owner+0x240,stats) && copy_field(stats+0xB98,alternate)
         && copy_field((alternate ? alternate : stats+0x9D8)+0x120,resistance))
         for (const auto& tier : boss_launch_profiles) if (resistance<tier.resistance_below) {
@@ -127,7 +127,7 @@ static void finish_launch_weight(void* actor, const LaunchHit& hit, bool accepte
         const float expected=(reaction&0x200000400ULL) ? hit.airborne : hit.grounded;
         float adjusted=(hit.launcher ? hit.vertical_impulse : expected)+hit.boost;
         if (adjusted>20) adjusted=20;
-        if (grapple_field(hit.component,0x5C,expected))
+        if (same_field(hit.component,0x5C,expected))
             memcpy(reinterpret_cast<void*>(hit.component+0x5C),&adjusted,sizeof(float));
     }
     if (weight) restore_launch_weights(victim,!committed);

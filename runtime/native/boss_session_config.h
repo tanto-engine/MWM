@@ -38,7 +38,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
         const uint16_t bits=chord.buttons;
         const uint16_t remaining=uint16_t(bits&(bits-1));
         if (!chord.stances || chord.stances>7
-            || (bits&~uint16_t(0xE500)) || !remaining || (remaining&(remaining-1))) return false;
+            || (bits&~uint16_t(chord.mode ? 0xE500 : 0xFDFF)) || !remaining || (remaining&(remaining-1))) return false;
         if (chord.mode && (chord.mode<2 || chord.mode>=12
             || (bits&SEQUENCE_BUTTONS[(chord.mode-2)/2]))) return false;
         for (unsigned prior=0;prior<i;++prior)

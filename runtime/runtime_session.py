@@ -212,7 +212,7 @@ def encode_session(config, pid, creation_filetime):
             raise ValueError('Invalid chord reservation')
         buttons,stances,mode=(row[key] for key in ('buttons','stances','mode'))
         if (any(type(value) is not int for value in (buttons,stances,mode)) or not 0<stances<=7
-                or buttons & ~0xE500 or buttons.bit_count()!=2
+                or buttons & ~(0xFDFF if mode==0 else 0xE500) or buttons.bit_count()!=2
                 or mode!=0 and (not 2<=mode<12 or buttons & SEQUENCE_BUTTONS[(mode-2)//2])
                 or (buttons,mode) in seen):
             raise ValueError('Invalid chord reservation')

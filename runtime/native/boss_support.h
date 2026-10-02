@@ -126,19 +126,52 @@ static constexpr uint8_t boss_dodge_template[0x30] = {
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 };
 
+static int boss_string_restart(unsigned slot) {
+    // A terminal phase returns only to its configured attack root in this stance/bank.
+    // Walk the authored forward graph so shared terminal phases cannot pick an unrelated root.
+    const auto& owner=boss_adapters[slot];const unsigned family=boss_settings(slot).input_family;
+    if (owner.kind!=4 || (family!=1 && family!=2) || sword_string_successor(boss_imports[slot])!=0) return -1;
+    const unsigned stance=owner.player_key==0xCF5 ? 1u : owner.player_key==0xC7A ? 2u : owner.player_key==0xCB7 ? 4u : 0u;
+    int root=-1;
+    for (const auto& binding : boss_skill_bindings) {
+        if (!binding.variant || binding.variant>boss_import_count || !(binding.stances&stance)
+            || (family==1 ? binding.kind!=5 : binding.kind!=1 || binding.key!=owner.player_key)) continue;
+        unsigned current=binding.variant-1;
+        if (boss_adapters[current].kind!=2 || sword_string_successor(boss_imports[current])<=0) continue;
+        for (unsigned depth=0;depth<boss_import_count;++depth) {
+            const auto& candidate=boss_adapters[current];
+            if (candidate.bank!=owner.bank || candidate.player_key!=owner.player_key) break;
+            if (current==slot) {
+                if (root>=0 && root!=int(binding.variant-1)) return -1;
+                root=int(binding.variant-1);break;
+            }
+            const int next=sword_string_successor(boss_imports[current]);unsigned found=boss_import_count;
+            if (next<=0) break;
+            for (unsigned i=0;i<boss_import_count;++i)
+                if (boss_imports[i].key==uint32_t(next) && boss_adapters[i].bank==owner.bank
+                    && boss_adapters[i].player_key==owner.player_key) {found=i;break;}
+            if (found==boss_import_count) break;
+            current=found;
+        }
+    }
+    return root;
+}
+
 static int boss_native_successor(unsigned slot, uint32_t key) {
-    // Keep ordinary automatic branches inside the entry's stance and source bank.
+    // Keep authored continuations and input restarts inside the entry's stance and source bank.
     // Only an explicit contact link or an existing paired action can enter another paired phase.
     // Standalone C79 and Izuna share source bytes but must own different successor graphs.
     const auto& owner=boss_adapters[slot];
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
+    const int restart=boss_string_restart(slot);
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
+        || (restart>=0 && boss_imports[restart].key==key)
         || (recorded_auto_successor(source)>0 && uint32_t(recorded_auto_successor(source))==key)
         || (sword_string_successor(source)>0 && uint32_t(sword_string_successor(source))==key)
         || (source.key==0xC79 && key==0xC7A)
-        || (source.key>=0xC71 && source.key<=0xC73 && key==source.key+1)
-        || (source.key>=0xC81 && source.key<=0xC82 && key==source.key+1)
+        || (airborne_sword(source,owner) && key==source.key+1
+            && ((source.key>=0xC71 && source.key<=0xC73) || (source.key>=0xC81 && source.key<=0xC82)))
         || (source.key==0xC75 && key==0xC77) || (source.key==0xC77 && key==0xC78)
         || ((source.key==0x3B2 || source.key==0x3B4) && (key==0x3B4 || key==0x3B6));
     if (!linked) return -1;
@@ -303,6 +336,10 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         for (const auto& binding : boss_skill_bindings) if (binding.kind==5 && binding.variant
             && binding.variant<=boss_import_count && boss_imports[binding.variant-1].key==0xD30
             && boss_adapters[binding.variant-1].bank==adapter.bank) quick_string=true;
+    const int authored_next=sword_string_successor(boss_imports[slot]), restart=boss_string_restart(slot);
+    const int next=authored_next==0 && restart>=0 ? int(boss_imports[restart].key) : authored_next;
+    const int next_slot=next>0 ? boss_native_successor(slot,uint32_t(next)) : -1;
+    bool continuation=false, have_fallback=false;uint8_t fallback[0x30]{};
     for (unsigned i=0; i<count; ++i) {
         uint8_t row_check[0x30];
         if (!copy_bytes(pointers[i],bodies[i],0x30) || !copy_bytes(pointers[i],row_check,0x30)
@@ -318,14 +355,24 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             }
         }
         int16_t target=0; memcpy(&target,bodies[i]+0x14,2);
-        const int next=sword_string_successor(boss_imports[slot]);
+        uint16_t condition=0;memcpy(&condition,bodies[i],2);
+        if (target==(quick_string ? 0xBBF : 0xBC0) && condition==93
+            && bodies[i][0x0A]==0 && bodies[i][0x0B]==(quick_string ? 0 : 1) && bodies[i][0x0C]==1) {
+            memcpy(fallback,bodies[i],sizeof(fallback));have_fallback=true;
+        }
         if ((adapter.kind==2 || adapter.kind==4) && next>=0 && target==int16_t(adapter.player_key+1)) {
             // One physical Triangle per strike, using William's buffered/direct heavy rows.
             // Every source phase retains the selected stance and native exits.
-            // The final strike disables this continuation instead of restarting the string.
-            target=boss_native_successor(slot,next)>=0 ? int16_t(next) : int16_t(-1);
+            // Terminal phases restart only their configured root after their final strike finishes.
+            target=next_slot>=0 ? int16_t(next) : int16_t(-1);
             memcpy(bodies[i]+0x14,&target,2);
             if (quick_string) bodies[i][0x0B]=0; // Quick uses Square; native Heavy keeps Triangle.
+            if (restart>=0) {
+                const int16_t start=bodies[i][0x0A]==2 ? 10 : adapted_recovery;
+                const int16_t end=bodies[i][0x0A]==2 ? int16_t(adapted_recovery-1) : INT16_MAX;
+                memcpy(bodies[i]+0x20,&start,2);memcpy(bodies[i]+0x22,&end,2);
+            }
+            continuation=next_slot>=0;
             continue;
         }
         if (target == 0xD5F) memcpy(bodies[i]+0x20,&adapted_recovery,2);
@@ -336,6 +383,19 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         }
     }
     if (!copy_bytes(table+uint64_t(start)*8,after,count*8) || memcmp(pointers,after,count*8)) return false;
+    if ((adapter.kind==2 || adapter.kind==4) && next_slot>=0 && !continuation) {
+        // High Strong has no native next-strike rows. Reuse its fresh-press attack row
+        // with William's buffered/direct input modes and the imported recovery boundary.
+        if (!have_fallback || count+2>64 || adapted_recovery<=10) return false;
+        const uint16_t conditions[]={0xffff,uint16_t(adapter.player_key==0xCB7 ? 0x50 : adapter.player_key==0xC7A ? 0x51 : 0x52)};
+        const uint32_t flags=0x400000;const int16_t target=int16_t(next);
+        for (unsigned mode=0;mode<2;++mode) {
+            auto* body=bodies[count++];memcpy(body,fallback,sizeof(fallback));memcpy(body,conditions,sizeof(conditions));
+            body[0x0A]=mode ? 0 : 2;memcpy(body+0x14,&target,2);memcpy(body+0x1C,&flags,4);
+            const int16_t begin=mode ? adapted_recovery : 10,end=mode ? INT16_MAX : int16_t(adapted_recovery-1);
+            memcpy(body+0x20,&begin,2);memcpy(body+0x22,&end,2);
+        }
+    }
     total=count;
     if (adapter.kind == 2 || adapter.kind == 4) {
         // Source automatic links run before generic player exits; AI input choices are excluded.
@@ -365,6 +425,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
                 || memcmp(body,check_body,sizeof(body))) return false;
             memcpy(&target,body+0x14,2); memcpy(&condition,body,2);
             if (body[0x0B]!=0xff || target<0) continue;
+            if (restart>=0 && target==int16_t(boss_imports[restart].key)) continue; // Restart requires player input.
             const bool owned=boss_native_successor(slot,uint32_t(target))>=0;
             if (!owned && body[0x0A]!=1) continue;
             if (count+added>=64) return false;
@@ -562,11 +623,10 @@ static uint64_t boss_borrowed(unsigned i, unsigned slot = boss_active_slot) {
     return adapter.kind ? (i < 2 ? adapter.motion_bank : adapter.timing_wrapper)
         : (i < 2 ? boss_session.source_motion_bank : boss_session.source_timing_wrapper);
 }
-static bool same_field(uint64_t base, unsigned offset, uint64_t expected) {
-    // Compare one live ownership field against its expected identity.
-    // Read through the guarded copy routine instead of directly dereferencing it.
-    // Replaced or inaccessible objects cannot authorize restoration through stale pointers.
-    uint64_t actual = 0;
+template<class T> static bool same_field(uint64_t base, unsigned offset, T expected) {
+    // The expected value's type is the native field width; pointers require uint64_t.
+    // Guarded reads reject stale memory without including adjacent DWORD/WORD fields.
+    T actual{};
     return copy_field(base + offset, actual) && actual == expected;
 }
 static bool boss_player_valid() {
