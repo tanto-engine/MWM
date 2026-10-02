@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.3.0-alpha.18
+
+- Add a native Pulse request for the recorded Guardian Spirit Talisman cast: retain the sword's actual Pulse deadline and wait until its timing stream passes the final non-sound event.
+- Consume the carried cancel window after a successful native Pulse; preserve it after a refused request.
+- Keep frame-generated finishers from competing with ranged triggers, item shortcuts, other attacks or menu inputs. Controller packet rollback requires release and a fresh press; movement and lock-on remain independent.
+- Include the previously unpublished alpha.16/17 cleanup, stance-specific input menus, buffered-hold fixes and Quick/Strong string continuation rules below.
+
+Cast shortening, Guardian Spirit persistence and actual Ki recovery still need live verification. Automated test counts and packaged UI results are recorded in the build receipt.
+
 ## 0.3.0-alpha.17
 
 - Use the compiled Quick/Strong input family for Jin string continuations. A Jin string assigned to Quick now continues on Square instead of silently requiring Triangle; Strong retains Triangle.
