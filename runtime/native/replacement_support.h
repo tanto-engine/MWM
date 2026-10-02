@@ -170,6 +170,7 @@ struct AttackFollowupInput {
     int64_t sampled;
     unsigned slot, epoch, spent_counter;
     WORD buttons;
+    DWORD packet;
     bool spent;
 };
 static AttackFollowupInput attack_followup_input{};
@@ -209,18 +210,23 @@ static DispatchReason choose_attack_followup(DispatchCommand& command) {
     auto& state=attack_followup_input;const WORD buttons=sample.buttons[slot];
     if (sample.qpc==state.sampled) return IneligibleRequest;
     const bool reset=!state.sampled || state.slot!=slot || state.epoch!=command.reserved[2]
-        || sample.qpc<state.sampled || sample.qpc-state.sampled>=dispatch->control.qpc_frequency/10;
+        || sample.qpc<state.sampled || sample.qpc-state.sampled>=dispatch->control.qpc_frequency/10
+        || sample.packets[slot]<state.packet;
     const WORD pressed=buttons&~state.buttons;
     if (reset) state={};
     state.sampled=sample.qpc;state.slot=slot;state.epoch=unsigned(command.reserved[2]);state.buttons=buttons;
+    state.packet=sample.packets[slot];
     uint32_t counter=0,stance=0;const unsigned family=sword_attack_family(boss_session.player);
     const WORD trigger=family==1 ? XINPUT_GAMEPAD_Y : XINPUT_GAMEPAD_X;
     unsigned variant=0;
     if (family && copy_field(boss_session.player+0x470,stance))
         for (const auto& binding : boss_skill_bindings)
             if (binding.kind==(family==1 ? 7u : 4u) && (binding.stances&(1u<<(2-stance)))) variant=binding.variant;
+    constexpr WORD competing=XINPUT_GAMEPAD_A|XINPUT_GAMEPAD_B|XINPUT_GAMEPAD_X|XINPUT_GAMEPAD_Y
+        |XINPUT_GAMEPAD_RIGHT_SHOULDER|XINPUT_GAMEPAD_START|XINPUT_GAMEPAD_BACK
+        |XINPUT_GAMEPAD_DPAD_UP|XINPUT_GAMEPAD_DPAD_DOWN|XINPUT_GAMEPAD_DPAD_LEFT|XINPUT_GAMEPAD_DPAD_RIGHT;
     if (reset || !variant || !(pressed&trigger) || !(buttons&XINPUT_GAMEPAD_LEFT_SHOULDER)
-        || (buttons&XINPUT_GAMEPAD_RIGHT_SHOULDER)
+        || (buttons&competing)!=trigger || sample.left_trigger[slot]>30 || sample.right_trigger[slot]>30
         || !copy_field(boss_session.player+0xDC,counter) || (state.spent && state.spent_counter==counter)) return IneligibleRequest;
     state.spent=true;state.spent_counter=counter;
     const unsigned index=variant-1;const auto& move=boss_imports[index];
