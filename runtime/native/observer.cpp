@@ -165,6 +165,11 @@ static bool observed_action_impl(void* actor, uint32_t key, void* context, Actio
         && copy_field(record.payload + 0x20, record.motion_key)
         && copy_field(record.payload + 0x34, record.timing_key)) record.valid_fields |= 16;
 #ifdef RESEARCH_DISPATCH
+#ifdef RESEARCH_REPEAT
+    if (request==ActionRequest::Native && result && record.actor==boss_session.player
+        && (record.valid_fields&4) && record.after_key>=0xD5F && record.after_key<=0xD78)
+        cast_pulse_input.closes=cast_pulse_input.edge=0;
+#endif
     if (reason == NativeCastPulse && result && record.after_key>=0xD5F && record.after_key<=0xD62) {
         record.valid_fields |= TRACE_CAST_PULSE;
         InterlockedIncrement64(&dispatch->control.dispatch_count);

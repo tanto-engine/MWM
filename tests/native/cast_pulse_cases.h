@@ -63,6 +63,21 @@ static void cast_pulse_cases() {
     cast_pulse_input.closes=0;put(vitals.data(),0x8C,std::numeric_limits<float>::quiet_NaN());
     latch_cast_pulse_window();assert(!cast_pulse_input.closes);++checks;
 
+    for (bool consumed : {false,true}) {
+        cast_setup();put(owner.data(),0x240,address(vitals.data()));
+        state(0xCB7,3300,0);put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+        cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
+        memcpy(vitals.data()+0x8C,timers,sizeof(timers));latch_cast_pulse_window();
+        assert(cast_pulse_input.closes>0);
+        if (!consumed) original_action=[](void*,uint32_t,void*) {return false;};
+        assert(observed_action(player.data(),0xD5F,nullptr)==consumed);
+        state(0x262,111,3);put(neutral_payload.data(),0x18,uint64_t(0x2181C0000ULL));
+        put(player.data(),0x58,address(neutral.data()));put(player.data(),0xDC,uint32_t(12));
+        cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);cast_cue(22);
+        cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+        assert(choose_cast_pulse(probe)==(consumed ? IneligibleRequest : NativeCastPulse));++checks;
+    }
+
     cast_setup();cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     assert(choose_cast_pulse(probe)==IneligibleRequest); // R1 buffered; effect rows still pending.
     cast_cue(14);assert(!cast_pulse_input.ready); // Sound98 precedes the final non-sound row132.
