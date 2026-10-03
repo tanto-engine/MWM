@@ -88,6 +88,7 @@ static MoveTiming boss_move_timing(unsigned slot) {
     // Table order resolves C79 variants; Frost bindings and an available successor select their special rows.
     // Unlisted moves keep source recovery and 1x startup rather than inheriting another attack's timing.
     const auto& move=boss_imports[slot];
+    if (const auto* phase=ishida_phase(move)) return {move.next_variant>=0 ? phase->next_frame : phase->end_frame,0,1};
     bool frost_bound=false;
     for (auto frost : boss_frost_variants) frost_bound=frost_bound || frost==slot+1;
     for (const auto& definition : sword_timing_definitions) {
@@ -126,18 +127,22 @@ static constexpr uint8_t boss_dodge_template[0x30] = {
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 };
 
+static int boss_string_successor(unsigned slot) {
+    const auto& move=boss_imports[slot];
+    return ishida_phase(move) && move.next_variant>=0 ? int(boss_imports[move.next_variant].key) : sword_string_successor(move);
+}
 static int boss_string_restart(unsigned slot) {
     // A terminal phase returns only to its configured attack root in this stance/bank.
     // Walk the authored forward graph so shared terminal phases cannot pick an unrelated root.
     const auto& owner=boss_adapters[slot];const unsigned family=boss_settings(slot).input_family;
-    if (owner.kind!=4 || (family!=1 && family!=2) || sword_string_successor(boss_imports[slot])!=0) return -1;
+    if (owner.kind!=4 || (family!=1 && family!=2) || boss_string_successor(slot)!=0) return -1;
     const unsigned stance=owner.player_key==0xCF5 ? 1u : owner.player_key==0xC7A ? 2u : owner.player_key==0xCB7 ? 4u : 0u;
     int root=-1;
     for (const auto& binding : boss_skill_bindings) {
         if (!binding.variant || binding.variant>boss_import_count || !(binding.stances&stance)
             || (family==1 ? binding.kind!=5 : binding.kind!=1 || binding.key!=owner.player_key)) continue;
         unsigned current=binding.variant-1;
-        if (boss_adapters[current].kind!=2 || sword_string_successor(boss_imports[current])<=0) continue;
+        if (boss_adapters[current].kind!=2 || boss_string_successor(current)<=0) continue;
         for (unsigned depth=0;depth<boss_import_count;++depth) {
             const auto& candidate=boss_adapters[current];
             if (candidate.bank!=owner.bank || candidate.player_key!=owner.player_key) break;
@@ -145,7 +150,12 @@ static int boss_string_restart(unsigned slot) {
                 if (root>=0 && root!=int(binding.variant-1)) return -1;
                 root=int(binding.variant-1);break;
             }
-            const int next=sword_string_successor(boss_imports[current]);unsigned found=boss_import_count;
+            if (ishida_phase(boss_imports[current])) {
+                const int next=boss_imports[current].next_variant;
+                if (next<0) break;
+                current=unsigned(next);continue;
+            }
+            const int next=boss_string_successor(current);unsigned found=boss_import_count;
             if (next<=0) break;
             for (unsigned i=0;i<boss_import_count;++i)
                 if (boss_imports[i].key==uint32_t(next) && boss_adapters[i].bank==owner.bank
@@ -165,6 +175,12 @@ static int boss_native_successor(unsigned slot, uint32_t key) {
     const auto& source=boss_imports[slot];
     if (owner.kind==5) return -1;
     const int restart=boss_string_restart(slot);
+    if (ishida_phase(source)) {
+        const int next=source.next_variant>=0 ? source.next_variant : restart;
+        if (next<0 || boss_imports[next].key!=key || boss_adapters[next].bank!=owner.bank
+            || boss_adapters[next].player_key!=owner.player_key) return -1;
+        return next;
+    }
     const bool linked=(source.next_variant>=0 && boss_imports[source.next_variant].key==key)
         || (restart>=0 && boss_imports[restart].key==key)
         || (recorded_auto_successor(source)>0 && uint32_t(recorded_auto_successor(source))==key)
@@ -312,8 +328,8 @@ static bool boss_copy_pulse_transitions(unsigned slot, const uint8_t* descriptor
 static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_descriptor,
         uint8_t (&bodies)[64][0x30], uint16_t& total) {
     // Keep William's native heavy-button buffering, targeting and exit conditions.
-    // Copy his transition rows and scale finite windows while retaining Jin's combat tables.
-    // Jin's AI transitions must never queue attacks or bypass William's running priority.
+    // Copy his transition rows and scale finite windows while retaining the source combat tables.
+    // Boss AI transitions must never queue attacks or bypass William's running priority.
     // TODO: confirm the reported guardian summon and final-spin hitboxes after retaining
     // Jin's descriptor tables; matching source bytes cannot prove combat contact in play.
     const auto& adapter = boss_adapters[slot];
@@ -336,9 +352,13 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         for (const auto& binding : boss_skill_bindings) if (binding.kind==5 && binding.variant
             && binding.variant<=boss_import_count && boss_imports[binding.variant-1].key==0xD30
             && boss_adapters[binding.variant-1].bank==adapter.bank) quick_string=true;
-    const int authored_next=sword_string_successor(boss_imports[slot]), restart=boss_string_restart(slot);
+    const int authored_next=boss_string_successor(slot), restart=boss_string_restart(slot);
     const int next=authored_next==0 && restart>=0 ? int(boss_imports[restart].key) : authored_next;
     const int next_slot=next>0 ? boss_native_successor(slot,uint32_t(next)) : -1;
+    // C84's contact ends at40, but its recorded landing clip lasts126 frames.
+    // Keep Pulse/dodge recovery while preventing attack spam from cutting off the landing.
+    const int16_t attack_gate=restart>=0 && sword_move_matches({0xC84,1011,0x184C0000,4,13,36},boss_imports[slot],adapter)
+        ? 126 : adapted_recovery;
     bool continuation=false, have_fallback=false;uint8_t fallback[0x30]{};
     for (unsigned i=0; i<count; ++i) {
         uint8_t row_check[0x30];
@@ -359,6 +379,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         if (target==(quick_string ? 0xBBF : 0xBC0) && condition==93
             && bodies[i][0x0A]==0 && bodies[i][0x0B]==(quick_string ? 0 : 1) && bodies[i][0x0C]==1) {
             memcpy(fallback,bodies[i],sizeof(fallback));have_fallback=true;
+            if (attack_gate!=adapted_recovery) memcpy(bodies[i]+0x20,&attack_gate,2);
         }
         if ((adapter.kind==2 || adapter.kind==4) && next>=0 && target==int16_t(adapter.player_key+1)) {
             // One physical Triangle per strike, using William's buffered/direct heavy rows.
@@ -368,8 +389,8 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
             memcpy(bodies[i]+0x14,&target,2);
             if (quick_string) bodies[i][0x0B]=0; // Quick uses Square; native Heavy keeps Triangle.
             if (restart>=0) {
-                const int16_t start=bodies[i][0x0A]==2 ? 10 : adapted_recovery;
-                const int16_t end=bodies[i][0x0A]==2 ? int16_t(adapted_recovery-1) : INT16_MAX;
+                const int16_t start=bodies[i][0x0A]==2 ? 10 : attack_gate;
+                const int16_t end=bodies[i][0x0A]==2 ? int16_t(attack_gate-1) : INT16_MAX;
                 memcpy(bodies[i]+0x20,&start,2);memcpy(bodies[i]+0x22,&end,2);
             }
             continuation=next_slot>=0;
@@ -392,7 +413,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         for (unsigned mode=0;mode<2;++mode) {
             auto* body=bodies[count++];memcpy(body,fallback,sizeof(fallback));memcpy(body,conditions,sizeof(conditions));
             body[0x0A]=mode ? 0 : 2;memcpy(body+0x14,&target,2);memcpy(body+0x1C,&flags,4);
-            const int16_t begin=mode ? adapted_recovery : 10,end=mode ? INT16_MAX : int16_t(adapted_recovery-1);
+            const int16_t begin=mode ? attack_gate : 10,end=mode ? INT16_MAX : int16_t(attack_gate-1);
             memcpy(body+0x20,&begin,2);memcpy(body+0x22,&end,2);
         }
     }
@@ -407,7 +428,7 @@ static bool boss_copy_player_transitions(unsigned slot, const uint8_t* source_de
         const uint64_t slice=source_table+uint64_t(source_start)*8;
         if (!copy_bytes(slice,rows,source_count*8)) return false;
         uint8_t automatic[64][0x30]{}; unsigned added=0;
-        bool contact_found=boss_imports[slot].next_variant<0;
+        bool contact_found=boss_imports[slot].next_variant<0 || ishida_phase(boss_imports[slot]);
         const int automatic_key=recorded_auto_successor(boss_imports[slot]);
         if (automatic_key>0 && boss_native_successor(slot,uint32_t(automatic_key))>=0) {
             auto* body=automatic[added++]; memset(body,0xff,0x30);
@@ -873,7 +894,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
         int paired_slot=-1;
         if (boss_adapters[boss_active_slot].kind==1
             && key==boss_adapters[boss_active_slot].player_key+1) {
-            const int source_key=sword_string_successor(current);
+            const int source_key=boss_string_successor(boss_active_slot);
             if (source_key>0) paired_slot=boss_native_successor(boss_active_slot,uint32_t(source_key));
         }
         if ((current.flags == 0x594C0000 || boss_adapters[boss_active_slot].kind == 2 || boss_adapters[boss_active_slot].kind == 4)
@@ -917,7 +938,7 @@ static bool boss_prepare_call(void* actor, uint32_t key, DispatchReason& reason,
     const unsigned private_slot = unsigned(command.reserved[1]);
     if (reason == Accepted) {
         const bool izuna=boss_imports[private_slot].key==0xC79 && boss_native_successor(private_slot,0xC7A)>=0;
-        if (((boss_imports[private_slot].flags == 0x594C0000 && !boss_adapters[private_slot].kind) || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0))
+        if (((boss_imports[private_slot].flags == 0x594C0000 && !boss_adapters[private_slot].kind) || izuna || ((boss_adapters[private_slot].kind==2 || boss_adapters[private_slot].kind==4) && boss_imports[private_slot].next_variant>=0 && !ishida_phase(boss_imports[private_slot])))
             && !boss_camera_available()) reason = BossBindingMismatch;
         int slot = int(private_slot);
         // Finish every reachable clone before starting the first attack. A

@@ -27,7 +27,7 @@ class BindingError(ValueError):
 HOTKEY_MASK = 0x2000  # Direct WinMM DS4 button 14 (touchpad click); XInput has no touchpad bit.
 HOTKEY_MIRROR_DELAY = .1  # Leave two 50-ms UI polls for a delayed XInput mirror.
 SHIPPED_PRESETS = {'baseline':'sword-original', 'starter':'sword-rebuild-1-supported',
-                   'trial':'sword-rebuild-1', 'maria':'sword-maria', 'maria_dash':'sword-maria-dash'}
+                   'trial':'sword-rebuild-1', 'maria':'sword-maria', 'maria_dash':'sword-maria-dash', 'ishida':'sword-ishida'}
 
 
 class TouchpadDoubleTap:

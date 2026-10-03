@@ -33,7 +33,7 @@ def release_inputs(project):
     spec=json.loads((project/'product.json').read_text(encoding='utf8'))
     version=spec.get('version','')
     if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.[1-9]\d*)?',version):
-        raise ValueError('Set a release version such as 0.2.0-alpha.1 in product.json')
+        raise ValueError('Set a release version such as 0.4.0 in product.json')
     if f'## {version}\n' not in (project/'CHANGELOG.md').read_text(encoding='utf8'):
         raise ValueError('Add release notes for this version to CHANGELOG.md')
     repositories=(ROOT,project) if spec['kind']=='recorder' else (ROOT,)

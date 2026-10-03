@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.4.0
+
+- Add five Ishida sword strings with 19 route-local phases and an editable preset. Preserve repeated C5B phases, shared endings, and C71's separate 91030 timing track.
+- Add fixed move-specific cast-cancel windows across boss imports and William's 20 native Quick/Strong stages. Assign rounded 60% Onmyo / 70% shuriken eligibility, with overlap. Reject early buffered R1 and preserve the preceding native Pulse deadline.
+- Fix #24: Okatsu's sequence is available in held custom input pickers and Browse. Fix #25: Input overrides has a visible primary tab.
+- Address #26: Maria's terminal horizontal-string restart waits for its 126-frame landing clip; Pulse/dodge recovery stays available earlier.
+- Expand native route, timing-boundary, alias and GUI regressions. Document the generated policy and verification limits. Release names now use only the version number.
+
+Unresolved: crash reports #2 (Isle of Demons entry) and #27 (repeated re-enables) lack a reproduced cause. Ishida's grapple and two beam recordings remain unsupported. The new Ishida moves, variable cancel windows and Maria recovery adjustment require gameplay verification; passing offline checks does not establish combat behavior or resolve those crashes.
+
 ## 0.3.0
 
 - Fix cast cancellation's 32-bit action-ID comparison. Onmyo and shurikens share an effect-release gate and the preceding sword Pulse window; native Pulse handles recovery without direct Ki or item writes.

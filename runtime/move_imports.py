@@ -8,15 +8,14 @@ from catalogue import load_catalogue, iter_moves
 
 from nioh_sword import (SUPPORTED_SOURCE_FLAGS, GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS,
                         PLAYER_REPLACEMENT_FLAGS, PLAYER_PAIRED_FLAGS,
-                        PLAYER_TEMPLATES, STANCE_OPENERS, is_airborne_sword, is_izuna_bridge, is_recorded_grounded)
+                        PLAYER_TEMPLATES, STANCE_OPENERS, is_airborne_sword, is_izuna_bridge, is_recorded_grounded, is_ishida_sword)
 IMPORT_LIMIT = 64
 BINDING_LIMIT = 32
 
 
 def shared_source(first, second):
-    # Separate launcher/Izuna and jump/full-Swallow roles sharing recorded source bytes.
-    # Require exact role pairs and identical source signatures/resources.
-    # Other duplicate action keys cannot enter the runtime table.
+    # Aliases share source bytes but retain separate route indices (including repeated Ishida phases).
+    # Source signatures and resolved resources must agree before sharing a numeric action key.
     fields=('key','motion','flags','ki_cost','recovery_frame','transition_count','source_payload_prefix',
             'source_voices','voices','descriptor','payload','clip','timing_record')
     same=all(first.get(field)==second.get(field) for field in fields)
@@ -27,7 +26,7 @@ def shared_source(first, second):
           and first.get('adapter_kind')==second.get('adapter_kind')==2
           and (first['key'],first['motion'],first['flags'])==(0xC79,5014,PLAYER_REPLACEMENT_FLAGS)
           and first['replacement']['player_key']!=second['replacement']['player_key'])
-    return same and (jump or launcher)
+    return same and (jump or launcher or is_ishida_sword(first) and is_ishida_sword(second))
 
 
 
@@ -74,7 +73,7 @@ def check_import_topology(moves, string_variant):
         if ((flags == SUPPORTED_SOURCE_FLAGS and not recorded or replacement and move['adapter_kind'] == 1) and move['recovery_frame'] <= 0
                 or flags in (GRAB_ATTEMPT_FLAGS, PAIRED_ATTACKER_FLAGS, PLAYER_PAIRED_FLAGS) and not recorded and move['recovery_frame'] != -1):
             raise ValueError('Recovery policy differs from the source action family')
-        if replacement and move['next_variant'] != -1 and (move['adapter_kind'] != 2 and not bridge or move['next_start'] or move['next_end']):
+        if replacement and move['next_variant'] != -1 and (move['adapter_kind'] != 2 and not bridge and not is_ishida_sword(move) or move['next_start'] or move['next_end']):
             raise ValueError('Player replacement follows native player transitions, not a timed source chain')
         if move['next_variant'] == -1:
             if move['next_start'] or move['next_end']:
@@ -99,6 +98,8 @@ def check_import_topology(moves, string_variant):
     for move in moves:
         if move['next_variant'] != -1:
             target = moves[move['next_variant']]
+            if is_ishida_sword(move) and (not is_ishida_sword(target) or move['next_start'] or move['next_end']):
+                raise ValueError('Ishida input routes must stay inside the recorded sword graph')
             if move['flags'] == PLAYER_REPLACEMENT_FLAGS or is_izuna_bridge(move):
                 if target['flags'] != PLAYER_PAIRED_FLAGS:
                     raise ValueError('Hold contact must enter a native paired source action')

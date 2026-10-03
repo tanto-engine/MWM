@@ -28,7 +28,9 @@ The **Maria sword** preset assigns:
 
 The alternate Maria preset replaces Mid Quick with her dodge-slash string. Hit counts and input counts differ: one animation can contain multiple hits. Grabs, evasions, buff, teleport and beam recordings remain outside this playable batch.
 
-**Cast cancellation:** attack with a remaining sword Pulse window, use Onmyo or a shuriken, then press R1/RB after the effect releases. The shared adapter requests William's native Pulse and preserves the cast effect. It uses the loaded cast's event timeline and the preceding attack's Pulse deadline; it does not write Ki or item counts.
+**Ishida sword** adds five recorded strings: double slash, three-hit, spinning ender, spinning opener, and five-hit. The preset assigns them across Low/Mid/High Quick and Strong inputs. Repeated and shared phases retain their own routes. His grapple and two beam recordings remain unsupported; the five adapted strings await gameplay verification.
+
+**Cast cancellation:** use Onmyo or a shuriken while the preceding sword attack still has a native Pulse opportunity, then press R1/RB inside that move's fixed window after the effect releases. Eligible moves target 60% Onmyo and 70% shuriken coverage, with overlap and rounding to whole source phases. William's 20 native Quick/Strong stages are included. Windows stay the same across attempts, bindings and presets; early R1 presses are discarded. The adapter never extends the native Pulse deadline or writes Ki/item counts.
 
 ## Architecture
 
@@ -107,6 +109,6 @@ npm --prefix .\mwm ci
 
 Tests cover real native code against owned memory, malformed and exhausted resource decoding, configuration and process lifecycle, and the actual Electron editor/worker. Release builds also run a copied EXE in an isolated directory and record source, dependency and artifact hashes.
 
-Offline tests can establish input routing, field widths, graph transitions, resource boundaries and UI transactions. Physical controller behavior, damage, movement, effect persistence and encounter transitions still need gameplay evidence. The user verified Guardian Spirit Talisman and shuriken cancellation; later string restart changes require a new gameplay check.
+Offline tests can establish input routing, field widths, graph transitions, resource boundaries and UI transactions. Physical controller behavior, damage, movement, effect persistence and encounter transitions still need gameplay evidence. The earlier uniform Guardian Spirit Talisman/shuriken cancels were verified in game. The new variable windows and Ishida strings require gameplay checks. Open crash reports #2 and #27 remain unresolved; offline checks do not reproduce their causes.
 
 See [the native walkthrough](runtime/native/NATIVE-WALKTHROUGH.md) for memory contracts and [RELEASES.md](RELEASES.md) for immutable versioned builds. Source captures, development tools and private recordings are excluded from the EXE.

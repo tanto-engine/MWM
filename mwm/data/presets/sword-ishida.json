@@ -1,0 +1,53 @@
+{
+  "schema_version": 8,
+  "name": "Ishida sword",
+  "weapon": "sword",
+  "tap_move": null,
+  "hold_move": null,
+  "modifier_mask": 16,
+  "trigger_mask": 4,
+  "hold_seconds": 0.25,
+  "low_heavy": null,
+  "stance_holds": {
+    "low": null,
+    "mid": null,
+    "high": null
+  },
+  "okatsu_grapple": false,
+  "mid_light_ender": false,
+  "string_enabled": false,
+  "skill_bindings": [
+    {
+      "source": "light_attack",
+      "stance": "mid",
+      "move": "ishida_mitsunari.double_slash_1"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "high",
+      "move": "ishida_mitsunari.five_hit_1"
+    },
+    {
+      "source": "light_attack",
+      "stance": "low",
+      "move": "ishida_mitsunari.three_hit_1"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "low",
+      "move": "ishida_mitsunari.spin_ender_1"
+    },
+    {
+      "source": "heavy_attack",
+      "stance": "mid",
+      "move": "ishida_mitsunari.spin_opener_1"
+    }
+  ],
+  "frost_moon": {
+    "low": null,
+    "mid": null,
+    "high": null
+  },
+  "chord_stance": "low",
+  "move_settings": {}
+}

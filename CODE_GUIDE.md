@@ -88,3 +88,9 @@ A move's timing table can request a boss vocal at a particular frame. Preparatio
 The combined repository keeps the runtime in `runtime/`, the weapon application in `mwm/`, and recording evidence separate from playable imports. Future weapons can share hooks, controller interpretation and resource ownership, but need reviewed adapters and equipped-weapon routing before they appear in the UI. Raw capture history stays out of EXEs.
 
 Engine remains private, Recorder remains a separate read-only product, and MWM begins with the single katana. See `RELEASES.md` for version, test, checksum and immutable-tag rules. Source comments do not update an existing EXE; any new distributable build must receive an unused release version.
+
+## Cast-cancel profiles
+
+`tools/generate_cast_profiles.py` ranks all shipped source signatures with fixed SHA-256 seeds, assigns rounded 60%/70% quotas, and writes `runtime/native/cast_pulse_profiles.h`. Route aliases share a source profile. Regenerate after changing import signatures; the freshness test detects drift. No process address, selected binding, wall clock or per-attempt random state affects learned timing. New releases can rebalance eligibility as the move pool grows.
+
+`cast_pulse.h` retains the preceding native Pulse deadline, observes effect release, and accepts a fresh input only inside the assigned interval. Source Ki, item consumption and effect dispatch remain native.

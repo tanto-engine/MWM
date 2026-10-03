@@ -20,7 +20,29 @@ static constexpr bool sword_move_matches(const SwordMoveSignature& source, const
         && source.kind==adapter.kind && source.transition_count==move.transition_count && source.recovery==move.recovery_frame;
 }
 
+struct IshidaPhase { uint32_t key; int32_t motion; uint16_t rows; int16_t next_frame, end_frame; };
+// Direct-input boundaries and serialized clip frame counts from Ishida's matched archives.
+static const IshidaPhase* ishida_phase(const MoveImport& move) {
+    static constexpr IshidaPhase phases[]={
+        {0xC5B,1030,30,69,140},
+        {0xC5C,1031,26,40,126},
+        {0xC58,1022,28,45,137},
+        {0xC71,1030,34,69,140},
+        {0xC72,1031,32,40,126},
+        {0xC6E,1022,36,45,137},
+        {0xC7A,1051,28,105,189},
+        {0xC78,1051,26,105,189},
+        {0xC6C,1020,40,45,130},
+        {0xC6D,1021,38,30,92},
+    };
+    if (move.flags==0x10018480000ULL && move.recovery_frame==-1)
+        for (const auto& phase : phases)
+            if (move.key==phase.key && move.motion==phase.motion && move.transition_count==phase.rows) return &phase;
+    return nullptr;
+}
+
 static bool recorded_grounded(const MoveImport& move, const MoveAdapter& adapter) {
+    if ((adapter.kind==2 || adapter.kind==4) && ishida_phase(move)) return true;
     // Admit only complete signatures matched against the new recording/archive evidence.
     // The normal player-transition adapter owns input and exits; source resources own animation/contact.
     // This excludes paired grabs and prevents a reused numeric ID from choosing another boss's rule.
@@ -95,6 +117,7 @@ struct SwordTimingDefinition {
 };
 
 static inline int sword_string_successor(const MoveImport& move) {
+    if (ishida_phase(move)) return move.next_variant<0 ? 0 : -1; // Indexed routes can repeat a source key.
     // Positive results name the next action key; zero ends a recognized string and -1 means unrecognized.
     // Require recorded flags, motion progression and row count before reusing a next-press transition.
     // These reviewed strings reuse William's next-press rows, never an automatic recording edge.

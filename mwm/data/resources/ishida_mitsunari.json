@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "resource_profile_id": "ishida_mitsunari.resources.v1",
+  "boss_id": "ishida_mitsunari",
+  "build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
+  "status": "archive_matched_gameplay_trial",
+  "cold_launch_supported": false,
+  "assets": {
+    "actions": {
+      "archive": "archive_00.lnk",
+      "entry_id": 86,
+      "source_name": "/383BFAEC406F04B3A38F216982AB591678A203090C0015F4C0E7E503D8FD0790",
+      "size": 74284,
+      "sha256": "51a1b494d1e0be4cd18dd8ae2f80988679bd334f2d536f160a30bd2b35845cb2"
+    },
+    "timing": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3970,
+      "source_name": "/D504EE5B11EBA8869F14A0A0B224E7114CB2B9EA269B29A8EF9F23D1B889C2A5",
+      "size": 84848,
+      "sha256": "e4dc4ed5497b3c5dc230b322227806bedbd9a09854fbd7f2d27dce8c0eeb5bd2"
+    },
+    "motion": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3971,
+      "source_name": "/07E7C1F44A74B4CEACC2C5387C5923CE7FC009D7DE3E66EBEBBAC5C21C188C4C",
+      "size": 1704992,
+      "sha256": "d28bc540df663dc16a356a77b64a066f22b23c911e952f93922d8fae7bc0cd83"
+    },
+    "camera": {
+      "archive": "archive_01.lnk",
+      "entry_id": 3972,
+      "source_name": "/C8D232957662AA4CFDAB4E37DA0C1624B208244EAF1C47953CEA6103EACB6D7B",
+      "size": 2416,
+      "sha256": "0e30584bc302fae277c3601db0fa12f9d61c85865f1dcb8c302238d526a6c927"
+    }
+  },
+  "moves": {
+    "C5B": {
+      "motion_key": 1030,
+      "timing_key": 1030,
+      "motion_index": 22,
+      "motion_record_offset": 432096,
+      "timing_index": 22,
+      "timing_record_offset": 24480,
+      "timing_event_count": 28,
+      "source_payload_offset": 10988
+    },
+    "C5C": {
+      "motion_key": 1031,
+      "timing_key": 1031,
+      "motion_index": 23,
+      "motion_record_offset": 484704,
+      "timing_index": 23,
+      "timing_record_offset": 26592,
+      "timing_event_count": 25,
+      "source_payload_offset": 11164
+    },
+    "C58": {
+      "motion_key": 1022,
+      "timing_key": 1022,
+      "motion_index": 21,
+      "motion_record_offset": 385760,
+      "timing_index": 21,
+      "timing_record_offset": 22624,
+      "timing_event_count": 24,
+      "source_payload_offset": 10460
+    },
+    "C71": {
+      "motion_key": 1030,
+      "timing_key": 91030,
+      "motion_index": 22,
+      "motion_record_offset": 432096,
+      "timing_index": 51,
+      "timing_record_offset": 79744,
+      "timing_event_count": 28,
+      "source_payload_offset": 16444
+    },
+    "C72": {
+      "motion_key": 1031,
+      "timing_key": 1031,
+      "motion_index": 23,
+      "motion_record_offset": 484704,
+      "timing_index": 23,
+      "timing_record_offset": 26592,
+      "timing_event_count": 25,
+      "source_payload_offset": 16620
+    },
+    "C6E": {
+      "motion_key": 1022,
+      "timing_key": 1022,
+      "motion_index": 21,
+      "motion_record_offset": 385760,
+      "timing_index": 21,
+      "timing_record_offset": 22624,
+      "timing_event_count": 24,
+      "source_payload_offset": 15916
+    },
+    "C7A": {
+      "motion_key": 1051,
+      "timing_key": 1051,
+      "motion_index": 25,
+      "motion_record_offset": 586752,
+      "timing_index": 25,
+      "timing_record_offset": 30720,
+      "timing_event_count": 36,
+      "source_payload_offset": 18028
+    },
+    "C78": {
+      "motion_key": 1051,
+      "timing_key": 1051,
+      "motion_index": 25,
+      "motion_record_offset": 586752,
+      "timing_index": 25,
+      "timing_record_offset": 30720,
+      "timing_event_count": 36,
+      "source_payload_offset": 17676
+    },
+    "C6C": {
+      "motion_key": 1020,
+      "timing_key": 1020,
+      "motion_index": 19,
+      "motion_record_offset": 308672,
+      "timing_index": 19,
+      "timing_record_offset": 19520,
+      "timing_event_count": 22,
+      "source_payload_offset": 15564
+    },
+    "C6D": {
+      "motion_key": 1021,
+      "timing_key": 1021,
+      "motion_index": 20,
+      "motion_record_offset": 348384,
+      "timing_index": 20,
+      "timing_record_offset": 21088,
+      "timing_event_count": 18,
+      "source_payload_offset": 15740
+    }
+  }
+}

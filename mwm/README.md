@@ -51,9 +51,23 @@ Load **Maria sword** or **Maria dodge string** in the editor, then review and sa
 
 The dodge preset swaps Mid Quick for the dodge-slash string. Continue pressing the assigned attack to advance and restart a completed string; stopping input retains normal recovery. A phase may contain several hits. Seven recorded Maria candidates remain unsupported, including grabs, evasions, buff, teleport and beam attacks.
 
-For Onmyo or shuriken cancellation, start a sword attack with a remaining Ki Pulse window, use the shortcut, then tap **R1/RB after the effect releases**. The engine requests a native Pulse and lets the effect persist. Cast families use their native release events and share the preceding attack's Pulse window. Casting from idle does not manufacture one.
+## Ishida and variable cast windows
 
-The user confirmed Guardian Spirit Talisman and shuriken cancellation and the initial Maria animations. Later High continuation and string-restart fixes pass the native offline matrix but await a fresh gameplay check; other Onmyo items and damage/contact coverage remain unverified.
+**Load Ishida sword** stages five strings for review:
+
+| Input | String |
+| --- | --- |
+| Mid Quick | Double slash, including the repeated opening phase |
+| High Strong | Five-hit |
+| Low Quick | Three-hit |
+| Low Strong | Spinning ender |
+| Mid Strong | Spinning opener |
+
+Press again for each phase. The grapple and two beam recordings remain unsupported. These new strings pass offline routing checks; animation, movement, contact and effects still need gameplay verification.
+
+Onmyo and shuriken cancels use fixed windows per source phase, independent of the selected preset. The shipped pool has 76 phases, including William's 20 native Quick/Strong stages: 46 allow Onmyo and 53 allow shurikens (60%/70%, rounded, with overlap). A successful cancel needs a fresh R1/RB press 2–8 frames after the observed effect-release cue, inside a 5–10-frame window. The original native Pulse deadline still applies. An early press or hold does not queue a cancel; casting from idle creates no window.
+
+The prior uniform cast behavior was tested in game. New timing windows, Ishida moves and Maria's longer final horizontal-string recovery need a fresh gameplay check. Crash reports #2 and #27 remain open because their causes have not been reproduced.
 
 ## Controllers
 

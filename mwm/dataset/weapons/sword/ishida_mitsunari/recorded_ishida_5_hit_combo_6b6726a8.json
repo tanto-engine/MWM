@@ -8,17 +8,102 @@
   "review_status": "candidate",
   "priority": null,
   "description": "Ishida 5 Hit Combo",
-  "mapping_status": "unmapped",
-  "steps": [],
-  "observed_links": [],
+  "mapping_status": "candidate",
+  "steps": [
+    {
+      "id": "stage_1",
+      "description": "One fresh attack press advances this recorded phase.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6C",
+        "motion_id": 1020,
+        "timing_id": 1020
+      }
+    },
+    {
+      "id": "stage_2",
+      "description": "One fresh attack press advances this recorded phase.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6D",
+        "motion_id": 1021,
+        "timing_id": 1021
+      }
+    },
+    {
+      "id": "stage_3",
+      "description": "One fresh attack press advances this recorded phase.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C71",
+        "motion_id": 1030,
+        "timing_id": 91030
+      }
+    },
+    {
+      "id": "stage_4",
+      "description": "One fresh attack press advances this recorded phase.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C72",
+        "motion_id": 1031,
+        "timing_id": 1031
+      }
+    },
+    {
+      "id": "stage_5",
+      "description": "One fresh attack press advances this recorded phase.",
+      "description_basis": "sequence_hypothesis",
+      "source": {
+        "action_id": "0x00000C6E",
+        "motion_id": 1022,
+        "timing_id": 1022
+      }
+    }
+  ],
+  "observed_links": [
+    {
+      "from": "stage_1",
+      "to": "stage_2",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_2",
+      "to": "stage_3",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_3",
+      "to": "stage_4",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    },
+    {
+      "from": "stage_4",
+      "to": "stage_5",
+      "basis": [
+        "observed_same_actor_order",
+        "consecutive_observed_action_counters",
+        "native_transition_target"
+      ]
+    }
+  ],
   "capture_context": {
-    "actor_identity": "Unverified; all actors remain in the raw recording.",
+    "actor_identity": "Same actor/owner across selected phases; complete payloads match Ishida archive_00 entry86.",
     "weapon_classification": "User-described sword destination; equipped weapon unverified."
   },
   "blocked_reasons": [
-    "actor_and_phase_mapping_unreviewed",
-    "william_adapter_unverified",
-    "motion_timing_resources_unverified",
     "gameplay_unverified"
   ],
   "evidence": [
@@ -35,8 +120,68 @@
       "annotation_end_seconds": 31.594,
       "game_build_sha256": "0c3508c6b4d0696d84423949df9faccb3f9c6d93833854e1e17a78d66defc389",
       "identity_line": 2,
-      "steps": [],
-      "native_links": []
+      "steps": [
+        {
+          "step_id": "stage_1",
+          "action_line": 1560,
+          "metadata_line": 1561,
+          "first_observed_seconds": 26.532,
+          "counter": 49
+        },
+        {
+          "step_id": "stage_2",
+          "action_line": 1605,
+          "metadata_line": 1606,
+          "first_observed_seconds": 27.219,
+          "counter": 50
+        },
+        {
+          "step_id": "stage_3",
+          "action_line": 1639,
+          "metadata_line": 884,
+          "first_observed_seconds": 27.719,
+          "counter": 51
+        },
+        {
+          "step_id": "stage_4",
+          "action_line": 1677,
+          "metadata_line": 1090,
+          "first_observed_seconds": 28.36,
+          "counter": 52
+        },
+        {
+          "step_id": "stage_5",
+          "action_line": 1710,
+          "metadata_line": 1129,
+          "first_observed_seconds": 29.063,
+          "counter": 53
+        }
+      ],
+      "native_links": [
+        {
+          "from": "stage_1",
+          "to": "stage_2",
+          "transition_entry_index": 1
+        },
+        {
+          "from": "stage_2",
+          "to": "stage_3",
+          "transition_entry_index": 5
+        },
+        {
+          "from": "stage_3",
+          "to": "stage_4",
+          "transition_entry_index": 5
+        },
+        {
+          "from": "stage_4",
+          "to": "stage_5",
+          "transition_entry_index": 6
+        }
+      ]
     }
+  ],
+  "review_notes": [
+    "Source sequence is preserved with explicit phase indices, including repeated C5B. Player animation, contact and movement require gameplay verification."
   ]
 }

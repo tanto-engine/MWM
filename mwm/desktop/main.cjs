@@ -15,7 +15,7 @@ if (smokeReport) {
   process.env.MWM_UI_SMOKE = '1';
   process.env.NIOH_RUNTIME_HOME = path.join(state, 'runtime');
 }
-const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'trial', 'maria', 'maria_dash', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'haptic', 'enable', 'disable', 'preset_list', 'preset_save', 'preset_load', 'preset_delete', 'preset_switch', 'preset_cycle']);
+const methods = new Set(['snapshot', 'validate', 'preview', 'add_override', 'apply', 'baseline', 'starter', 'trial', 'maria', 'maria_dash', 'ishida', 'controller', 'capture_start', 'capture_poll', 'capture_cancel', 'haptic', 'enable', 'disable', 'preset_list', 'preset_save', 'preset_load', 'preset_delete', 'preset_switch', 'preset_cycle']);
 const pending = new Map();
 let window, worker, nextId = 0, hotkeyTimer, hotkeyBusy = false, cycling = false, closeAfterCycle = false;
 

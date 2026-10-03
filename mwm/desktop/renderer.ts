@@ -77,14 +77,14 @@ const pageHelp: Record<string, [string, string, string]> = {
   overview: ['Sword moves', 'Choose a stance. Each input row shows the move it will play; Original keeps the game action.', 'Hover a row for its exact input and move behavior. Save changes before enabling.'],
   speed: ['Speed modification', 'Select a move on the left, then adjust its playback percentage.', 'Inherit follows its sequence. 100% explicitly uses native speed.'],
   presets: ['Preset manager', 'Save named movesets and switch the active one in the app.', 'On a supported DS4 mapping, double-tap the touchpad click to cycle during gameplay.'],
-  controls: ['Controller', 'Set the device mapping and the buttons for the global custom chord.', 'Input routes can use additional chords with separate buttons.'],
-  native: ['Input routes', 'Original routes replace a named Nioh action. Custom routes use their own controller buttons.', 'A configured chord takes priority over a game action on the same buttons. Sequential operators keep the modifier held through both presses.'],
+  controls: ['Controller', 'Set the device mapping and the buttons for the global custom chord.', 'Input overrides can use additional chords with separate buttons.'],
+  native: ['Input overrides', 'Original routes replace a named Nioh action. Custom routes use their own controller buttons.', 'A configured chord takes priority over a game action on the same buttons. Sequential operators keep the modifier held through both presses.'],
   frost: ['Stance-switch moves', 'Choose the move used when Frost Moon reaches each stance.', 'Trigger during a Ki Pulse window with R1 / RB and two stance taps.'],
-  collection: ['Move library', 'Playable moves can be assigned in Sword or Input routes. Recorded candidates remain research until adapted and reviewed.', 'A video or action ID alone does not establish that William can play a move.'],
+  collection: ['Move library', 'Playable moves can be assigned in Moves or Input overrides. Recorded candidates remain research until adapted and reviewed.', 'A video or action ID alone does not establish that William can play a move.'],
   guide: ['Help', 'Choose moves, save the draft, then enable the mod.', 'Disable the mod before saving further changes.']
 };
 const builtInPresets: Record<string, string> = {
-  baseline: 'Sword baseline', starter: 'Rebuild subset', trial: 'Sword Rebuild 1', maria: 'Maria sword', maria_dash: 'Maria dodge string'
+  baseline: 'Sword baseline', starter: 'Rebuild subset', trial: 'Sword Rebuild 1', maria: 'Maria sword', maria_dash: 'Maria dodge string', ishida: 'Ishida sword'
 };
 const fieldHelp: Record<string, [string, string]> = {
   'Moveset name': ['Names this saved configuration in the editor.', 'It does not change the game weapon.'],
@@ -110,7 +110,7 @@ const fieldHelp: Record<string, [string, string]> = {
   Move: ['The reviewed move played by this route.', 'Remove the row to clear the route.'],
   'Okatsu grapple': ['When a sword grapple succeeds and its native contact condition is met, use the imported Okatsu grapple sequence.', 'This does not turn normal attacks into grapples.'],
   'Mid quick-attack finisher': ['While a native Mid quick-attack string is active, hold Guard (LB/L1) and press Strong attack (Y/Triangle) in its combo window for William’s native finisher.', 'It adds a finisher to three Mid quick strings; it does not replace every quick press.'],
-  'Include Okatsu kicking string': ['Add Okatsu’s quick/kick sequence to the move choices, then assign it to a held controller chord in Sword.', 'Keep the chord held through the flip and grab attempt.'],
+  'Include Okatsu kicking string': ['Enable Okatsu’s quick/kick sequence, then assign it to a Hold custom input or the shared Hold chord in Moves.', 'Keep the chord held through the flip and grab attempt. Tap and native attack inputs do not support this sequence.'],
   'Low heavy string': ['Replaces Low stance’s ordinary heavy-attack sequence with the selected reviewed string.', 'Its later phases continue from the first attack; set phase speeds in Tuning.']
 };
 
@@ -141,6 +141,7 @@ const actionHelp: Record<string, [string, string]> = {
   trial: ['Loads Sword Rebuild 1 into a draft.', 'Review it, then save to use it.'],
   starter: ['Loads a smaller Rebuild subset into a draft.', 'Review it, then save to use it.'],
   maria: ['Loads Maria’s quick, horizontal slash, aerial kick and forward dodge slash bindings.', 'Review the inputs, then save to use them.'],
+  ishida: ['Loads five recorded Ishida sword strings across Quick and Strong inputs.', 'One fresh press advances each phase. Gameplay verification is pending.'],
   maria_dash: ['Loads Maria’s dodge slash string in place of her Mid quick string.', 'The two strings share continuation phases; choose one per moveset.'],
   baseline: ['Loads the baseline sword configuration into a draft.', 'Save to make this your active setup.'],
   load: ['Imports a moveset file into your draft.', 'Saving is a separate step.'],
@@ -471,7 +472,7 @@ function renderOverview() {
   if (customRows.length) rows.append(element('h3', 'Custom inputs', 'skill-subtitle'));
   for (const binding of customRows) {
     const key = `custom:${preset.skill_bindings.indexOf(binding)}`;
-    const row = addRow('Custom input', routeInput(binding), binding.move, 'chord', key, value => {
+    const row = addRow('Custom input', routeInput(binding), binding.move, binding.input!.gesture === 'hold' ? 'string_hold' : 'chord', key, value => {
       if (value) { binding.move = value; changed(); }
       else { preset.skill_bindings.splice(preset.skill_bindings.indexOf(binding), 1); changed(); render(); }
     }, 'Remove input');
@@ -487,6 +488,10 @@ function renderOverview() {
     const choices = (names: string[]): [string, string][] => names.filter(name => state.buttons[name] !== undefined).map(name => [name, name]);
     const pattern = select([['tap', 'Tap · two buttons'], ['hold', 'Hold · two buttons'], ['sequence', 'Follow-up · three buttons']], 'tap', value => {
       followupField.hidden = value !== 'sequence';
+      // Hold-only sequences belong in both the builder and existing held-input menus.
+      const previous = move.value;
+      move.replaceChildren(...moveOptions(value === 'hold' ? 'string_hold' : 'chord', 'Choose a move').map(([id, name]) => new Option(name, id)));
+      if ([...move.options].some(option => option.value === previous)) move.value = previous;
     }, false);
     const modifier = select(choices(sequence.modifiers), sequence.modifiers[0], () => {}, false);
     const first = select(choices(sequence.buttons), sequence.buttons.find(name => name !== modifier.value) || '', () => {}, false);
@@ -495,7 +500,7 @@ function renderOverview() {
     field('Input pattern', pattern, builder);
     field('Hold modifier', modifier, builder); field('Trigger / first press', first, builder);
     const followupField = field('Then press', followup, builder); followupField.hidden = true;
-    field('Move', move, builder);
+    browseMove(field('Move', move, builder), move, 'custom input');
     const add = element('button', 'Add operator', 'add-route');
     add.onclick = () => void action(async () => {
       if (!move.value) throw new Error('Choose a reviewed move for this operator.');
@@ -536,7 +541,7 @@ function renderOverview() {
 
 
 function renderMoves() {
-  const p = state.preset, grid = section('Global custom chord', 'Hold Modifier, then press Trigger. Choose separate moves for a tap and a hold. Input routes can use additional chords.');
+  const p = state.preset, grid = section('Global custom chord', 'Hold Modifier, then press Trigger. Choose separate moves for a tap and a hold. Input overrides can use additional chords.');
   field('Moveset name', input(p.name, value => {
     p.name = value;
   }), grid);
@@ -1010,7 +1015,7 @@ function renderGuide() {
   content.append(steps);
   for (const [title, body] of [
     ['Maria sword bindings', 'Load Maria sword from More or Presets. Low Quick uses the aerial kick string; Mid Quick uses the quick string; High Strong uses the horizontal slash string; Mid Guard + Strong uses the forward dodge slash. Press again for each phase and keep tapping as the final phase ends to restart. Maria dodge string replaces only the Mid Quick string.'],
-    ['Onmyo and shuriken Ki Pulse', 'After a sword attack, cast Onmyo or throw a shuriken, then press R1 / RB during the remaining Ki Pulse window. Release Guard and attack buttons first. The same release timing applies to both: the spell effect or projectile is preserved before recovery is cancelled with a full Ki Pulse. A cast alone does not create a new Ki Pulse window.']
+    ['Onmyo and shuriken Ki Pulse', 'Each sword move has a fixed window across presets and eligible item types. Onmyo cancels work after 60% of supported moves; shuriken cancels after 70%, with overlap. Native William attacks are included. Cast after an attack, release Guard and attack buttons, then press R1 / RB shortly after the effect or projectile appears. Early presses are not buffered. Cancels preserve the effect and complete Ki Pulse before its original deadline; other moves keep normal cast recovery.']
   ]) {
     const feature = element('details', undefined, 'guide-glossary'); feature.open = true;
     feature.append(element('summary', title), element('p', body)); content.append(feature);
@@ -1018,7 +1023,7 @@ function renderGuide() {
   const glossary = element('details', undefined, 'guide-glossary');
   glossary.append(element('summary', 'What counts as a playable move?'));
   glossary.append(element('p', 'The move picker contains reviewed moves the Engine can route to William. Move library separately lists named recording candidates and unreviewed action signatures; neither becomes playable without William adaptation.'),
-    element('p', 'A stance-switch move fires during a Ki Pulse window after R1/RB and two taps toward the destination stance. A held strong route uses a long Triangle/Y press. Input routes in More exposes the full route table and controller recording.'));
+    element('p', 'A stance-switch move fires during a Ki Pulse window after R1/RB and two taps toward the destination stance. A held strong route uses a long Triangle/Y press. Input overrides exposes the full route table and controller recording.'));
   content.append(glossary);
 }
 
@@ -1048,7 +1053,7 @@ function renderCollection() {
   // Playable capability rows and recorded research use separate views. A recording
   // never becomes a bindable choice simply because it appears in the library.
   content.append(element('h2', 'Move library', 'section-title'));
-  content.append(element('p', 'Reviewed playable moves are available in Sword and Input routes. Recorded candidates need William-specific adaptation and verification before binding.', 'hint'));
+  content.append(element('p', 'Reviewed playable moves are available in Moves and Input overrides. Recorded candidates need William-specific adaptation and verification before binding.', 'hint'));
   const tabs = element('div', undefined, 'library-tabs');
   const playableTab = element('button', `Playable · ${state.capabilities.moves.length}`);
   const recordedTab = element('button', `Recorded candidates · ${collection.moves.length}`);
@@ -1064,7 +1069,7 @@ function renderCollection() {
     card.append(element('h3', move.name), element('p', move.input || 'Input depends on the assigned route', 'library-input'),
       element('p', move.description || 'Reviewed for the supported route; see the source notes for details.', 'library-description'));
     annotate(card, move.name, move.description || 'Reviewed playable move.', move.input ? `Expected input: ${move.input}` : 'Input depends on the route you assign.');
-    const kinds = [move.chord && 'Custom chord', move.held && 'Held strong', move.native && 'Input route', move.heavy_string && 'Heavy string'].filter(Boolean);
+    const kinds = [move.chord && 'Custom chord', move.string_hold && 'Held custom input', move.held && 'Held strong', move.native && 'Input route', move.heavy_string && 'Heavy string'].filter(Boolean);
     card.append(element('small', kinds.join(' · ') || 'Tuning only', 'move-kinds'));
     playablePane.append(card); playableCards.push({ node: card, text: `${move.id} ${move.name} ${move.input || ''} ${move.description || ''}`.toLowerCase() });
   }

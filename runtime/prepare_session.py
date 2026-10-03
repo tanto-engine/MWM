@@ -120,7 +120,7 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             raise ValueError('Loaded source action family differs from the configured adapter')
         if 'source_payload_prefix' in move and not body.startswith(bytes.fromhex(move['source_payload_prefix'])):
             raise ValueError('Loaded unobserved branch payload differs from exact archive evidence')
-        if I32(body, 0x20) != motion_key or I32(body, 0x34) not in (-1, motion_key):
+        if I32(body, 0x20) != motion_key or I32(body, 0x34) not in (-1, move.get('timing',motion_key)):
             raise ValueError('Loaded source motion/timing identity differs')
         if struct.unpack_from('<h', body, 0x24)[0] != move['recovery_frame']:
             raise ValueError('Loaded source recovery frame differs')
@@ -148,7 +148,10 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
                 raise ValueError('Izuna launcher lacks its recorded airborne continuation')
         if move['next_variant'] != -1:
             next_key = manifest['moves'][move['next_variant']]['key']
-            if move['flags'] == GRAB_ATTEMPT_FLAGS or move.get('adapter_kind') == 2 or is_izuna_bridge(move):
+            if move['flags']==0x10018480000:
+                if not any(struct.unpack_from('<h',row,20)[0]==next_key and row[10] in (0,2) and row[11]!=0xff for row in rows):
+                    raise ValueError('Recorded sword successor lacks its native input route')
+            elif move['flags'] == GRAB_ATTEMPT_FLAGS or move.get('adapter_kind') == 2 or is_izuna_bridge(move):
                 native_success = any(struct.unpack_from('<h', row, 0x14)[0] == next_key
                                      and struct.unpack_from('<H', row, 0)[0] == 22
                                      and row[10:12]==b'\x00\xff' for row in rows)
@@ -164,7 +167,7 @@ def resolve_imports(game, stable, bank, motion_bank, timing_wrapper, manifest):
             if not source_paired <= paired:
                 raise ValueError('Native paired transition targets an unconfigured source action')
         motion = inspect_motion(game, stable, motion_bank, motion_key)
-        timing = inspect_timing(game, stable, timing_wrapper, motion_key)
+        timing = inspect_timing(game, stable, timing_wrapper, move.get('timing',motion_key))
         if motion['presence'] != 'present' or timing['presence'] != 'present':
             raise ValueError('Owned source package did not resolve the move')
         record = int(timing['record'], 0)

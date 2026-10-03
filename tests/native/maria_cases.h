@@ -62,6 +62,7 @@ static void maria_transition_cases() {
             assert(boss_prepare_private_action(i+2));
             const auto& clone=boss_private_actions[i+2];unsigned next_rows=0;
             const int next=phase.next ? phase.next : i==7 ? 0 : int(phases[root].key);
+            const int restart_frame=phase.key==0xC84 ? 126 : phase.adapted;
             for (unsigned r=0;r<clone.transition_count;++r) {
                 const auto* row=clone.transition_bodies[r];int16_t target=0;memcpy(&target,row+0x14,2);
                 assert(target!=0xC79 && target!=0xCF6);
@@ -70,8 +71,14 @@ static void maria_transition_cases() {
                     assert(row[0x0A]==0 || row[0x0A]==2);
                     if (!phase.next || stance==0) {
                         int16_t start=0,end=0;memcpy(&start,row+0x20,2);memcpy(&end,row+0x22,2);
-                        assert(row[0x0A]==2 ? end==phase.adapted-1 : start==phase.adapted);
+                        const int gate=!phase.next ? restart_frame : phase.adapted;
+                        assert(row[0x0A]==2 ? end==gate-1 : start==gate);
                     }
+                }
+                // Same-button generic opener must not bypass the final landing;
+                // Pulse, dodge and opposite-button cancels retain their earlier recovery.
+                if (phase.key==0xC84 && target==(family==1 ? 0xBBF : 0xBC0)) {
+                    int16_t start=0;memcpy(&start,row+0x20,2);assert(start==126);
                 }
             }
             assert(next_rows==(next ? 2u : 0u));

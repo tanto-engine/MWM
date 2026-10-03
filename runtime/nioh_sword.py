@@ -12,6 +12,17 @@ STANCE_OPENERS = {'low': 0xCF5, 'mid': 0xC7A, 'high': 0xCB7}
 # Keep these signatures exact: Tachibana's positive-recovery 594C action is not
 # Okatsu's negative-recovery grab despite sharing the flags word.
 RECORDED_GROUNDED = (
+    (0xC5B,1030,0x10018480000,30,-1),
+    (0xC5C,1031,0x10018480000,26,-1),
+    (0xC58,1022,0x10018480000,28,-1),
+    (0xC71,1030,0x10018480000,34,-1),
+    (0xC72,1031,0x10018480000,32,-1),
+    (0xC6E,1022,0x10018480000,36,-1),
+    (0xC7A,1051,0x10018480000,28,-1),
+    (0xC78,1051,0x10018480000,26,-1),
+    (0xC6C,1020,0x10018480000,40,-1),
+    (0xC6D,1021,0x10018480000,38,-1),
+
     (0xD30,2000,0x184C0000,46,45),(0xD31,2010,0x184C0000,46,30),
     (0xD32,2020,0x184C0000,46,35),(0xD33,2030,0x184C0000,42,-1),
     (0xC6E,1010,0x19400000,10,-1),(0xC6F,1011,0x19400000,6,-1),
@@ -30,6 +41,10 @@ def is_recorded_grounded(move):
     # Native preparation additionally checks the complete archived payload prefix.
     return move.get('adapter_kind') in (2,4) and tuple(move.get(k) for k in
         ('key','motion','flags','transition_count','recovery_frame')) in RECORDED_GROUNDED
+
+
+def is_ishida_sword(move):
+    return move.get('flags') == 0x10018480000 and is_recorded_grounded(move)
 
 
 def is_airborne_sword(move):

@@ -152,7 +152,7 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
                 || (adapter.kind==3 ? move.flags!=0x8038000000ULL : adapter.kind!=5 || !airborne)) return false;
         } else if (memcmp(&adapter, &no_adapter, sizeof(adapter))) return false;
         const bool simple = move.flags == 0x184C0000 || replacement;
-        const bool attempt = move.flags == 0x594C0000 || ((adapter.kind == 2 || izuna_bridge) && move.next_variant>=0);
+        const bool attempt = move.flags == 0x594C0000 || (!ishida_phase(move) && (adapter.kind == 2 || izuna_bridge) && move.next_variant>=0);
         const bool paired = move.flags == 0x8078000000ULL || move.flags == 0x8038000000ULL;
         if ((!simple && !attempt && !paired) || (replacement ? (move.recovery_frame == 0 || move.recovery_frame < -1 || (adapter.kind==1 && move.recovery_frame<0)) : (simple ? move.recovery_frame <= 0 : move.recovery_frame != -1)))
             return false;
@@ -164,15 +164,17 @@ static bool runtime_imports_valid(const RuntimeSessionConfig& config) {
             if (move.next_start || move.next_end) return false;
         } else {
             const auto& target = config.imports[move.next_variant];
+            if (ishida_phase(move) && (!ishida_phase(target) || move.next_start || move.next_end
+                || config.adapters[move.next_variant].bank!=adapter.bank)) return false;
             if (attempt != (target.flags == 0x8078000000ULL || target.flags == 0x8038000000ULL)) return false;
             if (attempt ? (move.next_start || move.next_end) :
-                (paired || move.next_start > move.next_end || !move.next_end)) return false;
+                (paired || move.next_start > move.next_end || (!move.next_end && !ishida_phase(move)))) return false;
         }
         for (unsigned prior = 0; prior != i; ++prior) if (move.key == config.imports[prior].key) {
             const auto& earlier=config.imports[prior]; const auto& owner=config.adapters[prior];
             if ((adapter.kind ? adapter.bank : config.session.source_bank)
                 !=(owner.kind ? owner.bank : config.session.source_bank)) continue;
-            const bool alias=(move.key==0xC79 && move.motion==5014 && move.flags==0x194C0000 && adapter.kind==2 && owner.kind==2 && adapter.player_key!=owner.player_key)
+            const bool alias=(ishida_phase(move) && ishida_phase(earlier)) || (move.key==0xC79 && move.motion==5014 && move.flags==0x194C0000 && adapter.kind==2 && owner.kind==2 && adapter.player_key!=owner.player_key)
                 || (move.key==0xC71 && move.motion==1050 && !move.flags && ((adapter.kind==5 && owner.kind==2) || (adapter.kind==2 && owner.kind==5)));
             if (!alias || earlier.motion!=move.motion || earlier.flags!=move.flags
                 || earlier.descriptor!=move.descriptor || earlier.payload!=move.payload || earlier.clip!=move.clip

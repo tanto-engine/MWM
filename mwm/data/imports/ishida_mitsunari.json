@@ -1,0 +1,556 @@
+{
+  "schema_version": 1,
+  "boss_id": "ishida_mitsunari",
+  "resource_profile_id": "ishida_mitsunari.resources.v1",
+  "trial": true,
+  "string_entry": null,
+  "candidates": {},
+  "hold_chains": {
+    "ishida_mitsunari.double_slash_1": [
+      "ishida_mitsunari.double_slash_1",
+      "ishida_mitsunari.double_slash_2",
+      "ishida_mitsunari.double_slash_3",
+      "ishida_mitsunari.double_slash_4"
+    ],
+    "ishida_mitsunari.three_hit_1": [
+      "ishida_mitsunari.three_hit_1",
+      "ishida_mitsunari.three_hit_2",
+      "ishida_mitsunari.three_hit_3"
+    ],
+    "ishida_mitsunari.spin_ender_1": [
+      "ishida_mitsunari.spin_ender_1",
+      "ishida_mitsunari.spin_ender_2",
+      "ishida_mitsunari.spin_ender_3"
+    ],
+    "ishida_mitsunari.spin_opener_1": [
+      "ishida_mitsunari.spin_opener_1",
+      "ishida_mitsunari.spin_opener_2",
+      "ishida_mitsunari.spin_opener_3",
+      "ishida_mitsunari.spin_opener_4"
+    ],
+    "ishida_mitsunari.five_hit_1": [
+      "ishida_mitsunari.five_hit_1",
+      "ishida_mitsunari.five_hit_2",
+      "ishida_mitsunari.five_hit_3",
+      "ishida_mitsunari.five_hit_4",
+      "ishida_mitsunari.five_hit_5"
+    ]
+  },
+  "moves": [
+    {
+      "id": "ishida_mitsunari.double_slash_1",
+      "key": 3163,
+      "motion": 1030,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 30,
+      "next": "ishida_mitsunari.double_slash_2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 51,
+          "index": 5,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015b0cffff0109000000000000000048180001000006040000ffff7d00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_2",
+      "key": 3163,
+      "motion": 1030,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 30,
+      "next": "ishida_mitsunari.double_slash_3",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 51,
+          "index": 5,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015b0cffff0109000000000000000048180001000006040000ffff7d00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_3",
+      "key": 3164,
+      "motion": 1031,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 26,
+      "next": "ishida_mitsunari.double_slash_4",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015c0cffff0109000000000000000048180001000007040000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_4",
+      "key": 3160,
+      "motion": 1022,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 28,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 29,
+          "index": 2,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff01580cffff01090000000000000000481800010000fe030000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_1",
+      "key": 3185,
+      "motion": 1030,
+      "flags": 1099918999552,
+      "ki_cost": 9,
+      "recovery_frame": -1,
+      "transition_count": 34,
+      "next": "ishida_mitsunari.three_hit_2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 51,
+          "index": 6,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff00710cffff0109000000000900000048180001000006040000ffff7d00ffff000001000200ffffff0096630100000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      },
+      "timing": 91030
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_2",
+      "key": 3186,
+      "motion": 1031,
+      "flags": 1099918999552,
+      "ki_cost": 9,
+      "recovery_frame": -1,
+      "transition_count": 32,
+      "next": "ishida_mitsunari.three_hit_3",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff00720cffff0109000000000900000048180001000007040000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_3",
+      "key": 3182,
+      "motion": 1022,
+      "flags": 1099918999552,
+      "ki_cost": 7,
+      "recovery_frame": -1,
+      "transition_count": 36,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 29,
+          "index": 2,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff006e0cffff01090000000007000000481800010000fe030000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_1",
+      "key": 3164,
+      "motion": 1031,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 26,
+      "next": "ishida_mitsunari.spin_ender_2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015c0cffff0109000000000000000048180001000007040000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_2",
+      "key": 3160,
+      "motion": 1022,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 28,
+      "next": "ishida_mitsunari.spin_ender_3",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 29,
+          "index": 2,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff01580cffff01090000000000000000481800010000fe030000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_3",
+      "key": 3194,
+      "motion": 1051,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 28,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 61,
+          "index": 4,
+          "hash": 2774199051
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff017a0cffff010900000000000000004818000100001b040000ffffb400ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_1",
+      "key": 3192,
+      "motion": 1051,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 26,
+      "next": "ishida_mitsunari.spin_opener_2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 61,
+          "index": 4,
+          "hash": 2774199051
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff01780cffff010900000000000000004818000100001b040000ffffb400ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_2",
+      "key": 3163,
+      "motion": 1030,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 30,
+      "next": "ishida_mitsunari.spin_opener_3",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 51,
+          "index": 5,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015b0cffff0109000000000000000048180001000006040000ffff7d00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_3",
+      "key": 3164,
+      "motion": 1031,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 26,
+      "next": "ishida_mitsunari.spin_opener_4",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff015c0cffff0109000000000000000048180001000007040000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_4",
+      "key": 3160,
+      "motion": 1022,
+      "flags": 1099918999552,
+      "ki_cost": 0,
+      "recovery_frame": -1,
+      "transition_count": 28,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 29,
+          "index": 2,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff01580cffff01090000000000000000481800010000fe030000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_1",
+      "key": 3180,
+      "motion": 1020,
+      "flags": 1099918999552,
+      "ki_cost": 7,
+      "recovery_frame": -1,
+      "transition_count": 40,
+      "next": "ishida_mitsunari.five_hit_2",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 21,
+          "index": 2,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff006c0cffff01090000000007000000481800010000fc030000ffff6400ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 2,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_2",
+      "key": 3181,
+      "motion": 1021,
+      "flags": 1099918999552,
+      "ki_cost": 7,
+      "recovery_frame": -1,
+      "transition_count": 38,
+      "next": "ishida_mitsunari.five_hit_3",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 3,
+          "index": 2,
+          "hash": 1287987428
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff006d0cffff01090000000007000000481800010000fd030000ffff4600ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_3",
+      "key": 3185,
+      "motion": 1030,
+      "flags": 1099918999552,
+      "ki_cost": 9,
+      "recovery_frame": -1,
+      "transition_count": 34,
+      "next": "ishida_mitsunari.five_hit_4",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 51,
+          "index": 6,
+          "hash": 2590116673
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff00710cffff0109000000000900000048180001000006040000ffff7d00ffff000001000200ffffff0096630100000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      },
+      "timing": 91030
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_4",
+      "key": 3186,
+      "motion": 1031,
+      "flags": 1099918999552,
+      "ki_cost": 9,
+      "recovery_frame": -1,
+      "transition_count": 32,
+      "next": "ishida_mitsunari.five_hit_5",
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 24,
+          "index": 4,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff00720cffff0109000000000900000048180001000007040000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_5",
+      "key": 3182,
+      "motion": 1022,
+      "flags": 1099918999552,
+      "ki_cost": 7,
+      "recovery_frame": -1,
+      "transition_count": 36,
+      "next": null,
+      "next_start": 0,
+      "next_end": 0,
+      "voices": [
+        {
+          "frame": 29,
+          "index": 2,
+          "hash": 4112437059
+        }
+      ],
+      "source_payload_prefix": "02000100000100000000ff006e0cffff01090000000007000000481800010000fe030000ffff6e00ffff000001000200ffffff00ffffffff000000000000ffff",
+      "adapter_kind": 4,
+      "replacement": {
+        "player_key": 3317,
+        "player_motion": 4300,
+        "transition_count": 46,
+        "recovery_frame": 38
+      }
+    }
+  ]
+}

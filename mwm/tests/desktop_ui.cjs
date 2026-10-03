@@ -135,6 +135,36 @@ app.whenReady().then(async () => {
       const stance=async name=>{[...document.querySelectorAll('.skill-stance')].find(button=>button.textContent===name.toUpperCase()).click();await ready();};
       const dismiss=()=>document.querySelector('#binding-error button').click();
       await ready();
+      const inputRoutes=document.querySelector('nav > [data-tab="native"]');
+      assert(inputRoutes?.getBoundingClientRect().width>0,'Input overrides are hidden behind More or a custom input');
+      inputRoutes.click();await ready();
+      assert(document.querySelector('.section-title').textContent==='Input overrides' && document.querySelector('#apply').disabled,'Opening Input overrides changed the clean draft');
+      await window.mwm.request('test_screenshot','input-overrides');
+      [...document.querySelectorAll('label')].find(label=>label.querySelector('span')?.textContent==='Include Okatsu kicking string').querySelector('input').click();await ready();
+      const kickName=(await window.mwm.request('snapshot')).capabilities.moves.find(move=>move.id==='okatsu.action_0c61').name;
+      await tab('collection');
+      const kickCard=[...document.querySelectorAll('.library-move')].find(card=>card.querySelector('h3').textContent===kickName);
+      assert(kickCard?.querySelector('.move-kinds').textContent.includes('Held custom input'),'Move library incorrectly labels the Okatsu sequence as tuning only');
+      await tab('overview');
+      const kickBuilder=document.querySelector('.custom-operator');kickBuilder.open=true;
+      const kickFields=[...kickBuilder.querySelectorAll('select')];
+      change(kickFields[0],'hold');
+      assert([...kickFields[4].options].some(option=>option.value==='okatsu.action_0c61'),'Enabled Okatsu kicking string is missing from the held custom-input builder');
+      kickBuilder.querySelector('.browse-move').click();
+      const kickChoice=[...document.querySelectorAll('.picker-choice')].find(button=>button.querySelector('strong').textContent===kickName);
+      assert(kickChoice,'Held-input browser is missing the enabled Okatsu kicking string');
+      await window.mwm.request('test_screenshot','okatsu-picker');kickChoice.click();
+      change(kickFields[0],'tap');
+      assert(![...kickFields[4].options].some(option=>option.value==='okatsu.action_0c61') && !kickFields[4].value,'Tap builder kept a hidden hold-only move');
+      change(kickFields[0],'hold');change(kickFields[1],'Circle / B');change(kickFields[2],'Triangle / Y');change(kickFields[4],'okatsu.action_0c61');
+      [...kickBuilder.querySelectorAll('button')].find(button=>button.textContent==='Add operator').click();await ready();
+      const kickAssignment=document.querySelector('.skill-row[data-route-key^="custom:"] select');
+      assert(kickAssignment?.value==='okatsu.action_0c61' && !kickAssignment.selectedOptions[0].textContent.includes('saved assignment'),'Existing held input does not recognize the Okatsu sequence');
+      document.querySelector('#apply').click();await ready();
+      const kickSaved=await window.mwm.request('snapshot');
+      assert(kickSaved.preset.string_enabled && kickSaved.preset.skill_bindings.some(binding=>binding.input?.gesture==='hold' && binding.move==='okatsu.action_0c61'),'Okatsu hold assignment did not persist through the real worker');
+      document.querySelector('#trial').click();await ready();document.querySelector('#apply').click();await ready();
+      document.querySelector('#reload').click();await ready();
       assert(document.querySelectorAll('.skill-stances [role="tab"]').length===3 && document.querySelector('.skill-stance.chosen').textContent==='LOW','Moves did not open on Low stance');
       assert(document.querySelector('[data-route-key="native:low:light_attack"] .skill-input strong').textContent==='Quick attack','Low stance lacks its named input');
       await stance('mid');
@@ -143,6 +173,7 @@ app.whenReady().then(async () => {
       const quick=document.querySelector('[data-assignment="native:low:light_attack"]');
       quick.focus();
       assert(document.activeElement===quick && quick.closest('.skill-row'),'Direct move selection lost keyboard focus');
+      document.querySelector('main').scrollTop=0;
       await wait(350);await window.mwm.request('test_screenshot','moves');
       const tiger=document.querySelector('[data-assignment="empty:low:tiger_sprint"]');
       assert(tiger && tiger.closest('.skill-row').querySelector('.skill-input strong').textContent==='Tiger Sprint','Unassigned input is not directly selectable');
@@ -166,6 +197,11 @@ app.whenReady().then(async () => {
       await tab('presets');
       document.querySelector('[data-preset-template="maria_dash"]').click();await ready();await tab('overview');await stance('mid');
       assert(document.querySelector('[data-assignment="native:mid:light_attack"]')?.value==='maria.action_0c8a','Maria dodge preset did not load from Presets');
+      document.querySelector('#ishida').click();await ready();await tab('overview');
+      for(const [mode,source,move] of [['mid','light_attack','double_slash'],['high','heavy_attack','five_hit'],['low','light_attack','three_hit'],['low','heavy_attack','spin_ender'],['mid','heavy_attack','spin_opener']]) {
+        await stance(mode);
+        assert(document.querySelector('[data-assignment="native:'+mode+':'+source+'"]')?.value==='ishida_mitsunari.'+move+'_1','Ishida preset is missing '+move);
+      }
       assert(JSON.stringify((await window.mwm.request('snapshot')).preset)===JSON.stringify(beforeMaria),'Loading a built-in preset unexpectedly saved the draft');
       await window.mwm.request('test_screenshot','maria');
       document.querySelector('#reload').click();await ready();await stance('low');

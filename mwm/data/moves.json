@@ -69594,6 +69594,538 @@
         "gameplay": "pending"
       },
       "resource_profile_id": "maria.resources.v1"
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_1",
+      "name": "Ishida - double slash",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3163,
+        "action_hex": "0C5B",
+        "motion_id": 1030,
+        "timing_id": 1030,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_2",
+      "name": "Ishida - double slash phase 2",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3163,
+        "action_hex": "0C5B",
+        "motion_id": 1030,
+        "timing_id": 1030,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_3",
+      "name": "Ishida - double slash phase 3",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3164,
+        "action_hex": "0C5C",
+        "motion_id": 1031,
+        "timing_id": 1031,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.double_slash_4",
+      "name": "Ishida - double slash phase 4",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3160,
+        "action_hex": "0C58",
+        "motion_id": 1022,
+        "timing_id": 1022,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_1",
+      "name": "Ishida - three hit",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3185,
+        "action_hex": "0C71",
+        "motion_id": 1030,
+        "timing_id": 91030,
+        "flags": 1099918999552,
+        "ki_cost": 9,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_2",
+      "name": "Ishida - three hit phase 2",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3186,
+        "action_hex": "0C72",
+        "motion_id": 1031,
+        "timing_id": 1031,
+        "flags": 1099918999552,
+        "ki_cost": 9,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.three_hit_3",
+      "name": "Ishida - three hit phase 3",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3182,
+        "action_hex": "0C6E",
+        "motion_id": 1022,
+        "timing_id": 1022,
+        "flags": 1099918999552,
+        "ki_cost": 7,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_1",
+      "name": "Ishida - spin ender",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3164,
+        "action_hex": "0C5C",
+        "motion_id": 1031,
+        "timing_id": 1031,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_2",
+      "name": "Ishida - spin ender phase 2",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3160,
+        "action_hex": "0C58",
+        "motion_id": 1022,
+        "timing_id": 1022,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_ender_3",
+      "name": "Ishida - spin ender phase 3",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3194,
+        "action_hex": "0C7A",
+        "motion_id": 1051,
+        "timing_id": 1051,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_1",
+      "name": "Ishida - spin opener",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3192,
+        "action_hex": "0C78",
+        "motion_id": 1051,
+        "timing_id": 1051,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_2",
+      "name": "Ishida - spin opener phase 2",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3163,
+        "action_hex": "0C5B",
+        "motion_id": 1030,
+        "timing_id": 1030,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_3",
+      "name": "Ishida - spin opener phase 3",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3164,
+        "action_hex": "0C5C",
+        "motion_id": 1031,
+        "timing_id": 1031,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.spin_opener_4",
+      "name": "Ishida - spin opener phase 4",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3160,
+        "action_hex": "0C58",
+        "motion_id": 1022,
+        "timing_id": 1022,
+        "flags": 1099918999552,
+        "ki_cost": 0,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_1",
+      "name": "Ishida - five hit",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3180,
+        "action_hex": "0C6C",
+        "motion_id": 1020,
+        "timing_id": 1020,
+        "flags": 1099918999552,
+        "ki_cost": 7,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": true,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_2",
+      "name": "Ishida - five hit phase 2",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3181,
+        "action_hex": "0C6D",
+        "motion_id": 1021,
+        "timing_id": 1021,
+        "flags": 1099918999552,
+        "ki_cost": 7,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_3",
+      "name": "Ishida - five hit phase 3",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3185,
+        "action_hex": "0C71",
+        "motion_id": 1030,
+        "timing_id": 91030,
+        "flags": 1099918999552,
+        "ki_cost": 9,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_4",
+      "name": "Ishida - five hit phase 4",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3186,
+        "action_hex": "0C72",
+        "motion_id": 1031,
+        "timing_id": 1031,
+        "flags": 1099918999552,
+        "ki_cost": 9,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
+    },
+    {
+      "id": "ishida_mitsunari.five_hit_5",
+      "name": "Ishida - five hit phase 5",
+      "boss_id": "ishida_mitsunari",
+      "weapon": "sword",
+      "designation": "skill",
+      "resource_profile_id": "ishida_mitsunari.resources.v1",
+      "source": {
+        "action_id": 3182,
+        "action_hex": "0C6E",
+        "motion_id": 1022,
+        "timing_id": 1022,
+        "flags": 1099918999552,
+        "ki_cost": 7,
+        "recovery_frame": -1
+      },
+      "default_binding": null,
+      "implementation": {
+        "selectable": false,
+        "engine_profile": "recorded_grounded_trial"
+      },
+      "adaptation": {
+        "status": "experimental"
+      },
+      "verification": {
+        "gameplay": "pending"
+      }
     }
   ],
   "observations": [],

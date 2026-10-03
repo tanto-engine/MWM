@@ -11,6 +11,17 @@ static constexpr uint32_t guardian_cast_events[][3]={
 };
 alignas(8) static std::array<uint8_t,0x90> cast_pose{};
 static DWORD cast_packet;
+static const CastPulseProfile* cast_dual_native() {
+    for (const auto& profile : cast_pulse_profiles)
+        if (!profile.rows && profile.onmyo && profile.shuriken) return &profile;
+    assert(false);return nullptr;
+}
+static void cast_native_source() {
+    const auto& profile=*cast_dual_native();
+    const unsigned stance=profile.key>=0xCF0 ? 2 : profile.key>=0xCB3 ? 0 : 1;
+    put(player.data(),0x470,uint32_t(stance));state(profile.key,profile.motion,int8_t(stance));
+    put(neutral_payload.data(),0x18,profile.flags);
+}
 static uint64_t cast_lookup(void*,uint32_t key,uint32_t* bank_index) {
     assert(key==0xD5F);*bank_index=0;return address(cast_pose.data());
 }
@@ -37,13 +48,60 @@ static void cast_setup() {
     put(voice_record.data(),4,uint32_t(std::size(guardian_cast_events)));put(voice_record.data(),8,uint32_t(0x24));
     memcpy(voice_record.data()+0x24,guardian_cast_events,sizeof(guardian_cast_events));
     cast_sample(0);DispatchCommand probe{};assert(choose_cast_pulse(probe)==IneligibleRequest);
+    cast_pulse_input.profile=cast_dual_native();
     LARGE_INTEGER now;QueryPerformanceCounter(&now);cast_pulse_input.closes=now.QuadPart+2*frequency;
 }
-static void cast_cue(unsigned index) {
+static void cast_cue(unsigned index, bool enter_window=true) {
     observe_cast_pulse_cue(voice_state.data(),voice_record.data(),voice_record.data()+0x24+index*12);
+    if (enter_window && cast_pulse_input.opens) {
+        // Move the observed window to now; boundary cases below retain the real generated timestamps.
+        LARGE_INTEGER now;QueryPerformanceCounter(&now);
+        const auto shift=cast_pulse_input.opens-now.QuadPart;
+        cast_pulse_input.opens-=shift;cast_pulse_input.window_closes-=shift;
+    }
 }
 static void cast_pulse_cases() {
     DispatchCommand probe{};
+    for (const auto& profile : cast_pulse_profiles) for (bool throwing : {false,true}) {
+        cast_setup();alignas(8) std::array<uint8_t,0xA0> vitals{};
+        put(owner.data(),0x240,address(vitals.data()));
+        const float pulse[4]={6,120,24,120};memcpy(vitals.data()+0x8C,pulse,sizeof(pulse));
+        if (!profile.rows) {
+            const unsigned stance=profile.key>=0xCF0 ? 2 : profile.key>=0xCB3 ? 0 : 1;
+            put(player.data(),0x470,uint32_t(stance));state(profile.key,profile.motion,int8_t(stance));
+            put(neutral_payload.data(),0x18,profile.flags);
+        } else {
+            auto& move=boss_imports[0];move.key=profile.key;move.motion=profile.motion;move.flags=profile.flags;
+            move.transition_count=profile.rows;move.recovery_frame=profile.recovery;
+            put(player.data(),0x58,move.descriptor);
+        }
+        cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
+        latch_cast_pulse_window();assert(cast_pulse_input.profile==&profile && cast_pulse_input.closes);
+        const auto deadline=cast_pulse_input.closes;
+        state(throwing ? 0x4D0 : 0x262,throwing ? 104 : 111,3);
+        put(neutral_payload.data(),0x18,uint64_t(throwing ? 0x2184C0000ULL : 0x2181C0000ULL));
+        put(player.data(),0x58,address(neutral.data()));put(player.data(),0xDC,uint32_t(12));
+        cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
+        LARGE_INTEGER before,after;QueryPerformanceCounter(&before);cast_cue(14,false);QueryPerformanceCounter(&after);
+        assert(cast_pulse_input.ready && cast_pulse_input.closes==deadline);
+        const unsigned width=throwing ? profile.shuriken : profile.onmyo;
+        if (!width) {
+            assert(!cast_pulse_input.opens);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+            assert(choose_cast_pulse(probe)==IneligibleRequest);
+        } else {
+            auto& input=cast_pulse_input;
+            assert(input.opens>=before.QuadPart+frequency*profile.delay/60
+                && input.opens<=after.QuadPart+frequency*profile.delay/60);
+            assert(input.window_closes-input.opens==frequency*width/60);
+            cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==IneligibleRequest);
+            QueryPerformanceCounter(&after);input.opens=after.QuadPart-1;input.window_closes=input.opens+frequency*width/60;
+            cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==IneligibleRequest); // Holding an early R1 is not a new edge.
+            cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
+            cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==NativeCastPulse);
+            input.window_closes=1;cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
+        }
+        ++checks;
+    }
     cast_setup();put(cast_pose.data(),4,uint32_t(0x155)); // Live descriptor metadata follows its DWORD key.
     cast_cue(22);cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);
     assert(choose_cast_pulse(probe)==NativeCastPulse);++checks;
@@ -71,7 +129,8 @@ static void cast_pulse_cases() {
     cast_cue(1);assert(cast_pulse_input.ready);++checks;
     cast_setup();alignas(8) std::array<uint8_t,0xA0> vitals{};
     put(owner.data(),0x240,address(vitals.data()));
-    state(0xCB7,3300,0);put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+    cast_native_source();
+    cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
     const float timers[4]={6,12,24,30};memcpy(vitals.data()+0x8C,timers,sizeof(timers));
     const auto vitals_before=vitals;cast_pulse_input.closes=0;
     LARGE_INTEGER start,end;QueryPerformanceCounter(&start);latch_cast_pulse_window();QueryPerformanceCounter(&end);
@@ -84,13 +143,13 @@ static void cast_pulse_cases() {
     cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==NativeCastPulse);
     assert(vitals==vitals_before);++checks;
 
-    state(0xCB7,3300,0);put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+    cast_native_source();
     cast_pulse_input.closes=0;put(vitals.data(),0x8C,std::numeric_limits<float>::quiet_NaN());
     latch_cast_pulse_window();assert(!cast_pulse_input.closes);++checks;
 
     for (bool consumed : {false,true}) {
         cast_setup();put(owner.data(),0x240,address(vitals.data()));
-        state(0xCB7,3300,0);put(neutral_payload.data(),0x18,uint64_t(0x8000000594C0000ULL));
+        cast_native_source();
         cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest);
         memcpy(vitals.data()+0x8C,timers,sizeof(timers));latch_cast_pulse_window();
         assert(cast_pulse_input.closes>0);
@@ -107,7 +166,8 @@ static void cast_pulse_cases() {
     assert(choose_cast_pulse(probe)==IneligibleRequest); // R1 buffered; effect rows still pending.
     cast_cue(12);assert(!cast_pulse_input.ready); // Sound86 precedes release91.
     cast_cue(14);assert(cast_pulse_input.ready); // Sound98 follows release; cleanup132 need not finish.
-    cast_sample(0);assert(choose_cast_pulse(probe)==NativeCastPulse && probe.desired_key==0xD5F);
+    cast_sample(0);assert(choose_cast_pulse(probe)==IneligibleRequest); // A pre-release R1 must not wait in a buffer.
+    cast_sample(XINPUT_GAMEPAD_RIGHT_SHOULDER);assert(choose_cast_pulse(probe)==NativeCastPulse);
     assert(cast_pulse_input.edge && cast_pulse_input.closes); // Selection alone does not consume a refused Pulse.
     ++checks;
 

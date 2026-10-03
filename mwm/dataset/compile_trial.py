@@ -1,5 +1,6 @@
 """Reproduce the new sword trials from archived observations and installed game assets."""
 import argparse
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -16,9 +17,13 @@ SOURCES = {
     'tachibana_muneshige': (107, 4005, [0xD8D]),
     'sanada_yukimura': (134, 4038, [0xC6A]),
     'maria': (124, 4286, [0xC80, 0xC81, 0xC82, 0xC83, 0xC84, 0xC85, 0xC86, 0xC89, 0xC8A]),
+    'ishida_mitsunari': (86, 3970, [0xC5B,0xC5C,0xC58,0xC71,0xC72,0xC6E,0xC7A,0xC78,0xC6C,0xC6D]),
 }
 MARIA_CHAINS = {0xC80: [0xC80, 0xC81, 0xC82], 0xC83: [0xC83, 0xC84],
                 0xC85: [0xC85, 0xC86], 0xC89: [0xC89], 0xC8A: [0xC8A, 0xC81, 0xC82]}
+ISHIDA_CHAINS = {'double_slash': [0xC5B,0xC5B,0xC5C,0xC58],
+                 'three_hit': [0xC71,0xC72,0xC6E], 'spin_ender': [0xC5C,0xC58,0xC7A],
+                 'spin_opener': [0xC78,0xC5B,0xC5C,0xC58], 'five_hit': [0xC6C,0xC6D,0xC71,0xC72,0xC6E]}
 
 
 def asset(folder, archive, index):
@@ -113,7 +118,8 @@ def compile_sources(folder, boss_id=None):
             if at < 0 or actions.find(prefix, at+1) >= 0: raise ValueError(f'{boss}/{key:X}: payload is not a unique archive match')
             body = actions[at:at+176]
             motion_key = row['payload_prefix']['motion_id']
-            mi, mo = motion_map[motion_key]; ti, to = timing_map[motion_key]
+            timing_key=row['payload_prefix']['timing_id']
+            mi, mo = motion_map[motion_key]; ti, to = timing_map[timing_key]
             count, events_offset, sound_offset = (struct.unpack_from('<I', timing, to+offset)[0] for offset in (4,8,16))
             events = list(struct.iter_unpack('<III', timing[to+events_offset:to+events_offset+count*12]))
             voices = []
@@ -130,21 +136,34 @@ def compile_sources(folder, boss_id=None):
                         source_payload_prefix=prefix.hex(),adapter_kind=2 if key in chains else 4,
                         replacement=dict(player_key=0xCF5,player_motion=4300,transition_count=46,recovery_frame=38))
             imports.append(move)
-            profile['moves'][f'{key:X}'] = dict(motion_key=motion_key,timing_key=motion_key,motion_index=mi,motion_record_offset=mo,
+            if timing_key!=motion_key: move['timing']=timing_key
+            profile['moves'][f'{key:X}'] = dict(motion_key=motion_key,timing_key=timing_key,motion_index=mi,motion_record_offset=mo,
                                                 timing_index=ti,timing_record_offset=to,timing_event_count=count,
                                                 source_payload_offset=at)
             if not any(item['id']==identifier for item in catalogue['moves']):
                 catalogue['moves'].append(dict(id=identifier,name='bloodborne gun shot' if boss=='sanada_yukimura' else boss.replace('_',' ').title()+f' · {key:04X} trial',boss_id=boss,
                     weapon='sword',designation='skill',source=dict(action_id=key,action_hex=f'{key:04X}',motion_id=motion_key,
-                    timing_id=motion_key,flags=move['flags'],ki_cost=move['ki_cost'],recovery_frame=move['recovery_frame']),
+                    timing_id=timing_key,flags=move['flags'],ki_cost=move['ki_cost'],recovery_frame=move['recovery_frame']),
                     default_binding=None,implementation=dict(selectable=True,engine_profile='recorded_grounded_trial'),
                     adaptation=dict(status='experimental'),verification=dict(gameplay='pending')))
+        hold_chains={f'{boss}.action_{root:04x}':[f'{boss}.action_{key:04x}' for key in chain] for root,chain in chains.items()}
+        if boss=='ishida_mitsunari':
+            # Route-local slots distinguish repeated actions and shared endings without inventing source keys.
+            originals={move['key']:move for move in imports}; imports=[];hold_chains={}
+            catalogue['moves']=[move for move in catalogue['moves'] if not move['id'].startswith(boss+'.')]
+            for name,chain in ISHIDA_CHAINS.items():
+                ids=[f'{boss}.{name}_{i+1}' for i in range(len(chain))];hold_chains[ids[0]]=ids
+                for i,key in enumerate(chain):
+                    move=copy.deepcopy(originals[key]);move.update(id=ids[i],adapter_kind=2 if i==0 else 4,next=ids[i+1] if i+1<len(ids) else None);imports.append(move)
+                    catalogue['moves'].append(dict(id=ids[i],name=f'Ishida - {name.replace("_"," ")}'+(f' phase {i+1}' if i else ''),boss_id=boss,
+                        weapon='sword',designation='skill',resource_profile_id=profile['resource_profile_id'],
+                        source=dict(action_id=key,action_hex=f'{key:04X}',motion_id=move['motion'],timing_id=move.get('timing',move['motion']),flags=move['flags'],ki_cost=move['ki_cost'],recovery_frame=-1),
+                        default_binding=None,implementation=dict(selectable=i==0,engine_profile='recorded_grounded_trial'),adaptation=dict(status='experimental'),verification=dict(gameplay='pending')))
         if not any(item['id']==boss for item in catalogue['bosses']): catalogue['bosses'].append(dict(id=boss,name=boss.replace('_',' ').title()))
         write(ROOT/'data/resources'/f'{boss}.json', profile)
         write(ROOT/'data/imports'/f'{boss}.json',dict(schema_version=1,boss_id=boss,resource_profile_id=profile['resource_profile_id'],
               trial=True,string_entry=None,candidates={},
-              hold_chains={f'{boss}.action_{root:04x}':[f'{boss}.action_{key:04x}' for key in chain]
-                           for root,chain in chains.items()},moves=imports))
+              hold_chains=hold_chains,moves=imports))
         print(boss, 'matched', len(imports), 'actions; voices', [len(m['voices']) for m in imports])
     for move in catalogue['moves']:
         if move['implementation'].get('engine_profile')=='recorded_grounded_trial': move.setdefault('default_binding',None)

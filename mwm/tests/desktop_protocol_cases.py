@@ -51,7 +51,7 @@ class DesktopProtocolTests(unittest.TestCase):
         desktop = worker.Desktop()
         saved = worker.read_json(ROOT/'data/controller-calibration.json')
         presets = {'baseline':'sword-original', 'starter':'sword-rebuild-1-supported',
-                   'trial':'sword-rebuild-1', 'maria':'sword-maria', 'maria_dash':'sword-maria-dash'}
+                   'trial':'sword-rebuild-1', 'maria':'sword-maria', 'maria_dash':'sword-maria-dash', 'ishida':'sword-ishida'}
         for method, filename in presets.items():
             for calibration in (saved, desktop.xinput_calibration(2)):
                 with self.subTest(preset=method, backend=calibration['device']['backend']):

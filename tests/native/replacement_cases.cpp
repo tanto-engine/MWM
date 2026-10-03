@@ -1271,6 +1271,8 @@ static void recorded_pulse_cost_cases() {
 }
 
 #include "maria_cases.h"
+#include "../../runtime/native/cast_pulse_profiles.h"
+#include "ishida_cases.h"
 
 int main() {
     // Stress native input priority, resource isolation and recovery under rejected commits.
@@ -1278,6 +1280,7 @@ int main() {
     // Moving entry, lock-on-independent selection and native running exclusions share this path.
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq); frequency=freq.QuadPart;
     maria_transition_cases();
+    ishida_transition_cases();
     recorded_pulse_cost_cases();
     native_heavy_string_cases();
     jin_string_input_cases();low_quick_string_cases();
